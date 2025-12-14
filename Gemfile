@@ -19,7 +19,7 @@ gem "turbo-rails"
 gem "tzinfo-data", platforms: %i[windows jruby]
 
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
-# gem "bcrypt", "~> 3.1.7"
+gem "bcrypt", "~> 3.1.7"
 
 group :development, :test do
   gem "brakeman", require: false

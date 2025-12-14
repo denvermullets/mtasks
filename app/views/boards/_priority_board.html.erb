@@ -1,0 +1,38 @@
+<div class="p-6">
+  <% @priorities.each do |priority| %>
+    <% priority_issues = @issues.where(priority: priority).not_archived %>
+    <% next if priority_issues.none? %>
+
+    <div class="mb-8">
+      <!-- Priority Header -->
+      <div class="mb-4 flex items-center gap-2">
+        <h2 class="text-lg font-semibold text-gray-900 capitalize">
+          <%= priority.to_s.humanize %>
+        </h2>
+        <span class="text-sm text-gray-500">(<%= priority_issues.count %>)</span>
+      </div>
+
+      <!-- Lanes for this priority -->
+      <div class="grid grid-cols-4 gap-4">
+        <% @lanes.each do |lane| %>
+          <div class="bg-white rounded-lg border border-gray-200">
+            <!-- Lane Header -->
+            <div class="px-4 py-3 border-b border-gray-200">
+              <h3 class="text-sm font-medium text-gray-700"><%= lane.name %></h3>
+              <span class="text-xs text-gray-500">
+                <%= priority_issues.where(lane: lane).count %>
+              </span>
+            </div>
+
+            <!-- Issues in this lane -->
+            <div class="p-3 space-y-2 min-h-[100px]">
+              <% priority_issues.where(lane: lane).each do |issue| %>
+                <%= render "issue_card", issue: issue %>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>
