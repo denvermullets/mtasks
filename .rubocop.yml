@@ -1,8 +1,67 @@
-# Omakase Ruby styling for Rails
-inherit_gem: { rubocop-rails-omakase: rubocop.yml }
+AllCops:
+  NewCops: enable
+  SuggestExtensions: false
+  # Auto-generated files are not our problem.
+  Exclude:
+    - "bin/*"
+    - "db/**/**"
+    - "node_modules/**/**"
+    - "vendor/**/**"
+    - "config/sorbet/*"
 
-# Overwrite or add rules to create your own house style
-#
-# # Use `[a, [b, c]]` not `[ a, [ b, c ] ]`
-# Layout/SpaceInsideArrayLiteralBrackets:
-#   Enabled: false
+# disable class/module comment descriptions
+Style/Documentation:
+  Enabled: false
+
+Lint/MissingSuper:
+  Exclude:
+    - "app/services/**/*"
+
+Lint/UselessAssignment:
+  Exclude:
+    - "local_gems/*/bin/*"
+
+Metrics/BlockLength:
+  Exclude:
+    - "config/routes.rb"
+    - "spec/**/*.rb"
+    - "config/environments/**"
+    - "local_gems/*/spec/**/*.rb"
+
+Metrics/MethodLength:
+  Max: 20
+
+Metrics/AbcSize:
+  Max: 22
+
+# Config files tend to get wordy.
+Layout/LineLength:
+  Exclude:
+    - "config/**/**"
+
+Style/BlockDelimiters:
+  Exclude:
+    - "spec/**/*.rb"
+
+# This is a case of "Damned if we do, damned if we don't."
+# Rails gets violently ill if you enforce compact style,
+# Namespaced scopes break if you try to enforce nested style.
+# Thus, this is disabled in the app scope. Elsewhere, go with compact.
+Style/ClassAndModuleChildren:
+  Exclude:
+    - "app/**/**"
+
+Style/RedundantFetchBlock:
+  Exclude:
+    - "config/puma.rb"
+
+Style/StringLiterals:
+  Exclude:
+    - "Gemfile"
+# Routes files need to be easy to read, and that means extra whitespace as-needed.
+Layout/ExtraSpacing:
+  Exclude:
+    - "config/routes.rb"
+
+Style/FrozenStringLiteralComment:
+  Enabled: false
