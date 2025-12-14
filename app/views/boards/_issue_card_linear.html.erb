@@ -1,0 +1,66 @@
+<div class="group bg-gray-900 border border-gray-800 hover:border-gray-700 rounded px-2.5 py-2 cursor-pointer transition-colors"
+     data-controller="issue-card"
+     data-issue-id="<%= issue.id %>">
+
+  <!-- Header: ID and Priority -->
+  <div class="flex items-center justify-between mb-1.5">
+    <span class="font-mono text-xs text-gray-500 font-medium">
+      <%= issue.identifier %>
+    </span>
+    <% unless issue.no_priority? %>
+      <div class="flex items-center gap-0.5">
+        <% priority_bars = case issue.priority
+           when 'urgent' then 4
+           when 'high' then 3
+           when 'medium' then 2
+           when 'low' then 1
+           else 0
+           end %>
+        <% priority_bars.times do %>
+          <div class="w-0.5 h-3 bg-<%= case issue.priority
+            when 'urgent' then 'red-500'
+            when 'high' then 'orange-500'
+            when 'medium' then 'yellow-500'
+            when 'low' then 'blue-500'
+            end %>"></div>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Title -->
+  <div class="text-sm text-gray-200 mb-2 line-clamp-2 leading-snug">
+    <%= issue.title %>
+  </div>
+
+  <!-- Labels -->
+  <% if issue.labels.any? %>
+    <div class="flex flex-wrap gap-1 mb-2">
+      <% issue.labels.first(2).each do |label| %>
+        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-800 text-gray-400 border border-gray-700">
+          <%= label.name %>
+        </span>
+      <% end %>
+      <% if issue.labels.count > 2 %>
+        <span class="text-xs text-gray-500">+<%= issue.labels.count - 2 %></span>
+      <% end %>
+    </div>
+  <% end %>
+
+  <!-- Footer: Assignee and Estimate -->
+  <div class="flex items-center justify-between text-xs">
+    <div class="flex items-center gap-1.5">
+      <% if issue.assignee %>
+        <div class="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-medium">
+          <%= issue.assignee.name.first.upcase %>
+        </div>
+      <% end %>
+    </div>
+
+    <% if issue.estimate %>
+      <span class="text-gray-500">
+        <%= issue.estimate %>
+      </span>
+    <% end %>
+  </div>
+</div>

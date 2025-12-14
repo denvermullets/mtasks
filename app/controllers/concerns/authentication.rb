@@ -3,7 +3,8 @@ module Authentication
 
   included do
     before_action :require_authentication
-    helper_method :authenticated?
+    before_action :set_current_user
+    helper_method :authenticated?, :current_user
   end
 
   class_methods do
@@ -15,7 +16,11 @@ module Authentication
   private
 
   def current_user
-    Current.user
+    @current_user
+  end
+
+  def set_current_user
+    @current_user = Current.user
   end
 
   def authenticated?
