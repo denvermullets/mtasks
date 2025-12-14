@@ -1,5 +1,5 @@
 class Issue < ApplicationRecord
-  enum priority: { urgent: 0, high: 1, medium: 2, low: 3, no_priority: 4 }
+  enum :priority, { urgent: 0, high: 1, medium: 2, low: 3, no_priority: 4 }
 
   # Associations
   belongs_to :team
@@ -28,7 +28,7 @@ class Issue < ApplicationRecord
   scope :in_progress, -> { where.not(started_at: nil).where(completed_at: nil, canceled_at: nil) }
 
   def identifier
-    "#{team.workspace.identifier}-#{team_number}"
+    "#{team.identifier}-#{team_number}"
   end
 
   def complete!

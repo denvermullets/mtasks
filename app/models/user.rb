@@ -2,7 +2,7 @@ class User < ApplicationRecord
   has_secure_password
   has_many :sessions, dependent: :destroy
 
-  enum role: { member: 0, admin: 1 }
+  enum :role, { member: 0, admin: 1 }
 
   # Associations
   has_many :owned_workspaces, class_name: 'Workspace', foreign_key: :owner_id, dependent: :destroy

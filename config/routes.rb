@@ -1,6 +1,8 @@
 Rails.application.routes.draw do
   resource :session
   resources :passwords, param: :token
+  resources :users, only: %i[new create]
+  resources :teams, only: %i[new create]
 
   # Boards
   resources :boards, only: %i[index]

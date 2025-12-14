@@ -11,8 +11,11 @@ class Team < ApplicationRecord
 
   # Validations
   validates :name, presence: true
+  validates :identifier, presence: true, uniqueness: true, length: { is: 3 },
+                         format: { with: /\A[A-Z]+\z/, message: 'must be 3 uppercase letters' }
 
   # Callbacks
+  before_validation :upcase_identifier
   after_create :create_default_lanes
 
   # Generate next issue number for this team
@@ -22,6 +25,10 @@ class Team < ApplicationRecord
   end
 
   private
+
+  def upcase_identifier
+    self.identifier = identifier&.upcase
+  end
 
   def create_default_lanes
     default_lanes = [

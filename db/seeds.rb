@@ -15,15 +15,16 @@ end
 puts "Created admin user: #{admin.email}"
 
 # Create workspace
-workspace = Workspace.find_or_create_by!(identifier: "MTK") do |ws|
-  ws.name = "My Tasks"
+workspace = Workspace.find_or_create_by!(name: "My Tasks") do |ws|
   ws.owner = admin
 end
 
-puts "Created workspace: #{workspace.name} (#{workspace.identifier})"
+puts "Created workspace: #{workspace.name}"
 
 # Create team (this will auto-create default lanes via callback)
-team = Team.find_or_create_by!(name: "Engineering", workspace: workspace)
+team = Team.find_or_create_by!(name: "Engineering", workspace: workspace) do |t|
+  t.identifier = "MTK"
+end
 
 puts "Created team: #{team.name} with #{team.lanes.count} lanes"
 

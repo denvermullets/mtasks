@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_14_155003) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_14_170832) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -115,10 +115,12 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_14_155003) do
   create_table "teams", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "description"
+    t.string "identifier"
     t.integer "issue_counter", default: 0
     t.string "name"
     t.datetime "updated_at", null: false
     t.bigint "workspace_id", null: false
+    t.index ["identifier"], name: "index_teams_on_identifier", unique: true
     t.index ["workspace_id"], name: "index_teams_on_workspace_id"
   end
 
@@ -134,11 +136,9 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_14_155003) do
 
   create_table "workspaces", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.string "identifier"
     t.string "name"
     t.bigint "owner_id", null: false
     t.datetime "updated_at", null: false
-    t.index ["identifier"], name: "index_workspaces_on_identifier", unique: true
     t.index ["owner_id"], name: "index_workspaces_on_owner_id"
   end
 
