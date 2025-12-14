@@ -3,7 +3,7 @@ Rails.application.routes.draw do
   resources :passwords, param: :token
 
   # CSV Import
-  resources :imports, only: [:new, :create]
+  resources :imports, only: %i[new create]
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.
@@ -14,5 +14,5 @@ Rails.application.routes.draw do
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
   # Defines the root path route ("/")
-  root "imports#new" # Temporary root - will be replaced with board view
+  root 'imports#new' # Temporary root - will be replaced with board view
 end
