@@ -14,7 +14,7 @@ class TeamsController < ApplicationController
     if @team.save
       # Add current user to the team
       @team.team_memberships.create!(user: current_user)
-      redirect_to root_path, notice: "Team created successfully!"
+      redirect_to root_path, notice: 'Team created successfully!'
     else
       render :new, status: :unprocessable_entity
     end

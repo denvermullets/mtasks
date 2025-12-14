@@ -1,5 +1,6 @@
 require 'csv'
 
+# rubocop:disable Metrics/ClassLength
 class IssueImporter
   attr_reader :team, :errors, :imported_count
 
@@ -31,64 +32,84 @@ class IssueImporter
 
   def import_issue(row)
     old_id = row['ID']
-    title = row['Title']
-    description = row['Description']
-    estimate = row['Estimate'].to_i if row['Estimate'].present?
-    priority = map_priority(row['Priority'])
-    due_date = parse_date(row['Due Date'])
+    issue = build_issue_from_row(row)
 
-    # Find or create lane by status name
-    lane = find_or_create_lane(row['Status'])
+    if issue.save
+      handle_successful_import(issue, old_id, row)
+    else
+      @errors << "Row #{old_id}: #{issue.errors.full_messages.join(', ')}"
+    end
+  rescue StandardError => e
+    @errors << "Row #{old_id}: #{e.message}"
+  end
 
-    # Find or create project and milestone
-    project = find_or_create_project(row['Project'], row['Project Milestone'])
-    milestone = project&.milestone || find_or_create_milestone(row['Project Milestone'])
+  def build_issue_from_row(row)
+    Issue.new(issue_attributes(row))
+  end
 
-    # Find or create users
-    creator = find_user_by_name(row['Creator'])
-    assignee = find_user_by_name(row['Assignee'])
-
-    issue = Issue.new(
-      title: title,
-      description: description,
+  def issue_attributes(row)
+    {
+      title: row['Title'],
+      description: row['Description'],
       team: @team,
-      lane: lane,
-      estimate: estimate,
-      priority: priority,
-      due_date: due_date,
-      project: project,
-      milestone: milestone,
-      creator: creator,
-      assignee: assignee,
+      lane: find_or_create_lane(row['Status']),
+      estimate: parse_estimate(row['Estimate']),
+      priority: map_priority(row['Priority']),
+      due_date: parse_date(row['Due Date'])
+    }.merge(issue_associations(row))
+      .merge(issue_timestamps(row))
+  end
+
+  def issue_associations(row)
+    {
+      project: find_or_create_project(row['Project'], row['Project Milestone']),
+      milestone: find_milestone_for_row(row),
+      creator: find_user_by_name(row['Creator']),
+      assignee: find_user_by_name(row['Assignee'])
+    }
+  end
+
+  def issue_timestamps(row)
+    {
       created_at: parse_date(row['Created']),
       updated_at: parse_date(row['Updated']),
       started_at: parse_date(row['Started']),
       completed_at: parse_date(row['Completed']),
       canceled_at: parse_date(row['Canceled']),
       archived_at: parse_date(row['Archived'])
-    )
+    }
+  end
 
-    if issue.save
-      @old_id_to_new_issue[old_id] = issue
+  def handle_successful_import(issue, old_id, row)
+    @old_id_to_new_issue[old_id] = issue
+    attach_labels(issue, row['Labels'])
+    store_parent_issue_id(issue, row['Parent issue'])
+    @imported_count += 1
+  end
 
-      # Handle labels
-      if row['Labels'].present?
-        label_names = row['Labels'].split(',').map(&:strip)
-        label_names.each do |label_name|
-          label = find_or_create_label(label_name)
-          issue.labels << label unless issue.labels.include?(label)
-        end
-      end
+  def find_milestone_for_row(row)
+    project = find_or_create_project(row['Project'], row['Project Milestone'])
+    project&.milestone || find_or_create_milestone(row['Project Milestone'])
+  end
 
-      # Store parent issue ID for second pass
-      issue.instance_variable_set(:@parent_issue_old_id, row['Parent issue']) if row['Parent issue'].present?
+  def attach_labels(issue, labels_string)
+    return unless labels_string.present?
 
-      @imported_count += 1
-    else
-      @errors << "Row #{old_id}: #{issue.errors.full_messages.join(', ')}"
+    label_names = labels_string.split(',').map(&:strip)
+    label_names.each do |label_name|
+      label = find_or_create_label(label_name)
+      issue.labels << label unless issue.labels.include?(label)
     end
-  rescue StandardError => e
-    @errors << "Row #{old_id}: #{e.message}"
+  end
+
+  def store_parent_issue_id(issue, parent_id)
+    return unless parent_id.present?
+
+    issue.instance_variable_set(:@parent_issue_old_id, parent_id)
+  end
+
+  def parse_estimate(estimate_str)
+    estimate_str.to_i if estimate_str.present?
   end
 
   def update_parent_issues
@@ -163,3 +184,4 @@ class IssueImporter
     colors.sample
   end
 end
+# rubocop:enable Metrics/ClassLength
