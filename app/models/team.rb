@@ -25,10 +25,10 @@ class Team < ApplicationRecord
 
   def create_default_lanes
     default_lanes = [
-      { name: "Backlog", position: 0, color: "#94a3b8" },
-      { name: "In Progress", position: 1, color: "#3b82f6" },
-      { name: "Done", position: 2, color: "#22c55e" },
-      { name: "Cancelled", position: 3, color: "#ef4444" }
+      { name: 'Backlog', position: 0, color: '#94a3b8' },
+      { name: 'In Progress', position: 1, color: '#3b82f6' },
+      { name: 'Done', position: 2, color: '#22c55e' },
+      { name: 'Cancelled', position: 3, color: '#ef4444' }
     ]
 
     default_lanes.each do |lane_attrs|

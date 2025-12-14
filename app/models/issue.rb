@@ -6,10 +6,10 @@ class Issue < ApplicationRecord
   belongs_to :lane
   belongs_to :project, optional: true
   belongs_to :milestone, optional: true
-  belongs_to :creator, class_name: "User", optional: true
-  belongs_to :assignee, class_name: "User", optional: true
-  belongs_to :parent_issue, class_name: "Issue", optional: true
-  has_many :sub_issues, class_name: "Issue", foreign_key: :parent_issue_id, dependent: :nullify
+  belongs_to :creator, class_name: 'User', optional: true
+  belongs_to :assignee, class_name: 'User', optional: true
+  belongs_to :parent_issue, class_name: 'Issue', optional: true
+  has_many :sub_issues, class_name: 'Issue', foreign_key: :parent_issue_id, dependent: :nullify
   has_many :issue_labels, dependent: :destroy
   has_many :labels, through: :issue_labels
 
@@ -51,6 +51,7 @@ class Issue < ApplicationRecord
 
   def assign_team_number
     return if team_number.present?
+
     self.team_number = team.next_issue_number
   end
 end

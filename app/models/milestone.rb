@@ -6,13 +6,15 @@ class Milestone < ApplicationRecord
   validates :name, presence: true
 
   def progress_percentage
-    return 0 if issues.count.zero?
+    return 0 if issues.none?
+
     completed = issues.where.not(completed_at: nil).count
     (completed.to_f / issues.count * 100).round
   end
 
   def behind_schedule?
     return false unless due_date
+
     progress_percentage < expected_progress_percentage
   end
 

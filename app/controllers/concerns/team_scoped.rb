@@ -20,25 +20,25 @@ module TeamScoped
     team_id = params[:team_id] || session[:current_team_id]
 
     @current_team = if team_id
-      user_teams.find_by(id: team_id)
-    else
-      user_teams.first
-    end
+                      user_teams.find_by(id: team_id)
+                    else
+                      user_teams.first
+                    end
 
     session[:current_team_id] = @current_team&.id
   end
 
   def authorize_team_access!(team)
-    unless user_teams.include?(team)
-      redirect_to root_path, alert: "You don't have access to that team"
-    end
+    return if user_teams.include?(team)
+
+    redirect_to root_path, alert: "You don't have access to that team"
   end
 
   def require_team!
-    redirect_to new_team_path, alert: "Please create or join a team first" unless current_team
+    redirect_to new_team_path, alert: 'Please create or join a team first' unless current_team
   end
 
   def require_admin!
-    redirect_to root_path, alert: "You must be an admin" unless current_user&.admin?
+    redirect_to root_path, alert: 'You must be an admin' unless current_user&.admin?
   end
 end
