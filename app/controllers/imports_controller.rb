@@ -21,7 +21,7 @@ class ImportsController < ApplicationController
   end
 
   def perform_import
-    importer = IssueImporter.new(current_team)
+    importer = IssueImporter.new(current_team.workspace, @current_user)
     importer.import(params[:csv_file].read)
   end
 
