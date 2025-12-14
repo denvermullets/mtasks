@@ -2,6 +2,9 @@ Rails.application.routes.draw do
   resource :session
   resources :passwords, param: :token
 
+  # Boards
+  resources :boards, only: %i[index]
+
   # CSV Import
   resources :imports, only: %i[new create]
 
@@ -14,5 +17,5 @@ Rails.application.routes.draw do
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
   # Defines the root path route ("/")
-  root 'imports#new' # Temporary root - will be replaced with board view
+  root 'boards#index'
 end
