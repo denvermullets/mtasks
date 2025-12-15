@@ -23,7 +23,11 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body class="bg-gray-950 text-gray-100">
-    <%= yield %>
+  <body class="bg-gray-950 text-gray-100 h-screen overflow-hidden flex">
+    <%= render "shared/sidebar" if authenticated? %>
+
+    <main class="flex-1 flex flex-col overflow-hidden">
+      <%= yield %>
+    </main>
   </body>
 </html>

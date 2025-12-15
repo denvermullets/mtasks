@@ -2,10 +2,9 @@ Rails.application.routes.draw do
   resource :session
   resources :passwords, param: :token
   resources :users, only: %i[new create]
-  resources :teams, only: %i[new create]
-
-  # Boards
-  resources :boards, only: %i[index]
+  resources :teams, only: %i[new create show] do
+    resources :issues
+  end
 
   # CSV Import
   resources :imports, only: %i[new create]
@@ -19,5 +18,8 @@ Rails.application.routes.draw do
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
   # Defines the root path route ("/")
-  root 'boards#index'
+  root to: redirect { |_params, request|
+    team_id = request.session[:current_team_id]
+    team_id ? "/teams/#{team_id}/issues" : '/teams/new'
+  }
 end

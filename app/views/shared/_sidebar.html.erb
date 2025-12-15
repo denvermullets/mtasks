@@ -1,0 +1,45 @@
+<aside id="sidebar" class="w-56 bg-gray-900 border-r border-gray-800 flex flex-col" data-turbo-permanent>
+  <!-- User -->
+  <div class="p-4 border-b border-gray-800">
+    <div class="flex items-center gap-2">
+      <div class="w-6 h-6 rounded bg-blue-600 flex items-center justify-center text-xs font-medium">
+        <%= current_user.name.first.upcase %>
+      </div>
+      <span class="text-sm font-medium"><%= current_user.name %></span>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <div class="flex-1 overflow-y-auto">
+    <div class="p-2">
+      <div class="text-xs font-medium text-gray-500 uppercase px-2 mb-2">Workspace</div>
+      <div class="space-y-1">
+        <%= link_to team_issues_path(current_team), class: "flex items-center gap-2 px-2 py-1.5 text-sm rounded hover:bg-gray-800 text-gray-300" do %>
+          <span>📋</span>
+          <span>My issues</span>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="p-2 mt-4">
+      <div class="text-xs font-medium text-gray-500 uppercase px-2 mb-2">Teams</div>
+      <div class="space-y-1">
+        <% user_teams.each do |team| %>
+          <%= link_to team_issues_path(team), class: "flex items-center justify-between px-2 py-1.5 text-sm rounded hover:bg-gray-800 #{team.id == current_team&.id ? 'bg-gray-800 text-gray-100' : 'text-gray-300'}" do %>
+            <div class="flex items-center gap-2">
+              <span class="font-mono text-xs text-gray-500"><%= team.identifier %></span>
+              <span><%= team.name %></span>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="p-4 border-t border-gray-800">
+    <%= link_to new_import_path, class: "text-xs text-gray-400 hover:text-gray-300" do %>
+      Import CSV
+    <% end %>
+  </div>
+</aside>

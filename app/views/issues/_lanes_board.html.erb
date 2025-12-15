@@ -1,9 +1,9 @@
-<div class="h-full p-4">
+<div class="h-full p-4 overflow-y-hidden">
   <div class="flex gap-3 h-full">
     <% @lanes.each do |lane| %>
-      <div class="flex-shrink-0 w-80 flex flex-col">
+      <div class="flex-shrink-0 w-80 flex flex-col h-full">
         <!-- Lane Header -->
-        <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center justify-between mb-3 flex-shrink-0">
           <div class="flex items-center gap-2">
             <h3 class="text-sm font-medium text-gray-300"><%= lane.name %></h3>
             <span class="text-xs text-gray-500"><%= @issues.where(lane: lane).count %></span>
@@ -11,9 +11,9 @@
         </div>
 
         <!-- Issues -->
-        <div class="flex-1 space-y-1.5 overflow-y-auto">
+        <div class="flex-1 space-y-1.5 overflow-y-auto min-h-0">
           <% @issues.where(lane: lane).each do |issue| %>
-            <%= render "issue_card_linear", issue: issue %>
+            <%= render "issue_card", issue: issue %>
           <% end %>
         </div>
       </div>
