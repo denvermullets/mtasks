@@ -4,76 +4,66 @@
     <div class="flex items-center gap-4">
       <%= link_to team_issues_path(current_team),
           class: "text-sm text-gray-500 hover:text-gray-400 flex items-center gap-2" do %>
-        <span>←</span>
+        <span>&#8592;</span>
         <span><%= current_team.name %></span>
       <% end %>
-      <span class="text-gray-600">›</span>
+      <span class="text-gray-600">&#8250;</span>
       <span class="text-sm text-gray-400 font-mono"><%= @issue.identifier %></span>
     </div>
-
     <div class="flex items-center gap-2">
       <% if Current.user.admin? || @issue.creator == Current.user %>
         <%= link_to "Edit", edit_team_issue_path(@issue.team, @issue), class: "px-3 py-1.5 text-xs font-medium rounded bg-gray-800 text-gray-300 hover:bg-gray-700" %>
       <% end %>
     </div>
   </div>
-
   <div class="flex-1 flex bg-gray-950">
     <!-- Issue Detail Content -->
     <div class="flex-1 overflow-y-auto">
       <div class="max-w-4xl mx-auto p-8">
-
         <!-- Issue Title -->
         <div class="mb-6">
           <h1 class="text-2xl font-semibold text-gray-100">
             <%= @issue.title %>
           </h1>
         </div>
-
         <!-- Description -->
         <div class="mb-8">
           <% if @issue.description.present? %>
             <div class="text-gray-300 prose prose-invert max-w-none">
               <%= simple_format(@issue.description) %>
             </div>
-          <% else %>
-            <p class="text-gray-500 italic">it'd be nice to view the collection split out</p>
           <% end %>
         </div>
-
         <!-- Sub-issues Section -->
         <% if @issue.sub_issues.any? %>
           <div class="mb-8">
             <button class="flex items-center gap-2 mb-4 text-sm text-gray-400 hover:text-gray-300">
-              <span>▶</span>
+              <span>&#9654;</span>
               <span>+ Add sub-issues</span>
             </button>
           </div>
         <% end %>
-
         <!-- Activity Section -->
         <div class="border-t border-gray-800 pt-8">
           <div class="flex items-center justify-between mb-6">
             <h2 class="text-sm font-semibold text-gray-400">Activity</h2>
             <button class="text-sm text-gray-500 hover:text-gray-400">Unsubscribe</button>
           </div>
-
           <!-- Activity Item -->
           <div class="flex gap-3 mb-6">
-            <div class="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-xs font-medium flex-shrink-0">
+            <div class="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-xs font-medium shrink-0">
               <%= @issue.creator&.name&.first&.upcase || 'U' %>
             </div>
             <div class="flex-1">
               <div class="text-sm text-gray-400">
                 <span class="text-gray-300"><%= @issue.creator&.name || 'Unknown' %></span>
-                created the issue · <%= time_ago_in_words(@issue.created_at) %> ago
+                created the issue &middot; <%= time_ago_in_words(@issue.created_at) %> ago
               </div>
             </div>
           </div>
-
           <!-- Comment Input -->
           <div class="flex gap-3">
-            <div class="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-xs font-medium flex-shrink-0">
+            <div class="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-xs font-medium shrink-0">
               <%= current_user.name.first.upcase %>
             </div>
             <div class="flex-1">
@@ -99,11 +89,9 @@
         </div>
       </div>
     </div>
-
     <!-- Right Sidebar - Properties -->
     <div class="w-80 border-l border-gray-800 p-6 overflow-y-auto">
       <h3 class="text-xs font-semibold text-gray-500 uppercase mb-4">Properties</h3>
-
       <!-- Backlog Status -->
       <div class="mb-6">
         <div class="flex items-center gap-2 text-sm">
@@ -113,7 +101,6 @@
           <span class="text-gray-300"><%= @issue.lane.name %></span>
         </div>
       </div>
-
       <!-- Priority -->
       <div class="mb-6">
         <div class="flex items-center gap-2 text-sm">
@@ -123,7 +110,6 @@
           <span class="text-gray-300 capitalize"><%= @issue.priority&.humanize || 'No priority' %></span>
         </div>
       </div>
-
       <!-- Assignee -->
       <div class="mb-6">
         <% if @issue.assignee %>
@@ -140,7 +126,6 @@
           </button>
         <% end %>
       </div>
-
       <!-- Estimate -->
       <div class="mb-6">
         <% if @issue.estimate %>
@@ -159,7 +144,6 @@
           </button>
         <% end %>
       </div>
-
       <!-- Labels -->
       <div class="mb-6">
         <div class="text-xs font-medium text-gray-500 mb-2">Labels</div>
@@ -178,7 +162,6 @@
           </button>
         <% end %>
       </div>
-
       <!-- Project -->
       <div class="mb-6">
         <div class="text-xs font-medium text-gray-500 mb-2">Project</div>
@@ -190,7 +173,6 @@
           </button>
         <% end %>
       </div>
-
       <!-- Milestone -->
       <% if @issue.milestone %>
         <div class="mb-6">
@@ -198,7 +180,6 @@
           <div class="text-sm text-gray-300"><%= @issue.milestone.name %></div>
         </div>
       <% end %>
-
       <!-- Due Date -->
       <% if @issue.due_date %>
         <div class="mb-6">
@@ -206,7 +187,6 @@
           <div class="text-sm text-gray-300"><%= @issue.due_date.strftime("%b %d, %Y") %></div>
         </div>
       <% end %>
-
       <!-- Created/Updated -->
       <div class="pt-6 border-t border-gray-800 text-xs text-gray-500 space-y-1">
         <div>Created <%= time_ago_in_words(@issue.created_at) %> ago</div>
@@ -215,7 +195,6 @@
     </div>
   </div>
 </div>
-
 <% content_for :head do %>
   <style>
     .prose {
