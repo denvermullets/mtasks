@@ -1,88 +1,32 @@
-<div class="h-screen flex" data-controller="board-keyboard">
-  <!-- Sidebar -->
-  <div class="w-56 bg-gray-900 border-r border-gray-800 flex flex-col">
-    <!-- User -->
-    <div class="p-4 border-b border-gray-800">
-      <div class="flex items-center gap-2">
-        <div class="w-6 h-6 rounded bg-blue-600 flex items-center justify-center text-xs font-medium">
-          <%= current_user.name.first.upcase %>
-        </div>
-        <span class="text-sm font-medium"><%= current_user.name %></span>
-      </div>
+<div class="flex-1 flex flex-col min-h-0" data-controller="board-keyboard">
+  <!-- Top Bar -->
+  <div class="h-14 bg-gray-900 border-b border-gray-800 flex items-center justify-between px-4 flex-shrink-0">
+    <div class="flex items-center gap-4">
+      <h1 class="text-base font-semibold"><%= current_team&.identifier %></h1>
+      <span class="text-sm text-gray-500"><%= current_team&.workspace&.name %></span>
     </div>
 
-    <!-- Navigation -->
-    <div class="flex-1 overflow-y-auto">
-      <div class="p-2">
-        <div class="text-xs font-medium text-gray-500 uppercase px-2 mb-2">Workspace</div>
-        <div class="space-y-1">
-          <%= link_to team_issues_path(current_team), class: "flex items-center gap-2 px-2 py-1.5 text-sm rounded hover:bg-gray-800 text-gray-300" do %>
-            <span>📋</span>
-            <span>My issues</span>
-          <% end %>
-        </div>
-      </div>
-
-      <div class="p-2 mt-4">
-        <div class="text-xs font-medium text-gray-500 uppercase px-2 mb-2">Teams</div>
-        <div class="space-y-1">
-          <% user_teams.each do |team| %>
-            <%= link_to team_issues_path(team, view: @view_mode),
-                data: { turbo_frame: "board_content", turbo_action: "advance" },
-                class: "flex items-center justify-between px-2 py-1.5 text-sm rounded hover:bg-gray-800 #{team.id == current_team&.id ? 'bg-gray-800 text-gray-100' : 'text-gray-300'}" do %>
-              <div class="flex items-center gap-2">
-                <span class="font-mono text-xs text-gray-500"><%= team.identifier %></span>
-                <span><%= team.name %></span>
-              </div>
-            <% end %>
-          <% end %>
-        </div>
-      </div>
-    </div>
-
-    <!-- Actions -->
-    <div class="p-4 border-t border-gray-800">
-      <%= link_to new_import_path, class: "text-xs text-gray-400 hover:text-gray-300" do %>
-        Import CSV
-      <% end %>
-    </div>
-  </div>
-
-  <!-- Main Content -->
-  <%= turbo_frame_tag "board_content" do %>
-    <div class="flex-1 flex flex-col">
-      <!-- Top Bar -->
-      <div class="h-14 bg-gray-900 border-b border-gray-800 flex items-center justify-between px-4">
-        <div class="flex items-center gap-4">
-          <h1 class="text-base font-semibold"><%= current_team&.identifier %></h1>
-          <span class="text-sm text-gray-500"><%= current_team&.workspace&.name %></span>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <!-- View Mode Switcher -->
-          <div class="flex items-center gap-1 bg-gray-800 rounded-md p-0.5">
-            <%= link_to team_issues_path(current_team, view: "lanes"),
-                data: { turbo_frame: "board_content", turbo_action: "advance" },
-                class: "px-3 py-1.5 text-xs font-medium rounded #{@view_mode == 'lanes' ? 'bg-gray-700 text-gray-100' : 'text-gray-400 hover:text-gray-200'}" do %>
-              Lanes
-            <% end %>
-            <%= link_to team_issues_path(current_team, view: "milestone"),
-                data: { turbo_frame: "board_content", turbo_action: "advance" },
-                class: "px-3 py-1.5 text-xs font-medium rounded #{@view_mode == 'milestone' ? 'bg-gray-700 text-gray-100' : 'text-gray-400 hover:text-gray-200'}" do %>
-              Milestone
-            <% end %>
-          </div>
-        </div>
-      </div>
-
-      <!-- Board -->
-      <div class="flex-1 overflow-x-auto bg-gray-950">
-        <% if @view_mode == "milestone" %>
-          <%= render "milestone_board" %>
-        <% else %>
-          <%= render "lanes_board" %>
+    <div class="flex items-center gap-2">
+      <!-- View Mode Switcher -->
+      <div class="flex items-center gap-1 bg-gray-800 rounded-md p-0.5">
+        <%= link_to team_issues_path(current_team, view: "lanes"),
+            class: "px-3 py-1.5 text-xs font-medium rounded #{@view_mode == 'lanes' ? 'bg-gray-700 text-gray-100' : 'text-gray-400 hover:text-gray-200'}" do %>
+          Lanes
+        <% end %>
+        <%= link_to team_issues_path(current_team, view: "milestone"),
+            class: "px-3 py-1.5 text-xs font-medium rounded #{@view_mode == 'milestone' ? 'bg-gray-700 text-gray-100' : 'text-gray-400 hover:text-gray-200'}" do %>
+          Milestone
         <% end %>
       </div>
     </div>
-  <% end %>
+  </div>
+
+  <!-- Board -->
+  <div class="flex-1 overflow-x-auto overflow-y-hidden bg-gray-950 min-h-0">
+    <% if @view_mode == "milestone" %>
+      <%= render "milestone_board" %>
+    <% else %>
+      <%= render "lanes_board" %>
+    <% end %>
+  </div>
 </div>

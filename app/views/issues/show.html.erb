@@ -1,26 +1,24 @@
-<%= turbo_frame_tag "board_content" do %>
-  <div class="flex-1 flex flex-col">
-    <!-- Top Bar -->
-    <div class="h-14 bg-gray-900 border-b border-gray-800 flex items-center justify-between px-4">
-      <div class="flex items-center gap-4">
-        <%= link_to team_issues_path(current_team),
-            data: { turbo_frame: "board_content", turbo_action: "advance" },
-            class: "text-sm text-gray-500 hover:text-gray-400 flex items-center gap-2" do %>
-          <span>←</span>
-          <span><%= current_team.name %></span>
-        <% end %>
-        <span class="text-gray-600">›</span>
-        <span class="text-sm text-gray-400 font-mono"><%= @issue.identifier %></span>
-      </div>
-
-      <div class="flex items-center gap-2">
-        <% if Current.user.admin? || @issue.creator == Current.user %>
-          <%= link_to "Edit", edit_team_issue_path(@issue.team, @issue), class: "px-3 py-1.5 text-xs font-medium rounded bg-gray-800 text-gray-300 hover:bg-gray-700" %>
-        <% end %>
-      </div>
+<div class="flex-1 flex flex-col">
+  <!-- Top Bar -->
+  <div class="h-14 bg-gray-900 border-b border-gray-800 flex items-center justify-between px-4">
+    <div class="flex items-center gap-4">
+      <%= link_to team_issues_path(current_team),
+          class: "text-sm text-gray-500 hover:text-gray-400 flex items-center gap-2" do %>
+        <span>←</span>
+        <span><%= current_team.name %></span>
+      <% end %>
+      <span class="text-gray-600">›</span>
+      <span class="text-sm text-gray-400 font-mono"><%= @issue.identifier %></span>
     </div>
 
-    <div class="flex-1 flex bg-gray-950">
+    <div class="flex items-center gap-2">
+      <% if Current.user.admin? || @issue.creator == Current.user %>
+        <%= link_to "Edit", edit_team_issue_path(@issue.team, @issue), class: "px-3 py-1.5 text-xs font-medium rounded bg-gray-800 text-gray-300 hover:bg-gray-700" %>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="flex-1 flex bg-gray-950">
     <!-- Issue Detail Content -->
     <div class="flex-1 overflow-y-auto">
       <div class="max-w-4xl mx-auto p-8">
@@ -216,7 +214,7 @@
       </div>
     </div>
   </div>
-<% end %>
+</div>
 
 <% content_for :head do %>
   <style>
