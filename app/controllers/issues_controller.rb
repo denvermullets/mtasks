@@ -17,20 +17,12 @@ class IssuesController < ApplicationController
   end
 
   def show
-    @lanes = current_team.lanes
-    @team_members = current_team.users
-    @labels = current_team.labels
-    @projects = current_team.projects
-    @milestones = current_team.milestones
+    load_form_collections
   end
 
   def new
     @issue = current_team.issues.new
-    @lanes = current_team.lanes
-    @team_members = current_team.users
-    @labels = current_team.labels
-    @projects = current_team.projects
-    @milestones = current_team.milestones
+    load_form_collections
   end
 
   def create
@@ -40,32 +32,20 @@ class IssuesController < ApplicationController
     if @issue.save
       redirect_to team_issue_path(@issue.team, @issue), notice: 'Issue was successfully created.'
     else
-      @lanes = current_team.lanes
-      @team_members = current_team.users
-      @labels = current_team.labels
-      @projects = current_team.projects
-      @milestones = current_team.milestones
+      load_form_collections
       render :new, status: :unprocessable_entity
     end
   end
 
   def edit
-    @lanes = current_team.lanes
-    @team_members = current_team.users
-    @labels = current_team.labels
-    @projects = current_team.projects
-    @milestones = current_team.milestones
+    load_form_collections
   end
 
   def update
     if @issue.update(issue_params)
       redirect_to team_issue_path(@issue.team, @issue), notice: 'Issue was successfully updated.'
     else
-      @lanes = current_team.lanes
-      @team_members = current_team.users
-      @labels = current_team.labels
-      @projects = current_team.projects
-      @milestones = current_team.milestones
+      load_form_collections
       render :edit, status: :unprocessable_entity
     end
   end
@@ -78,21 +58,30 @@ class IssuesController < ApplicationController
   private
 
   def set_issue
-    @issue = Issue.includes(:team, :lane, :project, :milestone, :labels, :assignee, :creator, :sub_issues).find(params[:id])
+    @issue = Issue.includes(:team, :lane, :project, :milestone, :labels, :assignee, :creator,
+                            :sub_issues).find(params[:id])
   rescue ActiveRecord::RecordNotFound
     redirect_to root_path, alert: 'Issue not found.'
   end
 
   def authorize_issue_access!
-    unless current_team == @issue.team
-      redirect_to root_path, alert: 'You do not have access to this issue.'
-    end
+    return if current_team == @issue.team
+
+    redirect_to root_path, alert: 'You do not have access to this issue.'
   end
 
   def authorize_issue_modification!
-    unless Current.user.admin? || @issue.creator == Current.user
-      redirect_to team_issue_path(@issue.team, @issue), alert: 'You do not have permission to modify this issue.'
-    end
+    return if Current.user.admin? || @issue.creator == Current.user
+
+    redirect_to team_issue_path(@issue.team, @issue), alert: 'You do not have permission to modify this issue.'
+  end
+
+  def load_form_collections
+    @lanes = current_team.lanes
+    @team_members = current_team.users
+    @labels = current_team.labels
+    @projects = current_team.projects
+    @milestones = current_team.milestones
   end
 
   def issue_params

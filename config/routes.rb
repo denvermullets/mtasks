@@ -18,7 +18,7 @@ Rails.application.routes.draw do
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
   # Defines the root path route ("/")
-  root to: redirect { |params, request|
+  root to: redirect { |_params, request|
     team_id = request.session[:current_team_id]
     team_id ? "/teams/#{team_id}/issues" : '/teams/new'
   }
