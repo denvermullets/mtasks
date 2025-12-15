@@ -13,7 +13,7 @@
         <!-- Issues -->
         <div class="flex-1 space-y-1.5 overflow-y-auto">
           <% @issues.where(lane: lane).each do |issue| %>
-            <%= render "issue_card_linear", issue: issue %>
+            <%= render "issue_card", issue: issue %>
           <% end %>
         </div>
       </div>

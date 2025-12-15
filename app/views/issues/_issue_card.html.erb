@@ -1,6 +1,7 @@
-<div class="group bg-gray-900 border border-gray-800 hover:border-gray-700 rounded px-2.5 py-2 cursor-pointer transition-colors"
-     data-controller="issue-card"
-     data-issue-id="<%= issue.id %>">
+<%= link_to team_issue_path(issue.team, issue), data: { turbo_frame: "board_content", turbo_action: "advance" }, class: "block" do %>
+  <div class="group bg-gray-900 border border-gray-800 hover:border-gray-700 rounded px-2.5 py-2 cursor-pointer transition-colors"
+       data-controller="issue-card"
+       data-issue-id="<%= issue.id %>">
 
   <!-- Header: ID and Priority -->
   <div class="flex items-center justify-between mb-1.5">
@@ -63,4 +64,5 @@
       </span>
     <% end %>
   </div>
-</div>
+  </div>
+<% end %>

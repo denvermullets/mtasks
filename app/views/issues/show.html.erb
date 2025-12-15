@@ -1,0 +1,230 @@
+<%= turbo_frame_tag "board_content" do %>
+  <div class="flex-1 flex flex-col">
+    <!-- Top Bar -->
+    <div class="h-14 bg-gray-900 border-b border-gray-800 flex items-center justify-between px-4">
+      <div class="flex items-center gap-4">
+        <%= link_to team_issues_path(current_team),
+            data: { turbo_frame: "board_content", turbo_action: "advance" },
+            class: "text-sm text-gray-500 hover:text-gray-400 flex items-center gap-2" do %>
+          <span>←</span>
+          <span><%= current_team.name %></span>
+        <% end %>
+        <span class="text-gray-600">›</span>
+        <span class="text-sm text-gray-400 font-mono"><%= @issue.identifier %></span>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <% if Current.user.admin? || @issue.creator == Current.user %>
+          <%= link_to "Edit", edit_team_issue_path(@issue.team, @issue), class: "px-3 py-1.5 text-xs font-medium rounded bg-gray-800 text-gray-300 hover:bg-gray-700" %>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="flex-1 flex bg-gray-950">
+    <!-- Issue Detail Content -->
+    <div class="flex-1 overflow-y-auto">
+      <div class="max-w-4xl mx-auto p-8">
+
+        <!-- Issue Title -->
+        <div class="mb-6">
+          <h1 class="text-2xl font-semibold text-gray-100">
+            <%= @issue.title %>
+          </h1>
+        </div>
+
+        <!-- Description -->
+        <div class="mb-8">
+          <% if @issue.description.present? %>
+            <div class="text-gray-300 prose prose-invert max-w-none">
+              <%= simple_format(@issue.description) %>
+            </div>
+          <% else %>
+            <p class="text-gray-500 italic">it'd be nice to view the collection split out</p>
+          <% end %>
+        </div>
+
+        <!-- Sub-issues Section -->
+        <% if @issue.sub_issues.any? %>
+          <div class="mb-8">
+            <button class="flex items-center gap-2 mb-4 text-sm text-gray-400 hover:text-gray-300">
+              <span>▶</span>
+              <span>+ Add sub-issues</span>
+            </button>
+          </div>
+        <% end %>
+
+        <!-- Activity Section -->
+        <div class="border-t border-gray-800 pt-8">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-sm font-semibold text-gray-400">Activity</h2>
+            <button class="text-sm text-gray-500 hover:text-gray-400">Unsubscribe</button>
+          </div>
+
+          <!-- Activity Item -->
+          <div class="flex gap-3 mb-6">
+            <div class="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-xs font-medium flex-shrink-0">
+              <%= @issue.creator&.name&.first&.upcase || 'U' %>
+            </div>
+            <div class="flex-1">
+              <div class="text-sm text-gray-400">
+                <span class="text-gray-300"><%= @issue.creator&.name || 'Unknown' %></span>
+                created the issue · <%= time_ago_in_words(@issue.created_at) %> ago
+              </div>
+            </div>
+          </div>
+
+          <!-- Comment Input -->
+          <div class="flex gap-3">
+            <div class="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-xs font-medium flex-shrink-0">
+              <%= current_user.name.first.upcase %>
+            </div>
+            <div class="flex-1">
+              <textarea
+                placeholder="Leave a comment..."
+                class="w-full bg-transparent border-b border-gray-800 text-gray-300 placeholder-gray-600 focus:outline-none focus:border-gray-700 pb-2 resize-none"
+                rows="1"
+              ></textarea>
+              <div class="flex items-center gap-2 mt-2">
+                <button class="text-gray-600 hover:text-gray-500">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                  </svg>
+                </button>
+                <button class="text-gray-600 hover:text-gray-500">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Sidebar - Properties -->
+    <div class="w-80 border-l border-gray-800 p-6 overflow-y-auto">
+      <h3 class="text-xs font-semibold text-gray-500 uppercase mb-4">Properties</h3>
+
+      <!-- Backlog Status -->
+      <div class="mb-6">
+        <div class="flex items-center gap-2 text-sm">
+          <div class="w-4 h-4 flex items-center justify-center">
+            <%= render_lane_icon(@issue.lane) %>
+          </div>
+          <span class="text-gray-300"><%= @issue.lane.name %></span>
+        </div>
+      </div>
+
+      <!-- Priority -->
+      <div class="mb-6">
+        <div class="flex items-center gap-2 text-sm">
+          <div class="w-4 h-4 flex items-center justify-center">
+            <%= render_priority_icon(@issue.priority) %>
+          </div>
+          <span class="text-gray-300 capitalize"><%= @issue.priority&.humanize || 'No priority' %></span>
+        </div>
+      </div>
+
+      <!-- Assignee -->
+      <div class="mb-6">
+        <% if @issue.assignee %>
+          <div class="flex items-center gap-2">
+            <div class="w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center text-xs font-medium">
+              <%= @issue.assignee.name.first.upcase %>
+            </div>
+            <span class="text-sm text-gray-300"><%= @issue.assignee.name %></span>
+          </div>
+        <% else %>
+          <button class="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-400">
+            <div class="w-5 h-5 rounded-full border border-gray-700"></div>
+            <span>Set assignee</span>
+          </button>
+        <% end %>
+      </div>
+
+      <!-- Estimate -->
+      <div class="mb-6">
+        <% if @issue.estimate %>
+          <div class="flex items-center gap-2 text-sm text-gray-300">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+            <span><%= @issue.estimate %> points</span>
+          </div>
+        <% else %>
+          <button class="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-400">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+            <span>Set estimate</span>
+          </button>
+        <% end %>
+      </div>
+
+      <!-- Labels -->
+      <div class="mb-6">
+        <div class="text-xs font-medium text-gray-500 mb-2">Labels</div>
+        <% if @issue.labels.any? %>
+          <div class="flex flex-wrap gap-1.5">
+            <% @issue.labels.each do |label| %>
+              <span class="px-2 py-0.5 rounded text-xs font-medium"
+                    style="background-color: <%= label.color %>20; color: <%= label.color %>;">
+                <%= label.name %>
+              </span>
+            <% end %>
+          </div>
+        <% else %>
+          <button class="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-400">
+            <span>+ Add label</span>
+          </button>
+        <% end %>
+      </div>
+
+      <!-- Project -->
+      <div class="mb-6">
+        <div class="text-xs font-medium text-gray-500 mb-2">Project</div>
+        <% if @issue.project %>
+          <div class="text-sm text-gray-300"><%= @issue.project.name %></div>
+        <% else %>
+          <button class="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-400">
+            <span>+ Add to project</span>
+          </button>
+        <% end %>
+      </div>
+
+      <!-- Milestone -->
+      <% if @issue.milestone %>
+        <div class="mb-6">
+          <div class="text-xs font-medium text-gray-500 mb-2">Milestone</div>
+          <div class="text-sm text-gray-300"><%= @issue.milestone.name %></div>
+        </div>
+      <% end %>
+
+      <!-- Due Date -->
+      <% if @issue.due_date %>
+        <div class="mb-6">
+          <div class="text-xs font-medium text-gray-500 mb-2">Due Date</div>
+          <div class="text-sm text-gray-300"><%= @issue.due_date.strftime("%b %d, %Y") %></div>
+        </div>
+      <% end %>
+
+      <!-- Created/Updated -->
+      <div class="pt-6 border-t border-gray-800 text-xs text-gray-500 space-y-1">
+        <div>Created <%= time_ago_in_words(@issue.created_at) %> ago</div>
+        <div>Updated <%= time_ago_in_words(@issue.updated_at) %> ago</div>
+      </div>
+    </div>
+  </div>
+<% end %>
+
+<% content_for :head do %>
+  <style>
+    .prose {
+      color: #d1d5db;
+    }
+    .prose p {
+      margin-bottom: 1rem;
+    }
+  </style>
+<% end %>
