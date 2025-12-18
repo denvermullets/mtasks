@@ -1,14 +1,13 @@
 <div class="flex-1 flex flex-col min-h-0" data-controller="board-keyboard">
   <!-- Top Bar -->
-  <div class="h-14 bg-gray-900 border-b border-gray-800 flex items-center justify-between px-4 flex-shrink-0">
+  <div class="h-14 bg-background border-b border-white-500 flex items-center justify-between px-4 shrink-0">
     <div class="flex items-center gap-4">
       <h1 class="text-base font-semibold"><%= current_team&.identifier %></h1>
       <span class="text-sm text-gray-500"><%= current_team&.workspace&.name %></span>
     </div>
-
     <div class="flex items-center gap-2">
       <!-- View Mode Switcher -->
-      <div class="flex items-center gap-1 bg-gray-800 rounded-md p-0.5">
+      <div class="flex items-center gap-1 bg-foreground rounded-md p-0.5">
         <%= link_to team_issues_path(current_team, view: "lanes"),
             class: "px-3 py-1.5 text-xs font-medium rounded #{@view_mode == 'lanes' ? 'bg-gray-700 text-gray-100' : 'text-gray-400 hover:text-gray-200'}" do %>
           Lanes
@@ -20,9 +19,8 @@
       </div>
     </div>
   </div>
-
   <!-- Board -->
-  <div class="flex-1 overflow-x-auto overflow-y-hidden bg-gray-950 min-h-0">
+  <div class="flex-1 overflow-x-auto overflow-y-hidden bg-background min-h-0">
     <% if @view_mode == "milestone" %>
       <%= render "milestone_board" %>
     <% else %>

@@ -1,6 +1,6 @@
 <div class="flex-1 flex flex-col">
   <!-- Top Bar -->
-  <div class="h-14 bg-gray-900 border-b border-gray-800 flex items-center justify-between px-4">
+  <div class="h-14 bg-background border-b border-highlight flex items-center justify-between px-4">
     <div class="flex items-center gap-4">
       <%= link_to team_issues_path(current_team),
           class: "text-sm text-gray-500 hover:text-gray-400 flex items-center gap-2" do %>
@@ -16,7 +16,7 @@
       <% end %>
     </div>
   </div>
-  <div class="flex-1 flex bg-gray-950">
+  <div class="flex-1 flex bg-background">
     <!-- Issue Detail Content -->
     <div class="flex-1 overflow-y-auto">
       <div class="max-w-4xl mx-auto p-8">
@@ -44,7 +44,7 @@
           </div>
         <% end %>
         <!-- Activity Section -->
-        <div class="border-t border-gray-800 pt-8">
+        <div class="border-t border-highlight pt-8">
           <div class="flex items-center justify-between mb-6">
             <h2 class="text-sm font-semibold text-gray-400">Activity</h2>
           </div>
@@ -74,7 +74,7 @@
       </div>
     </div>
     <!-- Right Sidebar - Properties -->
-    <div class="w-80 border-l border-gray-800 p-6 overflow-y-auto">
+    <div class="w-80 border-l border-highlight p-6 overflow-y-auto">
       <h3 class="text-xs font-semibold text-gray-500 uppercase mb-4">Properties</h3>
       <!-- Backlog Status -->
       <div class="mb-6">
@@ -105,7 +105,7 @@
           </div>
         <% else %>
           <button class="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-400">
-            <div class="w-5 h-5 rounded-full border border-gray-700"></div>
+            <div class="w-5 h-5 rounded-full border border-highlight"></div>
             <span>Set assignee</span>
           </button>
         <% end %>
@@ -172,7 +172,7 @@
         </div>
       <% end %>
       <!-- Created/Updated -->
-      <div class="pt-6 border-t border-gray-800 text-xs text-gray-500 space-y-1">
+      <div class="pt-6 border-t border-highlight text-xs text-gray-500 space-y-1">
         <div>Created <%= time_ago_in_words(@issue.created_at) %> ago</div>
         <div>Updated <%= time_ago_in_words(@issue.updated_at) %> ago</div>
       </div>

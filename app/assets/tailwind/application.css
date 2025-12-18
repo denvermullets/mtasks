@@ -1,1 +1,26 @@
 @import "tailwindcss";
+
+@theme {
+  /* Custom Colors */
+  --color-menu: #090909;
+  --color-foreground: #17181A;
+  --color-highlight: #27282D;
+  /* --color-grey-text: #859296; */
+  --color-background: #101011;
+  /* --color-nine-white: #fefefe; */
+
+  /* Dark Shades */
+  /* --color-dark-200: #202e36; */
+
+  /* Accent Colors */
+  /* --color-accent-50: #39db7d; */
+  /* --color-accent-100: #fc3b74; */
+  /* --color-accent-200: #f3a952; */
+  /* --color-accent-300: #ffd439; */
+  /* --color-accent-400: #c6ee52; */
+
+  /* --drop-shadow-nine: 0 0px 1px rgba(254, 254, 254, 0.5); */
+
+  /* Fonts */
+  /* --font-display: "Inter var", system-ui, sans-serif; */
+}
