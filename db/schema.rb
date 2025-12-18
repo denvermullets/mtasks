@@ -10,9 +10,19 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_14_170832) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_18_010413) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "comments", force: :cascade do |t|
+    t.text "body"
+    t.datetime "created_at", null: false
+    t.bigint "issue_id", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["issue_id"], name: "index_comments_on_issue_id"
+    t.index ["user_id"], name: "index_comments_on_user_id"
+  end
 
   create_table "issue_labels", force: :cascade do |t|
     t.datetime "created_at", null: false
@@ -142,6 +152,8 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_14_170832) do
     t.index ["owner_id"], name: "index_workspaces_on_owner_id"
   end
 
+  add_foreign_key "comments", "issues"
+  add_foreign_key "comments", "users"
   add_foreign_key "issue_labels", "issues"
   add_foreign_key "issue_labels", "labels"
   add_foreign_key "issues", "issues", column: "parent_issue_id"

@@ -3,7 +3,9 @@ Rails.application.routes.draw do
   resources :passwords, param: :token
   resources :users, only: %i[new create]
   resources :teams, only: %i[new create show] do
-    resources :issues
+    resources :issues do
+      resources :comments, only: %i[create destroy]
+    end
   end
 
   # CSV Import

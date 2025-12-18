@@ -1,0 +1,51 @@
+<%= turbo_frame_tag dom_id(comment) do %>
+  <div class="bg-gray-900 rounded-lg p-4 mb-4">
+    <div class="flex items-start gap-3">
+      <div class="w-6 h-6 rounded-full bg-orange-600 flex items-center justify-center text-xs font-medium shrink-0">
+        <%= comment.user.name.first.upcase %>
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-sm text-gray-300 font-medium"><%= comment.user.name %></span>
+          <span class="text-xs text-gray-500"><%= time_ago_in_words(comment.created_at) %> ago</span>
+        </div>
+        <div class="text-sm text-gray-300">
+          <%= simple_format(comment.body, {}, wrapper_tag: "div", class: "whitespace-pre-wrap") %>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 ml-auto shrink-0">
+        <button class="text-gray-500 hover:text-gray-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
+          </svg>
+        </button>
+        <button class="text-gray-500 hover:text-gray-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+        </button>
+        <button class="text-gray-500 hover:text-gray-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"></path>
+          </svg>
+        </button>
+        <% if Current.user.admin? || comment.user == Current.user %>
+          <%= button_to team_issue_comment_path(comment.issue.team, comment.issue, comment),
+              method: :delete,
+              class: "text-gray-500 hover:text-gray-400",
+              data: { turbo_confirm: "Are you sure?" } do %>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
+            </svg>
+          <% end %>
+        <% else %>
+          <button class="text-gray-500 hover:text-gray-400">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
+            </svg>
+          </button>
+        <% end %>
+      </div>
+    </div>
+  </div>
+<% end %>

@@ -1,0 +1,32 @@
+<%= form_with model: [issue.team, issue, comment],
+             html: { class: "bg-gray-900 rounded-lg p-4 mb-4" },
+             data: { turbo_frame: "_top" } do |form| %>
+  <div class="flex items-start gap-3">
+    <div class="w-6 h-6 rounded-full bg-orange-600 flex items-center justify-center text-xs font-medium shrink-0">
+      <%= Current.user.name.first.upcase %>
+    </div>
+    <div class="flex-1 min-w-0">
+      <%= form.text_area :body,
+          placeholder: "Leave a comment...",
+          class: "w-full bg-transparent text-gray-300 placeholder-gray-500 focus:outline-none resize-none border-0 p-0",
+          rows: 2 %>
+      <% if comment.errors.any? %>
+        <div class="text-red-400 text-xs mt-2">
+          <%= comment.errors.full_messages.join(', ') %>
+        </div>
+      <% end %>
+    </div>
+    <div class="flex items-center gap-2 ml-auto shrink-0">
+      <button type="button" class="text-gray-500 hover:text-gray-400">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+        </svg>
+      </button>
+      <button type="submit" class="text-gray-500 hover:text-gray-400">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+<% end %>

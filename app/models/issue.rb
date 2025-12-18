@@ -12,6 +12,7 @@ class Issue < ApplicationRecord
   has_many :sub_issues, class_name: 'Issue', foreign_key: :parent_issue_id, dependent: :nullify
   has_many :issue_labels, dependent: :destroy
   has_many :labels, through: :issue_labels
+  has_many :comments, dependent: :destroy
 
   # Validations
   validates :title, presence: true
