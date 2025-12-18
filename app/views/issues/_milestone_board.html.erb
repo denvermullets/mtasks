@@ -4,7 +4,7 @@
     <% next if milestone_issues.none? %>
     <div class="border border-foreground rounded-lg bg-background">
       <!-- Milestone Header -->
-      <div class="px-6 py-4 bg-background border-b border-highlight rounded-t-lg">
+      <div class="px-6 py-4 bg-background border-b border-stroke rounded-t-lg">
         <div class="flex items-center justify-between">
           <div>
             <h2 class="text-xl font-semibold text-gray-100"><%= milestone.name %></h2>
@@ -30,17 +30,17 @@
         <% milestone.projects.each do |project| %>
           <% project_issues = milestone_issues.where(project: project) %>
           <% next if project_issues.none? %>
-          <div class="border border-highlight rounded-lg">
+          <div class="border border-stroke rounded-lg">
             <!-- Project Header -->
-            <div class="px-4 py-3 bg-gray-800 border-b border-highlight rounded-t-lg">
+            <div class="px-4 py-3 bg-gray-800 border-b border-stroke rounded-t-lg">
               <h3 class="text-base font-semibold text-gray-200"><%= project.name %></h3>
               <span class="text-sm text-gray-400"><%= project_issues.count %> issues</span>
             </div>
             <!-- Lanes for this project -->
             <div class="p-4 grid grid-cols-4 gap-4">
               <% @lanes.each do |lane| %>
-                <div class="bg-background rounded border border-highlight">
-                  <div class="px-3 py-2 border-b border-highlight">
+                <div class="bg-background rounded border border-stroke">
+                  <div class="px-3 py-2 border-b border-stroke">
                     <h4 class="text-xs font-medium text-gray-300"><%= lane.name %></h4>
                     <span class="text-xs text-gray-500">
                       <%= project_issues.where(lane: lane).count %>
@@ -61,15 +61,15 @@
   <% end %>
   <!-- Ungrouped Issues -->
   <% if @ungrouped_issues.any? %>
-    <div class="border border-highlight rounded-lg bg-gray-900">
-      <div class="px-6 py-4 bg-background border-b border-highlight rounded-t-lg">
+    <div class="border border-stroke rounded-lg bg-gray-900">
+      <div class="px-6 py-4 bg-background border-b border-stroke rounded-t-lg">
         <h2 class="text-xl font-semibold text-gray-100">No Milestone</h2>
         <span class="text-sm text-gray-400"><%= @ungrouped_issues.count %> issues</span>
       </div>
       <div class="p-6 grid grid-cols-4 gap-4">
         <% @lanes.each do |lane| %>
-          <div class="bg-background rounded border border-highlight">
-            <div class="px-3 py-2 border-b border-highlight">
+          <div class="bg-background rounded border border-stroke">
+            <div class="px-3 py-2 border-b border-stroke">
               <h4 class="text-xs font-medium text-gray-300"><%= lane.name %></h4>
               <span class="text-xs text-gray-500">
                 <%= @ungrouped_issues.where(lane: lane).count %>

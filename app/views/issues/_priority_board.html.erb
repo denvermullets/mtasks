@@ -15,9 +15,9 @@
       <!-- Lanes for this priority -->
       <div class="grid grid-cols-4 gap-4">
         <% @lanes.each do |lane| %>
-          <div class="bg-white rounded-lg border border-gray-200">
+          <div class="bg-white rounded-lg border border-stroke">
             <!-- Lane Header -->
-            <div class="px-4 py-3 border-b border-gray-200">
+            <div class="px-4 py-3 border-b border-stroke">
               <h3 class="text-sm font-medium text-gray-700"><%= lane.name %></h3>
               <span class="text-xs text-gray-500">
                 <%= priority_issues.where(lane: lane).count %>
