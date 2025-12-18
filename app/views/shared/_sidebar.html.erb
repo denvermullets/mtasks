@@ -1,6 +1,6 @@
-<aside id="sidebar" class="w-56 bg-menu border-r border-highlight flex flex-col" data-turbo-permanent>
+<aside id="sidebar" class="w-56 bg-menu border-r border-stroke flex flex-col" data-turbo-permanent>
   <!-- User -->
-  <div class="p-4 border-b border-highlight">
+  <div class="p-4 border-b border-stroke">
     <div class="flex items-center gap-2">
       <div class="w-6 h-6 rounded bg-blue-600 flex items-center justify-center text-xs font-medium">
         <%= current_user.name.first.upcase %>
@@ -33,7 +33,7 @@
     </div>
   </div>
   <!-- Actions -->
-  <div class="p-4 border-t border-highlight">
+  <div class="p-4 border-t border-stroke">
     <%= link_to new_import_path, class: "text-xs text-gray-400 hover:text-gray-300" do %>
       Import CSV
     <% end %>

@@ -1,5 +1,5 @@
 <%= link_to team_issue_path(issue.team, issue), class: "block" do %>
-  <div class="group bg-foreground border border-highlight hover:border-highlight rounded px-2.5 py-2 cursor-pointer transition-colors"
+  <div class="group bg-foreground border border-stroke hover:bg-hover-highlight hover:border-stroke rounded px-2.5 py-2 cursor-pointer transition-colors"
        data-controller="issue-card"
        data-issue-id="<%= issue.id %>">
     <!-- Header: ID and Priority -->
@@ -35,7 +35,7 @@
     <% if issue.labels.any? %>
       <div class="flex flex-wrap gap-1 mb-2">
         <% issue.labels.first(2).each do |label| %>
-          <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-800 text-gray-400 border border-highlight">
+          <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-800 text-gray-400 border border-stroke">
             <%= label.name %>
           </span>
         <% end %>
