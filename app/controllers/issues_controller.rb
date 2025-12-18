@@ -59,7 +59,7 @@ class IssuesController < ApplicationController
 
   def set_issue
     @issue = Issue.includes(:team, :lane, :project, :milestone, :labels, :assignee, :creator,
-                            :sub_issues).find(params[:id])
+                            :sub_issues, comments: :user).find(params[:id])
   rescue ActiveRecord::RecordNotFound
     redirect_to root_path, alert: 'Issue not found.'
   end
