@@ -31,7 +31,7 @@ class IssuesController < ApplicationController
     @issue.creator = Current.user
 
     if @issue.save
-      if params[:create_more] == "1"
+      if params[:create_more] == '1'
         redirect_to new_team_issue_path(@issue.team), notice: 'Issue was successfully created. Create another?'
       else
         redirect_to team_issues_path(@issue.team), notice: 'Issue was successfully created.'
