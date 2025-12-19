@@ -24,8 +24,14 @@ export default class extends Controller {
   }
 
   createNewIssue() {
-    // For now, just alert - we'll implement a modal later
-    alert("Create new issue modal will go here. For now, you can import issues via CSV.")
-    console.log("Create new issue")
+    // Get the team ID from the URL path
+    const pathParts = window.location.pathname.split('/')
+    const teamIndex = pathParts.indexOf('teams')
+    if (teamIndex !== -1 && pathParts[teamIndex + 1]) {
+      const teamId = pathParts[teamIndex + 1]
+      window.location.href = `/teams/${teamId}/issues/new`
+    } else {
+      console.error("Could not determine team ID from URL")
+    }
   }
 }
