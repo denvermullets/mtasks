@@ -1,38 +1,31 @@
 <div class="mx-auto md:w-2/3 w-full">
   <h1 class="font-bold text-4xl mb-4 text-gray-100">Create Your Team</h1>
   <p class="text-gray-400 mb-6">First, let's set up your workspace and team.</p>
-
   <%= form_with url: teams_path, class: "contents" do |form| %>
     <div class="bg-foreground border border-stroke rounded-lg p-4 mb-6">
       <h3 class="font-semibold text-gray-200 mb-4">Workspace Details</h3>
-
       <div class="mb-4">
         <%= form.label "workspace[name]", "Workspace Name", class: "block font-medium text-gray-300" %>
         <%= form.text_field "workspace[name]", required: true, placeholder: "e.g., Acme Inc", class: "block rounded-md border border-stroke bg-background text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-600 px-3 py-2 mt-2 w-full" %>
         <p class="text-sm text-gray-500 mt-1">A workspace can contain multiple teams</p>
       </div>
     </div>
-
     <div class="bg-foreground border border-stroke rounded-lg p-4 mb-6">
       <h3 class="font-semibold text-gray-200 mb-4">Team Details</h3>
-
       <div class="mb-4">
         <%= form.label "team[name]", "Team Name", class: "block font-medium text-gray-300" %>
         <%= form.text_field "team[name]", required: true, placeholder: "e.g., Engineering", class: "block rounded-md border border-stroke bg-background text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-600 px-3 py-2 mt-2 w-full" %>
       </div>
-
       <div class="mb-4">
         <%= form.label "team[identifier]", "Team Identifier (3 letters)", class: "block font-medium text-gray-300" %>
         <%= form.text_field "team[identifier]", required: true, maxlength: 3, placeholder: "e.g., ENG", class: "block rounded-md border border-stroke bg-background text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-600 px-3 py-2 mt-2 w-full uppercase" %>
         <p class="text-sm text-gray-500 mt-1">This will prefix your issue numbers (e.g., ENG-1, ENG-2)</p>
       </div>
-
       <div class="mb-4">
         <%= form.label "team[description]", "Description (optional)", class: "block font-medium text-gray-300" %>
         <%= form.text_area "team[description]", rows: 3, placeholder: "What does this team work on?", class: "block rounded-md border border-stroke bg-background text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-600 px-3 py-2 mt-2 w-full" %>
       </div>
     </div>
-
     <div class="inline">
       <%= form.submit "Create Team", class: "rounded-md px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-medium cursor-pointer" %>
     </div>

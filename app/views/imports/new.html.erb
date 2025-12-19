@@ -3,9 +3,7 @@
     <% if alert = flash[:alert] %>
       <p class="py-2 px-3 bg-red-900/20 border border-red-800 mb-5 text-red-400 font-medium rounded-lg inline-block" id="alert"><%= alert %></p>
     <% end %>
-
     <h1 class="font-bold text-4xl mb-4 text-gray-100">Import Issues from CSV</h1>
-
     <div class="bg-foreground border border-stroke rounded-lg p-4 mb-6">
       <h3 class="font-semibold text-gray-200 mb-2">CSV Format</h3>
       <p class="text-sm text-gray-400 mb-2">Your CSV should have the following headers:</p>
@@ -16,7 +14,6 @@
         <strong>Note:</strong> Labels should be comma-separated. Priority can be: Urgent, High, Medium, Low, or No priority.
       </p>
     </div>
-
     <% if @errors.present? %>
       <div class="bg-red-900/20 border border-red-800 rounded-lg p-4 mb-6">
         <h3 class="font-semibold text-red-400 mb-2">Import Errors</h3>
@@ -27,15 +24,13 @@
         </ul>
       </div>
     <% end %>
-
     <%= form_with url: imports_path, multipart: true, class: "contents" do |form| %>
       <div class="my-5">
         <%= form.label :csv_file, "Select CSV File", class: "block font-medium text-gray-300 mb-2" %>
         <%= form.file_field :csv_file, accept: ".csv", required: true, class: "block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-foreground file:text-gray-300 hover:file:bg-highlight file:cursor-pointer" %>
       </div>
-
       <div class="inline-flex gap-2">
-        <%= form.submit "Import Issues", class: "rounded-md px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-medium cursor-pointer" %>
+        <%= form.submit "Import Issues", class: "rounded-md px-3.5 py-2.5 border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 font-medium cursor-pointer" %>
         <%= link_to "Cancel", root_path, class: "rounded-md px-3.5 py-2.5 bg-foreground hover:bg-highlight text-gray-300 font-medium" %>
       </div>
     <% end %>

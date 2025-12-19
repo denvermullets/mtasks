@@ -21,6 +21,7 @@ class IssuesController < ApplicationController
   end
 
   def new
+    @team = current_team
     @issue = current_team.issues.new
     load_form_collections
   end
@@ -30,7 +31,11 @@ class IssuesController < ApplicationController
     @issue.creator = Current.user
 
     if @issue.save
-      redirect_to team_issue_path(@issue.team, @issue), notice: 'Issue was successfully created.'
+      if params[:create_more] == "1"
+        redirect_to new_team_issue_path(@issue.team), notice: 'Issue was successfully created. Create another?'
+      else
+        redirect_to team_issues_path(@issue.team), notice: 'Issue was successfully created.'
+      end
     else
       load_form_collections
       render :new, status: :unprocessable_entity
