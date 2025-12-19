@@ -1,0 +1,215 @@
+<%= turbo_frame_tag "issue_sidebar", class: "flex" do %>
+  <div class="w-80 border-l border-stroke p-6 overflow-y-auto self-stretch">
+    <%= form_with model: [issue.team, issue],
+                  method: :patch,
+                  data: { controller: "issue-sidebar" } do |form| %>
+    <h3 class="text-xs font-semibold text-gray-500 uppercase mb-4">Properties</h3>
+    <!-- Lane -->
+    <div class="mb-6">
+      <div class="text-xs font-medium text-gray-500 mb-2">Status</div>
+      <div class="relative">
+        <button type="button"
+                data-action="click->issue-sidebar#toggleDropdown"
+          data-dropdown="lane"
+          class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors">
+          <div class="w-4 h-4 flex items-center justify-center">
+            <%= render_lane_icon(issue.lane) %>
+          </div>
+          <span data-issue-sidebar-target="laneLabel"><%= issue.lane.name %></span>
+        </button>
+        <div data-issue-sidebar-target="laneDropdown" class="hidden absolute top-full left-0 mt-1 w-full bg-foreground border border-stroke rounded-md shadow-lg z-10">
+          <% lanes.each do |lane| %>
+            <button type="button"
+                    data-action="click->issue-sidebar#selectLane"
+              data-lane-id="<%= lane.id %>"
+              data-lane-name="<%= lane.name %>"
+              class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors first:rounded-t-md last:rounded-b-md">
+              <%= lane.name %>
+            </button>
+          <% end %>
+        </div>
+        <%= form.hidden_field :lane_id, value: issue.lane_id, data: { issue_sidebar_target: "laneInput" } %>
+      </div>
+    </div>
+    <!-- Priority -->
+    <div class="mb-6">
+      <div class="text-xs font-medium text-gray-500 mb-2">Priority</div>
+      <div class="relative">
+        <button type="button"
+                data-action="click->issue-sidebar#toggleDropdown"
+          data-dropdown="priority"
+          class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors">
+          <div class="w-4 h-4 flex items-center justify-center">
+            <%= render_priority_icon(issue.priority) %>
+          </div>
+          <span data-issue-sidebar-target="priorityLabel" class="capitalize"><%= issue.priority&.humanize || 'No priority' %></span>
+        </button>
+        <div data-issue-sidebar-target="priorityDropdown" class="hidden absolute top-full left-0 mt-1 w-full bg-foreground border border-stroke rounded-md shadow-lg z-10">
+          <% [["No priority", "no_priority"], ["Urgent", "urgent"], ["High", "high"], ["Medium", "medium"], ["Low", "low"]].each do |label, value| %>
+            <button type="button"
+                    data-action="click->issue-sidebar#selectPriority"
+              data-priority-value="<%= value %>"
+              data-priority-label="<%= label %>"
+              class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors first:rounded-t-md last:rounded-b-md">
+              <%= label %>
+            </button>
+          <% end %>
+        </div>
+        <%= form.hidden_field :priority, value: issue.priority || "no_priority", data: { issue_sidebar_target: "priorityInput" } %>
+      </div>
+    </div>
+    <!-- Assignee -->
+    <div class="mb-6">
+      <div class="text-xs font-medium text-gray-500 mb-2">Assignee</div>
+      <div class="relative">
+        <button type="button"
+                data-action="click->issue-sidebar#toggleDropdown"
+          data-dropdown="assignee"
+          class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors">
+          <% if issue.assignee %>
+            <div class="w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center text-xs font-medium">
+              <%= issue.assignee.name.first.upcase %>
+            </div>
+            <span data-issue-sidebar-target="assigneeLabel"><%= issue.assignee.name %></span>
+          <% else %>
+            <div class="w-5 h-5 rounded-full border border-stroke"></div>
+            <span data-issue-sidebar-target="assigneeLabel" class="text-gray-500">No assignee</span>
+          <% end %>
+        </button>
+        <div data-issue-sidebar-target="assigneeDropdown" class="hidden absolute top-full left-0 mt-1 w-full bg-foreground border border-stroke rounded-md shadow-lg z-10">
+          <button type="button"
+                  data-action="click->issue-sidebar#selectAssignee"
+            data-assignee-id=""
+            data-assignee-name="No assignee"
+            class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors first:rounded-t-md">
+            No assignee
+          </button>
+          <% team_members.each do |member| %>
+            <button type="button"
+                    data-action="click->issue-sidebar#selectAssignee"
+              data-assignee-id="<%= member.id %>"
+              data-assignee-name="<%= member.name %>"
+              class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors last:rounded-b-md">
+              <%= member.name %>
+            </button>
+          <% end %>
+        </div>
+        <%= form.hidden_field :assignee_id, value: issue.assignee_id, data: { issue_sidebar_target: "assigneeInput" } %>
+      </div>
+    </div>
+    <!-- Estimate -->
+    <div class="mb-6">
+      <div class="text-xs font-medium text-gray-500 mb-2">Estimate</div>
+      <div class="relative">
+        <button type="button"
+                data-action="click->issue-sidebar#toggleDropdown"
+          data-dropdown="estimate"
+          class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+          </svg>
+          <% if issue.estimate %>
+            <span data-issue-sidebar-target="estimateLabel"><%= issue.estimate %> <%= 'point'.pluralize(issue.estimate) %></span>
+          <% else %>
+            <span data-issue-sidebar-target="estimateLabel" class="text-gray-500">No estimate</span>
+          <% end %>
+        </button>
+        <div data-issue-sidebar-target="estimateDropdown" class="hidden absolute top-full left-0 mt-1 w-full bg-foreground border border-stroke rounded-md shadow-lg z-10">
+          <button type="button"
+                  data-action="click->issue-sidebar#selectEstimate"
+            data-estimate-value=""
+            data-estimate-label="No estimate"
+            class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors first:rounded-t-md">
+            No estimate
+          </button>
+          <% [1, 2, 3, 5, 8, 13].each do |points| %>
+            <button type="button"
+                    data-action="click->issue-sidebar#selectEstimate"
+              data-estimate-value="<%= points %>"
+              data-estimate-label="<%= points %> <%= 'point'.pluralize(points) %>"
+              class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors last:rounded-b-md">
+              <%= points %> <%= 'point'.pluralize(points) %>
+            </button>
+          <% end %>
+        </div>
+        <%= form.hidden_field :estimate, value: issue.estimate, data: { issue_sidebar_target: "estimateInput" } %>
+      </div>
+    </div>
+    <!-- Project -->
+    <div class="mb-6">
+      <div class="text-xs font-medium text-gray-500 mb-2">Project</div>
+      <div class="relative">
+        <button type="button"
+                data-action="click->issue-sidebar#toggleDropdown"
+          data-dropdown="project"
+          class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+          </svg>
+          <% if issue.project %>
+            <span data-issue-sidebar-target="projectLabel"><%= issue.project.name %></span>
+          <% else %>
+            <span data-issue-sidebar-target="projectLabel" class="text-gray-500">No project</span>
+          <% end %>
+        </button>
+        <div data-issue-sidebar-target="projectDropdown" class="hidden absolute top-full left-0 mt-1 w-full bg-foreground border border-stroke rounded-md shadow-lg z-10">
+          <button type="button"
+                  data-action="click->issue-sidebar#selectProject"
+            data-project-id=""
+            data-project-name="No project"
+            class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors first:rounded-t-md">
+            No project
+          </button>
+          <% projects.each do |project| %>
+            <button type="button"
+                    data-action="click->issue-sidebar#selectProject"
+              data-project-id="<%= project.id %>"
+              data-project-name="<%= project.name %>"
+              class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors last:rounded-b-md">
+              <%= project.name %>
+            </button>
+          <% end %>
+        </div>
+        <%= form.hidden_field :project_id, value: issue.project_id, data: { issue_sidebar_target: "projectInput" } %>
+      </div>
+    </div>
+    <!-- Labels (Display only for now) -->
+    <div class="mb-6">
+      <div class="text-xs font-medium text-gray-500 mb-2">Labels</div>
+      <% if issue.labels.any? %>
+        <div class="flex flex-wrap gap-1.5">
+          <% issue.labels.each do |label| %>
+            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-foreground border border-stroke text-gray-400">
+              <span class="w-1.5 h-1.5 rounded-full" style="background-color: <%= label.color %>;"></span>
+              <%= label.name %>
+            </span>
+          <% end %>
+        </div>
+      <% else %>
+        <button class="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-400">
+          <span>+ Add label</span>
+        </button>
+      <% end %>
+    </div>
+    <!-- Milestone -->
+    <% if issue.milestone %>
+      <div class="mb-6">
+        <div class="text-xs font-medium text-gray-500 mb-2">Milestone</div>
+        <div class="text-sm text-gray-300"><%= issue.milestone.name %></div>
+      </div>
+    <% end %>
+    <!-- Due Date -->
+    <% if issue.due_date %>
+      <div class="mb-6">
+        <div class="text-xs font-medium text-gray-500 mb-2">Due Date</div>
+        <div class="text-sm text-gray-300"><%= issue.due_date.strftime("%b %d, %Y") %></div>
+      </div>
+    <% end %>
+    <!-- Created/Updated -->
+    <div class="pt-6 border-t border-stroke text-xs text-gray-500 space-y-1">
+      <div>Created <%= time_ago_in_words(issue.created_at) %> ago</div>
+      <div>Updated <%= time_ago_in_words(issue.updated_at) %> ago</div>
+    </div>
+    <% end %>
+  </div>
+<% end %>

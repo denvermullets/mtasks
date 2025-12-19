@@ -47,10 +47,19 @@ class IssuesController < ApplicationController
   end
 
   def update
+    load_form_collections
     if @issue.update(issue_params)
-      redirect_to team_issue_path(@issue.team, @issue), notice: 'Issue was successfully updated.'
+      respond_to do |format|
+        format.turbo_stream do
+          render turbo_stream: turbo_stream.replace(
+            'issue_sidebar',
+            partial: 'issues/sidebar',
+            locals: { issue: @issue, lanes: @lanes, team_members: @team_members, projects: @projects }
+          )
+        end
+        format.html { redirect_to team_issue_path(@issue.team, @issue), notice: 'Issue was successfully updated.' }
+      end
     else
-      load_form_collections
       render :edit, status: :unprocessable_entity
     end
   end
@@ -76,7 +85,11 @@ class IssuesController < ApplicationController
   end
 
   def authorize_issue_modification!
-    return if Current.user.admin? || @issue.creator == Current.user
+    # Allow any team member to update issues for inline editing
+    return if current_team.users.include?(Current.user)
+
+    # Only allow creator or admin for edit/destroy actions
+    return if (Current.user.admin? || @issue.creator == Current.user) && action_name.in?(%w[edit destroy])
 
     redirect_to team_issue_path(@issue.team, @issue), alert: 'You do not have permission to modify this issue.'
   end

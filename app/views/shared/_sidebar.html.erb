@@ -1,4 +1,4 @@
-<aside id="sidebar" class="w-56 bg-menu border-r border-stroke flex flex-col" data-turbo-permanent>
+<aside id="sidebar" class="w-56 bg-menu border-r border-stroke flex flex-col">
   <!-- User -->
   <div class="p-4 border-b border-stroke">
     <div class="flex items-center gap-2">
@@ -22,7 +22,7 @@
       <div class="text-xs font-medium text-gray-500 uppercase px-2 mb-2">Teams</div>
       <div class="space-y-1">
         <% user_teams.each do |team| %>
-          <%= link_to team_issues_path(team), class: "flex items-center justify-between px-2 py-1.5 text-sm rounded hover:bg-foreground #{team.id == current_team&.id ? 'bg-gray-800 text-gray-100' : 'text-gray-300'}" do %>
+          <%= link_to team_issues_path(team), class: "flex items-center justify-between px-2 py-1.5 text-sm rounded hover:bg-foreground #{team.id == current_team&.id ? 'bg-foreground text-gray-100' : 'text-gray-300'}" do %>
             <div class="flex items-center gap-2">
               <span class="font-mono text-xs text-gray-500"><%= team.identifier %></span>
               <span><%= team.name %></span>
