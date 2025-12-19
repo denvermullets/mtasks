@@ -47,20 +47,19 @@ class IssuesController < ApplicationController
   end
 
   def update
+    load_form_collections
     if @issue.update(issue_params)
-      load_form_collections
       respond_to do |format|
         format.turbo_stream do
           render turbo_stream: turbo_stream.replace(
-            "issue_sidebar",
-            partial: "issues/sidebar",
+            'issue_sidebar',
+            partial: 'issues/sidebar',
             locals: { issue: @issue, lanes: @lanes, team_members: @team_members, projects: @projects }
           )
         end
         format.html { redirect_to team_issue_path(@issue.team, @issue), notice: 'Issue was successfully updated.' }
       end
     else
-      load_form_collections
       render :edit, status: :unprocessable_entity
     end
   end
