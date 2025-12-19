@@ -41,9 +41,13 @@ export default class extends Controller {
     ]
 
     dropdowns.forEach(dropdown => {
-      const target = `${dropdown}Target`
-      if (this[target]) {
-        this[target].classList.add("hidden")
+      try {
+        const target = `${dropdown}Target`
+        if (this[target]) {
+          this[target].classList.add("hidden")
+        }
+      } catch (error) {
+        // Target doesn't exist, skip it
       }
     })
   }
@@ -63,6 +67,7 @@ export default class extends Controller {
     this.laneInputTarget.value = laneId
     this.laneLabelTarget.textContent = laneName
     this.laneDropdownTarget.classList.add("hidden")
+    this.triggerChange(this.laneInputTarget)
   }
 
   selectPriority(event) {
@@ -73,6 +78,7 @@ export default class extends Controller {
     this.priorityInputTarget.value = priorityValue
     this.priorityLabelTarget.textContent = priorityLabel
     this.priorityDropdownTarget.classList.add("hidden")
+    this.triggerChange(this.priorityInputTarget)
   }
 
   selectAssignee(event) {
@@ -83,6 +89,7 @@ export default class extends Controller {
     this.assigneeInputTarget.value = assigneeId
     this.assigneeLabelTarget.textContent = assigneeName
     this.assigneeDropdownTarget.classList.add("hidden")
+    this.triggerChange(this.assigneeInputTarget)
   }
 
   selectProject(event) {
@@ -93,6 +100,7 @@ export default class extends Controller {
     this.projectInputTarget.value = projectId
     this.projectLabelTarget.textContent = projectName
     this.projectDropdownTarget.classList.add("hidden")
+    this.triggerChange(this.projectInputTarget)
   }
 
   selectEstimate(event) {
@@ -103,6 +111,17 @@ export default class extends Controller {
     this.estimateInputTarget.value = estimateValue
     this.estimateLabelTarget.textContent = estimateLabel
     this.estimateDropdownTarget.classList.add("hidden")
+    this.triggerChange(this.estimateInputTarget)
+  }
+
+  triggerChange(element) {
+    // Dispatch a change event to trigger any listeners
+    element.dispatchEvent(new Event('change', { bubbles: true }))
+  }
+
+  submitForm() {
+    // Auto-submit the form when a field changes
+    this.element.requestSubmit()
   }
 
   updateLabelsCount(event) {
