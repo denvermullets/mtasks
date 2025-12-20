@@ -20,9 +20,11 @@ class DisplayPreferencesController < ApplicationController
     params.permit(
       :view_mode,
       :group_by,
+      :sub_group_by,
       :order_by,
       :show_sub_issues,
       :show_empty_groups,
+      :show_empty_rows,
       :completed_filter,
       visible_properties: []
     )
@@ -33,9 +35,11 @@ class DisplayPreferencesController < ApplicationController
     {
       view_mode: prefs[:view_mode],
       group_by: prefs[:group_by],
+      sub_group_by: prefs[:sub_group_by],
       order_by: prefs[:order_by],
       show_sub_issues: prefs[:show_sub_issues] == 'true',
       show_empty_groups: prefs[:show_empty_groups] == 'true',
+      show_empty_rows: prefs[:show_empty_rows] == 'true',
       completed_filter: prefs[:completed_filter].presence,
       visible_properties: prefs[:visible_properties] || []
     }
@@ -45,9 +49,11 @@ class DisplayPreferencesController < ApplicationController
     {
       view_mode: params[:view_mode],
       group_by: params[:group_by],
+      sub_group_by: params[:sub_group_by],
       order_by: params[:order_by],
       show_sub_issues: params[:show_sub_issues],
       show_empty_groups: params[:show_empty_groups],
+      show_empty_rows: params[:show_empty_rows],
       completed_filter: params[:completed_filter],
       visible_properties: params[:visible_properties]&.join(',')
     }

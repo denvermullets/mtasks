@@ -21,9 +21,11 @@
         <%= form_with url: team_display_preference_path(current_team), method: :patch, data: { turbo: false, action: "submit->display-options#savePreferences" } do |f| %>
           <%= f.hidden_field :view_mode, value: @display_options[:view_mode] %>
           <%= f.hidden_field :group_by, value: @display_options[:group_by] %>
+          <%= f.hidden_field :sub_group_by, value: @display_options[:sub_group_by] %>
           <%= f.hidden_field :order_by, value: @display_options[:order_by] %>
           <%= f.hidden_field :show_sub_issues, value: @display_options[:show_sub_issues] %>
           <%= f.hidden_field :show_empty_groups, value: @display_options[:show_empty_groups] %>
+          <%= f.hidden_field :show_empty_rows, value: @display_options[:show_empty_rows] %>
           <%= f.hidden_field :completed_filter, value: @display_options[:completed_filter] %>
           <% @display_options[:visible_properties].each do |prop| %>
             <%= f.hidden_field "visible_properties[]", value: prop, id: nil %>
@@ -65,31 +67,51 @@
         </div>
       </div>
 
-      <!-- Grouping Section -->
+      <!-- Columns (Grouping) Section -->
       <div>
-        <label class="flex items-center gap-2 text-xs font-medium text-gray-400 mb-2">
+        <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 4H5a2 2 0 00-2 2v4m6-6h6m-6 0v6m6-6v6m6-6a2 2 0 012 2v4M4 10v6a2 2 0 002 2h4m-6-8h6m0 8v6m0-6h6m0 6v6m0-6a2 2 0 012-2h4"></path>
           </svg>
           Columns
         </label>
         <%= render "panel_dropdown_selector",
-            current: @display_options[:group_by].titleize,
+            current: @display_options[:group_by].titleize.gsub('_', ' '),
             options: [
-              { value: 'lane', label: 'Lane' },
-              { value: 'priority', label: 'Priority' },
+              { value: 'none', label: 'No grouping' },
               { value: 'status', label: 'Status' },
-              { value: 'project', label: 'Project' },
-              { value: 'milestone', label: 'Milestone' },
               { value: 'assignee', label: 'Assignee' },
-              { value: 'none', label: 'No grouping' }
+              { value: 'project', label: 'Project' },
+              { value: 'priority', label: 'Priority' },
+              { value: 'label', label: 'Label' },
+              { value: 'parent_issue', label: 'Parent issue' }
             ],
             param_name: 'group_by' %>
       </div>
 
+      <!-- Rows (Sub-grouping) Section -->
+      <div>
+        <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+          </svg>
+          Rows
+        </label>
+        <%= render "panel_dropdown_selector",
+            current: @display_options[:sub_group_by]&.titleize || 'None',
+            options: [
+              { value: 'none', label: 'None' },
+              { value: 'status', label: 'Status' },
+              { value: 'priority', label: 'Priority' },
+              { value: 'assignee', label: 'Assignee' },
+              { value: 'project', label: 'Project' }
+            ],
+            param_name: 'sub_group_by' %>
+      </div>
+
       <!-- Ordering Section -->
       <div>
-        <label class="flex items-center gap-2 text-xs font-medium text-gray-400 mb-2">
+        <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"></path>
           </svg>
@@ -107,31 +129,14 @@
             param_name: 'order_by' %>
       </div>
 
-      <!-- Toggles Section -->
-      <div class="space-y-3 pt-2 border-t border-stroke">
-        <%= render "toggle_option",
-            label: "Show sub-issues",
-            param: 'show_sub_issues',
-            checked: @display_options[:show_sub_issues] %>
-
-        <%= render "toggle_option",
-            label: "Show empty groups",
-            param: 'show_empty_groups',
-            checked: @display_options[:show_empty_groups] %>
-      </div>
-
       <!-- Completed Filter Section -->
       <div>
-        <label class="flex items-center gap-2 text-xs font-medium text-gray-400 mb-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
+        <label class="text-sm font-medium text-gray-300 mb-2 block">
           Completed issues
         </label>
         <%= render "panel_dropdown_selector",
-            current: @display_options[:completed_filter]&.titleize&.gsub('_', ' ') || 'Hide completed',
+            current: @display_options[:completed_filter]&.titleize&.gsub('_', ' ') || 'Past day',
             options: [
-              { value: '', label: 'Hide completed' },
               { value: 'past_day', label: 'Past day' },
               { value: 'past_week', label: 'Past week' },
               { value: 'past_month', label: 'Past month' },
@@ -140,23 +145,45 @@
             param_name: 'completed_filter' %>
       </div>
 
+      <!-- Show Sub-issues Toggle -->
+      <%= render "toggle_option",
+          label: "Show sub-issues",
+          param: 'show_sub_issues',
+          checked: @display_options[:show_sub_issues] %>
+
+      <!-- Board Options Section -->
+      <div class="pt-4 border-t border-stroke">
+        <h3 class="text-sm font-semibold text-gray-200 mb-3">Board options</h3>
+
+        <div class="space-y-3">
+          <%= render "toggle_option",
+              label: "Show empty columns",
+              param: 'show_empty_groups',
+              checked: @display_options[:show_empty_groups] %>
+
+          <%= render "toggle_option",
+              label: "Show empty rows",
+              param: 'show_empty_rows',
+              checked: @display_options[:show_empty_rows] %>
+        </div>
+      </div>
+
       <!-- Display Properties Section -->
       <div>
-        <label class="flex items-center gap-2 text-xs font-medium text-gray-400 mb-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
-          </svg>
+        <label class="text-sm font-medium text-gray-300 mb-2 block">
           Display properties
         </label>
-        <div class="space-y-2 max-h-48 overflow-y-auto">
+        <div class="flex flex-wrap gap-2">
           <% UserPreference::AVAILABLE_PROPERTIES.each do |property| %>
-            <label class="flex items-center gap-2 cursor-pointer hover:bg-hover-highlight px-2 py-1.5 rounded transition-colors">
+            <label class="cursor-pointer">
               <input type="checkbox"
-                     class="w-4 h-4 rounded border-gray-600 text-blue-600"
+                     class="peer sr-only"
                      value="<%= property %>"
                      <%= 'checked' if @display_options[:visible_properties].include?(property) %>
                      data-action="change->display-options#updateProperties">
-              <span class="text-sm text-gray-300"><%= property.titleize %></span>
+              <span class="inline-block px-2.5 py-1.5 text-sm rounded border transition-colors peer-checked:bg-accent peer-checked:text-gray-900 peer-checked:border-accent bg-background text-gray-300 border-stroke hover:border-accent">
+                <%= property.titleize.gsub('_', ' ') %>
+              </span>
             </label>
           <% end %>
         </div>

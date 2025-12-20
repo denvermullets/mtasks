@@ -1,12 +1,12 @@
-<label class="flex items-center gap-2 cursor-pointer">
+<label class="flex items-center justify-between cursor-pointer">
+  <span class="text-sm text-gray-300"><%= label %></span>
   <input type="checkbox"
          class="hidden"
          <%= 'checked' if checked %>
          data-action="change->display-options#toggleOption"
          data-param="<%= param %>">
-  <div class="w-8 h-5 rounded-full transition-colors <%= checked ? 'bg-blue-600' : 'bg-gray-600' %>"
+  <div class="w-10 h-6 rounded-full transition-colors <%= checked ? 'bg-accent' : 'bg-gray-600' %>"
        data-display-options-target="<%= param.camelize(:lower) %>Toggle">
-    <div class="w-4 h-4 bg-white rounded-full transform transition-transform <%= checked ? 'translate-x-4' : 'translate-x-0.5' %> mt-0.5"></div>
+    <div class="w-5 h-5 bg-white rounded-full transform transition-transform <%= checked ? 'translate-x-5' : 'translate-x-0.5' %> mt-0.5"></div>
   </div>
-  <span class="text-xs text-gray-400"><%= label %></span>
 </label>

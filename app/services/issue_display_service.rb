@@ -122,7 +122,7 @@ class IssueDisplayService
   def group_by_priority(issue_scope)
     groups = {}
 
-    Issue.priorities.keys.each do |priority_key|
+    Issue.priorities.each_key do |priority_key|
       issues_in_group = issue_scope.where(priority: priority_key)
       next if issues_in_group.empty? && !options[:show_empty_groups]
 

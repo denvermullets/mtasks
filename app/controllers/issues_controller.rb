@@ -123,9 +123,11 @@ class IssuesController < ApplicationController
     @display_options = {
       view_mode: params[:view_mode] || saved_prefs.view_mode,
       group_by: params[:group_by] || saved_prefs.group_by,
+      sub_group_by: params[:sub_group_by] || saved_prefs.sub_group_by || 'none',
       order_by: params[:order_by] || saved_prefs.order_by,
       show_sub_issues: param_to_bool(params[:show_sub_issues], saved_prefs.show_sub_issues),
       show_empty_groups: param_to_bool(params[:show_empty_groups], saved_prefs.show_empty_groups),
+      show_empty_rows: param_to_bool(params[:show_empty_rows], saved_prefs.show_empty_rows),
       completed_filter: params[:completed_filter] || saved_prefs.completed_filter,
       visible_properties: params[:visible_properties]&.split(',') || saved_prefs.visible_properties_array
     }
@@ -134,6 +136,6 @@ class IssuesController < ApplicationController
   def param_to_bool(param, default)
     return default if param.nil?
 
-    param.to_s == 'true' || param.to_s == '1'
+    %w[true 1].include?(param.to_s)
   end
 end

@@ -148,7 +148,13 @@ export default class extends Controller {
     // Update group_by
     const groupByInput = form.querySelector('input[name="group_by"]')
     if (groupByInput) {
-      groupByInput.value = params.get('group_by') || 'lane'
+      groupByInput.value = params.get('group_by') || 'none'
+    }
+
+    // Update sub_group_by
+    const subGroupByInput = form.querySelector('input[name="sub_group_by"]')
+    if (subGroupByInput) {
+      subGroupByInput.value = params.get('sub_group_by') || 'none'
     }
 
     // Update order_by
@@ -167,6 +173,12 @@ export default class extends Controller {
     const showEmptyGroupsInput = form.querySelector('input[name="show_empty_groups"]')
     if (showEmptyGroupsInput) {
       showEmptyGroupsInput.value = params.get('show_empty_groups') || 'false'
+    }
+
+    // Update show_empty_rows
+    const showEmptyRowsInput = form.querySelector('input[name="show_empty_rows"]')
+    if (showEmptyRowsInput) {
+      showEmptyRowsInput.value = params.get('show_empty_rows') || 'false'
     }
 
     // Update completed_filter
@@ -211,10 +223,12 @@ export default class extends Controller {
 
     return {
       view_mode: form.querySelector('input[name="view_mode"]')?.value || 'board',
-      group_by: form.querySelector('input[name="group_by"]')?.value || 'lane',
+      group_by: form.querySelector('input[name="group_by"]')?.value || 'none',
+      sub_group_by: form.querySelector('input[name="sub_group_by"]')?.value || 'none',
       order_by: form.querySelector('input[name="order_by"]')?.value || 'manual',
       show_sub_issues: form.querySelector('input[name="show_sub_issues"]')?.value || 'true',
       show_empty_groups: form.querySelector('input[name="show_empty_groups"]')?.value || 'false',
+      show_empty_rows: form.querySelector('input[name="show_empty_rows"]')?.value || 'false',
       completed_filter: form.querySelector('input[name="completed_filter"]')?.value || '',
       visible_properties: properties
     }
@@ -230,10 +244,12 @@ export default class extends Controller {
 
     return {
       view_mode: params.get('view_mode') || 'board',
-      group_by: params.get('group_by') || 'lane',
+      group_by: params.get('group_by') || 'none',
+      sub_group_by: params.get('sub_group_by') || 'none',
       order_by: params.get('order_by') || 'manual',
       show_sub_issues: params.get('show_sub_issues') || 'true',
       show_empty_groups: params.get('show_empty_groups') || 'false',
+      show_empty_rows: params.get('show_empty_rows') || 'false',
       completed_filter: params.get('completed_filter') || '',
       visible_properties: properties
     }
@@ -248,9 +264,11 @@ export default class extends Controller {
     const hasChanged =
       current.view_mode !== saved.view_mode ||
       current.group_by !== saved.group_by ||
+      current.sub_group_by !== saved.sub_group_by ||
       current.order_by !== saved.order_by ||
       current.show_sub_issues !== saved.show_sub_issues ||
       current.show_empty_groups !== saved.show_empty_groups ||
+      current.show_empty_rows !== saved.show_empty_rows ||
       current.completed_filter !== saved.completed_filter ||
       current.visible_properties !== saved.visible_properties
 
