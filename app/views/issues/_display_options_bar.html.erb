@@ -67,13 +67,17 @@
         </div>
       </div>
 
-      <!-- Columns (Grouping) Section -->
+      <!-- Grouping Section (label changes based on view mode) -->
       <div>
         <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 4H5a2 2 0 00-2 2v4m6-6h6m-6 0v6m6-6v6m6-6a2 2 0 012 2v4M4 10v6a2 2 0 002 2h4m-6-8h6m0 8v6m0-6h6m0 6v6m0-6a2 2 0 012-2h4"></path>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" data-display-options-target="groupingIcon">
+            <% if @display_options[:view_mode] == 'board' %>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 4H5a2 2 0 00-2 2v4m6-6h6m-6 0v6m6-6v6m6-6a2 2 0 012 2v4M4 10v6a2 2 0 002 2h4m-6-8h6m0 8v6m0-6h6m0 6v6m0-6a2 2 0 012-2h4"></path>
+            <% else %>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+            <% end %>
           </svg>
-          Columns
+          <span data-display-options-target="groupingLabel"><%= @display_options[:view_mode] == 'board' ? 'Columns' : 'Grouping' %></span>
         </label>
         <%= render "panel_dropdown_selector",
             current: @display_options[:group_by].titleize.gsub('_', ' '),
@@ -89,8 +93,8 @@
             param_name: 'group_by' %>
       </div>
 
-      <!-- Rows (Sub-grouping) Section -->
-      <div>
+      <!-- Rows (Sub-grouping) Section - Only shown in board view -->
+      <div data-display-options-target="rowsSection" class="<%= 'hidden' unless @display_options[:view_mode] == 'board' %>">
         <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
@@ -135,12 +139,13 @@
           Completed issues
         </label>
         <%= render "panel_dropdown_selector",
-            current: @display_options[:completed_filter]&.titleize&.gsub('_', ' ') || 'Past day',
+            current: @display_options[:completed_filter]&.titleize&.gsub('_', ' ') || 'Hide completed',
             options: [
+              { value: '', label: 'Hide completed' },
               { value: 'past_day', label: 'Past day' },
               { value: 'past_week', label: 'Past week' },
               { value: 'past_month', label: 'Past month' },
-              { value: 'all_time', label: 'All time' }
+              { value: 'all_completed', label: 'All completed' }
             ],
             param_name: 'completed_filter' %>
       </div>

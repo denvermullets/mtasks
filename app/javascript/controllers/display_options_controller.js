@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["panel", "saveButton"]
+  static targets = ["panel", "saveButton", "rowsSection", "groupingLabel", "groupingIcon"]
 
   connect() {
     this.boundHandleClickOutside = this.handleClickOutside.bind(this)
@@ -47,6 +47,9 @@ export default class extends Controller {
     // Update button states immediately
     this.updateViewModeButtons(viewMode)
 
+    // Update visible options based on view mode
+    this.updateOptionsForViewMode(viewMode)
+
     // Navigate with Turbo Frame to update only the board
     window.Turbo.visit(url.toString(), { frame: 'issues_board' })
 
@@ -66,6 +69,34 @@ export default class extends Controller {
         button.classList.add('text-gray-400', 'hover:text-gray-200')
       }
     })
+  }
+
+  updateOptionsForViewMode(viewMode) {
+    // Update grouping label
+    if (this.hasGroupingLabelTarget) {
+      this.groupingLabelTarget.textContent = viewMode === 'board' ? 'Columns' : 'Grouping'
+    }
+
+    // Update grouping icon
+    if (this.hasGroupingIconTarget) {
+      const icon = this.groupingIconTarget
+      if (viewMode === 'board') {
+        // Columns icon
+        icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 4H5a2 2 0 00-2 2v4m6-6h6m-6 0v6m6-6v6m6-6a2 2 0 012 2v4M4 10v6a2 2 0 002 2h4m-6-8h6m0 8v6m0-6h6m0 6v6m0-6a2 2 0 012-2h4"></path>'
+      } else {
+        // List/rows icon
+        icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>'
+      }
+    }
+
+    // Show/hide rows section
+    if (this.hasRowsSectionTarget) {
+      if (viewMode === 'board') {
+        this.rowsSectionTarget.classList.remove('hidden')
+      } else {
+        this.rowsSectionTarget.classList.add('hidden')
+      }
+    }
   }
 
   handleDropdownChange(event) {
