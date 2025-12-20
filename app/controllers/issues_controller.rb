@@ -3,17 +3,16 @@ class IssuesController < ApplicationController
   before_action :set_issue, only: %i[show edit update destroy]
   before_action :authorize_issue_access!, only: %i[show]
   before_action :authorize_issue_modification!, only: %i[edit update destroy]
+  before_action :load_display_options, only: %i[index]
 
   def index
-    @view_mode = params[:view] || 'lanes'
-    @issues = current_team.issues.not_archived.includes(:lane, :project, :milestone, :labels, :assignee, :creator)
-    @lanes = current_team.lanes.includes(:issues)
+    base_issues = current_team.issues.not_archived.includes(
+      :lane, :project, :milestone, :labels, :assignee, :creator
+    )
 
-    case @view_mode
-    when 'milestone'
-      @milestones = current_team.milestones.includes(projects: :issues)
-      @ungrouped_issues = @issues.where(milestone_id: nil, project_id: nil)
-    end
+    @display_service = IssueDisplayService.new(base_issues, @display_options)
+    @grouped_issues = @display_service.grouped_issues
+    @lanes = current_team.lanes.order(:position)
   end
 
   def show
@@ -116,5 +115,25 @@ class IssuesController < ApplicationController
       :parent_issue_id,
       label_ids: []
     )
+  end
+
+  def load_display_options
+    saved_prefs = UserPreference.for_user_and_team(Current.user, current_team)
+
+    @display_options = {
+      view_mode: params[:view_mode] || saved_prefs.view_mode,
+      group_by: params[:group_by] || saved_prefs.group_by,
+      order_by: params[:order_by] || saved_prefs.order_by,
+      show_sub_issues: param_to_bool(params[:show_sub_issues], saved_prefs.show_sub_issues),
+      show_empty_groups: param_to_bool(params[:show_empty_groups], saved_prefs.show_empty_groups),
+      completed_filter: params[:completed_filter] || saved_prefs.completed_filter,
+      visible_properties: params[:visible_properties]&.split(',') || saved_prefs.visible_properties_array
+    }
+  end
+
+  def param_to_bool(param, default)
+    return default if param.nil?
+
+    param.to_s == 'true' || param.to_s == '1'
   end
 end

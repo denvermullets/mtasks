@@ -1,22 +1,41 @@
-<%= link_to team_issue_path(issue.team, issue), class: "block" do %>
-  <div class="group bg-foreground border border-stroke hover:bg-hover-highlight hover:border-stroke rounded px-2.5 py-2 cursor-pointer transition-colors"
+<%
+  visible_properties ||= UserPreference::AVAILABLE_PROPERTIES
+%>
+<%= link_to team_issue_path(issue.team, issue), class: "block", data: { turbo_frame: "_top" } do %>
+  <div class="group bg-foreground border border-stroke hover:bg-hover-highlight hover:border-stroke rounded px-3 py-2.5 cursor-pointer transition-colors"
        data-controller="issue-card"
        data-issue-id="<%= issue.id %>">
-    <!-- Header: ID -->
-    <div class="flex items-center justify-between mb-1.5">
-      <span class="font-mono text-xs text-gray-500 font-medium">
-        <%= issue.identifier %>
-      </span>
+    <!-- Identifier (always shown at top) -->
+    <div class="font-mono text-xs text-gray-500 font-medium mb-2">
+      <%= issue.identifier %>
     </div>
+
     <!-- Title -->
-    <div class="text-sm text-gray-200 mb-auto line-clamp-2 leading-snug">
+    <div class="text-sm text-gray-200 mb-3 line-clamp-2 leading-snug">
       <%= issue.title %>
     </div>
-    <!-- Footer: Priority, Labels, and Estimate -->
-    <div class="flex items-center justify-between text-xs mt-2">
-      <div class="flex items-center gap-1.5">
-        <!-- Priority Icon -->
-        <% unless issue.no_priority? %>
+
+    <!-- Dynamic Properties Footer -->
+    <%
+      # Check if any badges will be shown
+      has_badges = (visible_properties.include?('priority') && !issue.no_priority?) ||
+                   (visible_properties.include?('labels') && issue.labels.any?) ||
+                   (visible_properties.include?('due_date') && issue.due_date) ||
+                   (visible_properties.include?('estimate') && issue.estimate) ||
+                   (visible_properties.include?('project') && issue.project) ||
+                   (visible_properties.include?('milestone') && issue.milestone) ||
+                   (visible_properties.include?('lane') && issue.lane) ||
+                   (visible_properties.include?('assignee') && issue.assignee)
+    %>
+    <div class="flex items-center justify-between text-xs flex-wrap gap-1">
+      <div class="flex items-center gap-1.5 flex-wrap">
+        <% unless has_badges %>
+          <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path>
+          </svg>
+        <% end %>
+
+        <% if visible_properties.include?('priority') && !issue.no_priority? %>
           <div class="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-foreground border border-stroke">
             <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
@@ -30,8 +49,8 @@
               end %></span>
           </div>
         <% end %>
-        <!-- Labels -->
-        <% if issue.labels.any? %>
+
+        <% if visible_properties.include?('labels') && issue.labels.any? %>
           <% issue.labels.first(2).each do |label| %>
             <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-foreground border border-stroke text-gray-400">
               <span class="w-1.5 h-1.5 rounded-full" style="background-color: <%= label.color %>;"></span>
@@ -41,12 +60,40 @@
           <% if issue.labels.count > 2 %>
             <span class="text-xs text-gray-500">+<%= issue.labels.count - 2 %></span>
           <% end %>
-        <% else %>
-          <span class="text-xs text-gray-600">...</span>
+        <% end %>
+
+        <% if visible_properties.include?('due_date') && issue.due_date %>
+          <span class="px-1.5 py-0.5 rounded bg-foreground border border-stroke text-gray-400">
+            <%= issue.due_date.strftime('%b %d') %>
+          </span>
+        <% end %>
+
+        <% if visible_properties.include?('estimate') && issue.estimate %>
+          <span class="px-1.5 py-0.5 rounded bg-foreground border border-stroke text-gray-400">
+            <%= issue.estimate %>pt
+          </span>
+        <% end %>
+
+        <% if visible_properties.include?('project') && issue.project %>
+          <span class="px-1.5 py-0.5 rounded bg-foreground border border-stroke text-gray-400">
+            <%= issue.project.name %>
+          </span>
+        <% end %>
+
+        <% if visible_properties.include?('milestone') && issue.milestone %>
+          <span class="px-1.5 py-0.5 rounded bg-foreground border border-stroke text-gray-400">
+            <%= issue.milestone.name %>
+          </span>
+        <% end %>
+
+        <% if visible_properties.include?('lane') && issue.lane %>
+          <span class="px-1.5 py-0.5 rounded bg-foreground border border-stroke text-gray-400">
+            <%= issue.lane.name %>
+          </span>
         <% end %>
       </div>
-      <!-- Assignee Avatar -->
-      <% if issue.assignee %>
+
+      <% if visible_properties.include?('assignee') && issue.assignee %>
         <div class="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-medium">
           <%= issue.assignee.name.first.upcase %>
         </div>

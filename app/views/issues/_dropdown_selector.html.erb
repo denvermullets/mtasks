@@ -1,0 +1,27 @@
+<div class="relative" data-display-options-target="<%= target %>Container">
+  <button type="button"
+          class="flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded bg-foreground text-gray-300 hover:bg-hover-highlight border border-stroke transition-colors"
+          data-action="click->display-options#toggleDropdown"
+          data-dropdown="<%= target %>">
+    <span class="text-gray-500"><%= label %>:</span>
+    <span data-display-options-target="<%= target %>Label"><%= current %></span>
+    <svg class="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+    </svg>
+  </button>
+
+  <div class="hidden absolute top-full left-0 mt-1 w-48 bg-foreground border border-stroke rounded shadow-lg z-10"
+       data-display-options-target="<%= target %>Dropdown">
+    <div class="py-1">
+      <% options.each do |option| %>
+        <%= link_to option[:label],
+            team_issues_path(current_team, @display_options.merge(param_name => option[:value])),
+            class: "block px-4 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors",
+            data: {
+              turbo_frame: 'issues_board',
+              action: 'click->display-options#selectOption'
+            } %>
+      <% end %>
+    </div>
+  </div>
+</div>

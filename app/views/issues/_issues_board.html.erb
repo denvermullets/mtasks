@@ -1,0 +1,7 @@
+<div class="h-full p-4 overflow-y-hidden">
+  <% if @display_options[:view_mode] == 'board' %>
+    <%= render "board_view" %>
+  <% else %>
+    <%= render "list_view" %>
+  <% end %>
+</div>

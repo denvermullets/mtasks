@@ -1,0 +1,20 @@
+<div class="flex gap-3 h-full">
+  <% @grouped_issues.each do |group_name, group_data| %>
+    <div class="shrink-0 w-80 flex flex-col h-full">
+      <!-- Group Header -->
+      <div class="flex items-center justify-between mb-3 shrink-0">
+        <div class="flex items-center gap-2">
+          <h3 class="text-sm font-medium text-gray-300"><%= group_name %></h3>
+          <span class="text-xs text-gray-500"><%= group_data[:issues].count %></span>
+        </div>
+      </div>
+
+      <!-- Issues -->
+      <div class="flex-1 space-y-1.5 overflow-y-auto min-h-0">
+        <% group_data[:issues].each do |issue| %>
+          <%= render "issue_card", issue: issue, visible_properties: @display_options[:visible_properties] %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>
