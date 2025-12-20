@@ -1,0 +1,35 @@
+<div class="relative" data-display-options-target="propertiesContainer">
+  <button type="button"
+          class="flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded bg-foreground text-gray-300 hover:bg-hover-highlight border border-stroke transition-colors"
+          data-action="click->display-options#toggleDropdown"
+          data-dropdown="properties">
+    <span class="text-gray-500">Display:</span>
+    <div class="flex items-center gap-1" data-display-options-target="propertiesChips">
+      <% @display_options[:visible_properties].first(3).each do |prop| %>
+        <span class="px-1.5 py-0.5 bg-gray-700 rounded text-xs"><%= prop.titleize %></span>
+      <% end %>
+      <% if @display_options[:visible_properties].length > 3 %>
+        <span class="text-xs text-gray-500">+<%= @display_options[:visible_properties].length - 3 %></span>
+      <% end %>
+    </div>
+    <svg class="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+    </svg>
+  </button>
+
+  <div class="hidden absolute top-full right-0 mt-1 w-56 bg-foreground border border-stroke rounded shadow-lg z-10"
+       data-display-options-target="propertiesDropdown">
+    <div class="p-3 space-y-2">
+      <% UserPreference::AVAILABLE_PROPERTIES.each do |property| %>
+        <label class="flex items-center gap-2 cursor-pointer hover:bg-hover-highlight px-2 py-1 rounded transition-colors">
+          <input type="checkbox"
+                 class="w-4 h-4 rounded border-gray-600 text-blue-600"
+                 value="<%= property %>"
+                 <%= 'checked' if @display_options[:visible_properties].include?(property) %>
+                 data-action="change->display-options#updateProperties">
+          <span class="text-sm text-gray-300"><%= property.titleize %></span>
+        </label>
+      <% end %>
+    </div>
+  </div>
+</div>
