@@ -121,6 +121,9 @@ export default class extends Controller {
     const param = event.currentTarget.dataset.param
     const checked = event.currentTarget.checked
 
+    // Update toggle visual state immediately
+    this.updateToggleVisual(param, checked)
+
     // Build new URL preserving all params
     const url = new URL(window.location.href)
     url.searchParams.set(param, checked)
@@ -133,6 +136,28 @@ export default class extends Controller {
 
     // Check if preferences have changed
     this.checkIfChanged()
+  }
+
+  updateToggleVisual(param, checked) {
+    // Find the toggle element
+    const toggleContainer = this.element.querySelector(`[data-display-options-target="${param.replace(/_([a-z])/g, (m, p1) => p1.toUpperCase())}Toggle"]`)
+    if (!toggleContainer) return
+
+    const toggleBall = toggleContainer.querySelector('div')
+
+    if (checked) {
+      // Toggle is ON
+      toggleContainer.classList.remove('bg-gray-600')
+      toggleContainer.classList.add('bg-accent')
+      toggleBall.classList.remove('translate-x-0.5')
+      toggleBall.classList.add('translate-x-5')
+    } else {
+      // Toggle is OFF
+      toggleContainer.classList.remove('bg-accent')
+      toggleContainer.classList.add('bg-gray-600')
+      toggleBall.classList.remove('translate-x-5')
+      toggleBall.classList.add('translate-x-0.5')
+    }
   }
 
   updateProperties(event) {
