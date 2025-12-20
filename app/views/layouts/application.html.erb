@@ -18,10 +18,14 @@
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
   </head>
-  <body class="bg-background text-gray-100 h-screen overflow-hidden flex">
+  <body class="<%= controller_name == 'landing' ? 'bg-background' : 'bg-background text-gray-100 h-screen overflow-hidden flex' %>">
     <%= render "shared/sidebar" if authenticated? %>
-    <main class="flex-1 flex flex-col overflow-hidden">
+    <% if controller_name == 'landing' %>
       <%= yield %>
-    </main>
+    <% else %>
+      <main class="flex-1 flex flex-col overflow-hidden">
+        <%= yield %>
+      </main>
+    <% end %>
   </body>
 </html>

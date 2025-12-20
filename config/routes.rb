@@ -20,9 +20,18 @@ Rails.application.routes.draw do
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
+  # Landing page
+  get 'landing', to: 'landing#index'
+
   # Defines the root path route ("/")
   root to: redirect { |_params, request|
-    team_id = request.session[:current_team_id]
-    team_id ? "/teams/#{team_id}/issues" : '/teams/new'
+    # Check if user is authenticated by looking for session cookie
+    session_id = request.cookie_jar.signed[:session_id]
+    if session_id && Session.find_by(id: session_id)
+      team_id = request.session[:current_team_id]
+      team_id ? "/teams/#{team_id}/issues" : '/teams/new'
+    else
+      '/landing'
+    end
   }
 end
