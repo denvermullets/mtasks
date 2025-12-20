@@ -119,16 +119,24 @@
                   data-action="click->issue-sidebar#selectEstimate"
             data-estimate-value=""
             data-estimate-label="No estimate"
-            class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors first:rounded-t-md">
-            No estimate
+            class="w-full text-left px-3 py-2 text-sm <%= issue.estimate.blank? ? 'bg-hover-highlight text-accent' : 'text-gray-300' %> hover:bg-hover-highlight transition-colors first:rounded-t-md">
+            <% if issue.estimate.blank? %>✓<% end %> No estimate
           </button>
-          <% [1, 2, 3, 5, 8, 13].each do |points| %>
+          <%
+            standard_points = [1, 2, 3, 5, 8, 13]
+            # Add current estimate if it's not in the standard list
+            # Convert to integer to ensure consistent comparison
+            current_estimate = issue.estimate.present? ? issue.estimate.to_i : nil
+            all_points = current_estimate && !standard_points.include?(current_estimate) ? (standard_points + [current_estimate]).sort : standard_points
+          %>
+          <% all_points.each do |points| %>
+            <% is_selected = current_estimate == points %>
             <button type="button"
                     data-action="click->issue-sidebar#selectEstimate"
               data-estimate-value="<%= points %>"
               data-estimate-label="<%= points %> <%= 'point'.pluralize(points) %>"
-              class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors last:rounded-b-md">
-              <%= points %> <%= 'point'.pluralize(points) %>
+              class="w-full text-left px-3 py-2 text-sm <%= is_selected ? 'bg-hover-highlight text-accent' : 'text-gray-300' %> hover:bg-hover-highlight transition-colors last:rounded-b-md">
+              <% if is_selected %>✓<% end %> <%= points %> <%= 'point'.pluralize(points) %>
             </button>
           <% end %>
         </div>

@@ -36,15 +36,22 @@ class IssueDisplayService
   end
 
   def group_issues(issue_scope)
-    case options[:group_by]
-    when 'priority'
-      group_by_priority(issue_scope)
-    when 'status'
-      group_by_status(issue_scope)
-    when 'none'
-      { 'All Issues' => { object: nil, issues: issue_scope } }
-    when 'lane', 'label', 'parent_issue', 'project', 'milestone', 'assignee'
-      group_by_association(issue_scope, options[:group_by].to_sym)
+    primary_groups = case options[:group_by]
+                     when 'priority'
+                       group_by_priority(issue_scope)
+                     when 'status'
+                       group_by_status(issue_scope)
+                     when 'none'
+                       { 'All Issues' => { object: nil, issues: issue_scope } }
+                     when 'lane', 'label', 'parent_issue', 'project', 'milestone', 'assignee'
+                       group_by_association(issue_scope, options[:group_by].to_sym)
+                     end
+
+    # Apply sub-grouping if specified and not 'none'
+    if options[:sub_group_by].present? && options[:sub_group_by] != 'none'
+      apply_sub_grouping(primary_groups)
+    else
+      primary_groups
     end
   end
 
@@ -54,6 +61,7 @@ class IssueDisplayService
     {
       view_mode: 'board',
       group_by: 'lane',
+      sub_group_by: 'none',
       order_by: 'manual',
       show_sub_issues: true,
       show_empty_groups: false,
@@ -104,13 +112,23 @@ class IssueDisplayService
                  end
 
     all_groups&.each do |group|
-      issues_in_group = issue_scope.where(association_name => group)
+      issues_in_group = if association_name == :label
+                          # Labels use has_many :through, so we need to join through issue_labels
+                          issue_scope.joins(:labels).where(labels: { id: group.id }).distinct
+                        else
+                          issue_scope.where(association_name => group)
+                        end
       next if issues_in_group.empty? && !options[:show_empty_groups]
 
       groups[group_name_for(group)] = { object: group, issues: issues_in_group }
     end
 
-    ungrouped = issue_scope.where(association_name => nil)
+    ungrouped = if association_name == :label
+                  # Issues with no labels
+                  issue_scope.left_joins(:labels).where(labels: { id: nil })
+                else
+                  issue_scope.where(association_name => nil)
+                end
     if ungrouped.any? || options[:show_empty_groups]
       groups["No #{association_name.to_s.titleize}"] = { object: nil, issues: ungrouped }
     end
@@ -135,24 +153,35 @@ class IssueDisplayService
   end
 
   def group_by_status(issue_scope)
-    statuses = {
-      'Backlog' => issue_scope.where(started_at: nil, completed_at: nil, canceled_at: nil),
-      'In Progress' => issue_scope.in_progress,
-      'Completed' => issue_scope.completed,
-      'Canceled' => issue_scope.where.not(canceled_at: nil)
-    }
-
-    statuses.each_with_object({}) do |(status_name, issues_in_status), result|
-      next if issues_in_status.empty? && !options[:show_empty_groups]
-
-      result[status_name] = { object: status_name.downcase.tr(' ', '_'), issues: issues_in_status }
-    end
+    # Status is represented by lanes, so group by lane for correct custom lane support
+    group_by_association(issue_scope, :lane)
   end
 
   def group_name_for(object)
     return object.name if object.respond_to?(:name)
 
     object.to_s
+  end
+
+  def apply_sub_grouping(primary_groups)
+    primary_groups.transform_values do |primary_group_data|
+      issues_in_primary_group = primary_group_data[:issues]
+
+      # Apply secondary grouping to issues within this primary group
+      subgroups = case options[:sub_group_by]
+                  when 'priority'
+                    group_by_priority(issues_in_primary_group)
+                  when 'status'
+                    group_by_status(issues_in_primary_group)
+                  when 'lane', 'label', 'parent_issue', 'project', 'milestone', 'assignee'
+                    group_by_association(issues_in_primary_group, options[:sub_group_by].to_sym)
+                  else
+                    { 'All' => { object: nil, issues: issues_in_primary_group } }
+                  end
+
+      # Return the primary group with nested subgroups
+      primary_group_data.merge(subgroups: subgroups)
+    end
   end
 end
 # rubocop:enable Metrics/ClassLength
