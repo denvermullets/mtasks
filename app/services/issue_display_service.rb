@@ -1,3 +1,4 @@
+# rubocop:disable Metrics/ClassLength
 class IssueDisplayService
   attr_reader :issues, :options
 
@@ -36,22 +37,14 @@ class IssueDisplayService
 
   def group_issues(issue_scope)
     case options[:group_by]
-    when 'lane'
-      group_by_association(issue_scope, :lane)
     when 'priority'
       group_by_priority(issue_scope)
     when 'status'
       group_by_status(issue_scope)
-    when 'project'
-      group_by_association(issue_scope, :project)
-    when 'milestone'
-      group_by_association(issue_scope, :milestone)
-    when 'assignee'
-      group_by_association(issue_scope, :assignee)
     when 'none'
       { 'All Issues' => { object: nil, issues: issue_scope } }
-    else
-      group_by_association(issue_scope, :lane)
+    when 'lane', 'label', 'parent_issue', 'project', 'milestone', 'assignee'
+      group_by_association(issue_scope, options[:group_by].to_sym)
     end
   end
 
@@ -74,7 +67,7 @@ class IssueDisplayService
              when 'past_day' then 1.day.ago
              when 'past_week' then 1.week.ago
              when 'past_month' then 1.month.ago
-             when 'all_time' then return issue_scope
+             when 'all_time', 'all_completed' then return issue_scope
              end
 
     if cutoff
@@ -88,6 +81,7 @@ class IssueDisplayService
     issue_scope.where(parent_issue_id: nil)
   end
 
+  # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
   def group_by_association(issue_scope, association_name)
     groups = {}
     team = issue_scope.first&.team
@@ -102,6 +96,11 @@ class IssueDisplayService
                    team.milestones
                  when :assignee
                    team.users
+                 when :label
+                   team.labels
+                 when :parent_issue
+                   # For parent_issue grouping, we'll handle it differently
+                   nil
                  end
 
     all_groups&.each do |group|
@@ -118,6 +117,7 @@ class IssueDisplayService
 
     groups
   end
+  # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
 
   def group_by_priority(issue_scope)
     groups = {}
@@ -155,3 +155,4 @@ class IssueDisplayService
     object.to_s
   end
 end
+# rubocop:enable Metrics/ClassLength

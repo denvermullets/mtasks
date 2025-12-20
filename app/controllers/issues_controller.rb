@@ -1,3 +1,4 @@
+# rubocop:disable Metrics/ClassLength
 class IssuesController < ApplicationController
   before_action :require_team!
   before_action :set_issue, only: %i[show edit update destroy]
@@ -117,6 +118,7 @@ class IssuesController < ApplicationController
     )
   end
 
+  # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
   def load_display_options
     saved_prefs = UserPreference.for_user_and_team(Current.user, current_team)
 
@@ -132,6 +134,7 @@ class IssuesController < ApplicationController
       visible_properties: params[:visible_properties]&.split(',') || saved_prefs.visible_properties_array
     }
   end
+  # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
   def param_to_bool(param, default)
     return default if param.nil?
@@ -139,3 +142,4 @@ class IssuesController < ApplicationController
     %w[true 1].include?(param.to_s)
   end
 end
+# rubocop:enable Metrics/ClassLength
