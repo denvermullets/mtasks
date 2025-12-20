@@ -1,11 +1,17 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["panel"]
+  static targets = ["panel", "saveButton"]
 
   connect() {
     this.boundHandleClickOutside = this.handleClickOutside.bind(this)
     document.addEventListener("click", this.boundHandleClickOutside)
+
+    // Store initial saved preferences from the form
+    this.savedPreferences = this.getCurrentFormValues()
+
+    // Check initial state
+    this.checkIfChanged()
   }
 
   disconnect() {
@@ -44,8 +50,8 @@ export default class extends Controller {
     // Navigate with Turbo Frame to update only the board
     window.Turbo.visit(url.toString(), { frame: 'issues_board' })
 
-    // Close the panel
-    this.closePanel()
+    // Check if preferences have changed
+    this.checkIfChanged()
   }
 
   updateViewModeButtons(activeMode) {
@@ -70,8 +76,14 @@ export default class extends Controller {
     const url = new URL(window.location.href)
     url.searchParams.set(param, value)
 
+    // Update browser URL
+    window.history.pushState({}, '', url.toString())
+
     // Navigate with Turbo Frame
     window.Turbo.visit(url.toString(), { frame: 'issues_board' })
+
+    // Check if preferences have changed
+    this.checkIfChanged()
   }
 
   toggleOption(event) {
@@ -82,8 +94,14 @@ export default class extends Controller {
     const url = new URL(window.location.href)
     url.searchParams.set(param, checked)
 
+    // Update browser URL
+    window.history.pushState({}, '', url.toString())
+
     // Navigate with Turbo Frame
     window.Turbo.visit(url.toString(), { frame: 'issues_board' })
+
+    // Check if preferences have changed
+    this.checkIfChanged()
   }
 
   updateProperties(event) {
@@ -100,10 +118,15 @@ export default class extends Controller {
       url.searchParams.delete('visible_properties')
     }
 
+    // Update browser URL
+    window.history.pushState({}, '', url.toString())
+
     // Navigate with Turbo Frame (debounced)
     clearTimeout(this.propertiesTimeout)
     this.propertiesTimeout = setTimeout(() => {
       window.Turbo.visit(url.toString(), { frame: 'issues_board' })
+      // Check if preferences have changed
+      this.checkIfChanged()
     }, 300)
   }
 
@@ -176,5 +199,69 @@ export default class extends Controller {
   savePreferences() {
     // Update form with current URL params before submission
     this.updateFormFromCurrentParams()
+  }
+
+  getCurrentFormValues() {
+    const form = this.element.querySelector('form')
+    if (!form) return {}
+
+    const container = this.element.querySelector('[data-display-options-target="panel"]')
+    const checkedBoxes = container.querySelectorAll('input[type="checkbox"]:checked')
+    const properties = Array.from(checkedBoxes).map(cb => cb.value).sort().join(',')
+
+    return {
+      view_mode: form.querySelector('input[name="view_mode"]')?.value || 'board',
+      group_by: form.querySelector('input[name="group_by"]')?.value || 'lane',
+      order_by: form.querySelector('input[name="order_by"]')?.value || 'manual',
+      show_sub_issues: form.querySelector('input[name="show_sub_issues"]')?.value || 'true',
+      show_empty_groups: form.querySelector('input[name="show_empty_groups"]')?.value || 'false',
+      completed_filter: form.querySelector('input[name="completed_filter"]')?.value || '',
+      visible_properties: properties
+    }
+  }
+
+  getCurrentUrlValues() {
+    const url = new URL(window.location.href)
+    const params = url.searchParams
+
+    const container = this.element.querySelector('[data-display-options-target="panel"]')
+    const checkedBoxes = container.querySelectorAll('input[type="checkbox"]:checked')
+    const properties = Array.from(checkedBoxes).map(cb => cb.value).sort().join(',')
+
+    return {
+      view_mode: params.get('view_mode') || 'board',
+      group_by: params.get('group_by') || 'lane',
+      order_by: params.get('order_by') || 'manual',
+      show_sub_issues: params.get('show_sub_issues') || 'true',
+      show_empty_groups: params.get('show_empty_groups') || 'false',
+      completed_filter: params.get('completed_filter') || '',
+      visible_properties: properties
+    }
+  }
+
+  checkIfChanged() {
+    if (!this.hasSaveButtonTarget) return
+
+    const current = this.getCurrentUrlValues()
+    const saved = this.savedPreferences
+
+    const hasChanged =
+      current.view_mode !== saved.view_mode ||
+      current.group_by !== saved.group_by ||
+      current.order_by !== saved.order_by ||
+      current.show_sub_issues !== saved.show_sub_issues ||
+      current.show_empty_groups !== saved.show_empty_groups ||
+      current.completed_filter !== saved.completed_filter ||
+      current.visible_properties !== saved.visible_properties
+
+    this.saveButtonTarget.disabled = !hasChanged
+
+    if (hasChanged) {
+      this.saveButtonTarget.classList.remove('opacity-50', 'cursor-not-allowed')
+      this.saveButtonTarget.classList.add('cursor-pointer')
+    } else {
+      this.saveButtonTarget.classList.add('opacity-50', 'cursor-not-allowed')
+      this.saveButtonTarget.classList.remove('cursor-pointer')
+    }
   }
 }

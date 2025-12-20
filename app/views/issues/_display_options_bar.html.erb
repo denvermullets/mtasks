@@ -28,7 +28,7 @@
           <% @display_options[:visible_properties].each do |prop| %>
             <%= f.hidden_field "visible_properties[]", value: prop, id: nil %>
           <% end %>
-          <%= f.submit "Save as default", class: "w-full px-3 py-2 text-sm font-medium rounded bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer" %>
+          <%= f.submit "Save as default", class: "w-full rounded-md px-3.5 py-2.5 border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 font-medium cursor-pointer", data: { display_options_target: "saveButton" } %>
         <% end %>
       </div>
       <!-- View Mode Section -->
