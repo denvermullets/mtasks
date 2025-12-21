@@ -25,4 +25,23 @@ export default class extends Controller {
     // - Change priority
     // - Archive
   }
+
+  mouseEnter() {
+    // Mark this card as hovered so keyboard shortcuts can target it
+    this.element.dataset.hovered = "true"
+  }
+
+  mouseLeave() {
+    // Remove hover state
+    delete this.element.dataset.hovered
+  }
+
+  handleLabelChange() {
+    // Refresh the page to show updated labels
+    if (typeof Turbo !== 'undefined') {
+      Turbo.visit(window.location.href, { action: 'replace' })
+    } else {
+      window.location.reload()
+    }
+  }
 }

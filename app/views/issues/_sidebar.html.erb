@@ -181,23 +181,35 @@
         <%= form.hidden_field :project_id, value: issue.project_id, data: { issue_sidebar_target: "projectInput" } %>
       </div>
     </div>
-    <!-- Labels (Display only for now) -->
+    <!-- Labels -->
     <div class="mb-6">
       <div class="text-xs font-medium text-gray-500 mb-2">Labels</div>
-      <% if issue.labels.any? %>
-        <div class="flex flex-wrap gap-1.5">
-          <% issue.labels.each do |label| %>
-            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-foreground border border-stroke text-gray-400">
-              <span class="w-1.5 h-1.5 rounded-full" style="background-color: <%= label.color %>;"></span>
-              <%= label.name %>
-            </span>
+      <div class="relative">
+        <button type="button"
+                data-action="click->issue-sidebar#toggleDropdown"
+          data-dropdown="labels"
+          class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+          </svg>
+          <% if issue.labels.any? %>
+            <div class="flex flex-wrap gap-1 flex-1">
+              <% issue.labels.each do |label| %>
+                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-background border border-stroke">
+                  <span class="w-1.5 h-1.5 rounded-full" style="background-color: <%= label.color %>;"></span>
+                  <%= label.name %>
+                </span>
+              <% end %>
+            </div>
+          <% else %>
+            <span class="text-gray-500">No labels</span>
           <% end %>
-        </div>
-      <% else %>
-        <button class="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-400">
-          <span>+ Add label</span>
         </button>
-      <% end %>
+        <div data-issue-sidebar-target="labelsDropdown"
+             data-action="label-picker:labelAdded@window->issue-sidebar#handleLabelChange label-picker:labelRemoved@window->issue-sidebar#handleLabelChange">
+          <%= render "labels/picker", issue: issue, context: "sidebar" %>
+        </div>
+      </div>
     </div>
     <!-- Milestone -->
     <% if issue.milestone %>

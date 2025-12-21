@@ -1,0 +1,73 @@
+<%# Label Picker Component
+  Usage: %= render "labels/picker", issue: @issue, context: "sidebar" %
+  Context can be: "sidebar" or "card"
+%>
+
+<%
+  issue_id = issue.id
+  team_id = issue.team_id
+  current_label_ids = issue.labels.pluck(:id)
+  context ||= "sidebar"
+%>
+
+<div data-controller="label-picker"
+     data-label-picker-issue-id-value="<%= issue_id %>"
+     data-label-picker-team-id-value="<%= team_id %>"
+     data-label-picker-context-value="<%= context %>"
+     data-label-picker-current-labels-value="<%= current_label_ids.to_json %>"
+     class="hidden fixed z-50 w-80 bg-context-foreground border-2 border-stroke rounded-md shadow-2xl"
+     data-label-picker-target="picker">
+
+  <!-- Header with issue identifier -->
+  <div class="px-3 py-2 border-b border-stroke">
+    <span class="text-xs text-gray-500"><%= issue.identifier %> • <%= issue.title.truncate(30) %></span>
+  </div>
+
+  <!-- Search Input -->
+  <div class="p-2 border-b border-stroke">
+    <input type="text"
+           placeholder="Search or create labels..."
+           data-label-picker-target="search"
+           data-action="input->label-picker#filterLabels keydown->label-picker#handleKeyDown"
+           class="w-full px-3 py-2 text-sm bg-background border border-stroke rounded text-gray-200 placeholder-gray-500 focus:outline-none focus:border-accent" />
+  </div>
+
+  <!-- Labels List Container -->
+  <div data-label-picker-target="labelList" class="max-h-96 overflow-y-auto">
+
+    <!-- Create New Label Option (shown dynamically) -->
+    <div data-label-picker-target="createOption" class="hidden border-b border-stroke">
+      <button type="button"
+              data-action="click->label-picker#createAndToggleLabel"
+              data-label-picker-target="createButton"
+              class="w-full text-left px-3 py-2 text-sm text-accent hover:bg-hover-highlight transition-colors flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+        <span>Create "<span data-label-picker-target="createText"></span>"</span>
+      </button>
+    </div>
+
+    <!-- Frequently Used Section -->
+    <div data-label-picker-target="frequentlyUsedSection" class="hidden">
+      <div class="px-3 py-2 text-xs font-medium text-gray-500">Frequently used</div>
+      <div data-label-picker-target="frequentlyUsedList"></div>
+    </div>
+
+    <!-- All Labels Section -->
+    <div>
+      <div class="px-3 py-2 text-xs font-medium text-gray-500" data-label-picker-target="allLabelsHeader">Labels</div>
+      <div data-label-picker-target="allLabelsList"></div>
+    </div>
+
+    <!-- Empty State -->
+    <div data-label-picker-target="emptyState" class="hidden px-3 py-8 text-center text-sm text-gray-500">
+      No labels found. Start typing to create one.
+    </div>
+
+    <!-- Loading State -->
+    <div data-label-picker-target="loadingState" class="px-3 py-8 text-center">
+      <div class="inline-block w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin"></div>
+    </div>
+  </div>
+</div>

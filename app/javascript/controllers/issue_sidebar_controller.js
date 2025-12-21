@@ -6,16 +6,20 @@ export default class extends Controller {
     "priorityDropdown", "priorityLabel", "priorityInput",
     "assigneeDropdown", "assigneeLabel", "assigneeInput",
     "projectDropdown", "projectLabel", "projectInput",
-    "estimateDropdown", "estimateLabel", "estimateInput"
+    "estimateDropdown", "estimateLabel", "estimateInput",
+    "labelsDropdown"
   ]
 
   connect() {
     this.boundHandleClickOutside = this.handleClickOutside.bind(this)
+    this.boundHandleKeyDown = this.handleKeyDown.bind(this)
     document.addEventListener("click", this.boundHandleClickOutside)
+    document.addEventListener("keydown", this.boundHandleKeyDown)
   }
 
   disconnect() {
     document.removeEventListener("click", this.boundHandleClickOutside)
+    document.removeEventListener("keydown", this.boundHandleKeyDown)
   }
 
   toggleDropdown(event) {
@@ -31,7 +35,7 @@ export default class extends Controller {
   }
 
   closeAllDropdowns() {
-    const dropdowns = ["laneDropdown", "priorityDropdown", "assigneeDropdown", "projectDropdown", "estimateDropdown"]
+    const dropdowns = ["laneDropdown", "priorityDropdown", "assigneeDropdown", "projectDropdown", "estimateDropdown", "labelsDropdown"]
 
     dropdowns.forEach(dropdown => {
       try {
@@ -92,5 +96,38 @@ export default class extends Controller {
 
     // Submit the form
     this.element.requestSubmit()
+  }
+
+  handleKeyDown(event) {
+    // Ignore if user is typing in an input or textarea
+    if (event.target.matches('input, textarea')) {
+      return
+    }
+
+    // Open labels dropdown with 'L' key
+    if (event.key === 'l' || event.key === 'L') {
+      event.preventDefault()
+      this.closeAllDropdowns()
+      if (this.hasLabelsDropdownTarget) {
+        this.labelsDropdownTarget.classList.remove("hidden")
+        // Find and open the label picker
+        const labelPicker = this.labelsDropdownTarget.querySelector('[data-controller="label-picker"]')
+        if (labelPicker) {
+          const controller = this.application.getControllerForElementAndIdentifier(labelPicker, "label-picker")
+          if (controller && controller.open) {
+            controller.open()
+          }
+        }
+      }
+    }
+  }
+
+  handleLabelChange() {
+    // Refresh the page to show updated labels
+    if (typeof Turbo !== 'undefined') {
+      Turbo.visit(window.location.href, { action: 'replace' })
+    } else {
+      window.location.reload()
+    }
   }
 }
