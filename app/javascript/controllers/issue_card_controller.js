@@ -25,4 +25,23 @@ export default class extends Controller {
     // - Change priority
     // - Archive
   }
+
+  mouseEnter() {
+    // Mark this card as hovered so keyboard shortcuts can target it
+    this.element.dataset.hovered = "true"
+  }
+
+  mouseLeave() {
+    // Remove hover state
+    delete this.element.dataset.hovered
+  }
+
+  handleLabelChange() {
+    // Refresh the card to show updated labels
+    // Find the closest turbo frame or refresh the whole board view
+    const frame = document.querySelector('turbo-frame#issues_board')
+    if (frame) {
+      frame.reload()
+    }
+  }
 }

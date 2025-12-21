@@ -21,6 +21,32 @@ export default class extends Controller {
       event.preventDefault()
       this.createNewIssue()
     }
+
+    // Press 'L' to open label picker on hovered card
+    if (event.key === 'l' || event.key === 'L') {
+      event.preventDefault()
+      this.openLabelPicker()
+    }
+  }
+
+  openLabelPicker() {
+    // Find the currently hovered card
+    const hoveredCard = document.querySelector('[data-hovered="true"]')
+    if (!hoveredCard) {
+      return
+    }
+
+    // Find the label picker inside the hovered card
+    const labelPicker = hoveredCard.querySelector('[data-controller="label-picker"]')
+    if (!labelPicker) {
+      return
+    }
+
+    // Get the label picker controller and open it
+    const controller = this.application.getControllerForElementAndIdentifier(labelPicker, "label-picker")
+    if (controller && controller.open) {
+      controller.open()
+    }
   }
 
   createNewIssue() {

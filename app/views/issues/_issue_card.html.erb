@@ -1,10 +1,10 @@
 <%
   visible_properties ||= UserPreference::AVAILABLE_PROPERTIES
 %>
-<%= link_to team_issue_path(issue.team, issue), class: "block", data: { turbo_frame: "_top" } do %>
-  <div class="group bg-foreground border border-stroke hover:bg-hover-highlight hover:border-stroke rounded px-3 py-2.5 cursor-pointer transition-colors"
-       data-controller="issue-card"
-       data-issue-id="<%= issue.id %>">
+<div class="relative" data-controller="issue-card" data-issue-id="<%= issue.id %>">
+  <%= link_to team_issue_path(issue.team, issue), class: "block", data: { turbo_frame: "_top" } do %>
+    <div class="group bg-foreground border border-stroke hover:bg-hover-highlight hover:border-stroke rounded px-3 py-2.5 cursor-pointer transition-colors"
+         data-action="mouseenter->issue-card#mouseEnter mouseleave->issue-card#mouseLeave">
     <!-- Identifier (always shown at top) -->
     <div class="font-mono text-xs text-gray-500 font-medium mb-2">
       <%= issue.identifier %>
@@ -99,5 +99,11 @@
         </div>
       <% end %>
     </div>
+    </div>
+  <% end %>
+
+  <!-- Label Picker Overlay (for 'L' keyboard shortcut) -->
+  <div data-action="label-picker:labelAdded@window->issue-card#handleLabelChange label-picker:labelRemoved@window->issue-card#handleLabelChange">
+    <%= render "labels/picker", issue: issue, context: "card" %>
   </div>
-<% end %>
+</div>
