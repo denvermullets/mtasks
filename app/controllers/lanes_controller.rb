@@ -7,33 +7,20 @@ class LanesController < ApplicationController
 
   # POST /teams/:team_id/lanes
   def create
-    @lane = current_team.lanes.build(lane_create_params)
-
-    if @lane.save
-      render json: {
-        id: @lane.id,
-        name: @lane.name,
-        color: @lane.color,
-        position: @lane.position
-      }, status: :created
-    else
-      render json: { errors: @lane.errors.full_messages },
-             status: :unprocessable_entity
-    end
+    @lane = current_team.lanes.build(lane_params)
+    @lane.save ? render_lane_created : render_lane_create_error
   end
 
   # PATCH /teams/:team_id/lanes/:id
   def update
-    if @lane.update(lane_params)
-      render json: {
-        id: @lane.id,
-        name: @lane.name,
-        color: @lane.color,
-        position: @lane.position
-      }
-    else
-      render json: { errors: @lane.errors.full_messages },
-             status: :unprocessable_entity
+    @lane.update(lane_params)
+
+    respond_to do |format|
+      format.turbo_stream do
+        render turbo_stream: turbo_stream.replace("lane_#{@lane.id}",
+                                                  partial: 'lanes/lane_row', locals: { lane: @lane })
+      end
+      format.html { redirect_to edit_team_path(current_team) }
     end
   end
 
@@ -44,7 +31,13 @@ class LanesController < ApplicationController
 
     reassign_issues_if_needed
     @lane.destroy
-    head :no_content
+
+    respond_to do |format|
+      format.turbo_stream do
+        render turbo_stream: turbo_stream.remove("lane_#{@lane.id}")
+      end
+      format.html { redirect_to edit_team_path(current_team) }
+    end
   end
 
   private
@@ -54,10 +47,6 @@ class LanesController < ApplicationController
   end
 
   def lane_params
-    params.require(:lane).permit(:name, :color, :position)
-  end
-
-  def lane_create_params
     params.require(:lane).permit(:name, :color, :position)
   end
 
@@ -77,22 +66,32 @@ class LanesController < ApplicationController
   end
 
   def render_last_lane_error
-    render json: { error: 'Cannot delete the last lane' },
-           status: :unprocessable_entity
+    respond_to do |format|
+      format.turbo_stream do
+        render turbo_stream: turbo_stream.append(
+          'flash_messages',
+          partial: 'shared/flash',
+          locals: { message: 'Cannot delete the last lane', type: 'alert' }
+        ), status: :unprocessable_entity
+      end
+      format.html { redirect_to edit_team_path(current_team), alert: 'Cannot delete the last lane' }
+    end
   end
 
   def render_reassignment_required
-    render json: {
-      error: 'Lane has issues',
-      requires_reassignment: true,
-      issue_count: @lane.issues.count,
-      available_lanes: available_lanes_for_reassignment
-    }, status: :unprocessable_entity
-  end
+    @available_lanes = current_team.lanes.where.not(id: @lane.id)
 
-  def available_lanes_for_reassignment
-    current_team.lanes.where.not(id: @lane.id).map do |lane|
-      { id: lane.id, name: lane.name, color: lane.color }
+    respond_to do |format|
+      format.turbo_stream do
+        render turbo_stream: turbo_stream.append(
+          'modals',
+          partial: 'lanes/reassignment_modal',
+          locals: { lane: @lane, available_lanes: @available_lanes }
+        )
+      end
+      format.html do
+        redirect_to edit_team_path(current_team), alert: 'This lane has issues. Please reassign them first.'
+      end
     end
   end
 
@@ -101,5 +100,27 @@ class LanesController < ApplicationController
 
     target_lane = current_team.lanes.find(params[:target_lane_id])
     @lane.issues.update_all(lane_id: target_lane.id)
+  end
+
+  def render_lane_created
+    respond_to do |format|
+      format.turbo_stream do
+        render turbo_stream: [
+          turbo_stream.append('lanes_list', partial: 'lanes/lane_row', locals: { lane: @lane }),
+          turbo_stream.update('add_lane_form', partial: 'lanes/add_lane_form_content')
+        ]
+      end
+      format.html { redirect_to edit_team_path(current_team) }
+    end
+  end
+
+  def render_lane_create_error
+    respond_to do |format|
+      format.turbo_stream do
+        render turbo_stream: turbo_stream.update('add_lane_form', partial: 'lanes/add_lane_form_content',
+                                                                  locals: { lane: @lane })
+      end
+      format.html { redirect_to edit_team_path(current_team), alert: @lane.errors.full_messages.join(', ') }
+    end
   end
 end

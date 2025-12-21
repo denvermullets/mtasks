@@ -49,8 +49,7 @@
 
       <!-- Lanes Section -->
       <div class="bg-foreground border border-stroke rounded-lg p-6"
-           data-controller="lane-settings"
-           data-lane-settings-team-id-value="<%= @team.id %>">
+           data-controller="lane-settings">
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-lg font-semibold text-gray-200">Lanes</h2>
           <button
@@ -62,12 +61,10 @@
         </div>
 
         <!-- Add Lane Form (hidden initially) -->
-        <div data-lane-settings-target="addLaneForm" class="hidden mb-4">
-          <%= render "lanes/add_lane_form" %>
-        </div>
+        <%= render "lanes/add_lane_form" %>
 
         <!-- Lane List -->
-        <div data-lane-settings-target="lanesList" class="space-y-2">
+        <div id="lanes_list" class="space-y-2">
           <% @lanes.each do |lane| %>
             <%= render "lanes/lane_row", lane: lane %>
           <% end %>
@@ -75,4 +72,10 @@
       </div>
     </div>
   </div>
+
+  <!-- Modals Container -->
+  <div id="modals"></div>
+
+  <!-- Flash Messages Container -->
+  <div id="flash_messages" class="fixed top-4 right-4 z-50"></div>
 </div>

@@ -1,0 +1,12 @@
+<div class="px-4 py-3 rounded border <%= type == 'alert' ? 'bg-red-900 border-red-700 text-red-100' : 'bg-green-900 border-green-700 text-green-100' %> mb-2"
+     data-controller="flash"
+     data-action="click->flash#close">
+  <div class="flex items-center justify-between">
+    <span class="text-sm"><%= message %></span>
+    <button type="button" class="text-current opacity-75 hover:opacity-100">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+    </button>
+  </div>
+</div>

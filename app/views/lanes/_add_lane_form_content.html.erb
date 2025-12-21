@@ -1,0 +1,62 @@
+<div class="p-4 bg-background border border-stroke rounded">
+  <h3 class="text-sm font-semibold text-gray-300 mb-3">Add New Lane</h3>
+  <%= form_with model: lane, url: team_lanes_path(lane.team_id || @team&.id || current_team&.id), method: :post, data: { controller: "color-picker" } do |f| %>
+    <div class="grid grid-cols-2 gap-4 mb-4">
+      <!-- Lane Name -->
+      <div>
+        <%= f.label :name, "Lane Name", class: "block text-xs font-medium text-gray-400 mb-1" %>
+        <%= f.text_field :name,
+            placeholder: "e.g., In Review",
+            required: true,
+            class: "w-full px-3 py-2 bg-background border border-stroke rounded text-gray-200 text-sm focus:outline-none focus:border-accent" %>
+        <% if lane.errors[:name].any? %>
+          <p class="text-red-500 text-xs mt-1"><%= lane.errors[:name].first %></p>
+        <% end %>
+      </div>
+
+      <!-- Position -->
+      <div>
+        <%= f.label :position, "Position", class: "block text-xs font-medium text-gray-400 mb-1" %>
+        <%= f.number_field :position,
+            min: 0,
+            placeholder: "0",
+            class: "w-full px-3 py-2 bg-background border border-stroke rounded text-gray-200 text-sm focus:outline-none focus:border-accent" %>
+        <p class="text-xs text-gray-500 mt-1">Leave empty to add at end</p>
+      </div>
+    </div>
+
+    <!-- Color Picker with Presets -->
+    <div class="mb-4">
+      <%= f.label :color, "Color", class: "block text-xs font-medium text-gray-400 mb-2" %>
+      <div class="flex items-center gap-2 mb-2">
+        <!-- Preset Colors -->
+        <button type="button" data-action="click->color-picker#selectColor" data-color="#94a3b8" class="w-8 h-8 rounded border-2 border-transparent hover:border-accent transition-colors" style="background-color: #94a3b8;" title="Slate"></button>
+        <button type="button" data-action="click->color-picker#selectColor" data-color="#3b82f6" class="w-8 h-8 rounded border-2 border-transparent hover:border-accent transition-colors" style="background-color: #3b82f6;" title="Blue"></button>
+        <button type="button" data-action="click->color-picker#selectColor" data-color="#22c55e" class="w-8 h-8 rounded border-2 border-transparent hover:border-accent transition-colors" style="background-color: #22c55e;" title="Green"></button>
+        <button type="button" data-action="click->color-picker#selectColor" data-color="#ef4444" class="w-8 h-8 rounded border-2 border-transparent hover:border-accent transition-colors" style="background-color: #ef4444;" title="Red"></button>
+        <button type="button" data-action="click->color-picker#selectColor" data-color="#f59e0b" class="w-8 h-8 rounded border-2 border-transparent hover:border-accent transition-colors" style="background-color: #f59e0b;" title="Amber"></button>
+        <button type="button" data-action="click->color-picker#selectColor" data-color="#8b5cf6" class="w-8 h-8 rounded border-2 border-transparent hover:border-accent transition-colors" style="background-color: #8b5cf6;" title="Purple"></button>
+        <button type="button" data-action="click->color-picker#selectColor" data-color="#ec4899" class="w-8 h-8 rounded border-2 border-transparent hover:border-accent transition-colors" style="background-color: #ec4899;" title="Pink"></button>
+
+        <!-- Custom Color Picker -->
+        <div class="ml-2 flex items-center gap-2">
+          <span class="text-xs text-gray-500">or</span>
+          <%= f.color_field :color,
+              value: lane.color || "#94a3b8",
+              data: { color_picker_target: "colorInput" },
+              class: "w-8 h-8 rounded cursor-pointer border border-stroke" %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex gap-2 justify-end">
+      <button type="button"
+              data-action="click->lane-settings#toggleAddLaneForm"
+              class="px-3 py-1.5 text-sm text-gray-400 hover:text-gray-200 rounded">
+        Cancel
+      </button>
+      <%= f.submit "Add Lane", class: "px-3 py-1.5 text-sm bg-accent text-white rounded hover:bg-accent-hover cursor-pointer" %>
+    </div>
+  <% end %>
+</div>
