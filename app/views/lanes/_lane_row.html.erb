@@ -1,5 +1,4 @@
-<%= turbo_frame_tag "lane_#{lane.id}" do %>
-  <div class="flex items-center gap-3 p-3 bg-background border border-stroke rounded hover:bg-hover-highlight transition-colors">
+<div id="lane_<%= lane.id %>" class="flex items-center gap-3 p-3 bg-background border border-stroke rounded hover:bg-hover-highlight transition-colors">
     <!-- Up/Down Arrows -->
     <div class="flex flex-col gap-0.5">
       <%= form_with model: lane, url: team_lane_path(lane.team, lane), method: :patch, class: "m-0" do |f| %>
@@ -25,7 +24,8 @@
     <%= form_with model: lane, url: team_lane_path(lane.team, lane), method: :patch, data: { controller: "auto-submit" }, class: "m-0" do |f| %>
       <%= f.color_field :color,
           data: { action: "change->auto-submit#submit" },
-          class: "w-8 h-8 rounded cursor-pointer border border-stroke" %>
+          class: "w-8 h-8 rounded-full cursor-pointer border border-stroke overflow-hidden",
+          style: "border-radius: 50%;" %>
     <% end %>
 
     <!-- Lane name (editable) with auto-submit on blur -->
@@ -56,4 +56,3 @@
       </svg>
     <% end %>
   </div>
-<% end %>

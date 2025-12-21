@@ -8,17 +8,30 @@ class LanesController < ApplicationController
   # POST /teams/:team_id/lanes
   def create
     @lane = current_team.lanes.build(lane_params)
+    @lane.position = current_team.lanes.maximum(:position).to_i + 1 if @lane.position.blank?
     @lane.save ? render_lane_created : render_lane_create_error
   end
 
   # PATCH /teams/:team_id/lanes/:id
   def update
-    @lane.update(lane_params)
+    if lane_params[:position].present? && @lane.position != lane_params[:position].to_i
+      update_lane_positions
+    else
+      @lane.update(lane_params)
+    end
 
     respond_to do |format|
       format.turbo_stream do
-        render turbo_stream: turbo_stream.replace("lane_#{@lane.id}",
-                                                  partial: 'lanes/lane_row', locals: { lane: @lane })
+        if lane_params[:position].present?
+          # Re-render all lanes when position changes
+          current_team.lanes.reload
+          render turbo_stream: turbo_stream.update('lanes_list',
+                                                   partial: 'lanes/lanes_list',
+                                                   locals: { lanes: current_team.lanes })
+        else
+          render turbo_stream: turbo_stream.replace("lane_#{@lane.id}",
+                                                    partial: 'lanes/lane_row', locals: { lane: @lane })
+        end
       end
       format.html { redirect_to edit_team_path(current_team) }
     end
@@ -107,7 +120,7 @@ class LanesController < ApplicationController
       format.turbo_stream do
         render turbo_stream: [
           turbo_stream.append('lanes_list', partial: 'lanes/lane_row', locals: { lane: @lane }),
-          turbo_stream.update('add_lane_form', partial: 'lanes/add_lane_form_content')
+          turbo_stream.update('add_lane_form', partial: 'lanes/add_lane_form_content', locals: { lane: Lane.new })
         ]
       end
       format.html { redirect_to edit_team_path(current_team) }
@@ -121,6 +134,25 @@ class LanesController < ApplicationController
                                                                   locals: { lane: @lane })
       end
       format.html { redirect_to edit_team_path(current_team), alert: @lane.errors.full_messages.join(', ') }
+    end
+  end
+
+  def update_lane_positions
+    new_position = lane_params[:position].to_i
+    old_position = @lane.position
+
+    # Find the lane at the target position
+    lane_at_target = current_team.lanes.find_by(position: new_position)
+
+    # Swap positions and re-normalize
+    Lane.transaction do
+      lane_at_target&.update_column(:position, old_position)
+      @lane.update_column(:position, new_position)
+
+      # Re-normalize all positions to be sequential
+      current_team.lanes.order(:position).each_with_index do |lane, index|
+        lane.update_column(:position, index) if lane.position != index
+      end
     end
   end
 end

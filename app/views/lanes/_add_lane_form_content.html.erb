@@ -30,13 +30,13 @@
       <%= f.label :color, "Color", class: "block text-xs font-medium text-gray-400 mb-2" %>
       <div class="flex items-center gap-2 mb-2">
         <!-- Preset Colors -->
-        <button type="button" data-action="click->color-picker#selectColor" data-color="#94a3b8" class="w-8 h-8 rounded border-2 border-transparent hover:border-accent transition-colors" style="background-color: #94a3b8;" title="Slate"></button>
-        <button type="button" data-action="click->color-picker#selectColor" data-color="#3b82f6" class="w-8 h-8 rounded border-2 border-transparent hover:border-accent transition-colors" style="background-color: #3b82f6;" title="Blue"></button>
-        <button type="button" data-action="click->color-picker#selectColor" data-color="#22c55e" class="w-8 h-8 rounded border-2 border-transparent hover:border-accent transition-colors" style="background-color: #22c55e;" title="Green"></button>
-        <button type="button" data-action="click->color-picker#selectColor" data-color="#ef4444" class="w-8 h-8 rounded border-2 border-transparent hover:border-accent transition-colors" style="background-color: #ef4444;" title="Red"></button>
-        <button type="button" data-action="click->color-picker#selectColor" data-color="#f59e0b" class="w-8 h-8 rounded border-2 border-transparent hover:border-accent transition-colors" style="background-color: #f59e0b;" title="Amber"></button>
-        <button type="button" data-action="click->color-picker#selectColor" data-color="#8b5cf6" class="w-8 h-8 rounded border-2 border-transparent hover:border-accent transition-colors" style="background-color: #8b5cf6;" title="Purple"></button>
-        <button type="button" data-action="click->color-picker#selectColor" data-color="#ec4899" class="w-8 h-8 rounded border-2 border-transparent hover:border-accent transition-colors" style="background-color: #ec4899;" title="Pink"></button>
+        <button type="button" data-action="click->color-picker#selectColor" data-color="#94a3b8" class="w-8 h-8 rounded-full border-2 border-transparent hover:border-accent transition-colors" style="background-color: #94a3b8;" title="Slate"></button>
+        <button type="button" data-action="click->color-picker#selectColor" data-color="#3b82f6" class="w-8 h-8 rounded-full border-2 border-transparent hover:border-accent transition-colors" style="background-color: #3b82f6;" title="Blue"></button>
+        <button type="button" data-action="click->color-picker#selectColor" data-color="#22c55e" class="w-8 h-8 rounded-full border-2 border-transparent hover:border-accent transition-colors" style="background-color: #22c55e;" title="Green"></button>
+        <button type="button" data-action="click->color-picker#selectColor" data-color="#ef4444" class="w-8 h-8 rounded-full border-2 border-transparent hover:border-accent transition-colors" style="background-color: #ef4444;" title="Red"></button>
+        <button type="button" data-action="click->color-picker#selectColor" data-color="#f59e0b" class="w-8 h-8 rounded-full border-2 border-transparent hover:border-accent transition-colors" style="background-color: #f59e0b;" title="Amber"></button>
+        <button type="button" data-action="click->color-picker#selectColor" data-color="#8b5cf6" class="w-8 h-8 rounded-full border-2 border-transparent hover:border-accent transition-colors" style="background-color: #8b5cf6;" title="Purple"></button>
+        <button type="button" data-action="click->color-picker#selectColor" data-color="#ec4899" class="w-8 h-8 rounded-full border-2 border-transparent hover:border-accent transition-colors" style="background-color: #ec4899;" title="Pink"></button>
 
         <!-- Custom Color Picker -->
         <div class="ml-2 flex items-center gap-2">
@@ -44,7 +44,8 @@
           <%= f.color_field :color,
               value: lane.color || "#94a3b8",
               data: { color_picker_target: "colorInput" },
-              class: "w-8 h-8 rounded cursor-pointer border border-stroke" %>
+              class: "w-8 h-8 rounded-full cursor-pointer border border-stroke overflow-hidden",
+              style: "border-radius: 50%;" %>
         </div>
       </div>
     </div>

@@ -9,7 +9,6 @@
       Back to Issues
     <% end %>
   </div>
-
   <!-- Settings Content -->
   <div class="flex-1 overflow-y-auto bg-background p-8">
     <div class="max-w-4xl mx-auto w-full space-y-6">
@@ -25,7 +24,6 @@
               <p class="text-red-500 text-xs mt-1"><%= @team.errors[:name].first %></p>
             <% end %>
           </div>
-
           <!-- Team Identifier -->
           <div class="mb-4">
             <label class="block text-sm font-medium text-gray-400 mb-2">
@@ -42,11 +40,9 @@
               <p class="text-red-500 text-xs mt-1"><%= @team.errors[:identifier].first %></p>
             <% end %>
           </div>
-
-          <%= f.submit "Save Team Details", class: "px-4 py-2 bg-accent text-white rounded hover:bg-accent-hover cursor-pointer" %>
+          <%= f.submit "Save Team Details", class: "px-4 py-2 border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 font-medium cursor-pointer rounded-md" %>
         <% end %>
       </div>
-
       <!-- Lanes Section -->
       <div class="bg-foreground border border-stroke rounded-lg p-6"
            data-controller="lane-settings">
@@ -55,14 +51,12 @@
           <button
             type="button"
             data-action="click->lane-settings#toggleAddLaneForm"
-            class="px-3 py-1.5 text-sm bg-accent text-white rounded hover:bg-accent-hover">
+            class="px-3 py-1.5 text-sm border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 font-medium cursor-pointer rounded-md">
             Add Lane
           </button>
         </div>
-
         <!-- Add Lane Form (hidden initially) -->
         <%= render "lanes/add_lane_form" %>
-
         <!-- Lane List -->
         <div id="lanes_list" class="space-y-2">
           <% @lanes.each do |lane| %>
@@ -72,10 +66,8 @@
       </div>
     </div>
   </div>
-
   <!-- Modals Container -->
   <div id="modals"></div>
-
   <!-- Flash Messages Container -->
   <div id="flash_messages" class="fixed top-4 right-4 z-50"></div>
 </div>
