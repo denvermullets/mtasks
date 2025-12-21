@@ -1,0 +1,58 @@
+<div id="lane_<%= lane.id %>" class="flex items-center gap-3 p-3 bg-background border border-stroke rounded hover:bg-hover-highlight transition-colors">
+    <!-- Up/Down Arrows -->
+    <div class="flex flex-col gap-0.5">
+      <%= form_with model: lane, url: team_lane_path(lane.team, lane), method: :patch, class: "m-0" do |f| %>
+        <%= f.hidden_field :position, value: [lane.position - 1, 0].max %>
+        <%= button_tag type: "submit", class: "text-gray-500 hover:text-gray-300 transition-colors p-0.5", title: "Move up", disabled: lane.position == 0 do %>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+          </svg>
+        <% end %>
+      <% end %>
+
+      <%= form_with model: lane, url: team_lane_path(lane.team, lane), method: :patch, class: "m-0" do |f| %>
+        <%= f.hidden_field :position, value: lane.position + 1 %>
+        <%= button_tag type: "submit", class: "text-gray-500 hover:text-gray-300 transition-colors p-0.5", title: "Move down" do %>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        <% end %>
+      <% end %>
+    </div>
+
+    <!-- Color picker with auto-submit -->
+    <%= form_with model: lane, url: team_lane_path(lane.team, lane), method: :patch, data: { controller: "auto-submit" }, class: "m-0" do |f| %>
+      <%= f.color_field :color,
+          data: { action: "change->auto-submit#submit" },
+          class: "w-8 h-8 rounded-full cursor-pointer border border-stroke overflow-hidden",
+          style: "border-radius: 50%;" %>
+    <% end %>
+
+    <!-- Lane name (editable) with auto-submit on blur -->
+    <%= form_with model: lane, url: team_lane_path(lane.team, lane), method: :patch, data: { controller: "auto-submit" }, class: "flex-1 m-0" do |f| %>
+      <%= f.text_field :name,
+          data: { action: "blur->auto-submit#submit", auto_submit_original_value: lane.name },
+          class: "w-full px-2 py-1 bg-transparent border border-transparent hover:border-stroke focus:border-accent focus:bg-background rounded text-gray-200 focus:outline-none" %>
+    <% end %>
+
+    <!-- Position -->
+    <span class="text-xs text-gray-500 font-mono w-8 text-center">
+      #<%= lane.position + 1 %>
+    </span>
+
+    <!-- Issue count badge -->
+    <span class="text-xs text-gray-500 px-2 py-1 bg-foreground rounded whitespace-nowrap">
+      <%= pluralize(lane.issues.count, 'issue') %>
+    </span>
+
+    <!-- Delete button -->
+    <%= button_to team_lane_path(lane.team, lane),
+        method: :delete,
+        form: { data: { turbo_confirm: "Are you sure you want to delete this lane?" } },
+        class: "text-gray-500 hover:text-red-500 transition-colors p-1",
+        title: "Delete lane" do %>
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+      </svg>
+    <% end %>
+  </div>
