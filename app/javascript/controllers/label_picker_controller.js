@@ -323,7 +323,10 @@ export default class extends Controller {
     this.currentLabelsValue = [...this.currentLabelsValue, labelId]
 
     // Dispatch event to update card display
-    this.dispatch("labelAdded", { detail: { labelId } })
+    window.dispatchEvent(new CustomEvent("label-picker:labelAdded", {
+      detail: { labelId, issueId: this.issueIdValue },
+      bubbles: true
+    }))
   }
 
   async removeLabelFromIssue(labelId) {
@@ -342,7 +345,10 @@ export default class extends Controller {
     this.currentLabelsValue = this.currentLabelsValue.filter(id => id !== labelId)
 
     // Dispatch event to update card display
-    this.dispatch("labelRemoved", { detail: { labelId } })
+    window.dispatchEvent(new CustomEvent("label-picker:labelRemoved", {
+      detail: { labelId, issueId: this.issueIdValue },
+      bubbles: true
+    }))
   }
 
   async createAndToggleLabel() {
@@ -411,14 +417,24 @@ export default class extends Controller {
     if (!card) return
 
     const rect = card.getBoundingClientRect()
+    const overlayWidth = 320 // w-80 = 20rem = 320px
     const overlayHeight = 400 // approximate
 
-    let top = rect.bottom + 8
-    let left = rect.left
+    // Position to the left of the card
+    let top = rect.top
+    let left = rect.left - overlayWidth - 8 // 8px gap
 
-    // Check if overlay would go off-screen
+    // If it would go off the left edge, position to the right instead
+    if (left < 8) {
+      left = rect.right + 8
+    }
+
+    // Check if overlay would go off-screen vertically
     if (top + overlayHeight > window.innerHeight) {
-      top = rect.top - overlayHeight - 8
+      top = window.innerHeight - overlayHeight - 8
+    }
+    if (top < 8) {
+      top = 8
     }
 
     this.pickerTarget.style.top = `${top}px`

@@ -123,10 +123,11 @@ export default class extends Controller {
   }
 
   handleLabelChange() {
-    // Refresh the turbo frame to show updated labels
-    const frame = this.element.closest('turbo-frame')
-    if (frame) {
-      frame.reload()
+    // Refresh the page to show updated labels
+    if (typeof Turbo !== 'undefined') {
+      Turbo.visit(window.location.href, { action: 'replace' })
+    } else {
+      window.location.reload()
     }
   }
 }

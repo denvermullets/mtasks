@@ -37,11 +37,11 @@ export default class extends Controller {
   }
 
   handleLabelChange() {
-    // Refresh the card to show updated labels
-    // Find the closest turbo frame or refresh the whole board view
-    const frame = document.querySelector('turbo-frame#issues_board')
-    if (frame) {
-      frame.reload()
+    // Refresh the page to show updated labels
+    if (typeof Turbo !== 'undefined') {
+      Turbo.visit(window.location.href, { action: 'replace' })
+    } else {
+      window.location.reload()
     }
   }
 }
