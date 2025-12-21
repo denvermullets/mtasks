@@ -40,10 +40,8 @@ export default class extends Controller {
     // Show picker
     this.pickerTarget.classList.remove("hidden")
 
-    // Position overlay if in card context
-    if (this.contextValue === "card") {
-      this.positionOverlay()
-    }
+    // Position overlay (for both card and sidebar contexts)
+    this.positionOverlay()
 
     // Focus search input
     this.searchTarget.focus()
@@ -413,14 +411,31 @@ export default class extends Controller {
   }
 
   positionOverlay() {
-    const card = this.element.closest('[data-hovered="true"]')
-    if (!card) return
-
-    const rect = card.getBoundingClientRect()
     const overlayWidth = 320 // w-80 = 20rem = 320px
     const overlayHeight = 400 // approximate
+    let referenceElement = null
+    let rect = null
 
-    // Position to the left of the card
+    if (this.contextValue === "card") {
+      // For card context, find the hovered card
+      referenceElement = this.element.closest('[data-hovered="true"]')
+      if (!referenceElement) return
+      rect = referenceElement.getBoundingClientRect()
+    } else {
+      // For sidebar context, find the labels dropdown button
+      referenceElement = this.element.closest('[data-issue-sidebar-target="labelsDropdown"]')
+      if (!referenceElement) return
+
+      // Get the button that triggers the dropdown
+      const button = referenceElement.previousElementSibling
+      if (button) {
+        rect = button.getBoundingClientRect()
+      } else {
+        rect = referenceElement.getBoundingClientRect()
+      }
+    }
+
+    // Position to the left of the reference element
     let top = rect.top
     let left = rect.left - overlayWidth - 8 // 8px gap
 
