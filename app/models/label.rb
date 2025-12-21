@@ -7,7 +7,7 @@ class Label < ApplicationRecord
   validates :color, presence: true
 
   # Scope to order labels by usage count (most used first)
-  scope :by_usage, -> {
+  scope :by_usage, lambda {
     left_joins(:issue_labels)
       .group(:id)
       .order(Arel.sql('COUNT(issue_labels.id) DESC'))
