@@ -1,0 +1,64 @@
+<div class="flex items-center gap-3 p-3 bg-background border border-stroke rounded hover:bg-hover-highlight transition-colors"
+     data-lane-id="<%= lane.id %>"
+     data-lane-settings-target="laneRow">
+  <!-- Up/Down Arrows -->
+  <div class="flex flex-col gap-0.5">
+    <button type="button"
+            data-action="click->lane-settings#moveLaneUp"
+            class="text-gray-500 hover:text-gray-300 transition-colors p-0.5"
+            title="Move up">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+      </svg>
+    </button>
+    <button type="button"
+            data-action="click->lane-settings#moveLaneDown"
+            class="text-gray-500 hover:text-gray-300 transition-colors p-0.5"
+            title="Move down">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Color indicator/picker -->
+  <div class="relative">
+    <input type="color"
+           value="<%= lane.color %>"
+           data-lane-id="<%= lane.id %>"
+           data-action="change->lane-settings#updateLaneColor"
+           class="w-8 h-8 rounded cursor-pointer border border-stroke" />
+  </div>
+
+  <!-- Lane name (editable) -->
+  <div class="flex-1">
+    <input type="text"
+           value="<%= lane.name %>"
+           data-lane-id="<%= lane.id %>"
+           data-original-value="<%= lane.name %>"
+           data-action="blur->lane-settings#updateLaneName keydown->lane-settings#handleLaneNameKeydown"
+           class="w-full px-2 py-1 bg-transparent border border-transparent hover:border-stroke focus:border-accent focus:bg-background rounded text-gray-200 focus:outline-none" />
+  </div>
+
+  <!-- Position -->
+  <span class="text-xs text-gray-500 font-mono w-8 text-center">
+    #<%= lane.position + 1 %>
+  </span>
+
+  <!-- Issue count badge -->
+  <span class="text-xs text-gray-500 px-2 py-1 bg-foreground rounded whitespace-nowrap">
+    <%= pluralize(lane.issues.count, 'issue') %>
+  </span>
+
+  <!-- Delete button -->
+  <button type="button"
+          data-action="click->lane-settings#deleteLane"
+          data-lane-id="<%= lane.id %>"
+          data-has-issues="<%= lane.issues.any? %>"
+          class="text-gray-500 hover:text-red-500 transition-colors p-1"
+          title="Delete lane">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+    </svg>
+  </button>
+</div>

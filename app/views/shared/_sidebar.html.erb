@@ -22,12 +22,39 @@
       <div class="text-xs font-medium text-gray-500 uppercase px-2 mb-2">Teams</div>
       <div class="space-y-1">
         <% user_teams.each do |team| %>
-          <%= link_to team_issues_path(team), class: "flex items-center justify-between px-2 py-1.5 text-sm rounded hover:bg-foreground #{team.id == current_team&.id ? 'bg-foreground text-gray-100' : 'text-gray-300'}" do %>
-            <div class="flex items-center gap-2">
+          <div class="group flex items-center justify-between px-2 py-1.5 rounded hover:bg-foreground <%= team.id == current_team&.id ? 'bg-foreground' : '' %>"
+               data-controller="team-menu">
+            <%= link_to team_issues_path(team), class: "flex items-center gap-2 flex-1 text-sm #{team.id == current_team&.id ? 'text-gray-100' : 'text-gray-300'}" do %>
               <span class="font-mono text-xs text-gray-500"><%= team.identifier %></span>
               <span><%= team.name %></span>
+            <% end %>
+
+            <!-- Ellipsis menu button -->
+            <div class="relative">
+              <button type="button"
+                      data-action="click->team-menu#toggleDropdown"
+                      class="p-1 text-gray-500 hover:text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+                </svg>
+              </button>
+
+              <!-- Dropdown menu -->
+              <div data-team-menu-target="dropdown"
+                   class="hidden absolute right-0 mt-1 w-48 bg-foreground border border-stroke rounded-md shadow-lg z-50">
+                <%= link_to edit_team_path(team),
+                    class: "block px-4 py-2 text-sm text-gray-300 hover:bg-hover-highlight rounded-md" do %>
+                  <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    Settings
+                  </div>
+                <% end %>
+              </div>
             </div>
-          <% end %>
+          </div>
         <% end %>
       </div>
     </div>

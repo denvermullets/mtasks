@@ -2,9 +2,10 @@ Rails.application.routes.draw do
   resource :session
   resources :passwords, param: :token
   resources :users, only: %i[new create]
-  resources :teams, only: %i[new create show] do
+  resources :teams, only: %i[new create show edit update] do
     resource :display_preference, only: %i[update]
     resources :labels, only: %i[index create update destroy]
+    resources :lanes, only: %i[create update destroy]
     resources :issues do
       resources :comments, only: %i[create destroy]
       resources :issue_labels, only: %i[create destroy]

@@ -1,0 +1,78 @@
+<div class="flex-1 flex flex-col min-h-0">
+  <!-- Top Bar -->
+  <div class="h-14 bg-menu border-b border-stroke flex items-center justify-between px-4 shrink-0">
+    <div class="flex items-center gap-4">
+      <h1 class="text-base font-semibold">Team Settings</h1>
+      <span class="text-sm text-gray-500"><%= @team.name %></span>
+    </div>
+    <%= link_to team_issues_path(@team), class: "text-sm text-gray-400 hover:text-gray-300" do %>
+      Back to Issues
+    <% end %>
+  </div>
+
+  <!-- Settings Content -->
+  <div class="flex-1 overflow-y-auto bg-background p-8">
+    <div class="max-w-4xl mx-auto w-full space-y-6">
+      <!-- Team Details Section -->
+      <div class="bg-foreground border border-stroke rounded-lg p-6">
+        <h2 class="text-lg font-semibold text-gray-200 mb-4">Team Details</h2>
+        <%= form_with model: @team, method: :patch, local: true do |f| %>
+          <!-- Team Name -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-400 mb-2">Team Name</label>
+            <%= f.text_field :name, class: "w-full px-3 py-2 bg-background border border-stroke rounded text-gray-200 focus:outline-none focus:border-accent" %>
+            <% if @team.errors[:name].any? %>
+              <p class="text-red-500 text-xs mt-1"><%= @team.errors[:name].first %></p>
+            <% end %>
+          </div>
+
+          <!-- Team Identifier -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-400 mb-2">
+              Identifier (3 uppercase letters)
+            </label>
+            <%= f.text_field :identifier,
+                maxlength: 3,
+                class: "w-32 px-3 py-2 bg-background border border-stroke rounded text-gray-200 font-mono uppercase focus:outline-none focus:border-accent" %>
+            <p class="text-xs text-gray-500 mt-1">
+              Used in issue identifiers (e.g., <%= @team.identifier %>-123).
+              <span class="text-amber-500">Warning: Changing this will affect all existing issue IDs.</span>
+            </p>
+            <% if @team.errors[:identifier].any? %>
+              <p class="text-red-500 text-xs mt-1"><%= @team.errors[:identifier].first %></p>
+            <% end %>
+          </div>
+
+          <%= f.submit "Save Team Details", class: "px-4 py-2 bg-accent text-white rounded hover:bg-accent-hover cursor-pointer" %>
+        <% end %>
+      </div>
+
+      <!-- Lanes Section -->
+      <div class="bg-foreground border border-stroke rounded-lg p-6"
+           data-controller="lane-settings"
+           data-lane-settings-team-id-value="<%= @team.id %>">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-gray-200">Lanes</h2>
+          <button
+            type="button"
+            data-action="click->lane-settings#toggleAddLaneForm"
+            class="px-3 py-1.5 text-sm bg-accent text-white rounded hover:bg-accent-hover">
+            Add Lane
+          </button>
+        </div>
+
+        <!-- Add Lane Form (hidden initially) -->
+        <div data-lane-settings-target="addLaneForm" class="hidden mb-4">
+          <%= render "lanes/add_lane_form" %>
+        </div>
+
+        <!-- Lane List -->
+        <div data-lane-settings-target="lanesList" class="space-y-2">
+          <% @lanes.each do |lane| %>
+            <%= render "lanes/lane_row", lane: lane %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
