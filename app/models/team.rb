@@ -8,6 +8,7 @@ class Team < ApplicationRecord
   has_many :milestones, dependent: :destroy
   has_many :issues, dependent: :destroy
   has_many :labels, dependent: :destroy
+  has_one :github_integration, dependent: :destroy
 
   # Validations
   validates :name, presence: true

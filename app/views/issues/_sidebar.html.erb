@@ -225,6 +225,42 @@
         <div class="text-sm text-gray-300"><%= issue.due_date.strftime("%b %d, %Y") %></div>
       </div>
     <% end %>
+    <!-- Pull Requests -->
+    <% if issue.pull_requests.any? %>
+      <div class="mb-6">
+        <div class="text-xs font-medium text-gray-500 mb-2">Pull Requests</div>
+        <div class="space-y-2">
+          <% issue.pull_requests.recent.each do |pr| %>
+            <a href="<%= pr.html_url %>" target="_blank" rel="noopener noreferrer"
+               class="block px-3 py-2 rounded-md bg-foreground border border-stroke hover:bg-hover-highlight transition-colors">
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm text-gray-300 truncate">#<%= pr.pr_number %> <%= pr.title %></div>
+                  <div class="text-xs text-gray-500 mt-0.5">by <%= pr.author_login %></div>
+                </div>
+                <div class="shrink-0">
+                  <% case pr.status_badge_color %>
+                  <% when "green" %>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-900/30 text-green-400 border border-green-700/50">
+                      Open
+                    </span>
+                  <% when "purple" %>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-900/30 text-purple-400 border border-purple-700/50">
+                      Merged
+                    </span>
+                  <% else %>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-900/30 text-red-400 border border-red-700/50">
+                      Closed
+                    </span>
+                  <% end %>
+                </div>
+              </div>
+            </a>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
     <!-- Created/Updated -->
     <div class="pt-6 border-t border-stroke text-xs text-gray-500 space-y-1">
       <div>Created <%= time_ago_in_words(issue.created_at) %> ago</div>

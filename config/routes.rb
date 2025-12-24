@@ -4,6 +4,7 @@ Rails.application.routes.draw do
   resources :users, only: %i[new create]
   resources :teams, only: %i[new create show edit update] do
     resource :display_preference, only: %i[update]
+    resource :github_integration, only: %i[show new destroy]
     resources :labels, only: %i[index create update destroy]
     resources :lanes, only: %i[create update destroy]
     resources :issues do
@@ -14,6 +15,15 @@ Rails.application.routes.draw do
 
   # CSV Import
   resources :imports, only: %i[new create]
+
+  # GitHub OAuth
+  get '/auth/github/callback', to: 'github_integrations#callback'
+  get '/auth/failure', to: 'github_integrations#failure'
+
+  # GitHub Webhooks
+  namespace :webhooks do
+    resource :github, only: [:create], controller: 'github'
+  end
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.

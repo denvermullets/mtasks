@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_20_161241) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_23_122040) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -24,6 +24,22 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_20_161241) do
     t.index ["user_id"], name: "index_comments_on_user_id"
   end
 
+  create_table "github_integrations", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.string "encrypted_access_token"
+    t.string "encrypted_access_token_iv"
+    t.string "encrypted_refresh_token"
+    t.string "encrypted_refresh_token_iv"
+    t.string "github_repo_full_name", null: false
+    t.string "installation_id"
+    t.datetime "last_webhook_at"
+    t.bigint "team_id", null: false
+    t.datetime "token_expires_at"
+    t.datetime "updated_at", null: false
+    t.index ["team_id"], name: "index_github_integrations_on_team_id", unique: true
+  end
+
   create_table "issue_labels", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "issue_id", null: false
@@ -31,6 +47,18 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_20_161241) do
     t.datetime "updated_at", null: false
     t.index ["issue_id"], name: "index_issue_labels_on_issue_id"
     t.index ["label_id"], name: "index_issue_labels_on_label_id"
+  end
+
+  create_table "issue_pull_requests", force: :cascade do |t|
+    t.boolean "comment_posted", default: false, null: false
+    t.datetime "comment_posted_at"
+    t.datetime "created_at", null: false
+    t.bigint "issue_id", null: false
+    t.bigint "pull_request_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["issue_id", "pull_request_id"], name: "index_issue_pull_requests_on_issue_and_pr", unique: true
+    t.index ["issue_id"], name: "index_issue_pull_requests_on_issue_id"
+    t.index ["pull_request_id"], name: "index_issue_pull_requests_on_pull_request_id"
   end
 
   create_table "issues", force: :cascade do |t|
@@ -104,6 +132,27 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_20_161241) do
     t.index ["team_id"], name: "index_projects_on_team_id"
   end
 
+  create_table "pull_requests", force: :cascade do |t|
+    t.string "author_login"
+    t.string "base_ref"
+    t.text "body"
+    t.datetime "closed_at"
+    t.datetime "created_at", null: false
+    t.datetime "github_created_at"
+    t.bigint "github_integration_id", null: false
+    t.datetime "github_updated_at"
+    t.string "head_ref"
+    t.string "html_url"
+    t.boolean "merged", default: false, null: false
+    t.datetime "merged_at"
+    t.integer "pr_number", null: false
+    t.string "state"
+    t.string "title"
+    t.datetime "updated_at", null: false
+    t.index ["github_integration_id", "pr_number"], name: "index_pull_requests_on_github_integration_id_and_pr_number", unique: true
+    t.index ["github_integration_id"], name: "index_pull_requests_on_github_integration_id"
+  end
+
   create_table "sessions", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "ip_address"
@@ -173,8 +222,11 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_20_161241) do
 
   add_foreign_key "comments", "issues"
   add_foreign_key "comments", "users"
+  add_foreign_key "github_integrations", "teams"
   add_foreign_key "issue_labels", "issues"
   add_foreign_key "issue_labels", "labels"
+  add_foreign_key "issue_pull_requests", "issues"
+  add_foreign_key "issue_pull_requests", "pull_requests"
   add_foreign_key "issues", "issues", column: "parent_issue_id"
   add_foreign_key "issues", "lanes"
   add_foreign_key "issues", "milestones"
@@ -187,6 +239,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_20_161241) do
   add_foreign_key "milestones", "teams"
   add_foreign_key "projects", "milestones"
   add_foreign_key "projects", "teams"
+  add_foreign_key "pull_requests", "github_integrations"
   add_foreign_key "sessions", "users"
   add_foreign_key "team_memberships", "teams"
   add_foreign_key "team_memberships", "users"
