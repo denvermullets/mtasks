@@ -16,9 +16,8 @@ Rails.application.routes.draw do
   # CSV Import
   resources :imports, only: %i[new create]
 
-  # GitHub OAuth
-  get '/auth/github/callback', to: 'github_integrations#callback'
-  get '/auth/failure', to: 'github_integrations#failure'
+  # GitHub App Installation
+  get '/github/callback', to: 'github_integrations#callback'
 
   # GitHub Webhooks
   namespace :webhooks do

@@ -68,18 +68,22 @@
         <div class="space-y-3 text-sm text-gray-400">
           <div class="flex gap-3">
             <span class="text-accent font-semibold">1.</span>
-            <p>When you connect GitHub, we'll create a webhook on your repository to receive pull request events.</p>
+            <p>Install the GitHub App on your repository. You choose which repos to give access to.</p>
           </div>
           <div class="flex gap-3">
             <span class="text-accent font-semibold">2.</span>
-            <p>Include issue identifiers (e.g., <code class="px-1 py-0.5 bg-background rounded font-mono"><%= @team.identifier %>-123</code>) in your PR title or description.</p>
+            <p>We'll create a webhook on your repository to receive pull request events automatically.</p>
           </div>
           <div class="flex gap-3">
             <span class="text-accent font-semibold">3.</span>
-            <p>We'll automatically link the PR to the issue and post a comment on GitHub with issue details.</p>
+            <p>Include issue identifiers (e.g., <code class="px-1 py-0.5 bg-background rounded font-mono"><%= @team.identifier %>-123</code>) in your PR title or description.</p>
           </div>
           <div class="flex gap-3">
             <span class="text-accent font-semibold">4.</span>
+            <p>We'll automatically link the PR to the issue and post a comment on GitHub with issue details.</p>
+          </div>
+          <div class="flex gap-3">
+            <span class="text-accent font-semibold">5.</span>
             <p>View linked PRs directly on the issue page to track progress.</p>
           </div>
         </div>
@@ -89,9 +93,9 @@
       <div class="bg-foreground border border-stroke rounded-lg p-6">
         <h2 class="text-lg font-semibold text-gray-200 mb-4">Requirements</h2>
         <ul class="space-y-2 text-sm text-gray-400 list-disc list-inside">
-          <li>You must have admin access to the GitHub repository</li>
-          <li>The repository must be accessible with the OAuth token</li>
-          <li>Webhook endpoint must be publicly accessible</li>
+          <li>You must have admin access to install the GitHub App on a repository</li>
+          <li>Webhook endpoint must be publicly accessible (use ngrok for local development)</li>
+          <li>The GitHub App must be created and configured (see setup instructions below)</li>
         </ul>
       </div>
     </div>

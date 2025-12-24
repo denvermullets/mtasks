@@ -4,7 +4,7 @@ class GithubApiClient
 
   def initialize(github_integration)
     @integration = github_integration
-    @client = Octokit::Client.new(access_token: @integration.access_token)
+    @client = Octokit::Client.new(access_token: installation_access_token)
   end
 
   def create_webhook
@@ -61,6 +61,11 @@ class GithubApiClient
   end
 
   private
+
+  def installation_access_token
+    # Generate a fresh installation access token for each API client instance
+    GithubApp.installation_token(@integration.installation_id)
+  end
 
   def repo_full_name
     @integration.github_repo_full_name

@@ -29,11 +29,17 @@ module Webhooks
       # Only process relevant actions
       return unless %w[opened edited synchronize closed reopened].include?(action)
 
+      installation_id = webhook_payload.dig('installation', 'id')
       repo_full_name = webhook_payload.dig('repository', 'full_name')
-      integration = GithubIntegration.find_by(github_repo_full_name: repo_full_name, active: true)
+
+      integration = GithubIntegration.find_by(
+        installation_id: installation_id,
+        github_repo_full_name: repo_full_name,
+        active: true
+      )
 
       unless integration
-        Rails.logger.warn("No active integration found for repo: #{repo_full_name}")
+        Rails.logger.warn("No active integration found for installation: #{installation_id}, repo: #{repo_full_name}")
         return
       end
 

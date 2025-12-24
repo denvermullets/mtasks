@@ -7,9 +7,8 @@ gem "bootsnap", require: false
 gem "dotenv"
 gem "image_processing", "~> 1.14.0"
 gem "importmap-rails"
-gem 'octokit'
-gem 'omniauth-github'
-gem 'omniauth-rails_csrf_protection'
+gem "jwt"
+gem "octokit"
 gem "pg", "~> 1.6.2"
 gem "propshaft"
 gem "puma", ">= 7.1.0"
