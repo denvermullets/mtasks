@@ -1,40 +1,62 @@
-<div class="mx-auto md:w-2/3 w-full">
-  <% if current_user.owned_workspaces.any? %>
-    <h1 class="font-bold text-4xl mb-4 text-gray-100">Create a New Team</h1>
-    <p class="text-gray-400 mb-6">Add a team to your workspace.</p>
-  <% else %>
-    <h1 class="font-bold text-4xl mb-4 text-gray-100">Create Your Team</h1>
-    <p class="text-gray-400 mb-6">First, let's set up your workspace and team.</p>
-  <% end %>
-  <%= form_with url: teams_path, class: "contents" do |form| %>
-    <% unless current_user.owned_workspaces.any? %>
-      <div class="bg-foreground border border-stroke rounded-lg p-4 mb-6">
-        <h3 class="font-semibold text-gray-200 mb-4">Workspace Details</h3>
-        <div class="mb-4">
-          <%= form.label "workspace[name]", "Workspace Name", class: "block font-medium text-gray-300" %>
-          <%= form.text_field "workspace[name]", required: true, placeholder: "e.g., Acme Inc", class: "block rounded-md border border-stroke bg-background text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-600 px-3 py-2 mt-2 w-full" %>
-          <p class="text-sm text-gray-500 mt-1">A workspace can contain multiple teams</p>
+<div class="flex-1 flex flex-col min-h-0">
+  <!-- Top Bar -->
+  <div class="h-14 bg-menu border-b border-stroke flex items-center justify-between px-4 shrink-0">
+    <div class="flex items-center gap-4">
+      <% if current_user.owned_workspaces.any? %>
+        <h1 class="text-base font-semibold">Create a New Team</h1>
+      <% else %>
+        <h1 class="text-base font-semibold">Create Your Team</h1>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Form Content -->
+  <div class="flex-1 overflow-y-auto bg-background p-8">
+    <div class="max-w-4xl mx-auto w-full space-y-6">
+      <% if current_user.owned_workspaces.any? %>
+        <p class="text-sm text-gray-400">Add a team to your workspace.</p>
+      <% else %>
+        <p class="text-sm text-gray-400">First, let's set up your workspace and team.</p>
+      <% end %>
+
+      <%= form_with url: teams_path, class: "space-y-6" do |form| %>
+        <% unless current_user.owned_workspaces.any? %>
+          <!-- Workspace Section -->
+          <div class="bg-foreground border border-stroke rounded-lg p-6">
+            <h2 class="text-lg font-semibold text-gray-200 mb-4">Workspace Details</h2>
+            <div class="mb-4">
+              <%= form.label "workspace[name]", "Workspace Name", class: "block text-sm font-medium text-gray-400 mb-2" %>
+              <%= form.text_field "workspace[name]", required: true, placeholder: "e.g., Acme Inc", class: "w-full px-3 py-2 bg-background border border-stroke rounded text-gray-200 focus:outline-none focus:border-accent" %>
+              <p class="text-xs text-gray-500 mt-1">A workspace can contain multiple teams</p>
+            </div>
+          </div>
+        <% end %>
+
+        <!-- Team Section -->
+        <div class="bg-foreground border border-stroke rounded-lg p-6">
+          <h2 class="text-lg font-semibold text-gray-200 mb-4">Team Details</h2>
+          <!-- Team Name -->
+          <div class="mb-4">
+            <%= form.label "team[name]", "Team Name", class: "block text-sm font-medium text-gray-400 mb-2" %>
+            <%= form.text_field "team[name]", required: true, placeholder: "e.g., Engineering", class: "w-full px-3 py-2 bg-background border border-stroke rounded text-gray-200 focus:outline-none focus:border-accent" %>
+          </div>
+
+          <!-- Team Identifier -->
+          <div class="mb-4">
+            <%= form.label "team[identifier]", "Identifier (3 uppercase letters)", class: "block text-sm font-medium text-gray-400 mb-2" %>
+            <%= form.text_field "team[identifier]", required: true, maxlength: 3, placeholder: "e.g., ENG", class: "w-32 px-3 py-2 bg-background border border-stroke rounded text-gray-200 font-mono uppercase focus:outline-none focus:border-accent" %>
+            <p class="text-xs text-gray-500 mt-1">This will prefix your issue numbers (e.g., ENG-1, ENG-2)</p>
+          </div>
+
+          <!-- Description -->
+          <div class="mb-4">
+            <%= form.label "team[description]", "Description (optional)", class: "block text-sm font-medium text-gray-400 mb-2" %>
+            <%= form.text_area "team[description]", rows: 3, placeholder: "What does this team work on?", class: "w-full px-3 py-2 bg-background border border-stroke rounded text-gray-200 focus:outline-none focus:border-accent" %>
+          </div>
+
+          <%= form.submit "Create Team", class: "px-4 py-2 border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 font-medium cursor-pointer rounded-md" %>
         </div>
-      </div>
-    <% end %>
-    <div class="bg-foreground border border-stroke rounded-lg p-4 mb-6">
-      <h3 class="font-semibold text-gray-200 mb-4">Team Details</h3>
-      <div class="mb-4">
-        <%= form.label "team[name]", "Team Name", class: "block font-medium text-gray-300" %>
-        <%= form.text_field "team[name]", required: true, placeholder: "e.g., Engineering", class: "block rounded-md border border-stroke bg-background text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-600 px-3 py-2 mt-2 w-full" %>
-      </div>
-      <div class="mb-4">
-        <%= form.label "team[identifier]", "Team Identifier (3 letters)", class: "block font-medium text-gray-300" %>
-        <%= form.text_field "team[identifier]", required: true, maxlength: 3, placeholder: "e.g., ENG", class: "block rounded-md border border-stroke bg-background text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-600 px-3 py-2 mt-2 w-full uppercase" %>
-        <p class="text-sm text-gray-500 mt-1">This will prefix your issue numbers (e.g., ENG-1, ENG-2)</p>
-      </div>
-      <div class="mb-4">
-        <%= form.label "team[description]", "Description (optional)", class: "block font-medium text-gray-300" %>
-        <%= form.text_area "team[description]", rows: 3, placeholder: "What does this team work on?", class: "block rounded-md border border-stroke bg-background text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-600 px-3 py-2 mt-2 w-full" %>
-      </div>
+      <% end %>
     </div>
-    <div class="inline">
-      <%= form.submit "Create Team", class: "rounded-md px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-medium cursor-pointer" %>
-    </div>
-  <% end %>
+  </div>
 </div>
