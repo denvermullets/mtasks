@@ -1,5 +1,7 @@
 module Webhooks
   class GithubController < ApplicationController
+    include GithubWebhookVerification
+
     skip_before_action :verify_authenticity_token
     skip_before_action :require_authentication
     skip_before_action :set_current_team
@@ -31,19 +33,8 @@ module Webhooks
       # Only process relevant actions
       return unless %w[opened edited synchronize closed reopened].include?(action)
 
-      installation_id = webhook_payload.dig('installation', 'id')
-      repo_full_name = webhook_payload.dig('repository', 'full_name')
-
-      integration = GithubIntegration.find_by(
-        installation_id: installation_id,
-        github_repo_full_name: repo_full_name,
-        active: true
-      )
-
-      unless integration
-        Rails.logger.warn("No active integration found for installation: #{installation_id}, repo: #{repo_full_name}")
-        return
-      end
+      integration = find_integration_for_webhook
+      return unless integration
 
       # Update last webhook timestamp
       integration.update(last_webhook_at: Time.current)
@@ -51,6 +42,7 @@ module Webhooks
       # Queue background job to process the webhook
       GithubWebhookProcessorJob.perform_later(integration.id, pr_data.to_json)
 
+      repo_full_name = webhook_payload.dig('repository', 'full_name')
       Rails.logger.info("Queued webhook processing for PR ##{pr_data['number']} in #{repo_full_name}")
     end
 
@@ -59,68 +51,41 @@ module Webhooks
       comment = webhook_payload['comment']
       issue = webhook_payload['issue']
 
-      # Only process comments on pull requests
-      return unless issue&.dig('pull_request')
+      return unless valid_pr_comment?(action, issue)
 
-      # Only process created comments (not edited/deleted)
-      return unless action == 'created'
+      integration = find_integration_for_webhook
+      return unless integration
 
-      installation_id = webhook_payload.dig('installation', 'id')
-      repo_full_name = webhook_payload.dig('repository', 'full_name')
-
-      integration = GithubIntegration.find_by(
-        installation_id: installation_id,
-        github_repo_full_name: repo_full_name,
-        active: true
-      )
-
-      unless integration
-        Rails.logger.warn("No active integration found for installation: #{installation_id}, repo: #{repo_full_name}")
-        return
-      end
-
-      # Queue background job to process the comment
-      GithubCommentProcessorJob.perform_later(
-        integration.id,
-        issue['number'],
-        comment['body']
-      )
-
-      Rails.logger.info("Queued comment processing for PR ##{issue['number']} in #{repo_full_name}")
+      queue_comment_processing(integration, issue, comment)
     end
 
     def handle_ping_event
       Rails.logger.info("Received GitHub ping event for repo: #{webhook_payload.dig('repository', 'full_name')}")
     end
 
-    def verify_github_signature
-      signature = request.headers['X-Hub-Signature-256']
+    def valid_pr_comment?(action, issue)
+      return false unless issue&.dig('pull_request')
+      return false unless action == 'created'
 
-      unless signature
-        Rails.logger.warn('Missing GitHub webhook signature')
-        head :unauthorized
-        return
-      end
-
-      expected_signature = compute_signature(request.raw_post)
-
-      return if Rack::Utils.secure_compare(signature, expected_signature)
-
-      Rails.logger.warn('Invalid GitHub webhook signature')
-      head :unauthorized
-      nil
+      true
     end
 
-    def compute_signature(payload_body)
-      secret = ENV.fetch('GITHUB_WEBHOOK_SECRET', nil)
-      "sha256=#{OpenSSL::HMAC.hexdigest(OpenSSL::Digest.new('sha256'), secret, payload_body)}"
+    def find_integration_for_webhook
+      GithubIntegration::FindFromWebhook.call(
+        installation_id: webhook_payload.dig('installation', 'id'),
+        repo_full_name: webhook_payload.dig('repository', 'full_name')
+      )
     end
 
-    def webhook_payload
-      @webhook_payload ||= JSON.parse(request.body.read)
-    rescue JSON::ParserError => e
-      Rails.logger.error("Failed to parse GitHub webhook payload: #{e.message}")
-      {}
+    def queue_comment_processing(integration, issue, comment)
+      GithubCommentProcessorJob.perform_later(
+        integration.id,
+        issue['number'],
+        comment['body']
+      )
+
+      repo_full_name = webhook_payload.dig('repository', 'full_name')
+      Rails.logger.info("Queued comment processing for PR ##{issue['number']} in #{repo_full_name}")
     end
   end
 end

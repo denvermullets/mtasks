@@ -8,24 +8,11 @@ class GithubApiClient
   end
 
   def create_webhook
-    webhook_url = Rails.application.routes.url_helpers.webhooks_github_url(
-      host: ENV.fetch('APP_HOST', 'localhost:3000'),
-      protocol: Rails.env.production? ? 'https' : 'http'
-    )
-
-    events = %w[pull_request issue_comment]
-    config = {
-      url: webhook_url,
-      content_type: 'json',
-      secret: ENV.fetch('GITHUB_WEBHOOK_SECRET'),
-      insecure_ssl: Rails.env.development? ? '1' : '0'
-    }
-
     response = @client.create_hook(
       repo_full_name,
       'web',
-      config,
-      events: events,
+      webhook_config,
+      events: webhook_events,
       active: true
     )
 
@@ -69,6 +56,26 @@ class GithubApiClient
 
   def repo_full_name
     @integration.github_repo_full_name
+  end
+
+  def webhook_url
+    Rails.application.routes.url_helpers.webhooks_github_url(
+      host: ENV.fetch('APP_HOST', 'localhost:3000'),
+      protocol: Rails.env.production? ? 'https' : 'http'
+    )
+  end
+
+  def webhook_events
+    %w[pull_request issue_comment]
+  end
+
+  def webhook_config
+    {
+      url: webhook_url,
+      content_type: 'json',
+      secret: ENV.fetch('GITHUB_WEBHOOK_SECRET'),
+      insecure_ssl: Rails.env.development? ? '1' : '0'
+    }
   end
 
   def handle_octokit_error(error)

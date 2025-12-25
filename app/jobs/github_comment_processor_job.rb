@@ -11,31 +11,35 @@ class GithubCommentProcessorJob < ApplicationJob
       return
     end
 
-    team = integration.team
+    pull_request = find_or_fetch_pull_request(integration, pr_number)
+    return unless pull_request
 
-    # Find or create the PR record
-    pr = integration.pull_requests.find_by(pr_number: pr_number)
+    link_referenced_issues(integration.team, pull_request, pr_number, comment_body)
+  end
 
-    unless pr
-      # If PR doesn't exist yet, we need to fetch it from GitHub and create it
-      Rails.logger.info("PR ##{pr_number} not found locally, fetching from GitHub")
+  private
 
-      begin
-        client = Octokit::Client.new(access_token: integration.access_token)
-        pr_data = client.pull_request(integration.github_repo_full_name, pr_number)
+  def find_or_fetch_pull_request(integration, pr_number)
+    pull_request = integration.pull_requests.find_by(pr_number: pr_number)
+    return pull_request if pull_request
 
-        # Create the PR using the sync service
-        sync_service = GithubPrSyncService.new(integration)
-        pr = sync_service.sync_pull_request(pr_data.to_h)
-      rescue StandardError => e
-        Rails.logger.error("Failed to fetch PR ##{pr_number}: #{e.message}")
-        return
-      end
-    end
+    fetch_pull_request_from_github(integration, pr_number)
+  end
 
-    return unless pr
+  def fetch_pull_request_from_github(integration, pr_number)
+    Rails.logger.info("PR ##{pr_number} not found locally, fetching from GitHub")
 
-    # Parse issue references from comment
+    client = Octokit::Client.new(access_token: integration.access_token)
+    pr_data = client.pull_request(integration.github_repo_full_name, pr_number)
+
+    sync_service = GithubPrSyncService.new(integration)
+    sync_service.sync_pull_request(pr_data.to_h)
+  rescue StandardError => e
+    Rails.logger.error("Failed to fetch PR ##{pr_number}: #{e.message}")
+    nil
+  end
+
+  def link_referenced_issues(team, pull_request, pr_number, comment_body)
     referenced_issues = IssueReferenceParser.find_issues(comment_body, team)
 
     if referenced_issues.empty?
@@ -43,19 +47,20 @@ class GithubCommentProcessorJob < ApplicationJob
       return
     end
 
-    # Link new issues to the PR
+    queue_comment_jobs_for_issues(referenced_issues, pull_request)
+    Rails.logger.info("Linked #{referenced_issues.count} issues from comment to PR ##{pr_number}")
+  end
+
+  def queue_comment_jobs_for_issues(referenced_issues, pull_request)
     referenced_issues.each do |issue|
       issue_pr = IssuePullRequest.find_or_create_by(
         issue: issue,
-        pull_request: pr
+        pull_request: pull_request
       )
 
-      # Queue comment job if not already posted
       next if issue_pr.comment_posted?
 
       GithubCommentPosterJob.perform_later(issue_pr.id)
     end
-
-    Rails.logger.info("Linked #{referenced_issues.count} issues from comment to PR ##{pr_number}")
   end
 end
