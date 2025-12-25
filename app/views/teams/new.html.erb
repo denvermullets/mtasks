@@ -1,15 +1,22 @@
 <div class="mx-auto md:w-2/3 w-full">
-  <h1 class="font-bold text-4xl mb-4 text-gray-100">Create Your Team</h1>
-  <p class="text-gray-400 mb-6">First, let's set up your workspace and team.</p>
+  <% if current_user.owned_workspaces.any? %>
+    <h1 class="font-bold text-4xl mb-4 text-gray-100">Create a New Team</h1>
+    <p class="text-gray-400 mb-6">Add a team to your workspace.</p>
+  <% else %>
+    <h1 class="font-bold text-4xl mb-4 text-gray-100">Create Your Team</h1>
+    <p class="text-gray-400 mb-6">First, let's set up your workspace and team.</p>
+  <% end %>
   <%= form_with url: teams_path, class: "contents" do |form| %>
-    <div class="bg-foreground border border-stroke rounded-lg p-4 mb-6">
-      <h3 class="font-semibold text-gray-200 mb-4">Workspace Details</h3>
-      <div class="mb-4">
-        <%= form.label "workspace[name]", "Workspace Name", class: "block font-medium text-gray-300" %>
-        <%= form.text_field "workspace[name]", required: true, placeholder: "e.g., Acme Inc", class: "block rounded-md border border-stroke bg-background text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-600 px-3 py-2 mt-2 w-full" %>
-        <p class="text-sm text-gray-500 mt-1">A workspace can contain multiple teams</p>
+    <% unless current_user.owned_workspaces.any? %>
+      <div class="bg-foreground border border-stroke rounded-lg p-4 mb-6">
+        <h3 class="font-semibold text-gray-200 mb-4">Workspace Details</h3>
+        <div class="mb-4">
+          <%= form.label "workspace[name]", "Workspace Name", class: "block font-medium text-gray-300" %>
+          <%= form.text_field "workspace[name]", required: true, placeholder: "e.g., Acme Inc", class: "block rounded-md border border-stroke bg-background text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-600 px-3 py-2 mt-2 w-full" %>
+          <p class="text-sm text-gray-500 mt-1">A workspace can contain multiple teams</p>
+        </div>
       </div>
-    </div>
+    <% end %>
     <div class="bg-foreground border border-stroke rounded-lg p-4 mb-6">
       <h3 class="font-semibold text-gray-200 mb-4">Team Details</h3>
       <div class="mb-4">

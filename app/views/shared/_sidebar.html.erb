@@ -18,9 +18,28 @@
         <% end %>
       </div>
     </div>
-    <div class="p-2 mt-4">
-      <div class="text-xs font-medium text-gray-500 uppercase px-2 mb-2">Teams</div>
-      <div class="space-y-1">
+    <div class="p-2 mt-4" data-controller="teams-section">
+      <!-- Header with toggle and + button -->
+      <div class="flex items-center justify-between px-2 mb-2">
+        <button data-action="click->teams-section#toggle"
+                class="flex items-center gap-1 text-xs font-medium text-gray-500 uppercase flex-1 text-left hover:text-gray-400">
+          <svg data-teams-section-target="chevron"
+               class="w-3 h-3 transition-transform"
+               fill="currentColor"
+               viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+          </svg>
+          <span>Your Teams</span>
+        </button>
+        <%= link_to new_team_path, class: "p-1 text-gray-500 hover:text-gray-300" do %>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg>
+        <% end %>
+      </div>
+
+      <!-- Teams list (collapsible) -->
+      <div class="space-y-1" data-teams-section-target="list">
         <% user_teams.each do |team| %>
           <div class="group flex items-center justify-between px-2 py-1.5 rounded hover:bg-foreground <%= team.id == current_team&.id ? 'bg-foreground' : '' %>"
                data-controller="team-menu">
