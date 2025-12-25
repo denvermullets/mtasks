@@ -11,6 +11,8 @@ module Webhooks
       case event_type
       when 'pull_request'
         handle_pull_request_event
+      when 'issue_comment'
+        handle_issue_comment_event
       when 'ping'
         handle_ping_event
       else
@@ -50,6 +52,41 @@ module Webhooks
       GithubWebhookProcessorJob.perform_later(integration.id, pr_data.to_json)
 
       Rails.logger.info("Queued webhook processing for PR ##{pr_data['number']} in #{repo_full_name}")
+    end
+
+    def handle_issue_comment_event
+      action = webhook_payload['action']
+      comment = webhook_payload['comment']
+      issue = webhook_payload['issue']
+
+      # Only process comments on pull requests
+      return unless issue&.dig('pull_request')
+
+      # Only process created comments (not edited/deleted)
+      return unless action == 'created'
+
+      installation_id = webhook_payload.dig('installation', 'id')
+      repo_full_name = webhook_payload.dig('repository', 'full_name')
+
+      integration = GithubIntegration.find_by(
+        installation_id: installation_id,
+        github_repo_full_name: repo_full_name,
+        active: true
+      )
+
+      unless integration
+        Rails.logger.warn("No active integration found for installation: #{installation_id}, repo: #{repo_full_name}")
+        return
+      end
+
+      # Queue background job to process the comment
+      GithubCommentProcessorJob.perform_later(
+        integration.id,
+        issue['number'],
+        comment['body']
+      )
+
+      Rails.logger.info("Queued comment processing for PR ##{issue['number']} in #{repo_full_name}")
     end
 
     def handle_ping_event

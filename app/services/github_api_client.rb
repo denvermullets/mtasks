@@ -13,7 +13,7 @@ class GithubApiClient
       protocol: Rails.env.production? ? 'https' : 'http'
     )
 
-    events = %w[pull_request]
+    events = %w[pull_request issue_comment]
     config = {
       url: webhook_url,
       content_type: 'json',
