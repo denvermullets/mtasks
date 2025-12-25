@@ -4,8 +4,11 @@ source "https://rubygems.org"
 gem "rails", "~> 8.1.1"
 
 gem "bootsnap", require: false
+gem "dotenv"
 gem "image_processing", "~> 1.14.0"
 gem "importmap-rails"
+gem "jwt"
+gem "octokit"
 gem "pg", "~> 1.6.2"
 gem "propshaft"
 gem "puma", ">= 7.1.0"

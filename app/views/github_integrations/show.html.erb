@@ -1,0 +1,103 @@
+<div class="flex-1 flex flex-col min-h-0">
+  <!-- Top Bar -->
+  <div class="h-14 bg-menu border-b border-stroke flex items-center justify-between px-4 shrink-0">
+    <div class="flex items-center gap-4">
+      <h1 class="text-base font-semibold">GitHub Integration</h1>
+      <span class="text-sm text-gray-500"><%= @team.name %></span>
+    </div>
+    <%= link_to edit_team_path(@team), class: "text-sm text-gray-400 hover:text-gray-300" do %>
+      Back to Settings
+    <% end %>
+  </div>
+
+  <!-- Integration Content -->
+  <div class="flex-1 overflow-y-auto bg-background p-8">
+    <div class="max-w-4xl mx-auto w-full space-y-6">
+      <!-- Connection Status -->
+      <div class="bg-foreground border border-stroke rounded-lg p-6">
+        <h2 class="text-lg font-semibold text-gray-200 mb-4">Connection Status</h2>
+
+        <% if @integration&.active? %>
+          <!-- Connected State -->
+          <div class="space-y-4">
+            <div class="flex items-center gap-2">
+              <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+              <span class="text-green-400 font-medium">Connected</span>
+            </div>
+
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between py-2 border-b border-stroke">
+                <span class="text-gray-400">Repository:</span>
+                <span class="text-gray-200 font-mono"><%= @integration.github_repo_full_name %></span>
+              </div>
+
+              <% if @integration.last_webhook_at %>
+                <div class="flex justify-between py-2 border-b border-stroke">
+                  <span class="text-gray-400">Last Webhook:</span>
+                  <span class="text-gray-200"><%= time_ago_in_words(@integration.last_webhook_at) %> ago</span>
+                </div>
+              <% end %>
+            </div>
+
+            <%= button_to "Disconnect", team_github_integration_path(@team),
+                method: :delete,
+                data: { turbo_confirm: "Are you sure? This will stop tracking PRs from GitHub." },
+                class: "mt-4 px-4 py-2 border border-red-500 text-red-400 hover:bg-red-500 hover:text-white font-medium cursor-pointer rounded-md" %>
+          </div>
+        <% else %>
+          <!-- Disconnected State -->
+          <div class="space-y-4">
+            <div class="flex items-center gap-2">
+              <div class="w-2 h-2 bg-gray-500 rounded-full"></div>
+              <span class="text-gray-400 font-medium">Not Connected</span>
+            </div>
+
+            <p class="text-sm text-gray-400">
+              Connect your GitHub repository to automatically link pull requests to issues.
+            </p>
+
+            <%= link_to "Connect GitHub", new_team_github_integration_path(@team),
+                class: "inline-block px-4 py-2 border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 font-medium cursor-pointer rounded-md" %>
+          </div>
+        <% end %>
+      </div>
+
+      <!-- How it Works -->
+      <div class="bg-foreground border border-stroke rounded-lg p-6">
+        <h2 class="text-lg font-semibold text-gray-200 mb-4">How it Works</h2>
+        <div class="space-y-3 text-sm text-gray-400">
+          <div class="flex gap-3">
+            <span class="text-accent font-semibold">1.</span>
+            <p>Install the GitHub App on your repository. You choose which repos to give access to.</p>
+          </div>
+          <div class="flex gap-3">
+            <span class="text-accent font-semibold">2.</span>
+            <p>We'll create a webhook on your repository to receive pull request events automatically.</p>
+          </div>
+          <div class="flex gap-3">
+            <span class="text-accent font-semibold">3.</span>
+            <p>Include issue identifiers (e.g., <code class="px-1 py-0.5 bg-background rounded font-mono"><%= @team.identifier %>-123</code>) in your PR title or description.</p>
+          </div>
+          <div class="flex gap-3">
+            <span class="text-accent font-semibold">4.</span>
+            <p>We'll automatically link the PR to the issue and post a comment on GitHub with issue details.</p>
+          </div>
+          <div class="flex gap-3">
+            <span class="text-accent font-semibold">5.</span>
+            <p>View linked PRs directly on the issue page to track progress.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Requirements -->
+      <div class="bg-foreground border border-stroke rounded-lg p-6">
+        <h2 class="text-lg font-semibold text-gray-200 mb-4">Requirements</h2>
+        <ul class="space-y-2 text-sm text-gray-400 list-disc list-inside">
+          <li>You must have admin access to install the GitHub App on a repository</li>
+          <li>Webhook endpoint must be publicly accessible (use ngrok for local development)</li>
+          <li>The GitHub App must be created and configured (see setup instructions below)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>

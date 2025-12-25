@@ -80,11 +80,11 @@ GEM
     ast (2.4.3)
     base64 (0.3.0)
     bcrypt (3.1.20)
-    bigdecimal (3.3.1)
+    bigdecimal (4.0.1)
     bindex (0.8.1)
-    bootsnap (1.19.0)
+    bootsnap (1.20.1)
       msgpack (~> 1.2)
-    brakeman (7.1.1)
+    brakeman (7.1.2)
       racc
     builder (3.3.0)
     bundler-audit (0.9.3)
@@ -106,11 +106,18 @@ GEM
     debug (1.11.1)
       irb (~> 1.10)
       reline (>= 0.3.8)
+    dotenv (3.2.0)
     drb (2.2.3)
     erb (6.0.1)
     erubi (1.13.1)
     et-orbi (1.4.0)
       tzinfo
+    faraday (2.14.0)
+      faraday-net_http (>= 2.0, < 3.5)
+      json
+      logger
+    faraday-net_http (3.4.2)
+      net-http (~> 0.5)
     ffi (1.17.2-aarch64-linux-gnu)
     ffi (1.17.2-aarch64-linux-musl)
     ffi (1.17.2-arm-linux-gnu)
@@ -124,7 +131,7 @@ GEM
       raabro (~> 1.4)
     globalid (1.3.0)
       activesupport (>= 6.1)
-    i18n (1.14.7)
+    i18n (1.14.8)
       concurrent-ruby (~> 1.0)
     image_processing (1.14.0)
       mini_magick (>= 4.9.5, < 6)
@@ -139,10 +146,12 @@ GEM
       rdoc (>= 4.0.0)
       reline (>= 0.4.2)
     json (2.18.0)
+    jwt (3.1.2)
+      base64
     language_server-protocol (3.17.0.5)
     lint_roller (1.1.0)
     logger (1.7.0)
-    loofah (2.24.1)
+    loofah (2.25.0)
       crass (~> 1.0.2)
       nokogiri (>= 1.12.0)
     mail (2.9.0)
@@ -156,9 +165,12 @@ GEM
     mini_magick (5.3.1)
       logger
     mini_mime (1.1.5)
-    minitest (5.27.0)
+    minitest (6.0.0)
+      prism (~> 1.5)
     msgpack (1.8.0)
-    net-imap (0.5.12)
+    net-http (0.9.1)
+      uri (>= 0.11.1)
+    net-imap (0.6.2)
       date
       net-protocol
     net-pop (0.1.2)
@@ -184,6 +196,9 @@ GEM
       racc (~> 1.4)
     nokogiri (1.18.10-x86_64-linux-musl)
       racc (~> 1.4)
+    octokit (10.0.0)
+      faraday (>= 1, < 3)
+      sawyer (~> 0.9)
     parallel (1.27.0)
     parser (3.3.10.0)
       ast (~> 2.4.1)
@@ -251,7 +266,7 @@ GEM
       zeitwerk (~> 2.6)
     rainbow (3.1.1)
     rake (13.3.1)
-    rdoc (7.0.1)
+    rdoc (7.0.3)
       erb
       psych (>= 4.0.0)
       tsort
@@ -259,7 +274,7 @@ GEM
     reline (0.6.3)
       io-console (~> 0.5)
     rexml (3.4.4)
-    rubocop (1.82.0)
+    rubocop (1.82.1)
       json (~> 2.3)
       language_server-protocol (~> 3.17.0.2)
       lint_roller (~> 1.1.0)
@@ -278,6 +293,9 @@ GEM
       ffi (~> 1.12)
       logger
     rubyzip (3.2.2)
+    sawyer (0.9.3)
+      addressable (>= 2.3.5)
+      faraday (>= 0.17.3, < 3)
     securerandom (0.4.1)
     selenium-webdriver (4.39.0)
       base64 (~> 0.2)
@@ -307,20 +325,20 @@ GEM
     tailwindcss-rails (4.4.0)
       railties (>= 7.0.0)
       tailwindcss-ruby (~> 4.0)
-    tailwindcss-ruby (4.1.16)
-    tailwindcss-ruby (4.1.16-aarch64-linux-gnu)
-    tailwindcss-ruby (4.1.16-aarch64-linux-musl)
-    tailwindcss-ruby (4.1.16-arm64-darwin)
-    tailwindcss-ruby (4.1.16-x86_64-darwin)
-    tailwindcss-ruby (4.1.16-x86_64-linux-gnu)
-    tailwindcss-ruby (4.1.16-x86_64-linux-musl)
+    tailwindcss-ruby (4.1.18)
+    tailwindcss-ruby (4.1.18-aarch64-linux-gnu)
+    tailwindcss-ruby (4.1.18-aarch64-linux-musl)
+    tailwindcss-ruby (4.1.18-arm64-darwin)
+    tailwindcss-ruby (4.1.18-x86_64-darwin)
+    tailwindcss-ruby (4.1.18-x86_64-linux-gnu)
+    tailwindcss-ruby (4.1.18-x86_64-linux-musl)
     thor (1.4.0)
     thruster (0.1.17)
     thruster (0.1.17-aarch64-linux)
     thruster (0.1.17-arm64-darwin)
     thruster (0.1.17-x86_64-darwin)
     thruster (0.1.17-x86_64-linux)
-    timeout (0.5.0)
+    timeout (0.6.0)
     tsort (0.2.0)
     turbo-rails (2.0.20)
       actionpack (>= 7.1.0)
@@ -344,7 +362,7 @@ GEM
     websocket-extensions (0.1.5)
     xpath (3.2.0)
       nokogiri (~> 1.8)
-    zeitwerk (2.7.3)
+    zeitwerk (2.7.4)
 
 PLATFORMS
   aarch64-linux
@@ -365,8 +383,11 @@ DEPENDENCIES
   bundler-audit
   capybara
   debug
+  dotenv
   image_processing (~> 1.14.0)
   importmap-rails
+  jwt
+  octokit
   pg (~> 1.6.2)
   propshaft
   puma (>= 7.1.0)
