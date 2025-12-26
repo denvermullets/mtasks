@@ -3,8 +3,8 @@
   <nav class="px-8 py-4 flex items-center justify-between border-b border-stroke">
     <div class="flex items-center gap-8">
       <div class="flex items-center gap-2">
-        <div class="w-8 h-8 bg-accent rounded-lg"></div>
-        <span class="text-xl font-semibold">MTasks</span>
+        <%= image_tag "icon.png", alt: "JAIT Logo", class: "w-8 h-8" %>
+        <span class="text-xl font-semibold">Just Another Issue Tracker</span>
       </div>
     </div>
     <div class="flex items-center gap-4">
@@ -12,7 +12,6 @@
       <%= link_to "Sign up", new_user_path, class: "px-3.5 py-2.5 rounded-md border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 font-medium transition-colors" %>
     </div>
   </nav>
-
   <!-- Hero Section -->
   <section class="px-8 py-20 max-w-7xl mx-auto">
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -28,14 +27,10 @@
         </div>
       </div>
       <div class="relative">
-        <!-- Placeholder for hero image -->
-        <div class="bg-foreground border border-stroke rounded-lg aspect-video flex items-center justify-center">
-          <div class="text-gray-600">Hero Image</div>
-        </div>
+        <%= image_tag "full-issue.png", alt: "Issue tracking interface", class: "rounded-lg shadow-2xl border border-stroke" %>
       </div>
     </div>
   </section>
-
   <!-- Features Section -->
   <section class="px-8 py-20 bg-foreground">
     <div class="max-w-7xl mx-auto">
@@ -46,7 +41,6 @@
           Simple, powerful tools to help you manage your team's work effectively.
         </p>
       </div>
-
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
         <div class="space-y-8">
           <div class="border-l-4 border-accent pl-6">
@@ -55,14 +49,12 @@
               Create and manage issues with custom fields, priorities, and statuses to match your workflow.
             </p>
           </div>
-
           <div class="pl-6">
             <h3 class="text-2xl font-bold mb-3">Track progress</h3>
             <p class="text-gray-400 mb-4">
               Monitor your team's progress with kanban boards and detailed issue tracking.
             </p>
           </div>
-
           <div class="pl-6">
             <h3 class="text-2xl font-bold mb-3">Collaborate seamlessly</h3>
             <p class="text-gray-400 mb-4">
@@ -70,22 +62,16 @@
             </p>
           </div>
         </div>
-
         <div class="relative">
-          <!-- Placeholder for features image -->
-          <div class="bg-background border border-stroke rounded-lg aspect-video flex items-center justify-center">
-            <div class="text-gray-600">Features Screenshot</div>
-          </div>
+          <%= image_tag "board.png", alt: "Kanban board view", class: "rounded-lg shadow-2xl border border-stroke" %>
         </div>
       </div>
     </div>
   </section>
-
   <!-- Stats Section -->
   <section class="px-8 py-20">
     <div class="max-w-7xl mx-auto">
       <h2 class="text-4xl font-bold text-center mb-16">Built for teams of all sizes</h2>
-
       <div class="bg-foreground border border-stroke rounded-2xl p-12">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
           <div class="text-center">
@@ -104,7 +90,6 @@
       </div>
     </div>
   </section>
-
   <!-- CTA Section -->
   <section class="px-8 py-20 bg-foreground">
     <div class="max-w-4xl mx-auto text-center">
@@ -117,15 +102,13 @@
       </div>
     </div>
   </section>
-
   <!-- Footer -->
   <footer class="px-8 py-12 border-t border-stroke">
     <div class="max-w-7xl mx-auto">
       <div class="flex items-center gap-2 mb-8">
-        <div class="w-8 h-8 bg-accent rounded-lg"></div>
-        <span class="text-xl font-semibold">MTasks</span>
+        <%= image_tag "icon.png", alt: "JAIT Logo", class: "w-8 h-8" %>
+        <span class="text-xl font-semibold">Just Another Issue Tracker</span>
       </div>
-
       <div class="text-gray-400 text-sm">
         A simple issue tracker for your team.
       </div>
