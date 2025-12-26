@@ -29,9 +29,9 @@ production:
   primary:
     <<: *default
     url: <%= ENV['DATABASE_URL'] %>
-  # cache:
-  #   <<: *cache
-  #   url: <%= ENV['DATABASE_URL']&.+('_cache') %>
+  cache:
+    <<: *cache
+    url: <%= ENV['BLUE_DATABASE_URL'] %>
   queue:
     <<: *queue
     url: <%= ENV['DATABASE_QUEUE_URL'] %>
