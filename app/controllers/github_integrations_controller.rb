@@ -7,26 +7,27 @@ class GithubIntegrationsController < ApplicationController
   end
 
   def new
-    # Store team_id in session for installation callback
-    session[:github_installation_team_id] = @team.id
-    Rails.logger.info("Storing team_id in session: #{@team.id}")
-
-    # Redirect to GitHub App installation page with setup URL
+    # Redirect to GitHub App installation page with setup URL and state
     app_slug = ENV.fetch('GITHUB_APP_SLUG', 'your-app-name')
     callback_url = github_callback_url
-    Rails.logger.info("Redirecting to GitHub with callback URL: #{callback_url}")
-    redirect_to "https://github.com/apps/#{app_slug}/installations/new?setup_url=#{CGI.escape(callback_url)}",
+
+    # Encode team_id in state parameter so GitHub can pass it back
+    state = Base64.urlsafe_encode64({ team_id: @team.id, timestamp: Time.current.to_i }.to_json)
+
+    Rails.logger.info("Redirecting to GitHub for team #{@team.id} with callback URL: #{callback_url}")
+    redirect_to "https://github.com/apps/#{app_slug}/installations/new?state=#{state}",
                 allow_other_host: true
   end
 
   def callback
     installation_id = params[:installation_id]
-    team_id = session[:github_installation_team_id]
+    state = params[:state]
 
-    log_callback_received(installation_id, team_id)
+    log_callback_received(installation_id, state)
+
+    team_id = extract_team_id_from_state(state)
     return unless valid_callback_params?(installation_id, team_id)
 
-    session.delete(:github_installation_team_id)
     setup_github_integration(installation_id)
   end
 
@@ -60,21 +61,31 @@ class GithubIntegrationsController < ApplicationController
     end
 
     unless team_id
-      redirect_to root_path, alert: 'Session expired. Please try again.'
+      redirect_to root_path, alert: 'Invalid callback state. Please try again.'
       return false
     end
 
     @team = current_user.teams.find_by(id: team_id)
     unless @team
-      redirect_to root_path, alert: 'Team not found.'
+      redirect_to root_path, alert: 'Team not found or access denied.'
       return false
     end
 
     true
   end
 
-  def log_callback_received(installation_id, team_id)
-    Rails.logger.info("GitHub callback received - installation_id: #{installation_id}, team_id: #{team_id}")
+  def extract_team_id_from_state(state)
+    return nil unless state.present?
+
+    decoded = JSON.parse(Base64.urlsafe_decode64(state))
+    decoded['team_id']
+  rescue StandardError => e
+    Rails.logger.error("Failed to decode state parameter: #{e.message}")
+    nil
+  end
+
+  def log_callback_received(installation_id, state)
+    Rails.logger.info("GitHub callback received - installation_id: #{installation_id}, state: #{state}")
     Rails.logger.info("All params: #{params.inspect}")
   end
 
