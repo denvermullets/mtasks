@@ -47,15 +47,8 @@ module GhIntegration
         raise SetupError, "Failed to save integration: #{integration.errors.full_messages.join(', ')}"
       end
 
-      create_webhook_for_integration(integration)
+      Rails.logger.info("GitHub integration created for #{repo[:full_name]} (installation: #{@installation_id})")
       integration
-    end
-
-    def create_webhook_for_integration(integration)
-      GithubApiClient.new(integration).create_webhook
-    rescue StandardError => e
-      Rails.logger.error("Failed to create webhook: #{e.message}")
-      raise SetupError, "Connected but failed to create webhook: #{e.message}"
     end
   end
 end
