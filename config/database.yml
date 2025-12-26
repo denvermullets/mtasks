@@ -20,17 +20,21 @@ development:
   queue:
     <<: *queue
     database: mtasks_dev_queue
+  cable:
+    <<: *default
+    database: mtasks_development
+    migrations_paths: db/cable_migrate
 
 test:
   <<: *default
   database: mtasks_test
 
 production:
-  primary:
+  primary: &primary_production
     <<: *default
     url: <%= ENV['DATABASE_URL'] %>
   cache:
-    <<: *cache
+    <<: *primary_production
     url: <%= ENV['BLUE_DATABASE_URL'] %>
   queue:
     <<: *queue
