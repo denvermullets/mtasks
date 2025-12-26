@@ -11,7 +11,7 @@ class IssuesController < ApplicationController
       :lane, :project, :milestone, :labels, :assignee, :creator
     )
 
-    @display_service = IssueDisplayService.new(base_issues, @display_options)
+    @display_service = IssueDisplayService.new(base_issues, @display_options, current_team)
     @grouped_issues = @display_service.grouped_issues
     @lanes = current_team.lanes.order(:position)
   end
