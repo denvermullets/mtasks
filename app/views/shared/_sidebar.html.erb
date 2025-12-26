@@ -10,14 +10,16 @@
   </div>
   <!-- Navigation -->
   <div class="flex-1 overflow-y-auto">
-    <div class="p-2">
-      <div class="text-xs font-medium text-gray-500 uppercase px-2 mb-2">Workspace</div>
-      <div class="space-y-1">
-        <%= link_to team_issues_path(current_team), class: "flex items-center gap-2 px-2 py-1.5 text-sm rounded hover:bg-foreground text-gray-300" do %>
-          <span>My issues</span>
-        <% end %>
+    <% if current_team.present? %>
+      <div class="p-2">
+        <div class="text-xs font-medium text-gray-500 uppercase px-2 mb-2">Workspace</div>
+        <div class="space-y-1">
+          <%= link_to team_issues_path(current_team), class: "flex items-center gap-2 px-2 py-1.5 text-sm rounded hover:bg-foreground text-gray-300" do %>
+            <span>My issues</span>
+          <% end %>
+        </div>
       </div>
-    </div>
+    <% end %>
     <div class="p-2 mt-4" data-controller="teams-section">
       <!-- Header with toggle and + button -->
       <div class="flex items-center justify-between px-2 mb-2">
@@ -79,9 +81,11 @@
     </div>
   </div>
   <!-- Actions -->
-  <div class="p-4 border-t border-stroke">
-    <%= link_to new_import_path, class: "text-xs text-gray-400 hover:text-gray-300" do %>
-      Import CSV
-    <% end %>
-  </div>
+  <% if current_team.present? %>
+    <div class="p-4 border-t border-stroke">
+      <%= link_to new_import_path, class: "text-xs text-gray-400 hover:text-gray-300" do %>
+        Import CSV
+      <% end %>
+    </div>
+  <% end %>
 </aside>
