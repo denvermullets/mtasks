@@ -1,4 +1,4 @@
-module GithubIntegration
+module GhIntegration
   class FindFromWebhook < Service
     def initialize(installation_id:, repo_full_name:)
       @installation_id = installation_id

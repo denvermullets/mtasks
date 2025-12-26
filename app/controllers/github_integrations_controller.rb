@@ -21,9 +21,9 @@ class GithubIntegrationsController < ApplicationController
 
     return unless valid_callback_params?(installation_id, team_id)
 
-    GithubIntegration::Setup.call(team: @team, installation_id: installation_id)
+    GhIntegration::Setup.call(team: @team, installation_id: installation_id)
     redirect_to team_github_integration_path(@team), notice: 'Successfully connected to GitHub!'
-  rescue GithubIntegration::Setup::SetupError => e
+  rescue GhIntegration::Setup::SetupError => e
     redirect_to team_github_integration_path(@team), alert: e.message
   rescue Octokit::Error => e
     Rails.logger.error("GitHub API error: #{e.message}")

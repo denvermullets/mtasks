@@ -1,4 +1,4 @@
-module GithubIntegration
+module GhIntegration
   class Setup < Service
     class SetupError < StandardError; end
 
