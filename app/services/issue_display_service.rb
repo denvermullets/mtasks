@@ -1,10 +1,11 @@
 # rubocop:disable Metrics/ClassLength
 class IssueDisplayService
-  attr_reader :issues, :options
+  attr_reader :issues, :options, :team
 
-  def initialize(issues, options = {})
+  def initialize(issues, options = {}, team = nil)
     @issues = issues
     @options = default_options.merge(options)
+    @team = team
   end
 
   def grouped_issues
@@ -92,7 +93,7 @@ class IssueDisplayService
   # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
   def group_by_association(issue_scope, association_name)
     groups = {}
-    team = issue_scope.first&.team
+    team = @team || issue_scope.first&.team
     return groups unless team
 
     all_groups = case association_name
