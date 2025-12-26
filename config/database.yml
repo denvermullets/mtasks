@@ -3,9 +3,9 @@ default: &default
   encoding: unicode
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
 
-# cache: &cache
-#   <<: *default
-#   migrations_paths: db/cache_migrate
+cache: &cache
+  <<: *default
+  migrations_paths: db/cache_migrate
 queue: &queue
   <<: *default
   migrations_paths: db/queue_migrate
