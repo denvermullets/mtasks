@@ -10,8 +10,14 @@ class TeamsController < ApplicationController
   end
 
   def create
-    # Create workspace if user doesn't have one
-    @workspace = current_user.owned_workspaces.first_or_create!(workspace_params)
+    # Get or create workspace
+    @workspace = if params[:workspace].present?
+                   # New user creating first workspace and team
+                   current_user.owned_workspaces.first_or_create!(workspace_params)
+                 else
+                   # Existing user adding a team
+                   current_user.owned_workspaces.first
+                 end
 
     # Create team
     @team = @workspace.teams.build(team_params)
