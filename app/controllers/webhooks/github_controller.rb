@@ -71,7 +71,7 @@ module Webhooks
     end
 
     def find_integration_for_webhook
-      GithubIntegration::FindFromWebhook.call(
+      GhIntegration::FindFromWebhook.call(
         installation_id: webhook_payload.dig('installation', 'id'),
         repo_full_name: webhook_payload.dig('repository', 'full_name')
       )
