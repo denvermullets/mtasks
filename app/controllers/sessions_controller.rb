@@ -1,5 +1,6 @@
 class SessionsController < ApplicationController
   allow_unauthenticated_access only: %i[new create]
+  before_action :redirect_if_authenticated, only: %i[new create]
   rate_limit to: 10, within: 3.minutes, only: :create, with: lambda {
     redirect_to new_session_path, alert: 'Try again later.'
   }

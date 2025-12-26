@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title><%= content_for(:title) || "Mtasks" %></title>
+    <title><%= content_for(:title) || "JAIT" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="Mtasks">
+    <meta name="application-name" content="Just Another Issue Tracker">
     <meta name="mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
@@ -19,7 +19,7 @@
     <%= javascript_importmap_tags %>
   </head>
   <body class="<%= controller_name == 'landing' ? 'bg-background' : 'bg-background text-gray-100 h-screen overflow-hidden flex' %>">
-    <%= render "shared/sidebar" if authenticated? %>
+    <%= render "shared/sidebar" if authenticated? && controller_name != 'landing' %>
     <% if controller_name == 'landing' %>
       <%= yield %>
     <% else %>

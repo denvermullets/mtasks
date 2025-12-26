@@ -20,6 +20,7 @@ module Authentication
   end
 
   def set_current_user
+    resume_session
     @current_user = Current.user
   end
 
