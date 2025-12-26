@@ -17,6 +17,8 @@ module Webhooks
         handle_issue_comment_event
       when 'ping'
         handle_ping_event
+      when 'installation', 'installation_repositories'
+        handle_installation_event
       else
         Rails.logger.info("Received unhandled GitHub event: #{event_type}")
       end
@@ -61,6 +63,23 @@ module Webhooks
 
     def handle_ping_event
       Rails.logger.info("Received GitHub ping event for repo: #{webhook_payload.dig('repository', 'full_name')}")
+    end
+
+    def handle_installation_event
+      installation_id = webhook_payload.dig('installation', 'id')
+      action = webhook_payload['action']
+
+      Rails.logger.info("Received installation event: #{action} for installation #{installation_id}")
+
+      # For now, just log the event. The integration should be created via the callback flow.
+      # This webhook serves as a confirmation that the installation was successful.
+      if installation_id && GithubIntegration.exists?(installation_id: installation_id)
+        integration = GithubIntegration.find_by(installation_id: installation_id)
+        integration.update(last_webhook_at: Time.current)
+        Rails.logger.info("Updated existing integration for installation #{installation_id}")
+      else
+        Rails.logger.warn("Received installation webhook for unknown installation #{installation_id}")
+      end
     end
 
     def valid_pr_comment?(action, issue)

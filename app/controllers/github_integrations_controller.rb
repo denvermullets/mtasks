@@ -9,25 +9,25 @@ class GithubIntegrationsController < ApplicationController
   def new
     # Store team_id in session for installation callback
     session[:github_installation_team_id] = @team.id
+    Rails.logger.info("Storing team_id in session: #{@team.id}")
 
-    # Redirect to GitHub App installation page
+    # Redirect to GitHub App installation page with setup URL
     app_slug = ENV.fetch('GITHUB_APP_SLUG', 'your-app-name')
-    redirect_to "https://github.com/apps/#{app_slug}/installations/new", allow_other_host: true
+    callback_url = github_callback_url
+    Rails.logger.info("Redirecting to GitHub with callback URL: #{callback_url}")
+    redirect_to "https://github.com/apps/#{app_slug}/installations/new?setup_url=#{CGI.escape(callback_url)}",
+                allow_other_host: true
   end
 
   def callback
     installation_id = params[:installation_id]
-    team_id = session.delete(:github_installation_team_id)
+    team_id = session[:github_installation_team_id]
 
+    log_callback_received(installation_id, team_id)
     return unless valid_callback_params?(installation_id, team_id)
 
-    GhIntegration::Setup.call(team: @team, installation_id: installation_id)
-    redirect_to team_github_integration_path(@team), notice: 'Successfully connected to GitHub!'
-  rescue GhIntegration::Setup::SetupError => e
-    redirect_to team_github_integration_path(@team), alert: e.message
-  rescue Octokit::Error => e
-    Rails.logger.error("GitHub API error: #{e.message}")
-    redirect_to team_github_integration_path(@team), alert: "GitHub error: #{e.message}"
+    session.delete(:github_installation_team_id)
+    setup_github_integration(installation_id)
   end
 
   def destroy
@@ -71,5 +71,29 @@ class GithubIntegrationsController < ApplicationController
     end
 
     true
+  end
+
+  def log_callback_received(installation_id, team_id)
+    Rails.logger.info("GitHub callback received - installation_id: #{installation_id}, team_id: #{team_id}")
+    Rails.logger.info("All params: #{params.inspect}")
+  end
+
+  def setup_github_integration(installation_id)
+    GhIntegration::Setup.call(team: @team, installation_id: installation_id)
+    redirect_to team_github_integration_path(@team), notice: 'Successfully connected to GitHub!'
+  rescue GhIntegration::Setup::SetupError => e
+    handle_setup_error(e)
+  rescue Octokit::Error => e
+    handle_github_api_error(e)
+  end
+
+  def handle_setup_error(error)
+    Rails.logger.error("Setup error: #{error.message}")
+    redirect_to team_github_integration_path(@team), alert: error.message
+  end
+
+  def handle_github_api_error(error)
+    Rails.logger.error("GitHub API error: #{error.message}")
+    redirect_to team_github_integration_path(@team), alert: "GitHub error: #{error.message}"
   end
 end
