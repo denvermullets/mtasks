@@ -10,22 +10,12 @@ class TeamsController < ApplicationController
   end
 
   def create
-    # Get or create workspace
-    @workspace = if params[:workspace].present?
-                   # New user creating first workspace and team
-                   current_user.owned_workspaces.first_or_create!(workspace_params)
-                 else
-                   # Existing user adding a team
-                   current_user.owned_workspaces.first
-                 end
-
-    # Create team
+    @workspace = find_or_create_workspace
     @team = @workspace.teams.build(team_params)
 
     if @team.save
-      # Add current user to the team
-      @team.team_memberships.create!(user: current_user)
-      redirect_to root_path, notice: 'Team created successfully!'
+      setup_team_membership
+      redirect_to team_issues_path(@team), notice: 'Team created successfully!'
     else
       render :new, status: :unprocessable_entity
     end
@@ -67,5 +57,18 @@ class TeamsController < ApplicationController
 
   def team_update_params
     params.require(:team).permit(:name, :identifier)
+  end
+
+  def find_or_create_workspace
+    if params[:workspace].present?
+      current_user.owned_workspaces.first_or_create!(workspace_params)
+    else
+      current_user.owned_workspaces.first
+    end
+  end
+
+  def setup_team_membership
+    @team.team_memberships.create!(user: current_user)
+    session[:current_team_id] = @team.id
   end
 end
