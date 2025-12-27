@@ -3,7 +3,7 @@ class GithubRepositorySubscription < ApplicationRecord
   belongs_to :github_installation
   has_many :pull_requests, dependent: :destroy
 
-  validates :team_id, uniqueness: { scope: [:github_installation_id, :github_repo_full_name] }
+  validates :team_id, uniqueness: { scope: %i[github_installation_id github_repo_full_name] }
   validates :github_repo_full_name, presence: true
 
   scope :active, -> { where(active: true) }

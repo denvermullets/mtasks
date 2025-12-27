@@ -42,7 +42,7 @@ module GhIntegration
       repo_full_name = repo['full_name']
 
       # Create or update subscription for this team + installation + repo
-      subscription = GithubRepositorySubscription.find_or_create_by!(
+      GithubRepositorySubscription.find_or_create_by!(
         team: team,
         github_installation: installation,
         github_repo_full_name: repo_full_name

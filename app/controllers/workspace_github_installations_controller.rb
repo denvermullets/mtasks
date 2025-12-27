@@ -13,7 +13,7 @@ class WorkspaceGithubInstallationsController < ApplicationController
       timestamp: Time.current.to_i
     }.to_json)
 
-    app_slug = ENV['GITHUB_APP_SLUG']
+    app_slug = ENV.fetch('GITHUB_APP_SLUG', nil)
     redirect_to "https://github.com/apps/#{app_slug}/installations/new?state=#{state}",
                 allow_other_host: true
   end
@@ -50,7 +50,7 @@ class WorkspaceGithubInstallationsController < ApplicationController
 
     redirect_to workspace_github_installation_path(@workspace),
                 notice: 'GitHub installation connected! Repositories will sync via webhook.'
-  rescue => e
+  rescue StandardError => e
     Rails.logger.error("GitHub installation failed: #{e.message}")
     redirect_to workspace_path(@workspace),
                 alert: "Failed to connect GitHub: #{e.message}"

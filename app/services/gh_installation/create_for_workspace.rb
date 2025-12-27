@@ -15,7 +15,7 @@ module GhInstallation
 
       # Create or update installation record
       installation = @workspace.github_installations
-        .find_or_initialize_by(installation_id: @installation_id)
+                               .find_or_initialize_by(installation_id: @installation_id)
 
       installation.update!(
         github_account_login: installation_data[:account][:login],
@@ -35,7 +35,7 @@ module GhInstallation
     def fetch_installation_data
       client = Octokit::Client.new(bearer_token: GithubApp.generate_jwt)
       client.find_app_installations
-        .find { |i| i[:id] == @installation_id.to_i }
+            .find { |i| i[:id] == @installation_id.to_i }
     rescue Octokit::Error => e
       Rails.logger.error("Failed to fetch installation #{@installation_id}: #{e.message}")
       nil

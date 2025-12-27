@@ -36,9 +36,9 @@ class TeamGithubRepositoriesController < ApplicationController
   end
 
   def authorize_team_member!
-    unless @team.users.include?(current_user)
-      redirect_to root_path, alert: 'Access denied'
-    end
+    return if @team.users.include?(current_user)
+
+    redirect_to root_path, alert: 'Access denied'
   end
 
   def fetch_available_repos
@@ -52,7 +52,7 @@ class TeamGithubRepositoriesController < ApplicationController
     # Filter out already subscribed repos
     subscribed_repo_names = @subscribed_repos.pluck(:github_repo_full_name)
     all_repos.reject { |repo| subscribed_repo_names.include?(repo[:full_name]) }
-  rescue => e
+  rescue StandardError => e
     Rails.logger.error("Failed to fetch repos: #{e.message}")
     []
   end

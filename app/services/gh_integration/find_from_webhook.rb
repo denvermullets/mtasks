@@ -9,12 +9,12 @@ module GhIntegration
     def call
       # Step 1: Find all teams subscribed to this repo
       all_subscriptions = GithubRepositorySubscription
-        .joins(:github_installation)
-        .where(
-          github_installations: { installation_id: @installation_id },
-          github_repo_full_name: @repo_full_name,
-          active: true
-        )
+                          .joins(:github_installation)
+                          .where(
+                            github_installations: { installation_id: @installation_id },
+                            github_repo_full_name: @repo_full_name,
+                            active: true
+                          )
 
       if all_subscriptions.empty?
         Rails.logger.info("No subscriptions found for installation: #{@installation_id}, repo: #{@repo_full_name}")
@@ -35,8 +35,8 @@ module GhIntegration
 
       # Step 4: Filter subscriptions to only teams mentioned
       matching_subscriptions = all_subscriptions
-        .joins(:team)
-        .where(teams: { identifier: team_identifiers })
+                               .joins(:team)
+                               .where(teams: { identifier: team_identifiers })
 
       Rails.logger.info(
         "Found #{matching_subscriptions.count} matching subscription(s) for PR ##{@pr_data['number']} " \
