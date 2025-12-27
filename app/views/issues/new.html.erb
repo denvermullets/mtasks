@@ -199,24 +199,14 @@
           <!-- Labels -->
           <div class="relative">
             <button type="button"
-                    data-action="click->issue-form#toggleDropdown"
-              data-dropdown="labels"
+                    data-action="click->issue-form#toggleLabelsDropdown"
               class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
               </svg>
               <span data-issue-form-target="labelsLabel">Labels</span>
             </button>
-            <div data-issue-form-target="labelsDropdown" class="hidden absolute top-full left-0 mt-1 min-w-[200px] bg-foreground border border-stroke rounded-md shadow-lg z-10 max-h-60 overflow-y-auto">
-              <% @labels.each do |label| %>
-                <label class="flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors cursor-pointer">
-                  <%= check_box_tag "issue[label_ids][]", label.id, false,
-                      data: { action: "change->issue-form#updateLabelsCount" },
-                      class: "mr-2 rounded bg-background border-stroke accent-accent" %>
-                  <%= label.name %>
-                </label>
-              <% end %>
-            </div>
+            <%= render "labels/new_issue_picker", team_id: @team.id %>
           </div>
         </div>
         <!-- Bottom Actions -->

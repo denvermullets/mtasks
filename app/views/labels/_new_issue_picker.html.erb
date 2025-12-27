@@ -1,0 +1,49 @@
+<%
+  team_id = local_assigns[:team_id]
+%>
+<div data-controller="new-issue-label-picker"
+     data-new-issue-label-picker-team-id-value="<%= team_id %>"
+     data-new-issue-label-picker-selected-label-ids-value="[]">
+  <!-- Hidden fields container for form submission -->
+  <div data-new-issue-label-picker-target="hiddenFields"></div>
+  <!-- Picker Overlay -->
+  <div data-new-issue-label-picker-target="picker"
+       class="hidden fixed z-50 w-80 bg-context-foreground border-2 border-stroke rounded-md shadow-2xl">
+    <!-- Search Input -->
+    <div class="p-2 border-b border-stroke">
+      <input type="text"
+             placeholder="Search or create labels..."
+             data-new-issue-label-picker-target="search"
+             data-action="input->new-issue-label-picker#filterLabels keydown->new-issue-label-picker#handleKeyDown"
+      class="w-full px-3 py-2 text-sm bg-background border border-stroke rounded text-gray-200 placeholder-gray-500 focus:outline-none focus:border-accent" />
+    </div>
+    <!-- Labels List Container -->
+    <div data-new-issue-label-picker-target="labelList" class="max-h-96 overflow-y-auto">
+      <!-- Create New Label Option (shown dynamically) -->
+      <div data-new-issue-label-picker-target="createOption" class="hidden border-b border-stroke">
+        <button type="button"
+                data-action="click->new-issue-label-picker#createAndToggleLabel"
+          data-new-issue-label-picker-target="createButton"
+          class="w-full text-left px-3 py-2 text-sm text-accent hover:bg-hover-highlight transition-colors flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg>
+          <span>Create "<span data-new-issue-label-picker-target="createText"></span>"</span>
+        </button>
+      </div>
+      <!-- All Labels Section -->
+      <div>
+        <div class="px-3 py-2 text-xs font-medium text-gray-500">Labels</div>
+        <div data-new-issue-label-picker-target="allLabelsList"></div>
+      </div>
+      <!-- Empty State -->
+      <div data-new-issue-label-picker-target="emptyState" class="hidden px-3 py-8 text-center text-sm text-gray-500">
+        No labels found. Start typing to create one.
+      </div>
+      <!-- Loading State -->
+      <div data-new-issue-label-picker-target="loadingState" class="px-3 py-8 text-center">
+        <div class="inline-block w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    </div>
+  </div>
+</div>
