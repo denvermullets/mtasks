@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_26_155447) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_27_132751) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -37,7 +37,8 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_26_155447) do
     t.bigint "team_id", null: false
     t.datetime "token_expires_at"
     t.datetime "updated_at", null: false
-    t.index ["team_id"], name: "index_github_integrations_on_team_id", unique: true
+    t.index ["team_id", "installation_id", "github_repo_full_name"], name: "index_github_integrations_on_team_installation_repo", unique: true
+    t.index ["team_id"], name: "index_github_integrations_on_team_id"
   end
 
   create_table "issue_labels", force: :cascade do |t|
@@ -119,6 +120,17 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_26_155447) do
     t.bigint "team_id", null: false
     t.datetime "updated_at", null: false
     t.index ["team_id"], name: "index_milestones_on_team_id"
+  end
+
+  create_table "pending_github_setups", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "expires_at"
+    t.string "installation_id"
+    t.bigint "team_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["expires_at"], name: "index_pending_github_setups_on_expires_at"
+    t.index ["installation_id"], name: "index_pending_github_setups_on_installation_id"
+    t.index ["team_id"], name: "index_pending_github_setups_on_team_id"
   end
 
   create_table "projects", force: :cascade do |t|
@@ -237,6 +249,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_26_155447) do
   add_foreign_key "labels", "teams"
   add_foreign_key "lanes", "teams"
   add_foreign_key "milestones", "teams"
+  add_foreign_key "pending_github_setups", "teams"
   add_foreign_key "projects", "milestones"
   add_foreign_key "projects", "teams"
   add_foreign_key "pull_requests", "github_integrations"

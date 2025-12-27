@@ -66,19 +66,82 @@ module Webhooks
     end
 
     def handle_installation_event
-      installation_id = webhook_payload.dig('installation', 'id')
+      installation_id = webhook_payload.dig('installation', 'id')&.to_s
       action = webhook_payload['action']
 
       Rails.logger.info("Received installation event: #{action} for installation #{installation_id}")
 
-      # For now, just log the event. The integration should be created via the callback flow.
-      # This webhook serves as a confirmation that the installation was successful.
-      if installation_id && GithubIntegration.exists?(installation_id: installation_id)
-        integration = GithubIntegration.find_by(installation_id: installation_id)
-        integration.update(last_webhook_at: Time.current)
-        Rails.logger.info("Updated existing integration for installation #{installation_id}")
+      case action
+      when 'created', 'added'
+        handle_repositories_added(installation_id)
+      when 'removed'
+        handle_repositories_removed(installation_id)
+      when 'deleted'
+        # Installation was completely deleted - remove all integrations for this installation
+        GithubIntegration.where(installation_id: installation_id).destroy_all
+        Rails.logger.info("Deleted all integrations for installation #{installation_id}")
       else
-        Rails.logger.warn("Received installation webhook for unknown installation #{installation_id}")
+        # For other actions, just update the last_webhook_at timestamp
+        if installation_id && GithubIntegration.exists?(installation_id: installation_id)
+          GithubIntegration.where(installation_id: installation_id).update_all(last_webhook_at: Time.current)
+          Rails.logger.info("Updated existing integrations for installation #{installation_id}")
+        end
+      end
+    end
+
+    def handle_repositories_added(installation_id)
+      repositories = webhook_payload['repositories_added'] || []
+      return if repositories.empty?
+
+      # Find pending setup to determine which team initiated this
+      pending_setup = PendingGithubSetup.active.find_by(installation_id: installation_id)
+
+      unless pending_setup
+        Rails.logger.warn("No pending setup found for installation #{installation_id}, cannot create integrations")
+        return
+      end
+
+      team = pending_setup.team
+
+      repositories.each do |repo|
+        repo_full_name = repo['full_name']
+
+        # Create or update integration for this team + installation + repo
+        integration = GithubIntegration.find_or_initialize_by(
+          team: team,
+          installation_id: installation_id,
+          github_repo_full_name: repo_full_name
+        )
+
+        integration.update!(
+          active: true,
+          last_webhook_at: Time.current
+        )
+
+        Rails.logger.info("Created/updated integration for #{team.name} - #{repo_full_name}")
+      end
+
+      # Delete the pending setup now that we've processed it
+      pending_setup.destroy
+      Rails.logger.info("Deleted pending setup for installation #{installation_id}")
+    end
+
+    def handle_repositories_removed(installation_id)
+      repositories = webhook_payload['repositories_removed'] || []
+      return if repositories.empty?
+
+      repositories.each do |repo|
+        repo_full_name = repo['full_name']
+
+        # Find and deactivate/delete all integrations for this installation + repo
+        # (could be multiple teams using the same installation)
+        integrations = GithubIntegration.where(
+          installation_id: installation_id,
+          github_repo_full_name: repo_full_name
+        )
+
+        integrations.destroy_all
+        Rails.logger.info("Deleted #{integrations.count} integration(s) for repo #{repo_full_name}")
       end
     end
 
