@@ -91,58 +91,18 @@ module Webhooks
 
     def handle_repositories_added(installation_id)
       repositories = webhook_payload['repositories_added'] || []
-      return if repositories.empty?
-
-      # Find pending setup to determine which team initiated this
-      pending_setup = PendingGithubSetup.active.find_by(installation_id: installation_id)
-
-      unless pending_setup
-        Rails.logger.warn("No pending setup found for installation #{installation_id}, cannot create integrations")
-        return
-      end
-
-      team = pending_setup.team
-
-      repositories.each do |repo|
-        repo_full_name = repo['full_name']
-
-        # Create or update integration for this team + installation + repo
-        integration = GithubIntegration.find_or_initialize_by(
-          team: team,
-          installation_id: installation_id,
-          github_repo_full_name: repo_full_name
-        )
-
-        integration.update!(
-          active: true,
-          last_webhook_at: Time.current
-        )
-
-        Rails.logger.info("Created/updated integration for #{team.name} - #{repo_full_name}")
-      end
-
-      # Delete the pending setup now that we've processed it
-      pending_setup.destroy
-      Rails.logger.info("Deleted pending setup for installation #{installation_id}")
+      GhIntegration::ProcessAddedRepositories.call(
+        installation_id: installation_id,
+        repositories: repositories
+      )
     end
 
     def handle_repositories_removed(installation_id)
       repositories = webhook_payload['repositories_removed'] || []
-      return if repositories.empty?
-
-      repositories.each do |repo|
-        repo_full_name = repo['full_name']
-
-        # Find and deactivate/delete all integrations for this installation + repo
-        # (could be multiple teams using the same installation)
-        integrations = GithubIntegration.where(
-          installation_id: installation_id,
-          github_repo_full_name: repo_full_name
-        )
-
-        integrations.destroy_all
-        Rails.logger.info("Deleted #{integrations.count} integration(s) for repo #{repo_full_name}")
-      end
+      GhIntegration::ProcessRemovedRepositories.call(
+        installation_id: installation_id,
+        repositories: repositories
+      )
     end
 
     def valid_pr_comment?(action, issue)
