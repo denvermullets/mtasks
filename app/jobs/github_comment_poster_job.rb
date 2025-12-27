@@ -17,13 +17,13 @@ class GithubCommentPosterJob < ApplicationJob
 
     issue = issue_pr.issue
     pr = issue_pr.pull_request
-    integration = pr.github_integration
+    subscription = pr.github_repository_subscription
 
     # Build comment body
     comment_body = build_comment_body(issue)
 
     # Post comment via GitHub API
-    api_client = GithubApiClient.new(integration)
+    api_client = GithubApiClient.new(subscription)
     api_client.post_pr_comment(pr.pr_number, comment_body)
 
     # Mark as posted

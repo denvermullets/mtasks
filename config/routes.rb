@@ -10,9 +10,7 @@ Rails.application.routes.draw do
 
   resources :teams, only: %i[new create show edit update] do
     resource :display_preference, only: %i[update]
-    # TODO: Remove after migration to new GitHub integration architecture
-    resource :github_integration, only: %i[show new destroy]
-    # New GitHub repositories management
+    # GitHub repositories management
     resources :github_repositories, only: %i[index create destroy], controller: 'team_github_repositories'
     resources :labels, only: %i[index create update destroy]
     resources :lanes, only: %i[create update destroy]
@@ -27,8 +25,6 @@ Rails.application.routes.draw do
 
   # GitHub App Installation Callbacks
   get '/github/callback', to: 'workspace_github_installations#callback'
-  # TODO: Remove old callback after migration
-  # get '/github/callback', to: 'github_integrations#callback'
 
   # GitHub Webhooks
   namespace :webhooks do

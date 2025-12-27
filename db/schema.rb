@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_27_162415) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_27_173950) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -35,23 +35,6 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_27_162415) do
     t.bigint "workspace_id", null: false
     t.index ["installation_id"], name: "index_github_installations_on_installation_id", unique: true
     t.index ["workspace_id"], name: "index_github_installations_on_workspace_id"
-  end
-
-  create_table "github_integrations", force: :cascade do |t|
-    t.boolean "active", default: true, null: false
-    t.datetime "created_at", null: false
-    t.string "encrypted_access_token"
-    t.string "encrypted_access_token_iv"
-    t.string "encrypted_refresh_token"
-    t.string "encrypted_refresh_token_iv"
-    t.string "github_repo_full_name", null: false
-    t.string "installation_id"
-    t.datetime "last_webhook_at"
-    t.bigint "team_id", null: false
-    t.datetime "token_expires_at"
-    t.datetime "updated_at", null: false
-    t.index ["team_id", "installation_id", "github_repo_full_name"], name: "index_github_integrations_on_team_installation_repo", unique: true
-    t.index ["team_id"], name: "index_github_integrations_on_team_id"
   end
 
   create_table "github_repository_subscriptions", force: :cascade do |t|
@@ -261,7 +244,6 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_27_162415) do
   add_foreign_key "comments", "issues"
   add_foreign_key "comments", "users"
   add_foreign_key "github_installations", "workspaces"
-  add_foreign_key "github_integrations", "teams"
   add_foreign_key "github_repository_subscriptions", "github_installations"
   add_foreign_key "github_repository_subscriptions", "teams"
   add_foreign_key "issue_labels", "issues"
