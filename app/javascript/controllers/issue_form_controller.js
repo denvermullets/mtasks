@@ -138,4 +138,20 @@ export default class extends Controller {
       this.labelsLabelTarget.textContent = "Labels"
     }
   }
+
+  toggleLabelsDropdown(event) {
+    event.stopPropagation()
+
+    // Close all other dropdowns
+    this.closeAllDropdowns()
+
+    // Find and open the label picker
+    const labelPickerElement = event.currentTarget.parentElement.querySelector('[data-controller="new-issue-label-picker"]')
+    if (labelPickerElement) {
+      const controller = this.application.getControllerForElementAndIdentifier(labelPickerElement, "new-issue-label-picker")
+      if (controller && controller.open) {
+        controller.open()
+      }
+    }
+  }
 }

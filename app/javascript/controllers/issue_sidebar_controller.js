@@ -30,7 +30,19 @@ export default class extends Controller {
     this.closeAllDropdowns()
 
     if (this[dropdownTarget]) {
+      const wasHidden = this[dropdownTarget].classList.contains("hidden")
       this[dropdownTarget].classList.toggle("hidden")
+
+      // If this is the labels dropdown and we're opening it, also open the label picker
+      if (dropdownType === "labels" && wasHidden) {
+        const labelPicker = this[dropdownTarget].querySelector('[data-controller="label-picker"]')
+        if (labelPicker) {
+          const controller = this.application.getControllerForElementAndIdentifier(labelPicker, "label-picker")
+          if (controller && controller.open) {
+            controller.open()
+          }
+        }
+      }
     }
   }
 

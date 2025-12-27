@@ -66,20 +66,43 @@ module Webhooks
     end
 
     def handle_installation_event
-      installation_id = webhook_payload.dig('installation', 'id')
+      installation_id = webhook_payload.dig('installation', 'id')&.to_s
       action = webhook_payload['action']
 
       Rails.logger.info("Received installation event: #{action} for installation #{installation_id}")
 
-      # For now, just log the event. The integration should be created via the callback flow.
-      # This webhook serves as a confirmation that the installation was successful.
-      if installation_id && GithubIntegration.exists?(installation_id: installation_id)
-        integration = GithubIntegration.find_by(installation_id: installation_id)
-        integration.update(last_webhook_at: Time.current)
-        Rails.logger.info("Updated existing integration for installation #{installation_id}")
+      case action
+      when 'created', 'added'
+        handle_repositories_added(installation_id)
+      when 'removed'
+        handle_repositories_removed(installation_id)
+      when 'deleted'
+        # Installation was completely deleted - remove all integrations for this installation
+        GithubIntegration.where(installation_id: installation_id).destroy_all
+        Rails.logger.info("Deleted all integrations for installation #{installation_id}")
       else
-        Rails.logger.warn("Received installation webhook for unknown installation #{installation_id}")
+        # For other actions, just update the last_webhook_at timestamp
+        if installation_id && GithubIntegration.exists?(installation_id: installation_id)
+          GithubIntegration.where(installation_id: installation_id).update_all(last_webhook_at: Time.current)
+          Rails.logger.info("Updated existing integrations for installation #{installation_id}")
+        end
       end
+    end
+
+    def handle_repositories_added(installation_id)
+      repositories = webhook_payload['repositories_added'] || []
+      GhIntegration::ProcessAddedRepositories.call(
+        installation_id: installation_id,
+        repositories: repositories
+      )
+    end
+
+    def handle_repositories_removed(installation_id)
+      repositories = webhook_payload['repositories_removed'] || []
+      GhIntegration::ProcessRemovedRepositories.call(
+        installation_id: installation_id,
+        repositories: repositories
+      )
     end
 
     def valid_pr_comment?(action, issue)
