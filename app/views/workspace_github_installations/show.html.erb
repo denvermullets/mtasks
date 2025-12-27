@@ -42,10 +42,16 @@
               <% end %>
             </div>
 
-            <%= button_to "Disconnect", workspace_github_installation_path(@workspace),
-                method: :delete,
-                data: { turbo_confirm: "Are you sure? This will disconnect GitHub for all teams in this workspace." },
-                class: "mt-4 px-4 py-2 border border-red-500 text-red-400 hover:bg-red-500 hover:text-white font-medium cursor-pointer rounded-md" %>
+            <div class="mt-4 flex gap-3">
+              <%= link_to "Manage Workspace Installation", "https://github.com/settings/installations/#{@installation.installation_id}",
+                  target: "_blank",
+                  class: "px-4 py-2 border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 font-medium cursor-pointer rounded-md" %>
+
+              <%= button_to "Disconnect", workspace_github_installation_path(@workspace),
+                  method: :delete,
+                  data: { turbo_confirm: "Are you sure? This will disconnect GitHub for all teams in this workspace." },
+                  class: "px-4 py-2 border border-red-500 text-red-400 hover:bg-red-500 hover:text-white font-medium cursor-pointer rounded-md" %>
+            </div>
           </div>
         <% else %>
           <!-- Disconnected State -->
