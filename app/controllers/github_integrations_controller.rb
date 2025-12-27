@@ -90,9 +90,9 @@ class GithubIntegrationsController < ApplicationController
   end
 
   def setup_github_integration(installation_id)
-    # Create pending setup so webhooks can find which team initiated this installation
-    PendingGithubSetup.create_for_team!(team: @team, installation_id: installation_id.to_s)
-    Rails.logger.info("Created pending setup for team #{@team.id}, installation #{installation_id}")
+    # Create pending setup so webhooks can find which workspace initiated this installation
+    PendingGithubSetup.create_for_workspace!(workspace: @team.workspace, installation_id: installation_id.to_s)
+    Rails.logger.info("Created pending setup for workspace #{@team.workspace.id}, installation #{installation_id}")
 
     # Also create initial integration for immediate feedback
     # The webhook will handle creating integrations for all repos
