@@ -19,41 +19,21 @@ class WorkspaceGithubInstallationsController < ApplicationController
   end
 
   def callback
-    installation_id = params[:installation_id]
-    state_data = decode_state(params[:state])
-
-    unless state_data && state_data['workspace_id']
-      redirect_to root_path, alert: 'Invalid callback state'
-      return
-    end
-
-    # Get workspace from state parameter
-    @workspace = Workspace.find(state_data['workspace_id'])
-
-    # Authorize access
-    unless current_user == @workspace.owner || @workspace.teams.joins(:users).where(users: { id: current_user.id }).exists?
-      redirect_to root_path, alert: 'Access denied'
-      return
-    end
-
-    # Create pending setup (workspace-scoped)
-    PendingGithubSetup.create_for_workspace!(
-      workspace: @workspace,
-      installation_id: installation_id
-    )
-
-    # Create installation record
-    GhInstallation::CreateForWorkspace.call(
-      workspace: @workspace,
-      installation_id: installation_id
+    @workspace = GhInstallation::ProcessCallback.call(
+      current_user: current_user,
+      installation_id: params[:installation_id],
+      state_data: decode_state(params[:state])
     )
 
     redirect_to workspace_github_installation_path(@workspace),
                 notice: 'GitHub installation connected! Repositories will sync via webhook.'
+  rescue GhInstallation::ProcessCallback::InvalidStateError
+    redirect_to root_path, alert: 'Invalid callback state'
+  rescue GhInstallation::ProcessCallback::UnauthorizedError
+    redirect_to root_path, alert: 'Access denied'
   rescue StandardError => e
     Rails.logger.error("GitHub installation failed: #{e.message}")
-    redirect_to workspace_path(@workspace),
-                alert: "Failed to connect GitHub: #{e.message}"
+    redirect_to root_path, alert: "Failed to connect GitHub: #{e.message}"
   end
 
   def destroy
@@ -71,10 +51,14 @@ class WorkspaceGithubInstallationsController < ApplicationController
   end
 
   def authorize_workspace_access!
-    # Simple authorization - user must be workspace owner or have teams in workspace
-    unless current_user == @workspace.owner || @workspace.teams.joins(:users).where(users: { id: current_user.id }).exists?
-      redirect_to root_path, alert: 'Access denied'
-    end
+    return if user_has_workspace_access?
+
+    redirect_to root_path, alert: 'Access denied'
+  end
+
+  def user_has_workspace_access?
+    current_user == @workspace.owner ||
+      @workspace.teams.joins(:users).where(users: { id: current_user.id }).exists?
   end
 
   def decode_state(state)
