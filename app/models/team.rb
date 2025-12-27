@@ -11,9 +11,6 @@ class Team < ApplicationRecord
   has_many :github_repository_subscriptions, dependent: :destroy
   has_many :github_installations, through: :workspace
 
-  # TODO: Remove after full migration to new GitHub integration architecture
-  has_one :github_integration, dependent: :destroy
-
   # Validations
   validates :name, presence: true
   validates :identifier, presence: true, uniqueness: true, length: { is: 3 },

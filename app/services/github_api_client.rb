@@ -2,8 +2,8 @@ class GithubApiClient
   class RateLimitError < StandardError; end
   class ApiError < StandardError; end
 
-  def initialize(github_integration)
-    @integration = github_integration
+  def initialize(github_repository_subscription)
+    @subscription = github_repository_subscription
     @client = Octokit::Client.new(access_token: installation_access_token)
   end
 
@@ -51,11 +51,11 @@ class GithubApiClient
 
   def installation_access_token
     # Generate a fresh installation access token for each API client instance
-    GithubApp.installation_token(@integration.installation_id)
+    GithubApp.installation_token(@subscription.github_installation.installation_id)
   end
 
   def repo_full_name
-    @integration.github_repo_full_name
+    @subscription.github_repo_full_name
   end
 
   def webhook_url
