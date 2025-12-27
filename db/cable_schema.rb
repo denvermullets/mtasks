@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_27_161127) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_27_162415) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -153,11 +153,11 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_27_161127) do
     t.datetime "created_at", null: false
     t.datetime "expires_at"
     t.string "installation_id"
-    t.bigint "team_id", null: false
     t.datetime "updated_at", null: false
+    t.bigint "workspace_id", null: false
     t.index ["expires_at"], name: "index_pending_github_setups_on_expires_at"
     t.index ["installation_id"], name: "index_pending_github_setups_on_installation_id"
-    t.index ["team_id"], name: "index_pending_github_setups_on_team_id"
+    t.index ["workspace_id"], name: "index_pending_github_setups_on_workspace_id"
   end
 
   create_table "projects", force: :cascade do |t|
@@ -178,7 +178,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_27_161127) do
     t.datetime "closed_at"
     t.datetime "created_at", null: false
     t.datetime "github_created_at"
-    t.bigint "github_integration_id", null: false
+    t.bigint "github_repository_subscription_id", null: false
     t.datetime "github_updated_at"
     t.string "head_ref"
     t.string "html_url"
@@ -188,8 +188,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_27_161127) do
     t.string "state"
     t.string "title"
     t.datetime "updated_at", null: false
-    t.index ["github_integration_id", "pr_number"], name: "index_pull_requests_on_github_integration_id_and_pr_number", unique: true
-    t.index ["github_integration_id"], name: "index_pull_requests_on_github_integration_id"
+    t.index ["github_repository_subscription_id"], name: "index_pull_requests_on_github_repository_subscription_id"
   end
 
   create_table "sessions", force: :cascade do |t|
@@ -279,10 +278,10 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_27_161127) do
   add_foreign_key "labels", "teams"
   add_foreign_key "lanes", "teams"
   add_foreign_key "milestones", "teams"
-  add_foreign_key "pending_github_setups", "teams"
+  add_foreign_key "pending_github_setups", "workspaces"
   add_foreign_key "projects", "milestones"
   add_foreign_key "projects", "teams"
-  add_foreign_key "pull_requests", "github_integrations"
+  add_foreign_key "pull_requests", "github_repository_subscriptions"
   add_foreign_key "sessions", "users"
   add_foreign_key "team_memberships", "teams"
   add_foreign_key "team_memberships", "users"

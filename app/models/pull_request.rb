@@ -1,10 +1,10 @@
 class PullRequest < ApplicationRecord
-  belongs_to :github_integration
+  belongs_to :github_repository_subscription
   has_many :issue_pull_requests, dependent: :destroy
   has_many :issues, through: :issue_pull_requests
 
-  validates :pr_number, presence: true, uniqueness: { scope: :github_integration_id }
-  validates :github_integration_id, presence: true
+  validates :pr_number, presence: true, uniqueness: { scope: :github_repository_subscription_id }
+  validates :github_repository_subscription_id, presence: true
 
   scope :open, -> { where(state: 'open') }
   scope :closed, -> { where(state: 'closed') }

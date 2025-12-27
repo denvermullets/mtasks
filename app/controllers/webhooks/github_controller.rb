@@ -35,17 +35,29 @@ module Webhooks
       # Only process relevant actions
       return unless %w[opened edited synchronize closed reopened].include?(action)
 
-      integration = find_integration_for_webhook
-      return unless integration
+      # Find ALL matching subscriptions based on shortcodes in PR
+      subscriptions = find_subscriptions_for_webhook(pr_data)
 
-      # Update last webhook timestamp
-      integration.update(last_webhook_at: Time.current)
+      if subscriptions.empty?
+        Rails.logger.info("No matching subscriptions for PR ##{pr_data['number']}")
+        return
+      end
 
-      # Queue background job to process the webhook
-      GithubWebhookProcessorJob.perform_later(integration.id, pr_data.to_json)
+      # Update installation timestamp
+      installation = GithubInstallation.find_by(
+        installation_id: webhook_payload.dig('installation', 'id')
+      )
+      installation&.update(last_webhook_at: Time.current)
 
-      repo_full_name = webhook_payload.dig('repository', 'full_name')
-      Rails.logger.info("Queued webhook processing for PR ##{pr_data['number']} in #{repo_full_name}")
+      # Queue job for EACH team whose shortcode was mentioned
+      subscriptions.each do |subscription|
+        subscription.update(last_webhook_at: Time.current)
+        GithubWebhookProcessorJob.perform_later(subscription.id, pr_data.to_json)
+
+        Rails.logger.info(
+          "Processing PR ##{pr_data['number']} for team #{subscription.team.identifier}"
+        )
+      end
     end
 
     def handle_issue_comment_event
@@ -55,10 +67,13 @@ module Webhooks
 
       return unless valid_pr_comment?(action, issue)
 
-      integration = find_integration_for_webhook
-      return unless integration
+      # For comments, we need to find subscriptions based on the PR data
+      pr_data = issue # Issue contains PR data for PR comments
+      subscriptions = find_subscriptions_for_webhook(pr_data)
 
-      queue_comment_processing(integration, issue, comment)
+      subscriptions.each do |subscription|
+        queue_comment_processing(subscription, issue, comment)
+      end
     end
 
     def handle_ping_event
@@ -77,14 +92,16 @@ module Webhooks
       when 'removed'
         handle_repositories_removed(installation_id)
       when 'deleted'
-        # Installation was completely deleted - remove all integrations for this installation
-        GithubIntegration.where(installation_id: installation_id).destroy_all
-        Rails.logger.info("Deleted all integrations for installation #{installation_id}")
+        # Installation was completely deleted - cascade deletes subscriptions
+        installation = GithubInstallation.find_by(installation_id: installation_id)
+        installation&.destroy
+        Rails.logger.info("Deleted installation #{installation_id} and all subscriptions")
       else
         # For other actions, just update the last_webhook_at timestamp
-        if installation_id && GithubIntegration.exists?(installation_id: installation_id)
-          GithubIntegration.where(installation_id: installation_id).update_all(last_webhook_at: Time.current)
-          Rails.logger.info("Updated existing integrations for installation #{installation_id}")
+        installation = GithubInstallation.find_by(installation_id: installation_id)
+        if installation
+          installation.update(last_webhook_at: Time.current)
+          Rails.logger.info("Updated installation #{installation_id}")
         end
       end
     end
@@ -112,16 +129,17 @@ module Webhooks
       true
     end
 
-    def find_integration_for_webhook
+    def find_subscriptions_for_webhook(pr_data)
       GhIntegration::FindFromWebhook.call(
         installation_id: webhook_payload.dig('installation', 'id'),
-        repo_full_name: webhook_payload.dig('repository', 'full_name')
+        repo_full_name: webhook_payload.dig('repository', 'full_name'),
+        pr_data: pr_data
       )
     end
 
-    def queue_comment_processing(integration, issue, comment)
+    def queue_comment_processing(subscription, issue, comment)
       GithubCommentProcessorJob.perform_later(
-        integration.id,
+        subscription.id,
         issue['number'],
         comment['body']
       )

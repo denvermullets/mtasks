@@ -3,23 +3,23 @@ class GithubWebhookProcessorJob < ApplicationJob
 
   retry_on StandardError, wait: :exponentially_longer, attempts: 3
 
-  def perform(integration_id, pr_data_json)
-    integration = GithubIntegration.find_by(id: integration_id)
+  def perform(subscription_id, pr_data_json)
+    subscription = GithubRepositorySubscription.find_by(id: subscription_id)
 
-    unless integration
-      Rails.logger.error("GithubIntegration #{integration_id} not found")
+    unless subscription
+      Rails.logger.error("GithubRepositorySubscription #{subscription_id} not found")
       return
     end
 
     pr_data = JSON.parse(pr_data_json)
 
-    sync_service = GithubPrSyncService.new(integration)
+    sync_service = GithubPrSyncService.new(subscription)
     pr = sync_service.sync_pull_request(pr_data)
 
     if pr
-      Rails.logger.info("Successfully processed webhook for PR ##{pr.pr_number}")
+      Rails.logger.info("Successfully processed webhook for PR ##{pr.pr_number} (team: #{subscription.team.identifier})")
     else
-      Rails.logger.error("Failed to sync PR ##{pr_data['number']}")
+      Rails.logger.error("Failed to sync PR ##{pr_data['number']} for team #{subscription.team.identifier}")
     end
   rescue JSON::ParserError => e
     Rails.logger.error("Failed to parse PR data JSON: #{e.message}")

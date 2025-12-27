@@ -2,9 +2,18 @@ Rails.application.routes.draw do
   resource :session
   resources :passwords, param: :token
   resources :users, only: %i[new create]
+  resources :workspaces, only: [] do
+    resource :github_installation, only: %i[show new destroy], controller: 'workspace_github_installations' do
+      get :callback, on: :collection
+    end
+  end
+
   resources :teams, only: %i[new create show edit update] do
     resource :display_preference, only: %i[update]
+    # TODO: Remove after migration to new GitHub integration architecture
     resource :github_integration, only: %i[show new destroy]
+    # New GitHub repositories management
+    resources :github_repositories, only: %i[index create destroy], controller: 'team_github_repositories'
     resources :labels, only: %i[index create update destroy]
     resources :lanes, only: %i[create update destroy]
     resources :issues do
@@ -16,8 +25,10 @@ Rails.application.routes.draw do
   # CSV Import
   resources :imports, only: %i[new create]
 
-  # GitHub App Installation
-  get '/github/callback', to: 'github_integrations#callback'
+  # GitHub App Installation Callbacks
+  get '/github/callback', to: 'workspace_github_installations#callback'
+  # TODO: Remove old callback after migration
+  # get '/github/callback', to: 'github_integrations#callback'
 
   # GitHub Webhooks
   namespace :webhooks do

@@ -1,7 +1,7 @@
 class GithubPrSyncService
-  def initialize(github_integration)
-    @integration = github_integration
-    @team = @integration.team
+  def initialize(github_repository_subscription)
+    @subscription = github_repository_subscription
+    @team = @subscription.team
   end
 
   def sync_pull_request(pr_data)
@@ -9,7 +9,7 @@ class GithubPrSyncService
     pull_request.assign_attributes(build_pr_attributes(pr_data))
 
     if pull_request.save
-      Rails.logger.info("Synced PR ##{pull_request.pr_number} for integration #{@integration.id}")
+      Rails.logger.info("Synced PR ##{pull_request.pr_number} for team #{@team.identifier}")
       link_issues_and_queue_comments(pull_request, pr_data)
       pull_request
     else
@@ -21,7 +21,7 @@ class GithubPrSyncService
   private
 
   def find_or_initialize_pull_request(pr_data)
-    @integration.pull_requests.find_or_initialize_by(pr_number: pr_data['number'])
+    @subscription.pull_requests.find_or_initialize_by(pr_number: pr_data['number'])
   end
 
   def build_pr_attributes(pr_data)
