@@ -30,22 +30,13 @@ module Webhooks
 
     def handle_pull_request_event
       pr_data = webhook_payload['pull_request']
-      action = webhook_payload['action']
+      return unless processable_action?(webhook_payload['action'])
 
-      # Only process relevant actions
-      return unless %w[opened edited synchronize closed reopened].include?(action)
+      subscriptions = find_subscriptions_for_webhook(pr_data)
+      return log_no_subscriptions(pr_data) if subscriptions.empty?
 
-      integration = find_integration_for_webhook
-      return unless integration
-
-      # Update last webhook timestamp
-      integration.update(last_webhook_at: Time.current)
-
-      # Queue background job to process the webhook
-      GithubWebhookProcessorJob.perform_later(integration.id, pr_data.to_json)
-
-      repo_full_name = webhook_payload.dig('repository', 'full_name')
-      Rails.logger.info("Queued webhook processing for PR ##{pr_data['number']} in #{repo_full_name}")
+      update_installation_timestamp
+      process_subscriptions(subscriptions, pr_data)
     end
 
     def handle_issue_comment_event
@@ -55,10 +46,13 @@ module Webhooks
 
       return unless valid_pr_comment?(action, issue)
 
-      integration = find_integration_for_webhook
-      return unless integration
+      # For comments, we need to find subscriptions based on the PR data
+      pr_data = issue # Issue contains PR data for PR comments
+      subscriptions = find_subscriptions_for_webhook(pr_data)
 
-      queue_comment_processing(integration, issue, comment)
+      subscriptions.each do |subscription|
+        queue_comment_processing(subscription, issue, comment)
+      end
     end
 
     def handle_ping_event
@@ -71,37 +65,10 @@ module Webhooks
 
       Rails.logger.info("Received installation event: #{action} for installation #{installation_id}")
 
-      case action
-      when 'created', 'added'
-        handle_repositories_added(installation_id)
-      when 'removed'
-        handle_repositories_removed(installation_id)
-      when 'deleted'
-        # Installation was completely deleted - remove all integrations for this installation
-        GithubIntegration.where(installation_id: installation_id).destroy_all
-        Rails.logger.info("Deleted all integrations for installation #{installation_id}")
-      else
-        # For other actions, just update the last_webhook_at timestamp
-        if installation_id && GithubIntegration.exists?(installation_id: installation_id)
-          GithubIntegration.where(installation_id: installation_id).update_all(last_webhook_at: Time.current)
-          Rails.logger.info("Updated existing integrations for installation #{installation_id}")
-        end
-      end
-    end
-
-    def handle_repositories_added(installation_id)
-      repositories = webhook_payload['repositories_added'] || []
-      GhIntegration::ProcessAddedRepositories.call(
+      GhIntegration::ProcessInstallationEvent.call(
         installation_id: installation_id,
-        repositories: repositories
-      )
-    end
-
-    def handle_repositories_removed(installation_id)
-      repositories = webhook_payload['repositories_removed'] || []
-      GhIntegration::ProcessRemovedRepositories.call(
-        installation_id: installation_id,
-        repositories: repositories
+        action: action,
+        webhook_payload: webhook_payload
       )
     end
 
@@ -112,22 +79,49 @@ module Webhooks
       true
     end
 
-    def find_integration_for_webhook
+    def find_subscriptions_for_webhook(pr_data)
       GhIntegration::FindFromWebhook.call(
         installation_id: webhook_payload.dig('installation', 'id'),
-        repo_full_name: webhook_payload.dig('repository', 'full_name')
+        repo_full_name: webhook_payload.dig('repository', 'full_name'),
+        pr_data: pr_data
       )
     end
 
-    def queue_comment_processing(integration, issue, comment)
+    def queue_comment_processing(subscription, issue, comment)
       GithubCommentProcessorJob.perform_later(
-        integration.id,
+        subscription.id,
         issue['number'],
         comment['body']
       )
 
       repo_full_name = webhook_payload.dig('repository', 'full_name')
       Rails.logger.info("Queued comment processing for PR ##{issue['number']} in #{repo_full_name}")
+    end
+
+    def processable_action?(action)
+      %w[opened edited synchronize closed reopened].include?(action)
+    end
+
+    def log_no_subscriptions(pr_data)
+      Rails.logger.info("No matching subscriptions for PR ##{pr_data['number']}")
+    end
+
+    def update_installation_timestamp
+      installation = GithubInstallation.find_by(
+        installation_id: webhook_payload.dig('installation', 'id')
+      )
+      installation&.update(last_webhook_at: Time.current)
+    end
+
+    def process_subscriptions(subscriptions, pr_data)
+      subscriptions.each do |subscription|
+        subscription.update(last_webhook_at: Time.current)
+        GithubWebhookProcessorJob.perform_later(subscription.id, pr_data.to_json)
+
+        Rails.logger.info(
+          "Processing PR ##{pr_data['number']} for team #{subscription.team.identifier}"
+        )
+      end
     end
   end
 end

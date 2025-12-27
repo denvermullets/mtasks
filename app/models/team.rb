@@ -8,6 +8,10 @@ class Team < ApplicationRecord
   has_many :milestones, dependent: :destroy
   has_many :issues, dependent: :destroy
   has_many :labels, dependent: :destroy
+  has_many :github_repository_subscriptions, dependent: :destroy
+  has_many :github_installations, through: :workspace
+
+  # TODO: Remove after full migration to new GitHub integration architecture
   has_one :github_integration, dependent: :destroy
 
   # Validations

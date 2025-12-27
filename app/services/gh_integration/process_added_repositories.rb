@@ -8,18 +8,27 @@ module GhIntegration
     def call
       return if @repositories.empty?
 
-      # Find pending setup to determine which team initiated this
+      # Find pending setup to determine which workspace initiated this
       pending_setup = PendingGithubSetup.active.find_by(installation_id: @installation_id)
 
       unless pending_setup
-        Rails.logger.warn("No pending setup found for installation #{@installation_id}, cannot create integrations")
+        Rails.logger.warn("No pending setup found for installation #{@installation_id}, cannot create subscriptions")
         return
       end
 
-      team = pending_setup.team
+      workspace = pending_setup.workspace
+      installation = workspace.github_installations.find_by(installation_id: @installation_id)
 
+      unless installation
+        Rails.logger.error("Installation #{@installation_id} not found for workspace #{workspace.id}")
+        return
+      end
+
+      # Create subscriptions for all teams in workspace (opt-out model)
       @repositories.each do |repo|
-        create_or_update_integration(team, repo)
+        workspace.teams.each do |team|
+          create_subscription(team, installation, repo)
+        end
       end
 
       # Delete the pending setup now that we've processed it
@@ -29,22 +38,22 @@ module GhIntegration
 
     private
 
-    def create_or_update_integration(team, repo)
+    def create_subscription(team, installation, repo)
       repo_full_name = repo['full_name']
 
-      # Create or update integration for this team + installation + repo
-      integration = GithubIntegration.find_or_initialize_by(
+      # Create or update subscription for this team + installation + repo
+      GithubRepositorySubscription.find_or_create_by!(
         team: team,
-        installation_id: @installation_id,
+        github_installation: installation,
         github_repo_full_name: repo_full_name
-      )
+      ) do |sub|
+        sub.active = true
+        sub.last_webhook_at = Time.current
+      end
 
-      integration.update!(
-        active: true,
-        last_webhook_at: Time.current
+      Rails.logger.info(
+        "Created subscription for #{team.identifier} - #{repo_full_name}"
       )
-
-      Rails.logger.info("Created/updated integration for #{team.name} - #{repo_full_name}")
     end
   end
 end

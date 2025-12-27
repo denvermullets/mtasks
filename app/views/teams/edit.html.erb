@@ -47,20 +47,40 @@
       <div class="bg-foreground border border-stroke rounded-lg p-6">
         <h2 class="text-lg font-semibold text-gray-200 mb-4">Integrations</h2>
         <div class="space-y-3">
+          <!-- GitHub Repositories -->
           <div class="flex items-center justify-between p-3 bg-background rounded border border-stroke">
             <div class="flex items-center gap-3">
               <div class="text-2xl">🔗</div>
               <div>
-                <h3 class="text-sm font-medium text-gray-200">GitHub</h3>
-                <p class="text-xs text-gray-400">Link pull requests to issues automatically</p>
+                <h3 class="text-sm font-medium text-gray-200">GitHub Repositories</h3>
+                <p class="text-xs text-gray-400">Subscribe to repositories and link PRs to issues</p>
               </div>
             </div>
-            <%= link_to team_github_integration_path(@team),
+            <%= link_to team_github_repositories_path(@team),
                 class: "text-sm text-accent hover:text-accent/80" do %>
-              <% if @team.github_integration&.active? %>
-                Manage
+              <% if @team.github_repository_subscriptions.active.any? %>
+                Manage (<%= @team.github_repository_subscriptions.active.count %>)
               <% else %>
-                Connect
+                Set Up
+              <% end %>
+            <% end %>
+          </div>
+
+          <!-- Workspace GitHub Installation -->
+          <div class="flex items-center justify-between p-3 bg-background rounded border border-stroke">
+            <div class="flex items-center gap-3">
+              <div class="text-2xl">⚙️</div>
+              <div>
+                <h3 class="text-sm font-medium text-gray-200">Workspace GitHub Installation</h3>
+                <p class="text-xs text-gray-400">Manage GitHub App installation (workspace-level)</p>
+              </div>
+            </div>
+            <%= link_to workspace_github_installation_path(@team.workspace),
+                class: "text-sm text-accent hover:text-accent/80" do %>
+              <% if @team.workspace.github_installation&.active? %>
+                View
+              <% else %>
+                Install
               <% end %>
             <% end %>
           </div>

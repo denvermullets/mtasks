@@ -1,0 +1,133 @@
+<div class="flex-1 flex flex-col min-h-0">
+  <!-- Top Bar -->
+  <div class="h-14 bg-menu border-b border-stroke flex items-center justify-between px-4 shrink-0">
+    <div class="flex items-center gap-4">
+      <h1 class="text-base font-semibold">GitHub Repositories</h1>
+      <span class="text-sm text-gray-500"><%= @team.name %></span>
+    </div>
+    <%= link_to edit_team_path(@team), class: "text-sm text-gray-400 hover:text-gray-300" do %>
+      Back to Settings
+    <% end %>
+  </div>
+
+  <!-- Repository Content -->
+  <div class="flex-1 overflow-y-auto bg-background p-8">
+    <div class="max-w-4xl mx-auto w-full space-y-6">
+      <% if @installation.nil? %>
+        <!-- No Installation -->
+        <div class="bg-foreground border border-stroke rounded-lg p-6">
+          <h2 class="text-lg font-semibold text-gray-200 mb-4">GitHub Not Connected</h2>
+          <div class="space-y-4">
+            <p class="text-sm text-gray-400">
+              Your workspace doesn't have a GitHub installation yet. Please ask a workspace admin to install the GitHub App.
+            </p>
+            <%= link_to "View Workspace Settings", workspace_github_installation_path(@team.workspace),
+                class: "inline-block px-4 py-2 border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 font-medium cursor-pointer rounded-md" %>
+          </div>
+        </div>
+      <% else %>
+        <!-- Subscribed Repositories -->
+        <div class="bg-foreground border border-stroke rounded-lg p-6">
+          <h2 class="text-lg font-semibold text-gray-200 mb-4">Subscribed Repositories</h2>
+
+          <% if @subscribed_repos.any? %>
+            <div class="space-y-2">
+              <% @subscribed_repos.each do |subscription| %>
+                <div class="flex items-center justify-between p-3 border border-stroke rounded-lg hover:bg-background transition-colors">
+                  <div class="flex items-center gap-3">
+                    <div class="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                    <div>
+                      <div class="text-sm font-mono text-gray-200"><%= subscription.github_repo_full_name %></div>
+                      <% if subscription.last_webhook_at %>
+                        <div class="text-xs text-gray-500">Last webhook: <%= time_ago_in_words(subscription.last_webhook_at) %> ago</div>
+                      <% end %>
+                    </div>
+                  </div>
+                  <%= button_to "Remove", team_github_repository_path(@team, subscription),
+                      method: :delete,
+                      data: { turbo_confirm: "Are you sure you want to unsubscribe from this repository?" },
+                      class: "px-3 py-1.5 text-xs border border-red-500 text-red-400 hover:bg-red-500 hover:text-white font-medium cursor-pointer rounded-md" %>
+                </div>
+              <% end %>
+            </div>
+          <% else %>
+            <p class="text-sm text-gray-400">
+              No repositories subscribed yet. Add repositories from the available list below.
+            </p>
+          <% end %>
+        </div>
+
+        <!-- Available Repositories -->
+        <div class="bg-foreground border border-stroke rounded-lg p-6">
+          <h2 class="text-lg font-semibold text-gray-200 mb-4">Available Repositories</h2>
+
+          <% if @available_repos.any? %>
+            <div class="space-y-2">
+              <% @available_repos.each do |repo| %>
+                <div class="flex items-center justify-between p-3 border border-stroke rounded-lg hover:bg-background transition-colors">
+                  <div class="flex items-center gap-3">
+                    <div class="w-1.5 h-1.5 bg-gray-500 rounded-full"></div>
+                    <div>
+                      <div class="text-sm font-mono text-gray-200"><%= repo[:full_name] %></div>
+                      <div class="text-xs text-gray-500">
+                        <%= repo[:private] ? "Private" : "Public" %> repository
+                      </div>
+                    </div>
+                  </div>
+                  <%= button_to "Add", team_github_repositories_path(@team, repo_full_name: repo[:full_name]),
+                      method: :post,
+                      class: "px-3 py-1.5 text-xs border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 font-medium cursor-pointer rounded-md" %>
+                </div>
+              <% end %>
+            </div>
+          <% elsif @subscribed_repos.any? %>
+            <p class="text-sm text-gray-400">
+              All available repositories are already subscribed.
+            </p>
+          <% else %>
+            <p class="text-sm text-gray-400">
+              No repositories available from the workspace installation.
+            </p>
+          <% end %>
+        </div>
+
+        <!-- How Smart Routing Works -->
+        <div class="bg-foreground border border-stroke rounded-lg p-6">
+          <h2 class="text-lg font-semibold text-gray-200 mb-4">How Smart Routing Works</h2>
+          <div class="space-y-3 text-sm text-gray-400">
+            <div class="flex gap-3">
+              <span class="text-accent font-semibold">📌</span>
+              <p>PRs are only processed for <strong>teams whose issue shortcodes appear in the PR</strong>.</p>
+            </div>
+            <div class="flex gap-3">
+              <span class="text-accent font-semibold">✓</span>
+              <p>Include your team's issue identifier in PR titles or descriptions: <code class="px-1 py-0.5 bg-background rounded font-mono"><%= @team.identifier %>-123</code></p>
+            </div>
+            <div class="flex gap-3">
+              <span class="text-accent font-semibold">⚡</span>
+              <p>Multiple teams can subscribe to the same repo - each team only sees PRs mentioning their issues.</p>
+            </div>
+            <div class="flex gap-3">
+              <span class="text-accent font-semibold">🔗</span>
+              <p>PRs without shortcodes won't be linked to any team automatically.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Example -->
+        <div class="bg-foreground border border-stroke rounded-lg p-6">
+          <h2 class="text-lg font-semibold text-gray-200 mb-4">Example</h2>
+          <div class="bg-background border border-stroke rounded-lg p-4 space-y-2">
+            <div class="text-xs text-gray-500 uppercase tracking-wide">Pull Request Title</div>
+            <div class="text-sm text-gray-200">
+              Fix authentication bug <code class="px-1 py-0.5 bg-foreground rounded font-mono text-accent"><%= @team.identifier %>-456</code>
+            </div>
+            <div class="text-xs text-gray-500 mt-3">
+              → This PR will be linked to issue <code class="px-1 py-0.5 bg-foreground rounded font-mono"><%= @team.identifier %>-456</code> in your team
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
