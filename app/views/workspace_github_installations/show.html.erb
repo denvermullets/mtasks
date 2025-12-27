@@ -5,7 +5,7 @@
       <h1 class="text-base font-semibold">GitHub Integration</h1>
       <span class="text-sm text-gray-500"><%= @workspace.name %> (Workspace)</span>
     </div>
-    <%= link_to "Back to Workspace", workspace_path(@workspace), class: "text-sm text-gray-400 hover:text-gray-300" %>
+    <%= link_to "Back to Team", current_team ? edit_team_path(current_team) : root_path, class: "text-sm text-gray-400 hover:text-gray-300" %>
   </div>
 
   <!-- Integration Content -->
