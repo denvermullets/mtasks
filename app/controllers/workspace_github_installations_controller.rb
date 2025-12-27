@@ -1,6 +1,6 @@
 class WorkspaceGithubInstallationsController < ApplicationController
-  before_action :set_workspace
-  before_action :authorize_workspace_access!
+  before_action :set_workspace, except: [:callback]
+  before_action :authorize_workspace_access!, except: [:callback]
 
   def show
     @installation = @workspace.github_installation
@@ -22,8 +22,17 @@ class WorkspaceGithubInstallationsController < ApplicationController
     installation_id = params[:installation_id]
     state_data = decode_state(params[:state])
 
-    unless state_data && state_data['workspace_id'] == @workspace.id
-      redirect_to workspace_path(@workspace), alert: 'Invalid callback state'
+    unless state_data && state_data['workspace_id']
+      redirect_to root_path, alert: 'Invalid callback state'
+      return
+    end
+
+    # Get workspace from state parameter
+    @workspace = Workspace.find(state_data['workspace_id'])
+
+    # Authorize access
+    unless current_user == @workspace.owner || @workspace.teams.joins(:users).where(users: { id: current_user.id }).exists?
+      redirect_to root_path, alert: 'Access denied'
       return
     end
 
