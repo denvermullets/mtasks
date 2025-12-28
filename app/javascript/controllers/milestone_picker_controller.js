@@ -348,37 +348,48 @@ export default class extends Controller {
   }
 
   positionOverlay() {
-    const rect = this.element.getBoundingClientRect()
-    const picker = this.pickerTarget
-    const viewportHeight = window.innerHeight
-    const viewportWidth = window.innerWidth
+    const overlayWidth = 320 // w-80 = 20rem = 320px
+    const overlayHeight = 400 // approximate
+    let referenceElement = null
+    let rect = null
 
     if (this.contextValue === "card") {
-      // Position to the left of the card (or right if too far left)
-      const spaceOnLeft = rect.left
-      const pickerWidth = 320 // w-80 = 320px
+      // For card context, find the hovered card
+      referenceElement = this.element.closest('[data-hovered="true"]')
+      if (!referenceElement) return
+      rect = referenceElement.getBoundingClientRect()
+    } else {
+      // For sidebar context, find the milestone dropdown button
+      referenceElement = this.element.closest('[data-issue-sidebar-target="milestoneDropdown"]')
+      if (!referenceElement) return
 
-      if (spaceOnLeft >= pickerWidth + 16) {
-        // Enough space on left
-        picker.style.left = `${rect.left - pickerWidth - 8}px`
-        picker.style.top = `${rect.top}px`
+      // Get the button that triggers the dropdown
+      const button = referenceElement.previousElementSibling
+      if (button) {
+        rect = button.getBoundingClientRect()
       } else {
-        // Not enough space, position on right
-        picker.style.left = `${rect.right + 8}px`
-        picker.style.top = `${rect.top}px`
+        rect = referenceElement.getBoundingClientRect()
       }
-    } else if (this.contextValue === "sidebar") {
-      // Position below the button
-      const spaceBelow = viewportHeight - rect.bottom
-      const pickerHeight = 400 // Approximate max height
-
-      if (spaceBelow >= pickerHeight) {
-        picker.style.top = `${rect.bottom + 4}px`
-      } else {
-        picker.style.top = `${rect.top - Math.min(pickerHeight, rect.top - 4)}px`
-      }
-
-      picker.style.left = `${rect.left}px`
     }
+
+    // Position to the left of the reference element
+    let top = rect.top
+    let left = rect.left - overlayWidth - 8 // 8px gap
+
+    // If it would go off the left edge, position to the right instead
+    if (left < 8) {
+      left = rect.right + 8
+    }
+
+    // Check if overlay would go off-screen vertically
+    if (top + overlayHeight > window.innerHeight) {
+      top = window.innerHeight - overlayHeight - 8
+    }
+    if (top < 8) {
+      top = 8
+    }
+
+    this.pickerTarget.style.top = `${top}px`
+    this.pickerTarget.style.left = `${left}px`
   }
 }

@@ -144,6 +144,23 @@ export default class extends Controller {
         }
       }
     }
+
+    // Open milestone dropdown with 'M' key
+    if (event.key === 'm' || event.key === 'M') {
+      event.preventDefault()
+      this.closeAllDropdowns()
+      if (this.hasMilestoneDropdownTarget) {
+        this.milestoneDropdownTarget.classList.remove("hidden")
+        // Find and open the milestone picker
+        const milestonePicker = this.milestoneDropdownTarget.querySelector('[data-controller="milestone-picker"]')
+        if (milestonePicker) {
+          const controller = this.application.getControllerForElementAndIdentifier(milestonePicker, "milestone-picker")
+          if (controller && controller.open) {
+            controller.open()
+          }
+        }
+      }
+    }
   }
 
   handleLabelChange() {
