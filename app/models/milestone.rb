@@ -33,16 +33,10 @@ class Milestone < ApplicationRecord
 
   def status_color
     return '#6b7280' unless due_date
+    return '#ef4444' if Date.current > due_date
+    return '#f59e0b' if due_date <= Date.current + 7.days || behind_schedule?
 
-    if Date.current > due_date
-      '#ef4444'  # Red - past due
-    elsif due_date <= Date.current + 7.days
-      '#f59e0b'  # Orange - due within 7 days
-    elsif behind_schedule?
-      '#f59e0b'  # Orange - behind schedule based on progress
-    else
-      '#10b981'  # Green - on track
-    end
+    '#10b981' # Green - on track
   end
 
   def formatted_due_date

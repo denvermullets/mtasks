@@ -51,28 +51,13 @@ class IssuesController < ApplicationController
     if @issue.update(issue_params)
       respond_to do |format|
         format.turbo_stream do
-          # Reload to get fresh associations
-          @issue.reload
-          streams = []
-
-          # Update the issue card if it exists on the page
-          streams << turbo_stream.replace(
-            "issue_#{@issue.id}",
-            partial: 'issues/issue_card',
-            locals: {
-              issue: @issue,
-              visible_properties: UserPreference.for_user_and_team(Current.user, current_team).visible_properties_array
-            }
+          service = IssueTurboStreamService.new(
+            @issue,
+            Current.user,
+            current_team,
+            { lanes: @lanes, team_members: @team_members, projects: @projects }
           )
-
-          # Update the sidebar if it exists on the page
-          streams << turbo_stream.replace(
-            'issue_sidebar',
-            partial: 'issues/sidebar',
-            locals: { issue: @issue, lanes: @lanes, team_members: @team_members, projects: @projects }
-          )
-
-          render turbo_stream: streams
+          render turbo_stream: service.update_streams(self)
         end
         format.html { redirect_to team_issue_path(@issue.team, @issue), notice: 'Issue was successfully updated.' }
       end

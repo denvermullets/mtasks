@@ -26,15 +26,21 @@ class UserPreference < ApplicationRecord
   after_initialize :set_defaults, if: :new_record?
 
   def set_defaults
-    self.view_mode ||= 'board'
-    self.group_by ||= 'status'
-    self.sub_group_by ||= 'none'
-    self.order_by ||= 'manual'
-    self.show_sub_issues = true if show_sub_issues.nil?
-    self.show_empty_groups = false if show_empty_groups.nil?
-    self.show_empty_rows = false if show_empty_rows.nil?
-    self.completed_filter ||= ''
-    self.visible_properties ||= DEFAULT_VISIBLE_PROPERTIES
+    assign_attributes(default_attributes.except(*attributes.keys))
+  end
+
+  def default_attributes
+    {
+      view_mode: 'board',
+      group_by: 'status',
+      sub_group_by: 'none',
+      order_by: 'manual',
+      show_sub_issues: true,
+      show_empty_groups: false,
+      show_empty_rows: false,
+      completed_filter: '',
+      visible_properties: DEFAULT_VISIBLE_PROPERTIES
+    }
   end
 
   def visible_properties_array
