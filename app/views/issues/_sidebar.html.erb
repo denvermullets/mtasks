@@ -212,12 +212,29 @@
       </div>
     </div>
     <!-- Milestone -->
-    <% if issue.milestone %>
-      <div class="mb-6">
-        <div class="text-xs font-medium text-gray-500 mb-2">Milestone</div>
-        <div class="text-sm text-gray-300"><%= issue.milestone.name %></div>
+    <div class="mb-6">
+      <div class="text-xs font-medium text-gray-500 mb-2">Milestone</div>
+      <div class="relative">
+        <button type="button"
+                data-action="click->issue-sidebar#toggleDropdown"
+                data-dropdown="milestone"
+                class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors">
+          <% if issue.milestone %>
+            <span style="color: <%= issue.milestone.status_color %>;">◆</span>
+            <span data-issue-sidebar-target="milestoneLabel"><%= issue.milestone.name %></span>
+            <% if issue.milestone.due_date %>
+              <span class="text-xs text-gray-500">• <%= issue.milestone.formatted_due_date %></span>
+            <% end %>
+          <% else %>
+            <span class="text-gray-500">◇</span>
+            <span data-issue-sidebar-target="milestoneLabel" class="text-gray-500">No milestone</span>
+          <% end %>
+        </button>
+        <div data-issue-sidebar-target="milestoneDropdown">
+          <%= render "milestones/picker", issue: issue, context: "sidebar" %>
+        </div>
       </div>
-    <% end %>
+    </div>
     <!-- Due Date -->
     <% if issue.due_date %>
       <div class="mb-6">

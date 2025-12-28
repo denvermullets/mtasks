@@ -7,7 +7,8 @@ export default class extends Controller {
     "assigneeDropdown", "assigneeLabel", "assigneeInput",
     "projectDropdown", "projectLabel", "projectInput",
     "estimateDropdown", "estimateLabel", "estimateInput",
-    "labelsDropdown", "labelsLabel"
+    "labelsDropdown", "labelsLabel",
+    "milestoneLabel"
   ]
 
   connect() {
@@ -149,6 +150,22 @@ export default class extends Controller {
     const labelPickerElement = event.currentTarget.parentElement.querySelector('[data-controller="new-issue-label-picker"]')
     if (labelPickerElement) {
       const controller = this.application.getControllerForElementAndIdentifier(labelPickerElement, "new-issue-label-picker")
+      if (controller && controller.open) {
+        controller.open()
+      }
+    }
+  }
+
+  toggleMilestonesDropdown(event) {
+    event.stopPropagation()
+
+    // Close all other dropdowns
+    this.closeAllDropdowns()
+
+    // Find and open the milestone picker
+    const milestonePickerElement = event.currentTarget.parentElement.querySelector('[data-controller="new-issue-milestone-picker"]')
+    if (milestonePickerElement) {
+      const controller = this.application.getControllerForElementAndIdentifier(milestonePickerElement, "new-issue-milestone-picker")
       if (controller && controller.open) {
         controller.open()
       }

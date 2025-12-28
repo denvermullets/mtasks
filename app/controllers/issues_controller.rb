@@ -51,11 +51,26 @@ class IssuesController < ApplicationController
     if @issue.update(issue_params)
       respond_to do |format|
         format.turbo_stream do
-          render turbo_stream: turbo_stream.replace(
+          streams = []
+
+          # Update the issue card if it exists on the page
+          streams << turbo_stream.replace(
+            "issue_#{@issue.id}",
+            partial: 'issues/issue_card',
+            locals: {
+              issue: @issue,
+              visible_properties: UserPreference.for_user_and_team(Current.user, current_team).visible_properties_array
+            }
+          )
+
+          # Update the sidebar if it exists on the page
+          streams << turbo_stream.replace(
             'issue_sidebar',
             partial: 'issues/sidebar',
             locals: { issue: @issue, lanes: @lanes, team_members: @team_members, projects: @projects }
           )
+
+          render turbo_stream: streams
         end
         format.html { redirect_to team_issue_path(@issue.team, @issue), notice: 'Issue was successfully updated.' }
       end
@@ -131,7 +146,8 @@ class IssuesController < ApplicationController
       show_empty_groups: param_to_bool(params[:show_empty_groups], saved_prefs.show_empty_groups),
       show_empty_rows: param_to_bool(params[:show_empty_rows], saved_prefs.show_empty_rows),
       completed_filter: params[:completed_filter] || saved_prefs.completed_filter,
-      visible_properties: params[:visible_properties]&.split(',') || saved_prefs.visible_properties_array
+      visible_properties: params[:visible_properties]&.split(',') || saved_prefs.visible_properties_array,
+      milestone_id: params[:milestone_id]
     }
   end
   # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity

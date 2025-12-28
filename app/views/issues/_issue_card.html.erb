@@ -1,7 +1,7 @@
 <%
   visible_properties ||= UserPreference::AVAILABLE_PROPERTIES
 %>
-<div class="relative" data-controller="issue-card" data-issue-id="<%= issue.id %>">
+<div id="issue_<%= issue.id %>" class="relative" data-controller="issue-card" data-issue-id="<%= issue.id %>">
   <%= link_to team_issue_path(issue.team, issue), class: "block", data: { turbo_frame: "_top" } do %>
     <div class="group bg-foreground border border-stroke hover:bg-hover-highlight hover:border-stroke rounded px-3 py-2.5 cursor-pointer transition-colors"
          data-action="mouseenter->issue-card#mouseEnter mouseleave->issue-card#mouseLeave">
@@ -81,8 +81,12 @@
         <% end %>
 
         <% if visible_properties.include?('milestone') && issue.milestone %>
-          <span class="px-1.5 py-0.5 rounded bg-foreground border border-stroke text-gray-400">
+          <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-foreground border border-stroke text-gray-400">
+            <span style="color: <%= issue.milestone.status_color %>;">◆</span>
             <%= issue.milestone.name %>
+            <% if issue.milestone.due_date %>
+              <span class="text-xs">• <%= issue.milestone.formatted_due_date %></span>
+            <% end %>
           </span>
         <% end %>
 
@@ -105,5 +109,10 @@
   <!-- Label Picker Overlay (for 'L' keyboard shortcut) -->
   <div data-action="label-picker:labelAdded@window->issue-card#handleLabelChange label-picker:labelRemoved@window->issue-card#handleLabelChange">
     <%= render "labels/picker", issue: issue, context: "card" %>
+  </div>
+
+  <!-- Milestone Picker Overlay (for 'M' keyboard shortcut) -->
+  <div>
+    <%= render "milestones/picker", issue: issue, context: "card" %>
   </div>
 </div>

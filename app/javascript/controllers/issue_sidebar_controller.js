@@ -7,7 +7,8 @@ export default class extends Controller {
     "assigneeDropdown", "assigneeLabel", "assigneeInput",
     "projectDropdown", "projectLabel", "projectInput",
     "estimateDropdown", "estimateLabel", "estimateInput",
-    "labelsDropdown"
+    "labelsDropdown",
+    "milestoneDropdown", "milestoneLabel"
   ]
 
   connect() {
@@ -43,11 +44,22 @@ export default class extends Controller {
           }
         }
       }
+
+      // If this is the milestone dropdown and we're opening it, also open the milestone picker
+      if (dropdownType === "milestone" && wasHidden) {
+        const milestonePicker = this[dropdownTarget].querySelector('[data-controller="milestone-picker"]')
+        if (milestonePicker) {
+          const controller = this.application.getControllerForElementAndIdentifier(milestonePicker, "milestone-picker")
+          if (controller && controller.open) {
+            controller.open()
+          }
+        }
+      }
     }
   }
 
   closeAllDropdowns() {
-    const dropdowns = ["laneDropdown", "priorityDropdown", "assigneeDropdown", "projectDropdown", "estimateDropdown", "labelsDropdown"]
+    const dropdowns = ["laneDropdown", "priorityDropdown", "assigneeDropdown", "projectDropdown", "estimateDropdown", "labelsDropdown", "milestoneDropdown"]
 
     dropdowns.forEach(dropdown => {
       try {

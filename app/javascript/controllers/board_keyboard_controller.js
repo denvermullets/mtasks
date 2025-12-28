@@ -27,6 +27,12 @@ export default class extends Controller {
       event.preventDefault()
       this.openLabelPicker()
     }
+
+    // Press 'M' to open milestone picker on hovered card
+    if (event.key === 'm' || event.key === 'M') {
+      event.preventDefault()
+      this.openMilestonePicker()
+    }
   }
 
   openLabelPicker() {
@@ -44,6 +50,26 @@ export default class extends Controller {
 
     // Get the label picker controller and open it
     const controller = this.application.getControllerForElementAndIdentifier(labelPicker, "label-picker")
+    if (controller && controller.open) {
+      controller.open()
+    }
+  }
+
+  openMilestonePicker() {
+    // Find the currently hovered card
+    const hoveredCard = document.querySelector('[data-hovered="true"]')
+    if (!hoveredCard) {
+      return
+    }
+
+    // Find the milestone picker inside the hovered card
+    const milestonePicker = hoveredCard.querySelector('[data-controller="milestone-picker"]')
+    if (!milestonePicker) {
+      return
+    }
+
+    // Get the milestone picker controller and open it
+    const controller = this.application.getControllerForElementAndIdentifier(milestonePicker, "milestone-picker")
     if (controller && controller.open) {
       controller.open()
     }
