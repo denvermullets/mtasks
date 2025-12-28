@@ -51,6 +51,8 @@ class IssuesController < ApplicationController
     if @issue.update(issue_params)
       respond_to do |format|
         format.turbo_stream do
+          # Reload to get fresh associations
+          @issue.reload
           streams = []
 
           # Update the issue card if it exists on the page
