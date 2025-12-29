@@ -1,23 +1,18 @@
 class IssueLabelsController < ApplicationController
   include TeamScoped
+  include FormCollections
 
   before_action :set_issue
+  before_action :load_form_collections, only: %i[create destroy]
 
   def create
     label = current_team.labels.find(params[:label_id])
     issue_label = @issue.issue_labels.build(label: label)
 
     if issue_label.save
-      render json: {
-        id: issue_label.id,
-        label: {
-          id: label.id,
-          name: label.name,
-          color: label.color
-        }
-      }, status: :created
+      @issue.reload
     else
-      render json: { errors: issue_label.errors.full_messages }, status: :unprocessable_entity
+      render turbo_stream: turbo_stream.append('errors', 'Error adding label'), status: :unprocessable_entity
     end
   end
 
@@ -26,9 +21,9 @@ class IssueLabelsController < ApplicationController
 
     if issue_label
       issue_label.destroy
-      head :no_content
+      @issue.reload
     else
-      render json: { error: 'Label not found on this issue' }, status: :not_found
+      render turbo_stream: turbo_stream.append('errors', 'Label not found'), status: :not_found
     end
   end
 
