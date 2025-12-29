@@ -1,0 +1,2 @@
+<%# Remove all instances of this label from label pickers %>
+<%= turbo_stream.remove_all ".label-option[data-label-id='#{@label.id}']" %>

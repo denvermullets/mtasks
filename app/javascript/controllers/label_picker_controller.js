@@ -17,9 +17,6 @@ export default class extends Controller {
 
   connect() {
     this.currentFocusIndex = -1
-    this.allLabels = []
-    this.frequentlyUsedLabels = []
-    this.filteredLabels = []
     this.csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
 
     // Bind event handlers
@@ -28,16 +25,16 @@ export default class extends Controller {
 
     // Set up debounced filter
     this.filterDebounceTimeout = null
+
+    // Initialize filtered labels from rendered DOM
+    this.updateFilteredLabels()
   }
 
   disconnect() {
     this.close()
   }
 
-  async open() {
-    // Load labels data
-    await this.loadLabels()
-
+  open() {
     // Show picker
     this.pickerTarget.classList.remove("hidden")
 
@@ -50,6 +47,9 @@ export default class extends Controller {
     // Add event listeners
     document.addEventListener("click", this.boundHandleClickOutside)
     document.addEventListener("keydown", this.boundHandleEscape)
+
+    // Reset filtered labels
+    this.updateFilteredLabels()
   }
 
   close() {
@@ -74,72 +74,9 @@ export default class extends Controller {
     }
   }
 
-  async loadLabels() {
-    this.showLoading()
-
-    try {
-      const response = await fetch(`/teams/${this.teamIdValue}/labels`, {
-        headers: {
-          "Accept": "application/json"
-        }
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        this.allLabels = data.all_labels
-        this.frequentlyUsedLabels = data.frequently_used
-        this.renderLabels()
-      }
-    } catch (error) {
-      console.error("Failed to load labels:", error)
-      this.showError()
-    } finally {
-      this.hideLoading()
-    }
-  }
-
-  renderLabels() {
-    // Render frequently used section
-    if (this.frequentlyUsedLabels.length > 0) {
-      this.frequentlyUsedSectionTarget.classList.remove("hidden")
-      this.frequentlyUsedListTarget.innerHTML = ""
-      this.frequentlyUsedLabels.forEach(label => {
-        this.frequentlyUsedListTarget.appendChild(this.createLabelElement(label))
-      })
-    } else {
-      this.frequentlyUsedSectionTarget.classList.add("hidden")
-    }
-
-    // Render all labels
-    this.allLabelsListTarget.innerHTML = ""
-    this.allLabels.forEach(label => {
-      this.allLabelsListTarget.appendChild(this.createLabelElement(label))
-    })
-
+  updateFilteredLabels() {
     this.filteredLabels = Array.from(this.labelListTarget.querySelectorAll(".label-option"))
     this.updateEmptyState()
-  }
-
-  createLabelElement(label) {
-    const div = document.createElement("label")
-    div.className = "label-option flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors cursor-pointer"
-    div.dataset.labelId = label.id
-    div.dataset.labelName = label.name
-    div.dataset.labelColor = label.color
-    div.setAttribute("role", "option")
-
-    const isChecked = this.currentLabelsValue.includes(label.id)
-
-    div.innerHTML = `
-      <input type="checkbox"
-             ${isChecked ? "checked" : ""}
-             class="mr-2 rounded bg-background border-stroke accent-accent focus:ring-0 focus:ring-offset-0"
-             data-action="change->label-picker#toggleLabel" />
-      <span class="w-3 h-3 rounded-full mr-2 shrink-0" style="background-color: ${label.color};"></span>
-      <span class="flex-1 truncate">${label.name}</span>
-    `
-
-    return div
   }
 
   filterLabels() {
@@ -356,6 +293,7 @@ export default class extends Controller {
       const response = await fetch(`/teams/${this.teamIdValue}/labels`, {
         method: "POST",
         headers: {
+          "Accept": "text/vnd.turbo-stream.html",
           "Content-Type": "application/json",
           "X-CSRF-Token": this.csrfToken
         },
@@ -368,35 +306,32 @@ export default class extends Controller {
       })
 
       if (response.ok) {
-        const label = await response.json()
+        const html = await response.text()
+        Turbo.renderStreamMessage(html)
 
-        // Add to labels array
-        this.allLabels.push({
-          id: label.id,
-          name: label.name,
-          color: label.color,
-          usage_count: 0
-        })
+        // Get the created label ID from the response
+        // We'll need to extract this from the Turbo Stream response
+        // For now, we'll wait a bit and then find the label by name
+        setTimeout(() => {
+          const newLabelElement = Array.from(this.labelListTarget.querySelectorAll(".label-option"))
+            .find(el => el.dataset.labelName === name)
 
-        // Re-render to include new label
-        this.renderLabels()
+          if (newLabelElement) {
+            const labelId = parseInt(newLabelElement.dataset.labelId)
+            const checkbox = newLabelElement.querySelector("input[type=checkbox]")
+            checkbox.checked = true
 
-        // Automatically add to issue
-        await this.addLabelToIssue(label.id)
+            // Add label to issue
+            this.addLabelToIssue(labelId)
+          }
 
-        // Check the new label's checkbox
-        const newLabelElement = this.labelListTarget.querySelector(`[data-label-id="${label.id}"]`)
-        if (newLabelElement) {
-          const checkbox = newLabelElement.querySelector("input[type=checkbox]")
-          checkbox.checked = true
-        }
-
-        // Clear search
-        this.searchTarget.value = ""
-        this.filterLabels()
-
+          // Clear search
+          this.searchTarget.value = ""
+          this.filterLabels()
+          this.updateFilteredLabels()
+        }, 100)
       } else {
-        const error = await response.json()
+        const error = await response.text()
         console.error("Failed to create label:", error)
       }
     } catch (error) {
@@ -453,20 +388,6 @@ export default class extends Controller {
 
     this.pickerTarget.style.top = `${top}px`
     this.pickerTarget.style.left = `${left}px`
-  }
-
-  showLoading() {
-    this.loadingStateTarget.classList.remove("hidden")
-    this.emptyStateTarget.classList.add("hidden")
-  }
-
-  hideLoading() {
-    this.loadingStateTarget.classList.add("hidden")
-  }
-
-  showError() {
-    // Could show error message here
-    this.hideLoading()
   }
 
   updateEmptyState() {

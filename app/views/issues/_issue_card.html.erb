@@ -1,5 +1,6 @@
 <%
   visible_properties ||= UserPreference::AVAILABLE_PROPERTIES
+  labels ||= issue.team.labels
 %>
 <div id="issue_<%= issue.id %>" class="relative" data-controller="issue-card" data-issue-id="<%= issue.id %>">
   <%= link_to team_issue_path(issue.team, issue), class: "block", data: { turbo_frame: "_top" } do %>
@@ -107,8 +108,8 @@
   <% end %>
 
   <!-- Label Picker Overlay (for 'L' keyboard shortcut) -->
-  <div data-action="label-picker:labelAdded@window->issue-card#handleLabelChange label-picker:labelRemoved@window->issue-card#handleLabelChange">
-    <%= render "labels/picker", issue: issue, context: "card" %>
+  <div>
+    <%= render "labels/picker", issue: issue, labels: labels, context: "card" %>
   </div>
 
   <!-- Milestone Picker Overlay (for 'M' keyboard shortcut) -->

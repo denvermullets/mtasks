@@ -1,5 +1,5 @@
 <%# Label Picker Component
-  Usage: %= render "labels/picker", issue: @issue, context: "sidebar" %
+  Usage: %= render "labels/picker", issue: @issue, labels: @labels, context: "sidebar" %
   Context can be: "sidebar" or "card"
 %>
 
@@ -8,6 +8,10 @@
   team_id = issue.team_id
   current_label_ids = issue.labels.pluck(:id)
   context ||= "sidebar"
+
+  # Get frequently used and all labels
+  frequently_used_labels = labels.frequently_used
+  all_labels = labels.by_usage
 %>
 
 <div data-controller="label-picker"
@@ -49,25 +53,36 @@
     </div>
 
     <!-- Frequently Used Section -->
-    <div data-label-picker-target="frequentlyUsedSection" class="hidden">
-      <div class="px-3 py-2 text-xs font-medium text-gray-500">Frequently used</div>
-      <div data-label-picker-target="frequentlyUsedList"></div>
-    </div>
+    <% if frequently_used_labels.any? %>
+      <div data-label-picker-target="frequentlyUsedSection">
+        <div class="px-3 py-2 text-xs font-medium text-gray-500">Frequently used</div>
+        <div data-label-picker-target="frequentlyUsedList">
+          <% frequently_used_labels.each do |label| %>
+            <%= render 'labels/picker_label_option', label: label, current_label_ids: current_label_ids %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
 
     <!-- All Labels Section -->
     <div>
       <div class="px-3 py-2 text-xs font-medium text-gray-500" data-label-picker-target="allLabelsHeader">Labels</div>
-      <div data-label-picker-target="allLabelsList"></div>
+      <div data-label-picker-target="allLabelsList">
+        <% all_labels.each do |label| %>
+          <%= render 'labels/picker_label_option', label: label, current_label_ids: current_label_ids %>
+        <% end %>
+      </div>
     </div>
 
     <!-- Empty State -->
-    <div data-label-picker-target="emptyState" class="hidden px-3 py-8 text-center text-sm text-gray-500">
-      No labels found. Start typing to create one.
-    </div>
-
-    <!-- Loading State -->
-    <div data-label-picker-target="loadingState" class="px-3 py-8 text-center">
-      <div class="inline-block w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin"></div>
-    </div>
+    <% if all_labels.empty? %>
+      <div data-label-picker-target="emptyState" class="px-3 py-8 text-center text-sm text-gray-500">
+        No labels found. Start typing to create one.
+      </div>
+    <% else %>
+      <div data-label-picker-target="emptyState" class="hidden px-3 py-8 text-center text-sm text-gray-500">
+        No labels found. Start typing to create one.
+      </div>
+    <% end %>
   </div>
 </div>
