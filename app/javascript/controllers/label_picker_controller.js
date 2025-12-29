@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { Turbo } from "@hotwired/turbo-rails"
 
 export default class extends Controller {
   static targets = [
@@ -134,7 +135,7 @@ export default class extends Controller {
              ${isChecked ? "checked" : ""}
              class="mr-2 rounded bg-background border-stroke accent-accent focus:ring-0 focus:ring-offset-0"
              data-action="change->label-picker#toggleLabel" />
-      <span class="w-3 h-3 rounded-full mr-2 flex-shrink-0" style="background-color: ${label.color};"></span>
+      <span class="w-3 h-3 rounded-full mr-2 shrink-0" style="background-color: ${label.color};"></span>
       <span class="flex-1 truncate">${label.name}</span>
     `
 
@@ -307,6 +308,7 @@ export default class extends Controller {
     const response = await fetch(`/teams/${this.teamIdValue}/issues/${this.issueIdValue}/issue_labels`, {
       method: "POST",
       headers: {
+        "Accept": "text/vnd.turbo-stream.html",
         "Content-Type": "application/json",
         "X-CSRF-Token": this.csrfToken
       },
@@ -317,20 +319,19 @@ export default class extends Controller {
       throw new Error("Failed to add label")
     }
 
+    // Turbo will automatically process the turbo-stream response
+    const html = await response.text()
+    Turbo.renderStreamMessage(html)
+
     // Update current labels
     this.currentLabelsValue = [...this.currentLabelsValue, labelId]
-
-    // Dispatch event to update card display
-    window.dispatchEvent(new CustomEvent("label-picker:labelAdded", {
-      detail: { labelId, issueId: this.issueIdValue },
-      bubbles: true
-    }))
   }
 
   async removeLabelFromIssue(labelId) {
     const response = await fetch(`/teams/${this.teamIdValue}/issues/${this.issueIdValue}/issue_labels/${labelId}`, {
       method: "DELETE",
       headers: {
+        "Accept": "text/vnd.turbo-stream.html",
         "X-CSRF-Token": this.csrfToken
       }
     })
@@ -339,14 +340,12 @@ export default class extends Controller {
       throw new Error("Failed to remove label")
     }
 
+    // Turbo will automatically process the turbo-stream response
+    const html = await response.text()
+    Turbo.renderStreamMessage(html)
+
     // Update current labels
     this.currentLabelsValue = this.currentLabelsValue.filter(id => id !== labelId)
-
-    // Dispatch event to update card display
-    window.dispatchEvent(new CustomEvent("label-picker:labelRemoved", {
-      detail: { labelId, issueId: this.issueIdValue },
-      bubbles: true
-    }))
   }
 
   async createAndToggleLabel() {

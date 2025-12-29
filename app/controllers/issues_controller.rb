@@ -1,4 +1,6 @@
 class IssuesController < ApplicationController
+  include FormCollections
+
   before_action :require_team!
   before_action :set_issue, only: %i[show edit update destroy]
   before_action :authorize_issue_access!, only: %i[show]
@@ -92,14 +94,6 @@ class IssuesController < ApplicationController
     return if (Current.user.admin? || @issue.creator == Current.user) && action_name.in?(%w[edit destroy])
 
     redirect_to team_issue_path(@issue.team, @issue), alert: 'You do not have permission to modify this issue.'
-  end
-
-  def load_form_collections
-    @lanes = current_team.lanes
-    @team_members = current_team.users
-    @labels = current_team.labels
-    @projects = current_team.projects
-    @milestones = current_team.milestones
   end
 
   def issue_params

@@ -205,8 +205,7 @@
             <span class="text-gray-500">No labels</span>
           <% end %>
         </button>
-        <div data-issue-sidebar-target="labelsDropdown"
-             data-action="label-picker:labelAdded@window->issue-sidebar#handleLabelChange label-picker:labelRemoved@window->issue-sidebar#handleLabelChange">
+        <div data-issue-sidebar-target="labelsDropdown">
           <%= render "labels/picker", issue: issue, context: "sidebar" %>
         </div>
       </div>
