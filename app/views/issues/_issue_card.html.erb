@@ -28,8 +28,8 @@
                    (visible_properties.include?('lane') && issue.lane) ||
                    (visible_properties.include?('assignee') && issue.assignee)
     %>
-    <div class="flex items-center justify-between text-xs flex-wrap gap-1">
-      <div class="flex items-center gap-1.5 flex-wrap">
+    <div class="flex items-start justify-between text-xs gap-1">
+      <div class="flex items-center gap-1.5 flex-wrap max-h-[3.5rem] overflow-hidden">
         <% unless has_badges %>
           <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path>
@@ -59,7 +59,7 @@
             </span>
           <% end %>
           <% if issue.labels.count > 2 %>
-            <span class="text-xs text-gray-500">+<%= issue.labels.count - 2 %></span>
+            <span class="text-xs text-gray-500 shrink-0">+<%= issue.labels.count - 2 %></span>
           <% end %>
         <% end %>
 
@@ -99,7 +99,7 @@
       </div>
 
       <% if visible_properties.include?('assignee') && issue.assignee %>
-        <div class="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-medium">
+        <div class="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-medium shrink-0">
           <%= issue.assignee.name.first.upcase %>
         </div>
       <% end %>
