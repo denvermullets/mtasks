@@ -10,64 +10,56 @@
       },
       class: "block px-4 py-3 text-sm" do %>
   <div class="flex items-center gap-4">
-    <div class="w-24 text-gray-400 font-mono"><%= issue.identifier %></div>
-    <div class="flex-1 text-gray-200"><%= issue.title %></div>
+    <!-- ID (fixed width) -->
+    <div class="w-24 text-gray-400 font-mono shrink-0"><%= issue.identifier %></div>
 
-    <% if display_options[:visible_properties].include?('priority') %>
-      <div class="w-24 text-gray-400">
-        <% unless issue.no_priority? %>
-          <%= issue.priority.titleize %>
-        <% end %>
-      </div>
-    <% end %>
+    <!-- Title (flexible, takes available space) -->
+    <div class="flex-1 text-gray-200 truncate"><%= issue.title %></div>
 
-    <% if display_options[:visible_properties].include?('status') %>
-      <div class="w-32 text-gray-400">
-        <% if issue.completed_at %>
-          Completed
-        <% elsif issue.canceled_at %>
-          Canceled
-        <% elsif issue.started_at %>
-          In Progress
-        <% else %>
-          Backlog
-        <% end %>
-      </div>
-    <% end %>
+    <!-- Properties (right-aligned, flows naturally) -->
+    <div class="flex items-center gap-2 shrink-0">
+      <% if display_options[:visible_properties].include?('priority') && !issue.no_priority? %>
+        <span class="text-xs text-gray-400"><%= issue.priority.titleize %></span>
+      <% end %>
 
-    <% if display_options[:visible_properties].include?('assignee') %>
-      <div class="w-40">
-        <% if issue.assignee %>
-          <div class="flex items-center gap-2">
-            <div class="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-medium">
-              <%= issue.assignee.name.first.upcase %>
-            </div>
-            <span class="text-gray-300"><%= issue.assignee.name %></span>
+      <% if display_options[:visible_properties].include?('assignee') && issue.assignee %>
+        <div class="flex items-center gap-1.5">
+          <div class="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-medium shrink-0">
+            <%= issue.assignee.name.first.upcase %>
           </div>
-        <% end %>
-      </div>
-    <% end %>
+          <span class="text-xs text-gray-300"><%= issue.assignee.name %></span>
+        </div>
+      <% end %>
 
-    <% if display_options[:visible_properties].include?('due_date') %>
-      <div class="w-32 text-gray-400">
-        <% if issue.due_date %>
-          <%= issue.due_date.strftime('%b %d, %Y') %>
-        <% end %>
-      </div>
-    <% end %>
+      <% if display_options[:visible_properties].include?('due_date') && issue.due_date %>
+        <span class="text-xs text-gray-400"><%= issue.due_date.strftime('%b %d') %></span>
+      <% end %>
 
-    <% if display_options[:visible_properties].include?('labels') %>
-      <div class="w-48">
-        <div class="flex items-center gap-1 flex-wrap">
-          <% issue.labels.first(3).each do |label| %>
+      <% if display_options[:visible_properties].include?('labels') && issue.labels.any? %>
+        <div class="flex items-center gap-1">
+          <% visible_labels = issue.labels.first(2) %>
+          <% remaining_count = issue.labels.count - visible_labels.count %>
+
+          <% visible_labels.each do |label| %>
             <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-foreground border border-stroke text-gray-400">
               <span class="w-1.5 h-1.5 rounded-full" style="background-color: <%= label.color %>;"></span>
               <%= label.name %>
             </span>
           <% end %>
+
+          <% if remaining_count > 0 %>
+            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-foreground border border-stroke text-gray-400">
+              <span class="flex items-center gap-0.5">
+                <% issue.labels[2...5].each do |label| %>
+                  <span class="w-1.5 h-1.5 rounded-full" style="background-color: <%= label.color %>;"></span>
+                <% end %>
+              </span>
+              +<%= remaining_count %>
+            </span>
+          <% end %>
         </div>
-      </div>
-    <% end %>
+      <% end %>
+    </div>
   </div>
   <% end %>
 

@@ -4,21 +4,7 @@
     <div class="flex items-center gap-4">
       <div class="w-24">ID</div>
       <div class="flex-1">Title</div>
-      <% if @display_options[:visible_properties].include?('priority') %>
-        <div class="w-24">Priority</div>
-      <% end %>
-      <% if @display_options[:visible_properties].include?('status') %>
-        <div class="w-32">Status</div>
-      <% end %>
-      <% if @display_options[:visible_properties].include?('assignee') %>
-        <div class="w-40">Assignee</div>
-      <% end %>
-      <% if @display_options[:visible_properties].include?('due_date') %>
-        <div class="w-32">Due Date</div>
-      <% end %>
-      <% if @display_options[:visible_properties].include?('labels') %>
-        <div class="w-48">Labels</div>
-      <% end %>
+      <div class="text-right">Properties</div>
     </div>
   </div>
 

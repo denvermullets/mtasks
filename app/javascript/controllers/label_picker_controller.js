@@ -389,7 +389,6 @@ export default class extends Controller {
         top = 8
       }
 
-      console.log('Positioning picker at:', { top, left, rect, isWideElement })
       this.pickerTarget.style.top = `${top}px`
       this.pickerTarget.style.left = `${left}px`
     } else {
@@ -422,7 +421,6 @@ export default class extends Controller {
         top = 8
       }
 
-      console.log('Positioning picker at:', { top, left, rect })
       this.pickerTarget.style.top = `${top}px`
       this.pickerTarget.style.left = `${left}px`
     }
