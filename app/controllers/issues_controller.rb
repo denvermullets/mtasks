@@ -1,4 +1,3 @@
-# rubocop:disable Metrics/ClassLength
 class IssuesController < ApplicationController
   before_action :require_team!
   before_action :set_issue, only: %i[show edit update destroy]
@@ -50,13 +49,7 @@ class IssuesController < ApplicationController
     load_form_collections
     if @issue.update(issue_params)
       respond_to do |format|
-        format.turbo_stream do
-          render turbo_stream: turbo_stream.replace(
-            'issue_sidebar',
-            partial: 'issues/sidebar',
-            locals: { issue: @issue, lanes: @lanes, team_members: @team_members, projects: @projects }
-          )
-        end
+        format.turbo_stream { render turbo_stream: issue_update_streams }
         format.html { redirect_to team_issue_path(@issue.team, @issue), notice: 'Issue was successfully updated.' }
       end
     else
@@ -70,6 +63,13 @@ class IssuesController < ApplicationController
   end
 
   private
+
+  def issue_update_streams
+    IssueTurboStreamService.new(
+      @issue, Current.user, current_team, view_context,
+      { lanes: @lanes, team_members: @team_members, projects: @projects }
+    ).update_streams
+  end
 
   def set_issue
     @issue = Issue.includes(:team, :lane, :project, :milestone, :labels, :assignee, :creator,
@@ -118,28 +118,7 @@ class IssuesController < ApplicationController
     )
   end
 
-  # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
   def load_display_options
-    saved_prefs = UserPreference.for_user_and_team(Current.user, current_team)
-
-    @display_options = {
-      view_mode: params[:view_mode] || saved_prefs.view_mode,
-      group_by: params[:group_by] || saved_prefs.group_by,
-      sub_group_by: params[:sub_group_by] || saved_prefs.sub_group_by || 'none',
-      order_by: params[:order_by] || saved_prefs.order_by,
-      show_sub_issues: param_to_bool(params[:show_sub_issues], saved_prefs.show_sub_issues),
-      show_empty_groups: param_to_bool(params[:show_empty_groups], saved_prefs.show_empty_groups),
-      show_empty_rows: param_to_bool(params[:show_empty_rows], saved_prefs.show_empty_rows),
-      completed_filter: params[:completed_filter] || saved_prefs.completed_filter,
-      visible_properties: params[:visible_properties]&.split(',') || saved_prefs.visible_properties_array
-    }
-  end
-  # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
-
-  def param_to_bool(param, default)
-    return default if param.nil?
-
-    %w[true 1].include?(param.to_s)
+    @display_options = DisplayOptionsService.call(params, Current.user, current_team)
   end
 end
-# rubocop:enable Metrics/ClassLength

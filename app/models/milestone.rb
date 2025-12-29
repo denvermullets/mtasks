@@ -3,7 +3,9 @@ class Milestone < ApplicationRecord
   has_many :projects, dependent: :nullify
   has_many :issues, dependent: :nullify
 
-  validates :name, presence: true
+  validates :name, presence: true, uniqueness: { scope: :team_id, case_sensitive: false }
+
+  scope :by_due_date, -> { order(:due_date) }
 
   def progress_percentage
     return 0 if issues.none?
@@ -27,5 +29,21 @@ class Milestone < ApplicationRecord
     return 0 if elapsed_days <= 0
 
     [(elapsed_days.to_f / total_days * 100).round, 100].min
+  end
+
+  def status_color
+    return '#6b7280' unless due_date
+    return '#ef4444' if Date.current > due_date
+    return '#f59e0b' if due_date <= Date.current + 7.days || behind_schedule?
+
+    '#10b981' # Green - on track
+  end
+
+  def formatted_due_date
+    due_date&.strftime('%b %d')
+  end
+
+  def issue_count
+    issues.count
   end
 end

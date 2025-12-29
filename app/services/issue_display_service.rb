@@ -18,6 +18,7 @@ class IssueDisplayService
     result = issues
     result = filter_by_completion(result) if options[:completed_filter].present?
     result = filter_sub_issues(result) unless options[:show_sub_issues]
+    result = filter_by_milestone(result) if options[:milestone_id].present?
     result
   end
 
@@ -88,6 +89,10 @@ class IssueDisplayService
 
   def filter_sub_issues(issue_scope)
     issue_scope.where(parent_issue_id: nil)
+  end
+
+  def filter_by_milestone(issue_scope)
+    issue_scope.where(milestone_id: options[:milestone_id])
   end
 
   # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity

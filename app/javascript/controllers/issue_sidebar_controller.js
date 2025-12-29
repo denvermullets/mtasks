@@ -7,7 +7,8 @@ export default class extends Controller {
     "assigneeDropdown", "assigneeLabel", "assigneeInput",
     "projectDropdown", "projectLabel", "projectInput",
     "estimateDropdown", "estimateLabel", "estimateInput",
-    "labelsDropdown"
+    "labelsDropdown",
+    "milestoneDropdown", "milestoneLabel"
   ]
 
   connect() {
@@ -43,11 +44,22 @@ export default class extends Controller {
           }
         }
       }
+
+      // If this is the milestone dropdown and we're opening it, also open the milestone picker
+      if (dropdownType === "milestone" && wasHidden) {
+        const milestonePicker = this[dropdownTarget].querySelector('[data-controller="milestone-picker"]')
+        if (milestonePicker) {
+          const controller = this.application.getControllerForElementAndIdentifier(milestonePicker, "milestone-picker")
+          if (controller && controller.open) {
+            controller.open()
+          }
+        }
+      }
     }
   }
 
   closeAllDropdowns() {
-    const dropdowns = ["laneDropdown", "priorityDropdown", "assigneeDropdown", "projectDropdown", "estimateDropdown", "labelsDropdown"]
+    const dropdowns = ["laneDropdown", "priorityDropdown", "assigneeDropdown", "projectDropdown", "estimateDropdown", "labelsDropdown", "milestoneDropdown"]
 
     dropdowns.forEach(dropdown => {
       try {
@@ -126,6 +138,23 @@ export default class extends Controller {
         const labelPicker = this.labelsDropdownTarget.querySelector('[data-controller="label-picker"]')
         if (labelPicker) {
           const controller = this.application.getControllerForElementAndIdentifier(labelPicker, "label-picker")
+          if (controller && controller.open) {
+            controller.open()
+          }
+        }
+      }
+    }
+
+    // Open milestone dropdown with 'M' key
+    if (event.key === 'm' || event.key === 'M') {
+      event.preventDefault()
+      this.closeAllDropdowns()
+      if (this.hasMilestoneDropdownTarget) {
+        this.milestoneDropdownTarget.classList.remove("hidden")
+        // Find and open the milestone picker
+        const milestonePicker = this.milestoneDropdownTarget.querySelector('[data-controller="milestone-picker"]')
+        if (milestonePicker) {
+          const controller = this.application.getControllerForElementAndIdentifier(milestonePicker, "milestone-picker")
           if (controller && controller.open) {
             controller.open()
           }

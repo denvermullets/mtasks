@@ -1,0 +1,19 @@
+<%
+  frame_id = @context == 'new_issue' ? 'new_issue_milestone_list_frame' : "milestone_list_frame_#{@issue_id}"
+%>
+<%= turbo_frame_tag frame_id do %>
+  <div id="milestone_form_errors"></div>
+
+  <!-- No milestone option -->
+  <%= render 'milestones/milestone_option', milestone: nil, selected: false %>
+
+  <!-- Divider -->
+  <div class="border-t border-stroke my-1"></div>
+
+  <!-- Milestones list -->
+  <div id="milestones_list">
+    <% @milestones.each do |milestone| %>
+      <%= render 'milestones/milestone_option', milestone: milestone, selected: false %>
+    <% end %>
+  </div>
+<% end %>
