@@ -34,27 +34,33 @@
 
   <!-- Create New Milestone Option (shown dynamically) -->
   <div data-milestone-picker-target="createOption" class="hidden border-b border-stroke">
-    <button type="button"
-            data-action="click->milestone-picker#createAndSelectMilestone"
-            data-milestone-picker-target="createButton"
-            class="w-full text-left px-3 py-2 text-sm text-accent hover:bg-hover-highlight transition-colors flex items-center gap-2">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-      </svg>
-      <span>Create "<span data-milestone-picker-target="createText"></span>"</span>
-    </button>
+    <%= form_with model: Milestone.new,
+                  url: team_milestones_path(team_id),
+                  data: {
+                    turbo_frame: "milestone_list_frame_#{issue_id}",
+                    action: "turbo:submit-end->milestone-picker#handleCreate"
+                  } do |f| %>
+      <%= f.hidden_field :name, data: { milestone_picker_target: "nameField" } %>
+      <button type="submit"
+              data-milestone-picker-target="createButton"
+              class="w-full text-left px-3 py-2 text-sm text-accent hover:bg-hover-highlight transition-colors flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+        <span>Create "<span data-milestone-picker-target="createText"></span>"</span>
+      </button>
+    <% end %>
   </div>
 
   <!-- Milestones List Container -->
   <div data-milestone-picker-target="milestoneList" class="max-h-96 overflow-y-auto">
-    <!-- Empty State -->
-    <div data-milestone-picker-target="emptyState" class="hidden px-3 py-8 text-center text-sm text-gray-500">
-      No milestones found. Start typing to create one.
-    </div>
-
-    <!-- Loading State -->
-    <div data-milestone-picker-target="loadingState" class="px-3 py-8 text-center">
-      <div class="inline-block w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin"></div>
-    </div>
+    <%= turbo_frame_tag "milestone_list_frame_#{issue_id}",
+                        src: team_milestones_path(team_id, issue_id: issue_id, context: context),
+                        loading: :lazy do %>
+      <!-- Loading State -->
+      <div class="px-3 py-8 text-center">
+        <div class="inline-block w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    <% end %>
   </div>
 </div>

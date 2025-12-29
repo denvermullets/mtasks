@@ -3,7 +3,7 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static targets = [
     "picker", "search", "milestoneList", "createOption", "createButton", "createText",
-    "emptyState", "loadingState"
+    "nameField"
   ]
 
   static values = {
@@ -15,8 +15,6 @@ export default class extends Controller {
 
   connect() {
     this.currentFocusIndex = -1
-    this.allMilestones = []
-    this.filteredMilestones = []
     this.csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
 
     // Bind event handlers
@@ -31,10 +29,7 @@ export default class extends Controller {
     this.close()
   }
 
-  async open() {
-    // Load milestones data
-    await this.loadMilestones()
-
+  open() {
     // Show picker
     this.pickerTarget.classList.remove("hidden")
 
@@ -71,95 +66,19 @@ export default class extends Controller {
     }
   }
 
-  async loadMilestones() {
-    this.showLoading()
-
-    try {
-      const response = await fetch(`/teams/${this.teamIdValue}/milestones`, {
-        headers: {
-          "Accept": "application/json"
+  handleCreate(event) {
+    // After milestone is created, automatically select it
+    if (event.detail.success) {
+      // The new milestone option will be appended to the list
+      // Wait a moment for DOM to update, then auto-select it
+      setTimeout(() => {
+        const newMilestone = this.milestoneListTarget.querySelector('.milestone-option:last-child input[type="radio"]')
+        if (newMilestone) {
+          newMilestone.checked = true
+          newMilestone.dispatchEvent(new Event('change', { bubbles: true }))
         }
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        this.allMilestones = data.milestones
-        this.renderMilestones()
-      }
-    } catch (error) {
-      console.error("Failed to load milestones:", error)
-      this.showError()
-    } finally {
-      this.hideLoading()
+      }, 100)
     }
-  }
-
-  renderMilestones() {
-    // Clear list
-    this.milestoneListTarget.innerHTML = ""
-
-    // Add "No milestone" option first
-    this.milestoneListTarget.appendChild(this.createNoMilestoneElement())
-
-    // Add divider
-    const divider = document.createElement("div")
-    divider.className = "border-t border-stroke my-1"
-    this.milestoneListTarget.appendChild(divider)
-
-    // Add all milestones (already sorted by due_date from backend)
-    this.allMilestones.forEach(milestone => {
-      this.milestoneListTarget.appendChild(this.createMilestoneElement(milestone))
-    })
-
-    this.filteredMilestones = Array.from(this.milestoneListTarget.querySelectorAll(".milestone-option"))
-    this.updateEmptyState()
-  }
-
-  createNoMilestoneElement() {
-    const label = document.createElement("label")
-    label.className = "milestone-option flex items-center px-3 py-2 text-sm text-gray-500 hover:bg-hover-highlight transition-colors cursor-pointer"
-    label.dataset.milestoneId = ""
-    label.dataset.milestoneName = "No milestone"
-    label.setAttribute("role", "option")
-
-    const isSelected = !this.currentMilestoneValue
-
-    label.innerHTML = `
-      <input type="radio"
-             name="milestone"
-             ${isSelected ? "checked" : ""}
-             class="mr-2 rounded-full bg-background border-stroke accent-accent focus:ring-0 focus:ring-offset-0"
-             data-action="change->milestone-picker#selectMilestone" />
-      <span class="text-gray-500 mr-2">◇</span>
-      <span class="flex-1">No milestone</span>
-      ${isSelected ? '<span class="text-accent">✓</span>' : ''}
-    `
-
-    return label
-  }
-
-  createMilestoneElement(milestone) {
-    const label = document.createElement("label")
-    label.className = "milestone-option flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors cursor-pointer"
-    label.dataset.milestoneId = milestone.id
-    label.dataset.milestoneName = milestone.name
-    label.setAttribute("role", "option")
-
-    const isSelected = this.currentMilestoneValue === milestone.id
-
-    label.innerHTML = `
-      <input type="radio"
-             name="milestone"
-             ${isSelected ? "checked" : ""}
-             class="mr-2 rounded-full bg-background border-stroke accent-accent focus:ring-0 focus:ring-offset-0"
-             data-action="change->milestone-picker#selectMilestone" />
-      <span style="color: ${milestone.status_color};" class="mr-2">◆</span>
-      <span class="flex-1 truncate">${milestone.name}</span>
-      ${milestone.formatted_due_date ? `<span class="text-xs text-gray-500">• ${milestone.formatted_due_date}</span>` : ''}
-      ${isSelected ? '<span class="text-accent ml-2">✓</span>' : ''}
-    `
-
-    return label
   }
 
   filterMilestones() {
@@ -171,24 +90,22 @@ export default class extends Controller {
     // Debounce the filtering
     this.filterDebounceTimeout = setTimeout(() => {
       const query = this.searchTarget.value.trim().toLowerCase()
+      const milestoneOptions = this.milestoneListTarget.querySelectorAll(".milestone-option")
 
       if (query === "") {
         // Show all milestones
-        this.filteredMilestones.forEach(el => el.classList.remove("hidden"))
+        milestoneOptions.forEach(el => el.classList.remove("hidden"))
         this.createOptionTarget.classList.add("hidden")
-        this.updateEmptyState()
         return
       }
 
       // Filter milestones
-      let visibleCount = 0
       let exactMatch = false
 
-      this.filteredMilestones.forEach(el => {
+      milestoneOptions.forEach(el => {
         const name = el.dataset.milestoneName.toLowerCase()
         if (name.includes(query)) {
           el.classList.remove("hidden")
-          visibleCount++
           if (name === query) {
             exactMatch = true
           }
@@ -200,12 +117,14 @@ export default class extends Controller {
       // Show create option if no exact match
       if (!exactMatch && query.length > 0) {
         this.createTextTarget.textContent = query
+        if (this.hasNameFieldTarget) {
+          this.nameFieldTarget.value = query
+        }
         this.createOptionTarget.classList.remove("hidden")
       } else {
         this.createOptionTarget.classList.add("hidden")
       }
 
-      this.updateEmptyState()
       this.currentFocusIndex = -1
     }, 300)
   }
@@ -290,62 +209,6 @@ export default class extends Controller {
     }
   }
 
-  async createAndSelectMilestone() {
-    const name = this.searchTarget.value.trim()
-
-    if (!name) return
-
-    try {
-      const response = await fetch(`/teams/${this.teamIdValue}/milestones`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-          "X-CSRF-Token": this.csrfToken
-        },
-        body: JSON.stringify({
-          milestone: { name }
-        })
-      })
-
-      if (response.ok) {
-        const milestone = await response.json()
-        await this.updateIssueMilestone(milestone.id)
-      } else {
-        console.error("Failed to create milestone")
-      }
-    } catch (error) {
-      console.error("Error creating milestone:", error)
-    }
-  }
-
-  updateEmptyState() {
-    const visibleCount = this.getVisibleOptions().length
-
-    if (this.hasEmptyStateTarget) {
-      if (visibleCount === 0 && this.searchTarget.value.trim() !== "") {
-        this.emptyStateTarget.classList.remove("hidden")
-      } else {
-        this.emptyStateTarget.classList.add("hidden")
-      }
-    }
-  }
-
-  showLoading() {
-    if (this.hasLoadingStateTarget) {
-      this.loadingStateTarget.classList.remove("hidden")
-    }
-  }
-
-  hideLoading() {
-    if (this.hasLoadingStateTarget) {
-      this.loadingStateTarget.classList.add("hidden")
-    }
-  }
-
-  showError() {
-    // TODO: Implement error state
-  }
 
   positionOverlay() {
     const overlayWidth = 320 // w-80 = 20rem = 320px

@@ -1,24 +1,24 @@
 class IssueTurboStreamService
-  attr_reader :issue, :current_user, :current_team, :form_collections
+  include ActionView::RecordIdentifier
 
-  def initialize(issue, current_user, current_team, form_collections = {})
+  attr_reader :issue, :current_user, :current_team, :form_collections, :view_context
+
+  def initialize(issue, current_user, current_team, view_context, form_collections = {})
     @issue = issue
     @current_user = current_user
     @current_team = current_team
+    @view_context = view_context
     @form_collections = form_collections
   end
 
-  def update_streams(view_context)
+  def update_streams
     issue.reload
-    [
-      render_card_stream(view_context),
-      render_sidebar_stream(view_context)
-    ]
+    [card_stream, sidebar_stream]
   end
 
   private
 
-  def render_card_stream(view_context)
+  def card_stream
     view_context.turbo_stream.replace(
       "issue_#{issue.id}",
       partial: 'issues/issue_card',
@@ -26,7 +26,7 @@ class IssueTurboStreamService
     )
   end
 
-  def render_sidebar_stream(view_context)
+  def sidebar_stream
     view_context.turbo_stream.replace(
       'issue_sidebar',
       partial: 'issues/sidebar',
