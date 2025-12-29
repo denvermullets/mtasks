@@ -355,6 +355,43 @@ export default class extends Controller {
       referenceElement = this.element.closest('[data-hovered="true"]')
       if (!referenceElement) return
       rect = referenceElement.getBoundingClientRect()
+
+      // Check if this is a wide element (like a list view row)
+      // If the element is wider than 800px, it's probably a list row
+      const isWideElement = rect.width > 800
+
+      let top = rect.top
+      let left
+
+      if (isWideElement) {
+        // For list view: center the picker horizontally on screen
+        left = (window.innerWidth - overlayWidth) / 2
+      } else {
+        // For board view: position to the left of the card
+        left = rect.left - overlayWidth - 8 // 8px gap
+
+        // If it would go off the left edge, position to the right instead
+        if (left < 8) {
+          left = rect.right + 8
+        }
+
+        // If still off-screen to the right, center it
+        if (left + overlayWidth > window.innerWidth - 8) {
+          left = (window.innerWidth - overlayWidth) / 2
+        }
+      }
+
+      // Check if overlay would go off-screen vertically
+      if (top + overlayHeight > window.innerHeight) {
+        top = window.innerHeight - overlayHeight - 8
+      }
+      if (top < 8) {
+        top = 8
+      }
+
+      console.log('Positioning picker at:', { top, left, rect, isWideElement })
+      this.pickerTarget.style.top = `${top}px`
+      this.pickerTarget.style.left = `${left}px`
     } else {
       // For sidebar context, find the labels dropdown button
       referenceElement = this.element.closest('[data-issue-sidebar-target="labelsDropdown"]')
@@ -367,27 +404,28 @@ export default class extends Controller {
       } else {
         rect = referenceElement.getBoundingClientRect()
       }
-    }
 
-    // Position to the left of the reference element
-    let top = rect.top
-    let left = rect.left - overlayWidth - 8 // 8px gap
+      // Position to the left of the reference element
+      let top = rect.top
+      let left = rect.left - overlayWidth - 8 // 8px gap
 
-    // If it would go off the left edge, position to the right instead
-    if (left < 8) {
-      left = rect.right + 8
-    }
+      // If it would go off the left edge, position to the right instead
+      if (left < 8) {
+        left = rect.right + 8
+      }
 
-    // Check if overlay would go off-screen vertically
-    if (top + overlayHeight > window.innerHeight) {
-      top = window.innerHeight - overlayHeight - 8
-    }
-    if (top < 8) {
-      top = 8
-    }
+      // Check if overlay would go off-screen vertically
+      if (top + overlayHeight > window.innerHeight) {
+        top = window.innerHeight - overlayHeight - 8
+      }
+      if (top < 8) {
+        top = 8
+      }
 
-    this.pickerTarget.style.top = `${top}px`
-    this.pickerTarget.style.left = `${left}px`
+      console.log('Positioning picker at:', { top, left, rect })
+      this.pickerTarget.style.top = `${top}px`
+      this.pickerTarget.style.left = `${left}px`
+    }
   }
 
   updateEmptyState() {

@@ -28,20 +28,13 @@ export default class extends Controller {
 
   mouseEnter() {
     // Mark this card as hovered so keyboard shortcuts can target it
+    console.log('Mouse enter on issue card:', this.element.dataset.issueId)
     this.element.dataset.hovered = "true"
   }
 
   mouseLeave() {
     // Remove hover state
+    console.log('Mouse leave on issue card:', this.element.dataset.issueId)
     delete this.element.dataset.hovered
-  }
-
-  handleLabelChange() {
-    // Refresh the page to show updated labels
-    if (typeof Turbo !== 'undefined') {
-      Turbo.visit(window.location.href, { action: 'replace' })
-    } else {
-      window.location.reload()
-    }
   }
 }

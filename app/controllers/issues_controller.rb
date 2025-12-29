@@ -15,6 +15,7 @@ class IssuesController < ApplicationController
     @display_service = IssueDisplayService.new(base_issues, @display_options, current_team)
     @grouped_issues = @display_service.grouped_issues
     @lanes = current_team.lanes.order(:position)
+    @labels = current_team.labels.includes(:issue_labels)
   end
 
   def show
@@ -69,7 +70,7 @@ class IssuesController < ApplicationController
   def issue_update_streams
     IssueTurboStreamService.new(
       @issue, Current.user, current_team, view_context,
-      { lanes: @lanes, team_members: @team_members, projects: @projects }
+      { lanes: @lanes, team_members: @team_members, projects: @projects, labels: @labels, milestones: @milestones }
     ).update_streams
   end
 

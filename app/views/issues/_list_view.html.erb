@@ -33,68 +33,7 @@
 
     <!-- Issues -->
     <% group_data[:issues].each do |issue| %>
-      <%= link_to team_issue_path(issue.team, issue), data: { turbo_frame: "_top" }, class: "block border-b border-stroke hover:bg-hover-highlight transition-colors" do %>
-        <div class="px-4 py-3 text-sm flex items-center gap-4">
-          <div class="w-24 text-gray-400 font-mono"><%= issue.identifier %></div>
-          <div class="flex-1 text-gray-200"><%= issue.title %></div>
-
-          <% if @display_options[:visible_properties].include?('priority') %>
-            <div class="w-24 text-gray-400">
-              <% unless issue.no_priority? %>
-                <%= issue.priority.titleize %>
-              <% end %>
-            </div>
-          <% end %>
-
-          <% if @display_options[:visible_properties].include?('status') %>
-            <div class="w-32 text-gray-400">
-              <% if issue.completed_at %>
-                Completed
-              <% elsif issue.canceled_at %>
-                Canceled
-              <% elsif issue.started_at %>
-                In Progress
-              <% else %>
-                Backlog
-              <% end %>
-            </div>
-          <% end %>
-
-          <% if @display_options[:visible_properties].include?('assignee') %>
-            <div class="w-40">
-              <% if issue.assignee %>
-                <div class="flex items-center gap-2">
-                  <div class="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-medium">
-                    <%= issue.assignee.name.first.upcase %>
-                  </div>
-                  <span class="text-gray-300"><%= issue.assignee.name %></span>
-                </div>
-              <% end %>
-            </div>
-          <% end %>
-
-          <% if @display_options[:visible_properties].include?('due_date') %>
-            <div class="w-32 text-gray-400">
-              <% if issue.due_date %>
-                <%= issue.due_date.strftime('%b %d, %Y') %>
-              <% end %>
-            </div>
-          <% end %>
-
-          <% if @display_options[:visible_properties].include?('labels') %>
-            <div class="w-48">
-              <div class="flex items-center gap-1 flex-wrap">
-                <% issue.labels.first(3).each do |label| %>
-                  <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-foreground border border-stroke text-gray-400">
-                    <span class="w-1.5 h-1.5 rounded-full" style="background-color: <%= label.color %>;"></span>
-                    <%= label.name %>
-                  </span>
-                <% end %>
-              </div>
-            </div>
-          <% end %>
-        </div>
-      <% end %>
+      <%= render "issues/list_row", issue: issue, display_options: @display_options, labels: @labels %>
     <% end %>
   <% end %>
 </div>

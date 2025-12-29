@@ -1,5 +1,8 @@
-<%# Update the issue card on the board %>
-<%= turbo_stream.replace "issue_#{@issue.id}", partial: "issues/issue_card", locals: { issue: @issue, visible_properties: @visible_properties } %>
+<%# Update the issue card in board view %>
+<%= turbo_stream.replace "issue_#{@issue.id}", partial: "issues/issue_card", locals: { issue: @issue, visible_properties: @visible_properties, labels: @labels } %>
+
+<%# Update the list row in list view %>
+<%= turbo_stream.replace "issue_row_#{@issue.id}", partial: "issues/list_row", locals: { issue: @issue, display_options: { visible_properties: @visible_properties }, labels: @labels } %>
 
 <%# Update the sidebar if it's open %>
 <%= turbo_stream.replace "issue_sidebar", partial: "issues/sidebar", locals: {

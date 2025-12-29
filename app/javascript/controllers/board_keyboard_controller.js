@@ -39,19 +39,28 @@ export default class extends Controller {
     // Find the currently hovered card
     const hoveredCard = document.querySelector('[data-hovered="true"]')
     if (!hoveredCard) {
+      console.log('No hovered card found')
       return
     }
+
+    console.log('Hovered card found:', hoveredCard)
 
     // Find the label picker inside the hovered card
     const labelPicker = hoveredCard.querySelector('[data-controller="label-picker"]')
     if (!labelPicker) {
+      console.log('No label picker found in hovered card')
       return
     }
+
+    console.log('Label picker found:', labelPicker)
 
     // Get the label picker controller and open it
     const controller = this.application.getControllerForElementAndIdentifier(labelPicker, "label-picker")
     if (controller && controller.open) {
+      console.log('Opening label picker')
       controller.open()
+    } else {
+      console.log('Label picker controller not found or no open method')
     }
   }
 
