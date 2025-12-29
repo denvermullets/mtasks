@@ -1,0 +1,4 @@
+<%# Replace all instances of this label in label pickers %>
+<%= turbo_stream.replace_all ".label-option[data-label-id='#{@label.id}']" do %>
+  <%= render 'labels/picker_label_option', label: @label, current_label_ids: [] %>
+<% end %>

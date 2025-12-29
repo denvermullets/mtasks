@@ -13,6 +13,13 @@ class Label < ApplicationRecord
       .order(Arel.sql('COUNT(issue_labels.id) DESC'))
   }
 
+  # Scope to get frequently used labels (top 5 with at least 1 use)
+  scope :frequently_used, lambda {
+    by_usage
+      .having('COUNT(issue_labels.id) > 0')
+      .limit(5)
+  }
+
   # Calculate usage count for this label
   def usage_count
     issue_labels.count

@@ -1,0 +1,4 @@
+<%# Append the new label to all label picker lists on the page %>
+<%= turbo_stream.append_all "[data-label-picker-target='allLabelsList']" do %>
+  <%= render 'labels/picker_label_option', label: @label, current_label_ids: @current_label_ids %>
+<% end %>

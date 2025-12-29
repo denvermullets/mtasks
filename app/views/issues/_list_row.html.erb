@@ -1,0 +1,70 @@
+<%# List view row - maintains table column structure %>
+<div id="issue_row_<%= issue.id %>"
+     class="relative border-b border-stroke hover:bg-hover-highlight transition-colors"
+     data-controller="issue-card"
+     data-issue-id="<%= issue.id %>">
+  <%= link_to team_issue_path(issue.team, issue),
+      data: {
+        turbo_frame: "_top",
+        action: "mouseenter->issue-card#mouseEnter mouseleave->issue-card#mouseLeave"
+      },
+      class: "block px-4 py-3 text-sm" do %>
+  <div class="flex items-center gap-4">
+    <!-- ID (fixed width) -->
+    <div class="w-24 text-gray-400 font-mono shrink-0"><%= issue.identifier %></div>
+
+    <!-- Title (flexible, takes available space) -->
+    <div class="flex-1 text-gray-200 truncate"><%= issue.title %></div>
+
+    <!-- Properties (right-aligned, flows naturally) -->
+    <div class="flex items-center gap-2 shrink-0">
+      <% if display_options[:visible_properties].include?('priority') && !issue.no_priority? %>
+        <span class="text-xs text-gray-400"><%= issue.priority.titleize %></span>
+      <% end %>
+
+      <% if display_options[:visible_properties].include?('assignee') && issue.assignee %>
+        <div class="flex items-center gap-1.5">
+          <div class="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-medium shrink-0">
+            <%= issue.assignee.name.first.upcase %>
+          </div>
+          <span class="text-xs text-gray-300"><%= issue.assignee.name %></span>
+        </div>
+      <% end %>
+
+      <% if display_options[:visible_properties].include?('due_date') && issue.due_date %>
+        <span class="text-xs text-gray-400"><%= issue.due_date.strftime('%b %d') %></span>
+      <% end %>
+
+      <% if display_options[:visible_properties].include?('labels') && issue.labels.any? %>
+        <div class="flex items-center gap-1">
+          <% visible_labels = issue.labels.first(2) %>
+          <% remaining_count = issue.labels.count - visible_labels.count %>
+
+          <% visible_labels.each do |label| %>
+            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-foreground border border-stroke text-gray-400">
+              <span class="w-1.5 h-1.5 rounded-full" style="background-color: <%= label.color %>;"></span>
+              <%= label.name %>
+            </span>
+          <% end %>
+
+          <% if remaining_count > 0 %>
+            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-foreground border border-stroke text-gray-400">
+              <span class="flex items-center gap-0.5">
+                <% issue.labels[2...5].each do |label| %>
+                  <span class="w-1.5 h-1.5 rounded-full" style="background-color: <%= label.color %>;"></span>
+                <% end %>
+              </span>
+              +<%= remaining_count %>
+            </span>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+  <% end %>
+
+  <!-- Label Picker (for 'L' keyboard shortcut) -->
+  <div>
+    <%= render "labels/picker", issue: issue, labels: labels, context: "card" %>
+  </div>
+</div>

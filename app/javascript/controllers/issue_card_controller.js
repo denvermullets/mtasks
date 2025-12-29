@@ -2,23 +2,13 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   connect() {
-    console.log("Issue card connected:", this.element.dataset.issueId)
   }
 
   click(event) {
-    // Prevent default if needed
-    const issueId = this.element.dataset.issueId
-    console.log("Issue clicked:", issueId)
-
-    // TODO: Open issue detail modal or navigate to issue page
-    // For now, just log it
+    // Issue navigation handled by link
   }
 
   contextMenu(event) {
-    event.preventDefault()
-    const issueId = this.element.dataset.issueId
-    console.log("Context menu for issue:", issueId)
-
     // TODO: Show context menu for quick actions
     // - Change status
     // - Assign to user
@@ -34,14 +24,5 @@ export default class extends Controller {
   mouseLeave() {
     // Remove hover state
     delete this.element.dataset.hovered
-  }
-
-  handleLabelChange() {
-    // Refresh the page to show updated labels
-    if (typeof Turbo !== 'undefined') {
-      Turbo.visit(window.location.href, { action: 'replace' })
-    } else {
-      window.location.reload()
-    }
   }
 }

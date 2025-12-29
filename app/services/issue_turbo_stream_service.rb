@@ -22,7 +22,7 @@ class IssueTurboStreamService
     view_context.turbo_stream.replace(
       "issue_#{issue.id}",
       partial: 'issues/issue_card',
-      locals: { issue: issue, visible_properties: visible_properties }
+      locals: { issue: issue, visible_properties: visible_properties, labels: form_collections[:labels] }
     )
   end
 
@@ -34,7 +34,9 @@ class IssueTurboStreamService
         issue: issue,
         lanes: form_collections[:lanes],
         team_members: form_collections[:team_members],
-        projects: form_collections[:projects]
+        projects: form_collections[:projects],
+        labels: form_collections[:labels],
+        milestones: form_collections[:milestones]
       }
     )
   end
