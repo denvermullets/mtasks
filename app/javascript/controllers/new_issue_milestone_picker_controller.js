@@ -1,9 +1,10 @@
 import { Controller } from "@hotwired/stimulus"
+import { Turbo } from "@hotwired/turbo-rails"
 
 export default class extends Controller {
   static targets = [
-    "picker", "search", "milestoneList", "createOption", "createButton", "createText",
-    "hiddenField", "nameField"
+    "picker", "search", "milestoneList", "createOption", "createText",
+    "hiddenField"
   ]
 
   static values = {
@@ -59,21 +60,6 @@ export default class extends Controller {
     }
   }
 
-  handleCreate(event) {
-    // After milestone is created, automatically select it
-    if (event.detail.success) {
-      // The new milestone option will be appended to the list
-      // Wait a moment for DOM to update, then auto-select it
-      setTimeout(() => {
-        const newMilestone = this.milestoneListTarget.querySelector('.milestone-option:last-child input[type="radio"]')
-        if (newMilestone) {
-          newMilestone.checked = true
-          newMilestone.dispatchEvent(new Event('change', { bubbles: true }))
-        }
-      }, 100)
-    }
-  }
-
   filterMilestones() {
     const query = this.searchTarget.value.trim().toLowerCase()
     const milestoneOptions = this.milestoneListTarget.querySelectorAll(".milestone-option")
@@ -103,12 +89,61 @@ export default class extends Controller {
     // Show create option if no exact match
     if (!exactMatch && query.length > 0) {
       this.createTextTarget.textContent = query
-      if (this.hasNameFieldTarget) {
-        this.nameFieldTarget.value = query
-      }
       this.createOptionTarget.classList.remove("hidden")
     } else {
       this.createOptionTarget.classList.add("hidden")
+    }
+  }
+
+  async createMilestone() {
+    const name = this.searchTarget.value.trim()
+    if (!name) return
+
+    try {
+      const response = await fetch(`/teams/${this.teamIdValue}/milestones`, {
+        method: "POST",
+        headers: {
+          "Accept": "text/vnd.turbo-stream.html",
+          "Content-Type": "application/json",
+          "X-CSRF-Token": this.csrfToken
+        },
+        body: JSON.stringify({
+          milestone: {
+            name: name
+          }
+        })
+      })
+
+      if (response.ok) {
+        const html = await response.text()
+        Turbo.renderStreamMessage(html)
+
+        // Wait for the DOM to update, then find and select the new milestone
+        setTimeout(() => {
+          const newMilestoneElement = Array.from(this.milestoneListTarget.querySelectorAll(".milestone-option"))
+            .find(el => el.dataset.milestoneName === name)
+
+          if (newMilestoneElement) {
+            const milestoneId = newMilestoneElement.dataset.milestoneId
+            const radio = newMilestoneElement.querySelector("input[type=radio]")
+            radio.checked = true
+
+            // Update selected milestone
+            this.selectedMilestoneIdValue = milestoneId === "" ? null : parseInt(milestoneId)
+            this.updateHiddenField()
+            this.updateButtonDisplay(name)
+          }
+
+          // Clear search
+          this.searchTarget.value = ""
+          this.filterMilestones()
+        }, 100)
+      } else {
+        const error = await response.text()
+        console.error("Failed to create milestone:", error)
+      }
+    } catch (error) {
+      console.error("Failed to create milestone:", error)
     }
   }
 
@@ -139,7 +174,7 @@ export default class extends Controller {
 
   updateHiddenField() {
     // Find the hidden field target
-    if (!this.hasTarget("hiddenField")) return
+    if (!this.hasHiddenFieldTarget) return
 
     // Update the hidden field value
     this.hiddenFieldTarget.value = this.selectedMilestoneIdValue || ""

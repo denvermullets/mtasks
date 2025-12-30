@@ -1,9 +1,11 @@
 <%
   team_id = local_assigns[:team_id]
+  labels = local_assigns[:labels] || []
+  selected_label_ids = local_assigns[:selected_label_ids] || []
 %>
 <div data-controller="new-issue-label-picker"
      data-new-issue-label-picker-team-id-value="<%= team_id %>"
-     data-new-issue-label-picker-selected-label-ids-value="[]">
+     data-new-issue-label-picker-selected-label-ids-value="<%= selected_label_ids.to_json %>">
   <!-- Hidden fields container for form submission -->
   <div data-new-issue-label-picker-target="hiddenFields"></div>
   <!-- Picker Overlay -->
@@ -34,15 +36,15 @@
       <!-- All Labels Section -->
       <div>
         <div class="px-3 py-2 text-xs font-medium text-gray-500">Labels</div>
-        <div data-new-issue-label-picker-target="allLabelsList"></div>
+        <div data-new-issue-label-picker-target="allLabelsList">
+          <% labels.each do |label| %>
+            <%= render 'labels/new_issue_picker_label_option', label: label, selected: selected_label_ids.include?(label.id) %>
+          <% end %>
+        </div>
       </div>
       <!-- Empty State -->
-      <div data-new-issue-label-picker-target="emptyState" class="hidden px-3 py-8 text-center text-sm text-gray-500">
+      <div data-new-issue-label-picker-target="emptyState" class="<%= 'hidden' if labels.any? %> px-3 py-8 text-center text-sm text-gray-500">
         No labels found. Start typing to create one.
-      </div>
-      <!-- Loading State -->
-      <div data-new-issue-label-picker-target="loadingState" class="px-3 py-8 text-center">
-        <div class="inline-block w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin"></div>
       </div>
     </div>
   </div>

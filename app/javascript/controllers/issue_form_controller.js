@@ -7,7 +7,7 @@ export default class extends Controller {
     "assigneeDropdown", "assigneeLabel", "assigneeInput",
     "projectDropdown", "projectLabel", "projectInput",
     "estimateDropdown", "estimateLabel", "estimateInput",
-    "labelsDropdown", "labelsLabel",
+    "labelsLabel",
     "milestoneLabel"
   ]
 
@@ -38,7 +38,7 @@ export default class extends Controller {
   closeAllDropdowns() {
     const dropdowns = [
       "laneDropdown", "priorityDropdown", "assigneeDropdown",
-      "projectDropdown", "estimateDropdown", "labelsDropdown"
+      "projectDropdown", "estimateDropdown"
     ]
 
     dropdowns.forEach(dropdown => {

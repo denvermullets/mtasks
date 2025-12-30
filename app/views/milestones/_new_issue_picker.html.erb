@@ -23,22 +23,15 @@
 
     <!-- Create New Milestone Option (shown dynamically) -->
     <div data-new-issue-milestone-picker-target="createOption" class="hidden border-b border-stroke">
-      <%= form_with model: Milestone.new,
-                    url: team_milestones_path(team_id),
-                    data: {
-                      turbo_frame: "new_issue_milestone_list_frame",
-                      action: "turbo:submit-end->new-issue-milestone-picker#handleCreate"
-                    } do |f| %>
-        <%= f.hidden_field :name, data: { new_issue_milestone_picker_target: "nameField" } %>
-        <button type="submit"
-                data-new-issue-milestone-picker-target="createButton"
-                class="w-full text-left px-3 py-2 text-sm text-accent hover:bg-hover-highlight transition-colors flex items-center gap-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-          </svg>
-          <span>Create "<span data-new-issue-milestone-picker-target="createText"></span>"</span>
-        </button>
-      <% end %>
+      <button type="button"
+              data-action="click->new-issue-milestone-picker#createMilestone"
+              data-new-issue-milestone-picker-target="createButton"
+              class="w-full text-left px-3 py-2 text-sm text-accent hover:bg-hover-highlight transition-colors flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+        <span>Create "<span data-new-issue-milestone-picker-target="createText"></span>"</span>
+      </button>
     </div>
 
     <!-- Milestones List Container -->
