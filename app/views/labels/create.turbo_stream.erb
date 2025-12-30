@@ -2,3 +2,8 @@
 <%= turbo_stream.append_all "[data-label-picker-target='allLabelsList']" do %>
   <%= render 'labels/picker_label_option', label: @label, current_label_ids: @current_label_ids %>
 <% end %>
+
+<%# Also append to new issue label picker lists %>
+<%= turbo_stream.append_all "[data-new-issue-label-picker-target='allLabelsList']" do %>
+  <%= render 'labels/new_issue_picker_label_option', label: @label %>
+<% end %>

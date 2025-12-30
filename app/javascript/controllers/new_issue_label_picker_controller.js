@@ -1,9 +1,10 @@
 import { Controller } from "@hotwired/stimulus"
+import { Turbo } from "@hotwired/turbo-rails"
 
 export default class extends Controller {
   static targets = [
     "picker", "search", "labelList", "createOption", "createButton", "createText",
-    "allLabelsList", "emptyState", "loadingState", "selectedLabels"
+    "allLabelsList", "emptyState"
   ]
 
   static values = {
@@ -12,7 +13,6 @@ export default class extends Controller {
   }
 
   connect() {
-    this.allLabels = []
     this.csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
 
     // Bind event handlers
@@ -23,16 +23,17 @@ export default class extends Controller {
     if (!this.selectedLabelIdsValue) {
       this.selectedLabelIdsValue = []
     }
+
+    // Initialize hidden fields and display with pre-selected labels
+    this.updateHiddenFields()
+    this.updateSelectedLabelsDisplay()
   }
 
   disconnect() {
     this.close()
   }
 
-  async open() {
-    // Load labels data
-    await this.loadLabels()
-
+  open() {
     // Show picker
     this.pickerTarget.classList.remove("hidden")
 
@@ -68,58 +69,6 @@ export default class extends Controller {
     }
   }
 
-  async loadLabels() {
-    this.showLoading()
-
-    try {
-      const response = await fetch(`/teams/${this.teamIdValue}/labels`, {
-        headers: {
-          "Accept": "application/json"
-        }
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        this.allLabels = data.all_labels
-        this.renderLabels()
-      }
-    } catch (error) {
-      console.error("Failed to load labels:", error)
-    } finally {
-      this.hideLoading()
-    }
-  }
-
-  renderLabels() {
-    // Render all labels
-    this.allLabelsListTarget.innerHTML = ""
-    this.allLabels.forEach(label => {
-      this.allLabelsListTarget.appendChild(this.createLabelElement(label))
-    })
-
-    this.updateEmptyState()
-  }
-
-  createLabelElement(label) {
-    const div = document.createElement("label")
-    div.className = "label-option flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors cursor-pointer"
-    div.dataset.labelId = label.id
-    div.dataset.labelName = label.name
-    div.dataset.labelColor = label.color
-
-    const isChecked = this.selectedLabelIdsValue.includes(label.id)
-
-    div.innerHTML = `
-      <input type="checkbox"
-             ${isChecked ? "checked" : ""}
-             class="mr-2 rounded bg-background border-stroke accent-accent focus:ring-0 focus:ring-offset-0"
-             data-action="change->new-issue-label-picker#toggleLabel" />
-      <span class="w-3 h-3 rounded-full mr-2 flex-shrink-0" style="background-color: ${label.color};"></span>
-      <span class="flex-1 truncate">${label.name}</span>
-    `
-
-    return div
-  }
 
   filterLabels() {
     const query = this.searchTarget.value.trim().toLowerCase()
@@ -195,6 +144,7 @@ export default class extends Controller {
       const response = await fetch(`/teams/${this.teamIdValue}/labels`, {
         method: "POST",
         headers: {
+          "Accept": "text/vnd.turbo-stream.html",
           "Content-Type": "application/json",
           "X-CSRF-Token": this.csrfToken
         },
@@ -207,37 +157,31 @@ export default class extends Controller {
       })
 
       if (response.ok) {
-        const label = await response.json()
+        const html = await response.text()
+        Turbo.renderStreamMessage(html)
 
-        // Add to labels array
-        this.allLabels.push({
-          id: label.id,
-          name: label.name,
-          color: label.color
-        })
+        // Wait for the DOM to update, then find and select the new label
+        setTimeout(() => {
+          const newLabelElement = Array.from(this.labelListTarget.querySelectorAll(".label-option"))
+            .find(el => el.dataset.labelName === name)
 
-        // Re-render to include new label
-        this.renderLabels()
+          if (newLabelElement) {
+            const labelId = parseInt(newLabelElement.dataset.labelId)
+            const checkbox = newLabelElement.querySelector("input[type=checkbox]")
+            checkbox.checked = true
 
-        // Automatically select the new label
-        this.selectedLabelIdsValue = [...this.selectedLabelIdsValue, label.id]
+            // Add to selected labels
+            this.selectedLabelIdsValue = [...this.selectedLabelIdsValue, labelId]
+            this.updateHiddenFields()
+            this.updateSelectedLabelsDisplay()
+          }
 
-        // Check the new label's checkbox
-        const newLabelElement = this.labelListTarget.querySelector(`[data-label-id="${label.id}"]`)
-        if (newLabelElement) {
-          const checkbox = newLabelElement.querySelector("input[type=checkbox]")
-          checkbox.checked = true
-        }
-
-        // Update hidden fields and display
-        this.updateHiddenFields()
-        this.updateSelectedLabelsDisplay()
-
-        // Clear search
-        this.searchTarget.value = ""
-        this.filterLabels()
+          // Clear search
+          this.searchTarget.value = ""
+          this.filterLabels()
+        }, 100)
       } else {
-        const error = await response.json()
+        const error = await response.text()
         console.error("Failed to create label:", error)
       }
     } catch (error) {
@@ -306,15 +250,6 @@ export default class extends Controller {
 
     this.pickerTarget.style.top = `${top}px`
     this.pickerTarget.style.left = `${left}px`
-  }
-
-  showLoading() {
-    this.loadingStateTarget.classList.remove("hidden")
-    this.emptyStateTarget.classList.add("hidden")
-  }
-
-  hideLoading() {
-    this.loadingStateTarget.classList.add("hidden")
   }
 
   updateEmptyState() {
