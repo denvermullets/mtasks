@@ -1,89 +1,95 @@
-import { Controller } from "@hotwired/stimulus"
+import { Controller } from "@hotwired/stimulus";
 
 export default class extends Controller {
   connect() {
-    this.boundHandleKeyPress = this.handleKeyPress.bind(this)
-    document.addEventListener("keydown", this.boundHandleKeyPress)
+    this.boundHandleKeyPress = this.handleKeyPress.bind(this);
+    document.addEventListener("keydown", this.boundHandleKeyPress);
   }
 
   disconnect() {
-    document.removeEventListener("keydown", this.boundHandleKeyPress)
+    document.removeEventListener("keydown", this.boundHandleKeyPress);
   }
 
   handleKeyPress(event) {
     // Ignore if user is typing in an input field
-    if (event.target.matches('input, textarea, select')) {
-      return
+    if (event.target.matches("input, textarea, select")) {
+      return;
     }
 
     // Press 'C' to create new issue
-    if (event.key === 'c' || event.key === 'C') {
-      event.preventDefault()
-      this.createNewIssue()
+    if (event.key === "c" || event.key === "C") {
+      event.preventDefault();
+      this.createNewIssue();
     }
 
     // Press 'L' to open label picker on hovered card
-    if (event.key === 'l' || event.key === 'L') {
-      event.preventDefault()
-      this.openLabelPicker()
+    if (event.key === "l" || event.key === "L") {
+      event.preventDefault();
+      this.openLabelPicker();
     }
 
     // Press 'M' to open milestone picker on hovered card
-    if (event.key === 'm' || event.key === 'M') {
-      event.preventDefault()
-      this.openMilestonePicker()
+    if (event.key === "m" || event.key === "M") {
+      event.preventDefault();
+      this.openMilestonePicker();
     }
   }
 
   openLabelPicker() {
     // Find the currently hovered card
-    const hoveredCard = document.querySelector('[data-hovered="true"]')
+    const hoveredCard = document.querySelector('[data-hovered="true"]');
     if (!hoveredCard) {
-      return
+      return;
     }
 
     // Find the label picker inside the hovered card
-    const labelPicker = hoveredCard.querySelector('[data-controller="label-picker"]')
+    const labelPicker = hoveredCard.querySelector('[data-controller="label-picker"]');
     if (!labelPicker) {
-      return
+      return;
     }
 
     // Get the label picker controller and open it
-    const controller = this.application.getControllerForElementAndIdentifier(labelPicker, "label-picker")
+    const controller = this.application.getControllerForElementAndIdentifier(
+      labelPicker,
+      "label-picker"
+    );
     if (controller && controller.open) {
-      controller.open()
+      controller.open();
     }
   }
 
   openMilestonePicker() {
     // Find the currently hovered card
-    const hoveredCard = document.querySelector('[data-hovered="true"]')
+    const hoveredCard = document.querySelector('[data-hovered="true"]');
     if (!hoveredCard) {
-      return
+      return;
     }
 
     // Find the milestone picker inside the hovered card
-    const milestonePicker = hoveredCard.querySelector('[data-controller="milestone-picker"]')
+    const milestonePicker = hoveredCard.querySelector('[data-controller="milestone-picker"]');
     if (!milestonePicker) {
-      return
+      return;
     }
 
     // Get the milestone picker controller and open it
-    const controller = this.application.getControllerForElementAndIdentifier(milestonePicker, "milestone-picker")
+    const controller = this.application.getControllerForElementAndIdentifier(
+      milestonePicker,
+      "milestone-picker"
+    );
     if (controller && controller.open) {
-      controller.open()
+      controller.open();
     }
   }
 
   createNewIssue() {
     // Get the team ID from the URL path
-    const pathParts = window.location.pathname.split('/')
-    const teamIndex = pathParts.indexOf('teams')
+    const pathParts = window.location.pathname.split("/");
+    const teamIndex = pathParts.indexOf("teams");
     if (teamIndex !== -1 && pathParts[teamIndex + 1]) {
-      const teamId = pathParts[teamIndex + 1]
-      window.location.href = `/teams/${teamId}/issues/new`
+      const teamId = pathParts[teamIndex + 1];
+      window.location.href = `/teams/${teamId}/issues/new`;
     } else {
-      console.error("Could not determine team ID from URL")
+      console.error("Could not determine team ID from URL");
     }
   }
 }

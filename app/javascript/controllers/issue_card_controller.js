@@ -1,8 +1,7 @@
-import { Controller } from "@hotwired/stimulus"
+import { Controller } from "@hotwired/stimulus";
 
 export default class extends Controller {
-  connect() {
-  }
+  connect() {}
 
   click(event) {
     // Issue navigation handled by link
@@ -18,11 +17,11 @@ export default class extends Controller {
 
   mouseEnter() {
     // Mark this card as hovered so keyboard shortcuts can target it
-    this.element.dataset.hovered = "true"
+    this.element.dataset.hovered = "true";
   }
 
   mouseLeave() {
     // Remove hover state
-    delete this.element.dataset.hovered
+    delete this.element.dataset.hovered;
   }
 }
