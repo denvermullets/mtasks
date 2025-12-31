@@ -1,6 +1,6 @@
 <div class="flex gap-3 h-full">
   <% @grouped_issues.each do |group_name, group_data| %>
-    <div class="shrink-0 w-80 flex flex-col h-full">
+    <div class="shrink-0 w-80 flex flex-col h-full group">
       <!-- Group Header -->
       <div class="flex items-center justify-between mb-3 shrink-0">
         <div class="flex items-center gap-2">
@@ -37,6 +37,15 @@
               <%= render "issue_card", issue: issue, visible_properties: @display_options[:visible_properties] %>
             <% end %>
           </div>
+        <% end %>
+
+        <!-- Add Issue Button -->
+        <%= link_to new_team_issue_path(current_team, lane_id: group_data[:object]&.id),
+            data: { turbo_frame: "_top" },
+            class: "opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-3 rounded-md border border-stroke hover:bg-hover-highlight mt-1.5" do %>
+          <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg>
         <% end %>
       </div>
     </div>

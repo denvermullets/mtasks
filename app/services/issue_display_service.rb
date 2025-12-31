@@ -129,14 +129,17 @@ class IssueDisplayService
       groups[group_name_for(group)] = { object: group, issues: issues_in_group }
     end
 
-    ungrouped = if association_name == :label
-                  # Issues with no labels
-                  issue_scope.left_joins(:labels).where(labels: { id: nil })
-                else
-                  issue_scope.where(association_name => nil)
-                end
-    if ungrouped.any? || options[:show_empty_groups]
-      groups["No #{association_name.to_s.titleize}"] = { object: nil, issues: ungrouped }
+    # Add "No X" group for optional associations (skip lane since it's required)
+    unless association_name == :lane
+      ungrouped = if association_name == :label
+                    # Issues with no labels
+                    issue_scope.left_joins(:labels).where(labels: { id: nil })
+                  else
+                    issue_scope.where(association_name => nil)
+                  end
+      if ungrouped.any? || options[:show_empty_groups]
+        groups["No #{association_name.to_s.titleize}"] = { object: nil, issues: ungrouped }
+      end
     end
 
     groups

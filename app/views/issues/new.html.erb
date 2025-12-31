@@ -54,6 +54,7 @@
         <!-- Property Buttons -->
         <div class="flex flex-wrap gap-2 mb-8">
           <!-- Lane (Backlog) -->
+          <% selected_lane = @issue.lane_id ? @lanes.find { |l| l.id == @issue.lane_id } : @lanes.first %>
           <div class="relative">
             <button type="button"
                     data-action="click->issue-form#toggleDropdown"
@@ -63,7 +64,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
               </svg>
               <span data-issue-form-target="laneLabel">
-                <%= @lanes.first&.name || "Backlog" %>
+                <%= selected_lane&.name || "Backlog" %>
               </span>
             </button>
             <div data-issue-form-target="laneDropdown" class="hidden absolute top-full left-0 mt-1 min-w-[200px] bg-foreground border border-stroke rounded-md shadow-lg z-10">
@@ -77,7 +78,7 @@
                 </button>
               <% end %>
             </div>
-            <%= form.hidden_field :lane_id, value: @lanes.first&.id, data: { issue_form_target: "laneInput" } %>
+            <%= form.hidden_field :lane_id, value: selected_lane&.id, data: { issue_form_target: "laneInput" } %>
           </div>
           <!-- Priority -->
           <div class="relative">

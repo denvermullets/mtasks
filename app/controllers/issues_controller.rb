@@ -25,6 +25,7 @@ class IssuesController < ApplicationController
   def new
     @team = current_team
     @issue = current_team.issues.new
+    @issue.lane_id = params[:lane_id] if params[:lane_id].present?
     load_form_collections
   end
 
