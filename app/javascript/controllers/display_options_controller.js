@@ -24,7 +24,6 @@ export default class extends Controller {
   }
 
   closePanel() {
-    console.log("d");
     this.panelTarget.classList.add("hidden");
   }
 
