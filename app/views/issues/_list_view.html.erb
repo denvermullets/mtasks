@@ -22,4 +22,16 @@
       <%= render "issues/list_row", issue: issue, display_options: @display_options, labels: @labels %>
     <% end %>
   <% end %>
+
+  <!-- Add New Issue Row -->
+  <%= link_to new_team_issue_path(current_team),
+      data: { turbo_frame: "_top" },
+      class: "block border-b border-stroke hover:bg-hover-highlight transition-colors px-4 py-3 text-sm" do %>
+    <div class="flex items-center gap-2 text-gray-400">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+      </svg>
+      <span>New issue</span>
+    </div>
+  <% end %>
 </div>
