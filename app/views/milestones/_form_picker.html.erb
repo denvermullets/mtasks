@@ -1,0 +1,65 @@
+<%# Milestone Form Picker Component
+  Usage: %= render "milestones/form_picker", project: @project, team_id: @team.id %
+  For use in forms - updates hidden field instead of making API calls
+%>
+
+<%
+  team_id = team_id
+  current_milestone_id = project.milestone_id || 0
+  milestones = Team.find(team_id).milestones
+%>
+
+<div data-controller="milestone-form-picker"
+     data-milestone-form-picker-current-milestone-value="<%= current_milestone_id %>"
+     class="hidden fixed z-50 w-80 bg-context-foreground border-2 border-stroke rounded-md shadow-2xl"
+     data-milestone-form-picker-target="picker">
+
+  <!-- Search Input -->
+  <div class="p-2 border-b border-stroke">
+    <input type="text"
+           placeholder="Search milestones..."
+           data-milestone-form-picker-target="search"
+           data-action="input->milestone-form-picker#filterMilestones keydown->milestone-form-picker#handleKeyDown"
+           class="w-full px-3 py-2 text-sm bg-background border border-stroke rounded text-gray-200 placeholder-gray-500 focus:outline-none focus:border-accent" />
+  </div>
+
+  <!-- Milestones List Container -->
+  <div data-milestone-form-picker-target="milestoneList" class="max-h-96 overflow-y-auto">
+    <!-- No Milestone Option -->
+    <div class="milestone-option"
+         data-milestone-id=""
+         data-milestone-name="No milestone">
+      <label class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors cursor-pointer flex items-center gap-2">
+        <input type="radio"
+               name="form_milestone"
+               value=""
+               <%= 'checked' if current_milestone_id == 0 %>
+               data-action="change->milestone-form-picker#selectMilestone"
+               class="w-4 h-4 text-accent bg-background border-stroke focus:ring-accent focus:ring-2">
+        <span class="text-gray-500">◇</span>
+        <span>No milestone</span>
+      </label>
+    </div>
+
+    <% milestones.each do |milestone| %>
+      <div class="milestone-option"
+           data-milestone-id="<%= milestone.id %>"
+           data-milestone-name="<%= milestone.name %>"
+           data-milestone-color="<%= milestone.status_color %>">
+        <label class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors cursor-pointer flex items-center gap-2">
+          <input type="radio"
+                 name="form_milestone"
+                 value="<%= milestone.id %>"
+                 <%= 'checked' if milestone.id == current_milestone_id %>
+                 data-action="change->milestone-form-picker#selectMilestone"
+                 class="w-4 h-4 text-accent bg-background border-stroke focus:ring-accent focus:ring-2">
+          <span style="color: <%= milestone.status_color %>;">◆</span>
+          <span><%= milestone.name %></span>
+          <% if milestone.due_date %>
+            <span class="text-xs text-gray-500">• <%= milestone.formatted_due_date %></span>
+          <% end %>
+        </label>
+      </div>
+    <% end %>
+  </div>
+</div>

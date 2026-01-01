@@ -208,5 +208,14 @@ export default class extends Controller {
         this.laneDropdownTarget.classList.remove("hidden");
       }
     }
+
+    // Open project dropdown with 'P' key
+    if (event.key === "p" || event.key === "P") {
+      event.preventDefault();
+      this.closeAllDropdowns();
+      if (this.hasProjectDropdownTarget) {
+        this.projectDropdownTarget.classList.remove("hidden");
+      }
+    }
   }
 }
