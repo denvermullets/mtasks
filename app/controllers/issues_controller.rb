@@ -110,17 +110,8 @@ class IssuesController < ApplicationController
 
   def issue_params
     params.require(:issue).permit(
-      :title,
-      :description,
-      :lane_id,
-      :priority,
-      :estimate,
-      :due_date,
-      :assignee_id,
-      :project_id,
-      :milestone_id,
-      :parent_issue_id,
-      label_ids: []
+      :title, :description, :lane_id, :priority, :estimate, :due_date, :assignee_id, :project_id,
+      :milestone_id, :parent_issue_id, label_ids: []
     )
   end
 

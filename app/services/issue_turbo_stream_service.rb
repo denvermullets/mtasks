@@ -30,7 +30,8 @@ class IssueTurboStreamService
     view_context.turbo_stream.replace(
       "issue_row_#{issue.id}",
       partial: 'issues/list_row',
-      locals: { issue: issue, display_options: { visible_properties: visible_properties }, labels: form_collections[:labels] }
+      locals: { issue: issue, display_options: { visible_properties: visible_properties },
+                labels: form_collections[:labels] }
     )
   end
 

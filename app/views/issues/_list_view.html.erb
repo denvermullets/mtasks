@@ -12,7 +12,7 @@
   <% @grouped_issues.each do |group_name, group_data| %>
     <!-- Group Header -->
     <% unless @display_options[:group_by] == 'none' %>
-      <div class="bg-background border-b border-stroke px-4 py-2 text-xs font-medium text-gray-400">
+      <div class="bg-hover-highlight border-b border-stroke px-4 py-2 text-xs font-medium text-gray-400">
         <%= group_name %> (<%= group_data[:issues].count %>)
       </div>
     <% end %>
