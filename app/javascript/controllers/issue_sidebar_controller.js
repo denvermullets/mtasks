@@ -199,5 +199,14 @@ export default class extends Controller {
         }
       }
     }
+
+    // Open lane dropdown with 'S' key
+    if (event.key === "s" || event.key === "S") {
+      event.preventDefault();
+      this.closeAllDropdowns();
+      if (this.hasLaneDropdownTarget) {
+        this.laneDropdownTarget.classList.remove("hidden");
+      }
+    }
   }
 }

@@ -1,0 +1,64 @@
+<%# Lane Picker Component
+  Usage: %= render "lanes/picker", issue: @issue, lanes: @lanes, context: "sidebar" %
+  Context can be: "sidebar" or "card"
+%>
+
+<%
+  issue_id = issue.id
+  team_id = issue.team_id
+  current_lane_id = issue.lane_id || 0
+  context ||= "sidebar"
+%>
+
+<div data-controller="lane-picker"
+     data-lane-picker-issue-id-value="<%= issue_id %>"
+     data-lane-picker-team-id-value="<%= team_id %>"
+     data-lane-picker-context-value="<%= context %>"
+     data-lane-picker-current-lane-value="<%= current_lane_id %>"
+     class="hidden fixed z-50 w-80 bg-context-foreground border-2 border-stroke rounded-md shadow-2xl"
+     data-lane-picker-target="picker">
+
+  <!-- Header with issue identifier -->
+  <div class="px-3 py-2 border-b border-stroke">
+    <span class="text-xs text-gray-500"><%= issue.identifier %> • <%= issue.title.truncate(30) %></span>
+  </div>
+
+  <!-- Search Input -->
+  <div class="p-2 border-b border-stroke">
+    <input type="text"
+           placeholder="Search lanes..."
+           data-lane-picker-target="search"
+           data-action="input->lane-picker#filterLanes keydown->lane-picker#handleKeyDown"
+           class="w-full px-3 py-2 text-sm bg-background border border-stroke rounded text-gray-200 placeholder-gray-500 focus:outline-none focus:border-accent" />
+  </div>
+
+  <!-- Lanes List Container -->
+  <div data-lane-picker-target="laneList" class="max-h-96 overflow-y-auto">
+    <% lanes.each do |lane| %>
+      <div class="lane-option"
+           data-lane-id="<%= lane.id %>"
+           data-lane-name="<%= lane.name %>">
+        <label class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors cursor-pointer flex items-center gap-2">
+          <input type="radio"
+                 name="lane_<%= issue_id %>"
+                 value="<%= lane.id %>"
+                 <%= 'checked' if lane.id == current_lane_id %>
+                 data-action="change->lane-picker#selectLane"
+                 class="w-4 h-4 text-accent bg-background border-stroke focus:ring-accent focus:ring-2">
+          <span><%= lane.name %></span>
+        </label>
+      </div>
+    <% end %>
+
+    <!-- Empty State -->
+    <% if lanes.empty? %>
+      <div data-lane-picker-target="emptyState" class="px-3 py-8 text-center text-sm text-gray-500">
+        No lanes found. Set up lanes in team settings.
+      </div>
+    <% else %>
+      <div data-lane-picker-target="emptyState" class="hidden px-3 py-8 text-center text-sm text-gray-500">
+        No lanes found.
+      </div>
+    <% end %>
+  </div>
+</div>
