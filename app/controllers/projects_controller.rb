@@ -9,8 +9,7 @@ class ProjectsController < ApplicationController
     @projects = current_team.projects.includes(:milestone).order(created_at: :desc)
   end
 
-  def show
-  end
+  def show; end
 
   def new
     @project = current_team.projects.new
@@ -26,8 +25,7 @@ class ProjectsController < ApplicationController
     end
   end
 
-  def edit
-  end
+  def edit; end
 
   def update
     if @project.update(project_params)
