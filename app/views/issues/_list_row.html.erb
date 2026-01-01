@@ -67,4 +67,14 @@
   <div>
     <%= render "labels/picker", issue: issue, labels: labels, context: "card" %>
   </div>
+
+  <!-- Milestone Picker (for 'M' keyboard shortcut) -->
+  <div>
+    <%= render "milestones/picker", issue: issue, context: "card" %>
+  </div>
+
+  <!-- Lane Picker (for 'S' keyboard shortcut) -->
+  <div>
+    <%= render "lanes/picker", issue: issue, lanes: issue.team.lanes, context: "card" %>
+  </div>
 </div>

@@ -33,6 +33,12 @@ export default class extends Controller {
       event.preventDefault();
       this.openMilestonePicker();
     }
+
+    // Press 'S' to open lane picker on hovered card
+    if (event.key === "s" || event.key === "S") {
+      event.preventDefault();
+      this.openLanePicker();
+    }
   }
 
   openLabelPicker() {
@@ -75,6 +81,29 @@ export default class extends Controller {
     const controller = this.application.getControllerForElementAndIdentifier(
       milestonePicker,
       "milestone-picker"
+    );
+    if (controller && controller.open) {
+      controller.open();
+    }
+  }
+
+  openLanePicker() {
+    // Find the currently hovered card
+    const hoveredCard = document.querySelector('[data-hovered="true"]');
+    if (!hoveredCard) {
+      return;
+    }
+
+    // Find the lane picker inside the hovered card
+    const lanePicker = hoveredCard.querySelector('[data-controller="lane-picker"]');
+    if (!lanePicker) {
+      return;
+    }
+
+    // Get the lane picker controller and open it
+    const controller = this.application.getControllerForElementAndIdentifier(
+      lanePicker,
+      "lane-picker"
     );
     if (controller && controller.open) {
       controller.open();
