@@ -14,7 +14,7 @@
       </div>
     </div>
 
-    <%= form_with model: [@team, @project], class: "flex-1 flex overflow-hidden" do |form| %>
+    <%= form_with model: [@team, @project], data: { controller: "project-form" }, class: "flex-1 flex overflow-hidden" do |form| %>
       <!-- Left Content -->
       <div class="flex-1 overflow-y-auto p-8">
         <div class="max-w-3xl">
@@ -64,12 +64,29 @@
       <div class="w-80 border-l border-stroke bg-menu overflow-y-auto p-6 shrink-0">
         <div class="space-y-6">
           <!-- Milestone -->
-          <div>
+          <div class="mb-6">
             <div class="text-xs font-medium text-gray-500 mb-2">Milestone</div>
-            <%= form.select :milestone_id,
-                options_from_collection_for_select(@team.milestones, :id, :name, @project.milestone_id),
-                { include_blank: "No milestone" },
-                class: "w-full px-3 py-2 bg-background border border-stroke rounded-md text-gray-200 text-sm focus:outline-none focus:border-accent" %>
+            <div class="relative">
+              <button type="button"
+                      data-action="click->project-form#toggleMilestonePicker"
+                      data-project-form-target="milestoneButton"
+                      class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-background border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors">
+                <% if @project.milestone %>
+                  <span style="color: <%= @project.milestone.status_color %>;">◆</span>
+                  <span data-project-form-target="milestoneLabel"><%= @project.milestone.name %></span>
+                  <% if @project.milestone.due_date %>
+                    <span class="text-xs text-gray-500">• <%= @project.milestone.formatted_due_date %></span>
+                  <% end %>
+                <% else %>
+                  <span class="text-gray-500">◇</span>
+                  <span data-project-form-target="milestoneLabel" class="text-gray-500">No milestone</span>
+                <% end %>
+              </button>
+              <div data-project-form-target="milestoneDropdown">
+                <%= render "milestones/form_picker", project: @project, team_id: @team.id %>
+              </div>
+              <%= form.hidden_field :milestone_id, value: @project.milestone_id, data: { project_form_target: "milestoneInput" } %>
+            </div>
           </div>
 
           <!-- Future Properties (Placeholders) -->
