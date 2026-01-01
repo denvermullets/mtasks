@@ -13,7 +13,7 @@ class IssueTurboStreamService
 
   def update_streams
     issue.reload
-    [card_stream, sidebar_stream]
+    [card_stream, list_row_stream, sidebar_stream]
   end
 
   private
@@ -23,6 +23,14 @@ class IssueTurboStreamService
       "issue_#{issue.id}",
       partial: 'issues/issue_card',
       locals: { issue: issue, visible_properties: visible_properties, labels: form_collections[:labels] }
+    )
+  end
+
+  def list_row_stream
+    view_context.turbo_stream.replace(
+      "issue_row_#{issue.id}",
+      partial: 'issues/list_row',
+      locals: { issue: issue, display_options: { visible_properties: visible_properties }, labels: form_collections[:labels] }
     )
   end
 
