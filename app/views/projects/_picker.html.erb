@@ -1,0 +1,80 @@
+<%# Project Picker Component
+  Usage: %= render "projects/picker", issue: @issue, projects: @projects, context: "sidebar" %
+  Context can be: "sidebar" or "card"
+%>
+
+<%
+  issue_id = issue.id
+  team_id = issue.team_id
+  current_project_id = issue.project_id || 0
+  context ||= "sidebar"
+  projects ||= issue.team.projects
+%>
+
+<div data-controller="project-picker"
+     data-project-picker-issue-id-value="<%= issue_id %>"
+     data-project-picker-team-id-value="<%= team_id %>"
+     data-project-picker-context-value="<%= context %>"
+     data-project-picker-current-project-value="<%= current_project_id %>"
+     class="hidden fixed z-50 w-80 bg-context-foreground border-2 border-stroke rounded-md shadow-2xl"
+     data-project-picker-target="picker">
+
+  <!-- Header with issue identifier -->
+  <div class="px-3 py-2 border-b border-stroke">
+    <span class="text-xs text-gray-500"><%= issue.identifier %> • <%= issue.title.truncate(30) %></span>
+  </div>
+
+  <!-- Search Input -->
+  <div class="p-2 border-b border-stroke">
+    <input type="text"
+           placeholder="Search projects..."
+           data-project-picker-target="search"
+           data-action="input->project-picker#filterProjects keydown->project-picker#handleKeyDown"
+           class="w-full px-3 py-2 text-sm bg-background border border-stroke rounded text-gray-200 placeholder-gray-500 focus:outline-none focus:border-accent" />
+  </div>
+
+  <!-- Projects List Container -->
+  <div data-project-picker-target="projectList" class="max-h-96 overflow-y-auto">
+    <!-- No Project Option -->
+    <div class="project-option"
+         data-project-id=""
+         data-project-name="No project">
+      <label class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors cursor-pointer flex items-center gap-2">
+        <input type="radio"
+               name="project_<%= issue_id %>"
+               value=""
+               <%= 'checked' if current_project_id == 0 %>
+               data-action="change->project-picker#selectProject"
+               class="w-4 h-4 text-accent bg-background border-stroke focus:ring-accent focus:ring-2">
+        <span class="text-gray-500">No project</span>
+      </label>
+    </div>
+
+    <% projects.each do |project| %>
+      <div class="project-option"
+           data-project-id="<%= project.id %>"
+           data-project-name="<%= project.name %>">
+        <label class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors cursor-pointer flex items-center gap-2">
+          <input type="radio"
+                 name="project_<%= issue_id %>"
+                 value="<%= project.id %>"
+                 <%= 'checked' if project.id == current_project_id %>
+                 data-action="change->project-picker#selectProject"
+                 class="w-4 h-4 text-accent bg-background border-stroke focus:ring-accent focus:ring-2">
+          <span><%= project.name %></span>
+        </label>
+      </div>
+    <% end %>
+
+    <!-- Empty State -->
+    <% if projects.empty? %>
+      <div data-project-picker-target="emptyState" class="px-3 py-8 text-center text-sm text-gray-500">
+        No projects found.
+      </div>
+    <% else %>
+      <div data-project-picker-target="emptyState" class="hidden px-3 py-8 text-center text-sm text-gray-500">
+        No projects found.
+      </div>
+    <% end %>
+  </div>
+</div>

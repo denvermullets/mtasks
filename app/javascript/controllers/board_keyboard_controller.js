@@ -39,6 +39,12 @@ export default class extends Controller {
       event.preventDefault();
       this.openLanePicker();
     }
+
+    // Press 'P' to open project picker on hovered card
+    if (event.key === "p" || event.key === "P") {
+      event.preventDefault();
+      this.openProjectPicker();
+    }
   }
 
   openLabelPicker() {
@@ -104,6 +110,29 @@ export default class extends Controller {
     const controller = this.application.getControllerForElementAndIdentifier(
       lanePicker,
       "lane-picker"
+    );
+    if (controller && controller.open) {
+      controller.open();
+    }
+  }
+
+  openProjectPicker() {
+    // Find the currently hovered card
+    const hoveredCard = document.querySelector('[data-hovered="true"]');
+    if (!hoveredCard) {
+      return;
+    }
+
+    // Find the project picker inside the hovered card
+    const projectPicker = hoveredCard.querySelector('[data-controller="project-picker"]');
+    if (!projectPicker) {
+      return;
+    }
+
+    // Get the project picker controller and open it
+    const controller = this.application.getControllerForElementAndIdentifier(
+      projectPicker,
+      "project-picker"
     );
     if (controller && controller.open) {
       controller.open();

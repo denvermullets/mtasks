@@ -77,4 +77,9 @@
   <div>
     <%= render "lanes/picker", issue: issue, lanes: issue.team.lanes, context: "card" %>
   </div>
+
+  <!-- Project Picker (for 'P' keyboard shortcut) -->
+  <div>
+    <%= render "projects/picker", issue: issue, projects: issue.team.projects, context: "card" %>
+  </div>
 </div>
