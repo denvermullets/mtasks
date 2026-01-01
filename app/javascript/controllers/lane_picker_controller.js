@@ -172,11 +172,16 @@ export default class extends Controller {
       if (response.ok) {
         this.currentLaneValue = laneId;
 
-        // Get the turbo stream response and let Turbo handle it
+        // Process the turbo stream response
         const turboStream = await response.text();
         Turbo.renderStreamMessage(turboStream);
 
-        this.close();
+        // Close the picker after a short delay to allow the board to reload
+        setTimeout(() => {
+          if (this.hasPickerTarget && !this.pickerTarget.classList.contains("hidden")) {
+            this.close();
+          }
+        }, 100);
       } else {
         console.error("Failed to update lane");
       }

@@ -52,8 +52,18 @@ class IssuesController < ApplicationController
   def update
     load_form_collections
     if @issue.update(issue_params)
+      @issue.reload
       respond_to do |format|
-        format.turbo_stream { render turbo_stream: issue_update_streams }
+        format.turbo_stream do
+          # Load display options for rendering the board/list
+          load_display_options
+          base_issues = current_team.issues.not_archived.includes(
+            :lane, :project, :milestone, :labels, :assignee, :creator
+          )
+          @display_service = IssueDisplayService.new(base_issues, @display_options, current_team)
+          @grouped_issues = @display_service.grouped_issues
+          render :update
+        end
         format.html { redirect_to team_issue_path(@issue.team, @issue), notice: 'Issue was successfully updated.' }
       end
     else

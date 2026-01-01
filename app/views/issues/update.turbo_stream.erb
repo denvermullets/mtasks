@@ -1,0 +1,15 @@
+<%# Reload the entire board/list to handle lane changes and grouping %>
+<%# Use update instead of replace to keep the turbo frame wrapper intact %>
+<%= turbo_stream.update "issues_board" do %>
+  <%= render "issues_board" %>
+<% end %>
+
+<%# Update the sidebar if it's open %>
+<%= turbo_stream.replace "issue_sidebar", partial: "issues/sidebar", locals: {
+  issue: @issue,
+  lanes: @lanes,
+  team_members: @team_members,
+  projects: @projects,
+  labels: @labels,
+  milestones: @milestones
+} %>
