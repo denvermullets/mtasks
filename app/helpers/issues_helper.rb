@@ -28,4 +28,32 @@ module IssuesHelper
       content_tag(:div, '•', class: 'text-gray-500')
     end
   end
+
+  # Reorganizes grouped issues for swimlane rendering
+  # Converts column-first structure to row-first structure
+  def organize_for_swimlanes(grouped_issues)
+    # Check if we have subgroups in any column
+    has_subgroups = grouped_issues.values.any? { |group_data| group_data[:subgroups].present? }
+    return nil unless has_subgroups
+
+    # Collect all unique subgroup names across all columns
+    all_subgroup_names = grouped_issues.values.flat_map do |group_data|
+      group_data[:subgroups]&.keys || []
+    end.uniq
+
+    # Build swimlane structure: { row_name => { column_name => data } }
+    swimlanes = {}
+    all_subgroup_names.each do |subgroup_name|
+      swimlanes[subgroup_name] = {}
+      grouped_issues.each do |column_name, column_data|
+        subgroup_data = column_data[:subgroups]&.[](subgroup_name)
+        swimlanes[subgroup_name][column_name] = {
+          object: column_data[:object],
+          issues: subgroup_data&.[](:issues) || []
+        }
+      end
+    end
+
+    swimlanes
+  end
 end
