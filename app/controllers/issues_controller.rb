@@ -14,6 +14,7 @@ class IssuesController < ApplicationController
 
     @display_service = IssueDisplayService.new(base_issues, @display_options, current_team)
     @grouped_issues = @display_service.grouped_issues
+    @empty_groups = @display_service.empty_groups
     @lanes = current_team.lanes.order(:position)
     @labels = current_team.labels.includes(:issue_labels)
   end
@@ -62,6 +63,7 @@ class IssuesController < ApplicationController
           )
           @display_service = IssueDisplayService.new(base_issues, @display_options, current_team)
           @grouped_issues = @display_service.grouped_issues
+          @empty_groups = @display_service.empty_groups
           render :update
         end
         format.html { redirect_to team_issue_path(@issue.team, @issue), notice: 'Issue was successfully updated.' }
