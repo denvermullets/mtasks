@@ -18,7 +18,7 @@
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
   </head>
-  <body class="<%= controller_name == 'landing' ? 'bg-background' : 'bg-background text-gray-100 h-screen overflow-hidden flex' %>">
+  <body class="<%= controller_name == 'landing' ? 'bg-background' : 'bg-background text-gray-100 h-screen overflow-hidden flex' %>" data-controller="keyboard-shortcuts">
     <%= render "shared/sidebar" if authenticated? && controller_name != 'landing' %>
     <% if controller_name == 'landing' %>
       <%= yield %>
@@ -27,5 +27,6 @@
         <%= yield %>
       </main>
     <% end %>
+    <%= render "shared/keyboard_shortcuts_modal" if authenticated? && controller_name != 'landing' %>
   </body>
 </html>
