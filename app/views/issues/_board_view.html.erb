@@ -40,7 +40,7 @@
         <% end %>
 
         <!-- Add Issue Button -->
-        <%= link_to new_team_issue_path(current_team, lane_id: group_data[:object]&.id),
+        <%= link_to new_team_issue_path(current_team, lane_id: (group_data[:object].id if group_data[:object].respond_to?(:id))),
             data: { turbo_frame: "_top" },
             class: "opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-3 rounded-md border border-stroke hover:bg-hover-highlight mt-1.5" do %>
           <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
