@@ -14,7 +14,14 @@ class IssueDisplayService
     group_issues(sorted)
   end
 
+  def empty_groups
+    return [] if options[:show_empty_groups]
+
+    @empty_groups ||= []
+  end
+
   def filter_issues
+    @empty_groups = [] # Reset empty groups tracking
     result = issues
     result = filter_by_completion(result) if options[:completed_filter].present?
     result = filter_sub_issues(result) unless options[:show_sub_issues]
@@ -129,7 +136,11 @@ class IssueDisplayService
                         else
                           issue_scope.where(association_name => group)
                         end
-      next if issues_in_group.empty? && !options[:show_empty_groups]
+
+      if issues_in_group.empty? && !options[:show_empty_groups]
+        @empty_groups << { name: group_name_for(group), object: group }
+        next
+      end
 
       groups[group_name_for(group)] = { object: group, issues: issues_in_group }
     end
@@ -156,10 +167,14 @@ class IssueDisplayService
 
     Issue.priorities.each_key do |priority_key|
       issues_in_group = issue_scope.where(priority: priority_key)
-      next if issues_in_group.empty? && !options[:show_empty_groups]
-
       label = priority_key.to_s.titleize
       label = 'No Priority' if priority_key == 'no_priority'
+
+      if issues_in_group.empty? && !options[:show_empty_groups]
+        @empty_groups << { name: label, object: priority_key }
+        next
+      end
+
       groups[label] = { object: priority_key, issues: issues_in_group }
     end
 

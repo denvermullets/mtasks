@@ -28,4 +28,24 @@ module IssuesHelper
       content_tag(:div, '•', class: 'text-gray-500')
     end
   end
+
+  def render_group_icon(group_object)
+    case group_object
+    when Lane
+      render_lane_icon(group_object)
+    when String
+      # Assume it's a priority
+      render_priority_icon(group_object)
+    when Project
+      content_tag(:div, '📁', class: 'text-gray-500')
+    when Milestone
+      content_tag(:div, '🎯', class: 'text-gray-500')
+    when Label
+      content_tag(:div, '🏷️', class: 'text-gray-500')
+    when User
+      content_tag(:div, '👤', class: 'text-gray-500')
+    else
+      content_tag(:div, class: 'w-4 h-4 rounded-full border border-gray-600') { '' }
+    end
+  end
 end
