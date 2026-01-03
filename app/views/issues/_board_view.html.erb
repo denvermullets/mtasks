@@ -21,15 +21,20 @@
     <!-- Swimlanes (Rows) -->
     <div class="flex flex-col gap-6">
       <% swimlanes.each do |row_name, columns| %>
-        <div class="flex flex-col gap-2">
+        <div class="flex flex-col gap-2" data-controller="swimlane-row">
           <!-- Row Header (Swimlane) -->
-          <div class="flex items-center gap-2 px-2">
-            <h4 class="text-xs font-medium text-accent"><%= row_name %></h4>
+          <div class="flex items-center gap-2 px-3 py-1.5 bg-hover-highlight rounded-md">
+            <button type="button" data-action="swimlane-row#toggle" class="flex items-center gap-2 cursor-pointer">
+              <svg data-swimlane-row-target="chevron" class="w-3 h-3 text-gray-500 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+              <h4 class="text-xs font-medium text-accent"><%= row_name %></h4>
+            </button>
             <span class="text-xs text-gray-500"><%= columns.sum { |_, col_data| col_data[:issues].count } %></span>
           </div>
 
           <!-- Columns within this row -->
-          <div class="flex gap-3">
+          <div class="flex gap-3" data-swimlane-row-target="content">
             <% columns.each do |column_name, column_data| %>
               <div class="shrink-0 w-80 flex flex-col">
                 <!-- Issues in this cell -->
