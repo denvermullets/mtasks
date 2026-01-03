@@ -32,28 +32,37 @@ module IssuesHelper
   # Reorganizes grouped issues for swimlane rendering
   # Converts column-first structure to row-first structure
   def organize_for_swimlanes(grouped_issues)
-    # Check if we have subgroups in any column
-    has_subgroups = grouped_issues.values.any? { |group_data| group_data[:subgroups].present? }
-    return nil unless has_subgroups
+    return nil unless subgroups?(grouped_issues)
 
-    # Collect all unique subgroup names across all columns
-    all_subgroup_names = grouped_issues.values.flat_map do |group_data|
+    subgroup_names = collect_subgroup_names(grouped_issues)
+    build_swimlanes(subgroup_names, grouped_issues)
+  end
+
+  private
+
+  def subgroups?(grouped_issues)
+    grouped_issues.values.any? { |group_data| group_data[:subgroups].present? }
+  end
+
+  def collect_subgroup_names(grouped_issues)
+    grouped_issues.values.flat_map do |group_data|
       group_data[:subgroups]&.keys || []
     end.uniq
+  end
 
-    # Build swimlane structure: { row_name => { column_name => data } }
-    swimlanes = {}
-    all_subgroup_names.each do |subgroup_name|
-      swimlanes[subgroup_name] = {}
-      grouped_issues.each do |column_name, column_data|
-        subgroup_data = column_data[:subgroups]&.[](subgroup_name)
-        swimlanes[subgroup_name][column_name] = {
-          object: column_data[:object],
-          issues: subgroup_data&.[](:issues) || []
-        }
-      end
+  def build_swimlanes(subgroup_names, grouped_issues)
+    subgroup_names.each_with_object({}) do |subgroup_name, swimlanes|
+      swimlanes[subgroup_name] = build_swimlane_columns(subgroup_name, grouped_issues)
     end
+  end
 
-    swimlanes
+  def build_swimlane_columns(subgroup_name, grouped_issues)
+    grouped_issues.each_with_object({}) do |(column_name, column_data), columns|
+      subgroup_data = column_data[:subgroups]&.[](subgroup_name)
+      columns[column_name] = {
+        object: column_data[:object],
+        issues: subgroup_data&.[](:issues) || []
+      }
+    end
   end
 end
