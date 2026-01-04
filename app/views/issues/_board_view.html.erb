@@ -2,48 +2,78 @@
 
 <% if swimlanes.present? %>
   <!-- Swimlane Layout: Rows span horizontally across columns -->
-  <div class="flex flex-col h-full overflow-auto">
-    <!-- Column Headers (sticky at top) -->
-    <div class="flex gap-3 mb-4 sticky top-0 bg-background z-30 pb-2">
-      <% column_names = swimlanes.values.first.keys %>
-      <% column_names.each do |column_name| %>
-        <div class="shrink-0 w-80">
-          <div class="flex items-center justify-between">
-            <h3 class="text-sm font-medium text-accent"><%= column_name %></h3>
-            <span class="text-xs text-gray-500">
-              <%= swimlanes.sum { |_, cols| cols[column_name][:issues].count } %>
-            </span>
+  <div class="flex h-full overflow-auto">
+    <div class="flex flex-col flex-1">
+      <!-- Column Headers (sticky at top) -->
+      <div class="flex gap-3 mb-4 sticky top-0 bg-background z-30 pb-2">
+        <% column_names = swimlanes.values.first.keys %>
+        <% column_names.each do |column_name| %>
+          <div class="shrink-0 w-80">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-medium text-accent"><%= column_name %></h3>
+              <span class="text-xs text-gray-500">
+                <%= swimlanes.sum { |_, cols| cols[column_name][:issues].count } %>
+              </span>
+            </div>
           </div>
-        </div>
-      <% end %>
-    </div>
+        <% end %>
+      </div>
 
-    <!-- Swimlanes (Rows) -->
-    <div class="flex flex-col gap-6">
-      <% swimlanes.each do |row_name, columns| %>
-        <div class="flex flex-col gap-2">
-          <!-- Row Header (Swimlane) -->
-          <div class="flex items-center gap-2 px-2">
-            <h4 class="text-xs font-medium text-accent"><%= row_name %></h4>
-            <span class="text-xs text-gray-500"><%= columns.sum { |_, col_data| col_data[:issues].count } %></span>
-          </div>
+      <!-- Swimlanes (Rows) -->
+      <div class="flex flex-col gap-6">
+        <% swimlanes.each do |row_name, columns| %>
+          <div class="flex flex-col gap-2" data-controller="swimlane-row">
+            <!-- Row Header (Swimlane) -->
+            <div class="flex items-center gap-2 px-3 py-1.5 bg-hover-highlight rounded-md">
+              <button type="button" data-action="swimlane-row#toggle" class="flex items-center gap-2 cursor-pointer">
+                <svg data-swimlane-row-target="chevron" class="w-3 h-3 text-gray-500 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+                <h4 class="text-xs font-medium text-accent"><%= row_name %></h4>
+              </button>
+              <span class="text-xs text-gray-500"><%= columns.sum { |_, col_data| col_data[:issues].count } %></span>
+            </div>
 
-          <!-- Columns within this row -->
-          <div class="flex gap-3">
-            <% columns.each do |column_name, column_data| %>
-              <div class="shrink-0 w-80 flex flex-col">
-                <!-- Issues in this cell -->
-                <div class="space-y-1.5 min-h-[60px]">
-                  <% column_data[:issues].each do |issue| %>
-                    <%= render "issue_card", issue: issue, visible_properties: @display_options[:visible_properties] %>
-                  <% end %>
+            <!-- Columns within this row -->
+            <div class="flex gap-3" data-swimlane-row-target="content">
+              <% columns.each do |column_name, column_data| %>
+                <div class="shrink-0 w-80 flex flex-col">
+                  <!-- Issues in this cell -->
+                  <div class="space-y-1.5 min-h-[60px]">
+                    <% column_data[:issues].each do |issue| %>
+                      <%= render "issue_card", issue: issue, visible_properties: @display_options[:visible_properties] %>
+                    <% end %>
+                  </div>
                 </div>
-              </div>
-            <% end %>
+              <% end %>
+            </div>
           </div>
-        </div>
-      <% end %>
+        <% end %>
+      </div>
     </div>
+
+    <!-- Hidden Columns Section (swimlane view) -->
+    <% if @empty_groups.present? %>
+      <div class="shrink-0 w-64 flex flex-col h-full ml-3 pl-3 border-l border-stroke">
+        <!-- Header -->
+        <div class="flex items-center gap-2 mb-3 shrink-0 sticky top-0 bg-background z-30 pb-2">
+          <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+          <h3 class="text-sm font-medium text-gray-500">Hidden columns</h3>
+        </div>
+
+        <!-- List of empty groups -->
+        <div class="flex-1 overflow-y-auto min-h-0 space-y-2">
+          <% @empty_groups.each do |empty_group| %>
+            <div class="flex items-center gap-2 px-3 py-2 text-sm text-gray-400">
+              <%= render_group_icon(empty_group[:object]) %>
+              <span><%= empty_group[:name] %></span>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
   </div>
 <% else %>
   <!-- Standard Column Layout: No swimlanes -->

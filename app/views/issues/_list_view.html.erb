@@ -10,17 +10,26 @@
 
   <!-- Issue Rows -->
   <% @grouped_issues.each do |group_name, group_data| %>
-    <!-- Group Header -->
-    <% unless @display_options[:group_by] == 'none' %>
-      <div class="bg-hover-highlight border-b border-stroke px-4 py-2 text-xs font-medium text-gray-400">
-        <%= group_name %> (<%= group_data[:issues].count %>)
-      </div>
-    <% end %>
+    <div data-controller="swimlane-row">
+      <!-- Group Header -->
+      <% unless @display_options[:group_by] == 'none' %>
+        <div class="bg-hover-highlight border-b border-stroke px-4 py-2">
+          <button type="button" data-action="swimlane-row#toggle" class="flex items-center gap-2 cursor-pointer">
+            <svg data-swimlane-row-target="chevron" class="w-3 h-3 text-gray-500 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+            <span class="text-xs font-medium text-gray-400"><%= group_name %> (<%= group_data[:issues].count %>)</span>
+          </button>
+        </div>
+      <% end %>
 
-    <!-- Issues -->
-    <% group_data[:issues].each do |issue| %>
-      <%= render "issues/list_row", issue: issue, display_options: @display_options, labels: @labels %>
-    <% end %>
+      <!-- Issues -->
+      <div data-swimlane-row-target="content">
+        <% group_data[:issues].each do |issue| %>
+          <%= render "issues/list_row", issue: issue, display_options: @display_options, labels: @labels %>
+        <% end %>
+      </div>
+    </div>
   <% end %>
 
   <!-- Add New Issue Row -->
