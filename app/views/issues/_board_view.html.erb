@@ -37,13 +37,22 @@
             <!-- Columns within this row -->
             <div class="flex gap-3" data-swimlane-row-target="content">
               <% columns.each do |column_name, column_data| %>
-                <div class="shrink-0 w-80 flex flex-col">
+                <div class="shrink-0 w-80 flex flex-col group/cell">
                   <!-- Issues in this cell -->
                   <div class="space-y-1.5 min-h-[60px]">
                     <% column_data[:issues].each do |issue| %>
                       <%= render "issue_card", issue: issue, visible_properties: @display_options[:visible_properties] %>
                     <% end %>
                   </div>
+
+                  <!-- Add Issue Button -->
+                  <%= link_to new_team_issue_path(current_team, lane_id: (column_data[:object].id if column_data[:object].respond_to?(:id))),
+                      data: { turbo_frame: "_top" },
+                      class: "opacity-0 group-hover/cell:opacity-100 transition-opacity flex items-center justify-center p-3 rounded-md border border-stroke hover:bg-hover-highlight mt-1.5" do %>
+                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                  <% end %>
                 </div>
               <% end %>
             </div>
@@ -65,7 +74,7 @@
 
         <!-- List of empty groups -->
         <div class="flex-1 overflow-y-auto min-h-0 space-y-2">
-          <% @empty_groups.each do |empty_group| %>
+          <% @empty_groups.uniq { |g| g[:name] }.each do |empty_group| %>
             <div class="flex items-center gap-2 px-3 py-2 text-sm text-gray-400">
               <%= render_group_icon(empty_group[:object]) %>
               <span><%= empty_group[:name] %></span>
@@ -77,40 +86,42 @@
   </div>
 <% else %>
   <!-- Standard Column Layout: No swimlanes -->
-  <div class="flex gap-3 h-full">
-    <% @grouped_issues.each do |group_name, group_data| %>
-      <div class="shrink-0 w-80 flex flex-col h-full group">
-        <!-- Group Header -->
-        <div class="flex items-center justify-between mb-3 shrink-0">
-          <div class="flex items-center gap-2">
-            <h3 class="text-sm font-medium text-accent"><%= group_name %></h3>
-            <span class="text-xs text-gray-500"><%= group_data[:issues].count %></span>
+  <div class="flex h-full overflow-auto">
+    <div class="flex gap-3 flex-1">
+      <% @grouped_issues.each do |group_name, group_data| %>
+        <div class="shrink-0 w-80 flex flex-col h-full group">
+          <!-- Group Header -->
+          <div class="flex items-center justify-between mb-3 shrink-0">
+            <div class="flex items-center gap-2">
+              <h3 class="text-sm font-medium text-accent"><%= group_name %></h3>
+              <span class="text-xs text-gray-500"><%= group_data[:issues].count %></span>
+            </div>
           </div>
-        </div>
 
-        <!-- Issues -->
-        <div class="flex-1 overflow-y-auto min-h-0">
-          <div class="space-y-1.5">
-            <% group_data[:issues].each do |issue| %>
-              <%= render "issue_card", issue: issue, visible_properties: @display_options[:visible_properties] %>
+          <!-- Issues -->
+          <div class="flex-1 overflow-y-auto min-h-0">
+            <div class="space-y-1.5">
+              <% group_data[:issues].each do |issue| %>
+                <%= render "issue_card", issue: issue, visible_properties: @display_options[:visible_properties] %>
+              <% end %>
+            </div>
+
+            <!-- Add Issue Button -->
+            <%= link_to new_team_issue_path(current_team, lane_id: (group_data[:object].id if group_data[:object].respond_to?(:id))),
+                data: { turbo_frame: "_top" },
+                class: "opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-3 rounded-md border border-stroke hover:bg-hover-highlight mt-1.5" do %>
+              <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+              </svg>
             <% end %>
           </div>
-
-          <!-- Add Issue Button -->
-          <%= link_to new_team_issue_path(current_team, lane_id: (group_data[:object].id if group_data[:object].respond_to?(:id))),
-              data: { turbo_frame: "_top" },
-              class: "opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-3 rounded-md border border-stroke hover:bg-hover-highlight mt-1.5" do %>
-            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-            </svg>
-          <% end %>
         </div>
-      </div>
-    <% end %>
+      <% end %>
+    </div>
 
     <!-- Hidden Columns Section -->
     <% if @empty_groups.present? %>
-      <div class="shrink-0 w-64 flex flex-col h-full">
+      <div class="shrink-0 w-64 flex flex-col h-full ml-3 pl-3 border-l border-stroke">
         <!-- Header -->
         <div class="flex items-center gap-2 mb-3 shrink-0">
           <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -121,7 +132,7 @@
 
         <!-- List of empty groups -->
         <div class="flex-1 overflow-y-auto min-h-0 space-y-2">
-          <% @empty_groups.each do |empty_group| %>
+          <% @empty_groups.uniq { |g| g[:name] }.each do |empty_group| %>
             <div class="flex items-center gap-2 px-3 py-2 text-sm text-gray-400">
               <%= render_group_icon(empty_group[:object]) %>
               <span><%= empty_group[:name] %></span>
