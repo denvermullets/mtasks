@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_27_173950) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_11_212211) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -18,9 +18,11 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_27_173950) do
     t.text "body"
     t.datetime "created_at", null: false
     t.bigint "issue_id", null: false
+    t.bigint "parent_id"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["issue_id"], name: "index_comments_on_issue_id"
+    t.index ["parent_id"], name: "index_comments_on_parent_id"
     t.index ["user_id"], name: "index_comments_on_user_id"
   end
 
@@ -241,6 +243,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_27_173950) do
     t.index ["owner_id"], name: "index_workspaces_on_owner_id"
   end
 
+  add_foreign_key "comments", "comments", column: "parent_id"
   add_foreign_key "comments", "issues"
   add_foreign_key "comments", "users"
   add_foreign_key "github_installations", "workspaces"

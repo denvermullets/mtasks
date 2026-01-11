@@ -1,51 +1,81 @@
 <%= turbo_frame_tag dom_id(comment) do %>
-  <div class="bg-foreground rounded-lg p-4 mb-4">
-    <div class="flex items-start gap-3">
-      <div class="w-6 h-6 rounded-full bg-orange-600 flex items-center justify-center text-xs font-medium shrink-0">
-        <%= comment.user.name.first.upcase %>
-      </div>
-      <div class="flex-1 min-w-0">
-        <div class="flex items-center gap-2 mb-2">
-          <span class="text-sm text-gray-300 font-medium"><%= comment.user.name %></span>
-          <span class="text-xs text-gray-500"><%= time_ago_in_words(comment.created_at) %> ago</span>
+  <div class="mb-4" data-controller="comment-reply">
+    <div class="bg-foreground rounded-lg p-4">
+      <div class="flex items-start gap-3">
+        <div class="w-6 h-6 rounded-full bg-orange-600 flex items-center justify-center text-xs font-medium shrink-0">
+          <%= comment.user.name.first.upcase %>
         </div>
-        <div class="text-sm text-gray-300">
-          <%= simple_format(comment.body, {}, wrapper_tag: "div", class: "whitespace-pre-wrap") %>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-sm text-gray-300 font-medium"><%= comment.user.name %></span>
+            <span class="text-xs text-gray-500"><%= time_ago_in_words(comment.created_at) %> ago</span>
+          </div>
+          <div class="text-sm text-gray-300">
+            <%= simple_format(comment.body, {}, wrapper_tag: "div", class: "whitespace-pre-wrap") %>
+          </div>
         </div>
-      </div>
-      <div class="flex items-center gap-2 ml-auto shrink-0">
-        <button class="text-gray-500 hover:text-gray-400">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
-          </svg>
-        </button>
-        <button class="text-gray-500 hover:text-gray-400">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-          </svg>
-        </button>
-        <button class="text-gray-500 hover:text-gray-400">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"></path>
-          </svg>
-        </button>
-        <% if Current.user.admin? || comment.user == Current.user %>
-          <%= button_to team_issue_comment_path(comment.issue.team, comment.issue, comment),
-              method: :delete,
-              class: "text-gray-500 hover:text-gray-400",
-              data: { turbo_confirm: "Are you sure?" } do %>
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
-            </svg>
+        <div class="flex items-center gap-2 ml-auto shrink-0">
+          <% if comment.can_reply? %>
+            <button type="button" class="text-gray-500 hover:text-gray-400 cursor-pointer" data-action="click->comment-reply#toggle" title="Reply">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
+              </svg>
+            </button>
           <% end %>
-        <% else %>
-          <button class="text-gray-500 hover:text-gray-400">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
-            </svg>
-          </button>
-        <% end %>
+          <% if Current.user.admin? || comment.user == Current.user %>
+            <%= button_to team_issue_comment_path(comment.issue.team, comment.issue, comment),
+                method: :delete,
+                class: "text-gray-500 hover:text-gray-400 cursor-pointer",
+                data: { turbo_confirm: "Are you sure?" } do %>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+              </svg>
+            <% end %>
+          <% end %>
+        </div>
       </div>
     </div>
+
+    <% if comment.can_reply? %>
+      <!-- Reply Form -->
+      <div class="hidden mt-2 ml-9" data-comment-reply-target="form">
+        <%= form_with model: [comment.issue.team, comment.issue, Comment.new],
+                     html: { class: "bg-foreground rounded-lg p-3" },
+                     data: { turbo_frame: "_top", controller: "submit-on-cmd-enter" } do |form| %>
+          <%= form.hidden_field :parent_id, value: comment.id %>
+          <div class="flex items-start gap-3">
+            <div class="w-5 h-5 rounded-full bg-orange-600 flex items-center justify-center text-xs font-medium shrink-0">
+              <%= Current.user.name.first.upcase %>
+            </div>
+            <div class="flex-1 min-w-0">
+              <%= form.text_area :body,
+                  placeholder: "Write a reply...",
+                  class: "w-full bg-transparent text-gray-300 placeholder-gray-500 focus:outline-none resize-none border-0 p-0 text-sm",
+                  rows: 2,
+                  data: { action: "keydown->submit-on-cmd-enter#submit" } %>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <button type="button" class="text-gray-500 hover:text-gray-400 text-xs cursor-pointer" data-action="click->comment-reply#hide">
+                Cancel
+              </button>
+              <button type="submit" class="text-gray-500 hover:text-gray-400 cursor-pointer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <!-- Nested Replies -->
+    <% if comment.replies.any? %>
+      <div class="ml-9 mt-2 border-l-2 border-stroke pl-4" id="<%= dom_id(comment, :replies) %>">
+        <%= render comment.replies.order(created_at: :asc) %>
+      </div>
+    <% else %>
+      <div class="ml-9 mt-2 border-l-2 border-stroke pl-4 hidden" id="<%= dom_id(comment, :replies) %>"></div>
+    <% end %>
   </div>
 <% end %>

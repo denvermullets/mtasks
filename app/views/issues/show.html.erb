@@ -63,7 +63,7 @@
           <!-- Comments List -->
           <%= turbo_frame_tag "comments" do %>
             <div id="comments_list">
-              <%= render @issue.comments.order(created_at: :asc) %>
+              <%= render @issue.comments.top_level.order(created_at: :asc) %>
             </div>
           <% end %>
           <!-- Comment Form -->

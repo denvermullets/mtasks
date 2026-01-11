@@ -1,2 +1,6 @@
-<%= turbo_stream.append "comments_list", partial: "comments/comment", locals: { comment: @comment } %>
-<%= turbo_stream.replace "comment_form", partial: "comments/form", locals: { issue: @issue, comment: Comment.new } %>
+<% if @comment.parent_id.present? %>
+  <%= turbo_stream.replace dom_id(@comment.parent), partial: "comments/comment", locals: { comment: @comment.parent.reload } %>
+<% else %>
+  <%= turbo_stream.append "comments_list", partial: "comments/comment", locals: { comment: @comment } %>
+  <%= turbo_stream.replace "comment_form", partial: "comments/form", locals: { issue: @issue, comment: Comment.new } %>
+<% end %>
