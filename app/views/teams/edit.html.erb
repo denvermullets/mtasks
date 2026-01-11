@@ -27,10 +27,10 @@
           <!-- Team Identifier -->
           <div class="mb-4">
             <label class="block text-sm font-medium text-gray-400 mb-2">
-              Identifier (3 uppercase letters)
+              Identifier (3-4 alphanumeric characters)
             </label>
             <%= f.text_field :identifier,
-                maxlength: 3,
+                maxlength: 4,
                 class: "w-32 px-3 py-2 bg-background border border-stroke rounded text-gray-200 font-mono uppercase focus:outline-none focus:border-accent" %>
             <p class="text-xs text-gray-500 mt-1">
               Used in issue identifiers (e.g., <%= @team.identifier %>-123).

@@ -13,8 +13,8 @@ class Team < ApplicationRecord
 
   # Validations
   validates :name, presence: true
-  validates :identifier, presence: true, uniqueness: true, length: { is: 3 },
-                         format: { with: /\A[A-Z]+\z/, message: 'must be 3 uppercase letters' }
+  validates :identifier, presence: true, uniqueness: true, length: { in: 3..4 },
+                         format: { with: /\A[A-Z0-9]+\z/, message: 'must be 3-4 uppercase letters or numbers' }
 
   # Callbacks
   before_validation :upcase_identifier

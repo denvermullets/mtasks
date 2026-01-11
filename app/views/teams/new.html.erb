@@ -43,9 +43,9 @@
 
           <!-- Team Identifier -->
           <div class="mb-4">
-            <%= form.label "team[identifier]", "Identifier (3 uppercase letters)", class: "block text-sm font-medium text-gray-400 mb-2" %>
-            <%= form.text_field "team[identifier]", required: true, maxlength: 3, placeholder: "e.g., ENG", class: "w-32 px-3 py-2 bg-background border border-stroke rounded text-gray-200 font-mono uppercase focus:outline-none focus:border-accent" %>
-            <p class="text-xs text-gray-500 mt-1">This will prefix your issue numbers (e.g., ENG-1, ENG-2)</p>
+            <%= form.label "team[identifier]", "Identifier (3-4 alphanumeric characters)", class: "block text-sm font-medium text-gray-400 mb-2" %>
+            <%= form.text_field "team[identifier]", required: true, maxlength: 4, placeholder: "e.g., ENG, 99S", class: "w-32 px-3 py-2 bg-background border border-stroke rounded text-gray-200 font-mono uppercase focus:outline-none focus:border-accent" %>
+            <p class="text-xs text-gray-500 mt-1">This will prefix your issue numbers (e.g., ENG-1, 99S-2)</p>
           </div>
 
           <!-- Description -->

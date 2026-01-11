@@ -1,3 +1,9 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
-# Empty - no fixtures needed yet
+one:
+  name: Test Workspace One
+  owner: one
+
+two:
+  name: Test Workspace Two
+  owner: two

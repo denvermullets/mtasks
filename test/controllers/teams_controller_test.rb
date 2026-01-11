@@ -26,10 +26,10 @@ class TeamsControllerTest < ActionDispatch::IntegrationTest
       }
     end
 
-    assert_redirected_to root_path
+    team = Team.last
+    assert_redirected_to team_issues_path(team)
     assert_equal 'Team created successfully!', flash[:notice]
 
-    team = Team.last
     assert_equal 'Engineering', team.name
     assert_equal 'ENG', team.identifier
     assert_equal 'Engineering team', team.description
@@ -38,7 +38,8 @@ class TeamsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test 'create without workspace params uses existing workspace' do
-    # Create a workspace for the user first
+    # Remove fixture workspaces and create a fresh one
+    @user.owned_workspaces.destroy_all
     workspace = @user.owned_workspaces.create!(name: 'Existing Workspace')
 
     assert_difference ['Team.count', 'TeamMembership.count'], 1 do
@@ -53,10 +54,10 @@ class TeamsControllerTest < ActionDispatch::IntegrationTest
       end
     end
 
-    assert_redirected_to root_path
+    team = Team.last
+    assert_redirected_to team_issues_path(team)
     assert_equal 'Team created successfully!', flash[:notice]
 
-    team = Team.last
     assert_equal 'Marketing', team.name
     assert_equal 'MKT', team.identifier
     assert_equal workspace, team.workspace
