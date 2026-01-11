@@ -1,6 +1,6 @@
 <%= form_with model: [issue.team, issue, comment],
              html: { class: "bg-foreground rounded-lg p-4 mb-4" },
-             data: { turbo_frame: "_top" } do |form| %>
+             data: { turbo_frame: "_top", controller: "submit-on-cmd-enter" } do |form| %>
   <div class="flex items-start gap-3">
     <div class="w-6 h-6 rounded-full bg-orange-600 flex items-center justify-center text-xs font-medium shrink-0">
       <%= Current.user.name.first.upcase %>
@@ -9,7 +9,8 @@
       <%= form.text_area :body,
           placeholder: "Leave a comment...",
           class: "w-full bg-transparent text-gray-300 placeholder-gray-500 focus:outline-none resize-none border-0 p-0",
-          rows: 2 %>
+          rows: 2,
+          data: { action: "keydown->submit-on-cmd-enter#submit" } %>
       <% if comment.errors.any? %>
         <div class="text-red-400 text-xs mt-2">
           <%= comment.errors.full_messages.join(', ') %>
