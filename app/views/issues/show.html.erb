@@ -2,10 +2,12 @@
   <!-- Top Bar -->
   <div class="h-14 bg-menu border-b border-stroke flex items-center justify-between px-4">
     <div class="flex items-center gap-4">
+      <%= render "shared/mobile_menu_button" %>
       <%= link_to team_issues_path(current_team),
           class: "text-sm text-gray-500 hover:text-gray-400 flex items-center gap-2" do %>
         <span>&#8592;</span>
-        <span><%= current_team.name %></span>
+        <span class="hidden sm:inline"><%= current_team.name %></span>
+        <span class="sm:hidden">Back</span>
       <% end %>
       <span class="text-gray-600">&#8250;</span>
       <span class="text-sm text-gray-400 font-mono"><%= @issue.identifier %></span>

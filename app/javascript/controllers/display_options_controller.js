@@ -12,10 +12,51 @@ export default class extends Controller {
 
     // Check initial state
     this.checkIfChanged();
+
+    // Force list view on mobile
+    this.enforceListViewOnMobile();
+    this.boundEnforceListViewOnMobile = this.enforceListViewOnMobile.bind(this);
+    window.addEventListener("resize", this.boundEnforceListViewOnMobile);
   }
 
   disconnect() {
     document.removeEventListener("click", this.boundHandleClickOutside);
+    window.removeEventListener("resize", this.boundEnforceListViewOnMobile);
+  }
+
+  isMobile() {
+    return window.innerWidth < 640; // Tailwind's sm breakpoint
+  }
+
+  enforceListViewOnMobile() {
+    const boardButton = this.element.querySelector('[data-view-mode="board"]');
+
+    if (this.isMobile()) {
+      // Disable board view button on mobile
+      if (boardButton) {
+        boardButton.disabled = true;
+        boardButton.classList.add("opacity-50", "cursor-not-allowed");
+        boardButton.title = "Board view is not available on mobile";
+      }
+
+      // If currently on board view, switch to list
+      const url = new URL(window.location.href);
+      const currentMode = url.searchParams.get("view_mode") || "board";
+      if (currentMode === "board") {
+        url.searchParams.set("view_mode", "list");
+        window.history.replaceState({}, "", url.toString());
+        window.Turbo.visit(url.toString(), { frame: "issues_board" });
+        this.updateViewModeButtons("list");
+        this.updateOptionsForViewMode("list");
+      }
+    } else {
+      // Re-enable board view button on desktop
+      if (boardButton) {
+        boardButton.disabled = false;
+        boardButton.classList.remove("opacity-50", "cursor-not-allowed");
+        boardButton.title = "";
+      }
+    }
   }
 
   togglePanel(event) {

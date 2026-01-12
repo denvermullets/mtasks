@@ -18,8 +18,72 @@
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
   </head>
-  <body class="<%= controller_name == 'landing' ? 'bg-background' : 'bg-background text-gray-100 h-screen overflow-hidden flex' %>" data-controller="keyboard-shortcuts">
-    <%= render "shared/sidebar" if authenticated? && controller_name != 'landing' %>
+  <body class="<%= controller_name == 'landing' ? 'bg-background' : 'bg-background text-gray-100 h-screen overflow-hidden flex' %>" data-controller="keyboard-shortcuts<%= ' sidebar' if authenticated? && controller_name != 'landing' %>">
+    <% if authenticated? && controller_name != 'landing' %>
+      <!-- Mobile drawer (hidden by default) -->
+      <div id="mobile-drawer" class="fixed inset-0 z-50 hidden sm:hidden">
+        <!-- Overlay -->
+        <div id="mobile-drawer-overlay" class="absolute inset-0 bg-black/50" data-action="click->sidebar#close"></div>
+        <!-- Drawer panel -->
+        <div id="mobile-drawer-panel" class="absolute inset-y-0 left-0 w-64 bg-menu border-r border-stroke flex flex-col transform -translate-x-full transition-transform duration-200 ease-in-out">
+          <!-- Header with close button -->
+          <div class="p-4 border-b border-stroke flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <div class="w-6 h-6 rounded bg-blue-600 flex items-center justify-center text-xs font-medium">
+                <%= current_user.name.first.upcase %>
+              </div>
+              <span class="text-sm font-medium"><%= current_user.name %></span>
+            </div>
+            <button type="button" class="p-1 text-gray-400 hover:text-gray-200" data-action="click->sidebar#close">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+          <!-- Navigation -->
+          <div class="flex-1 overflow-y-auto">
+            <% if current_team.present? %>
+              <div class="p-2">
+                <div class="text-xs font-medium text-gray-500 uppercase px-2 mb-2">Workspace</div>
+                <div class="space-y-1">
+                  <%= link_to team_issues_path(current_team, assignee_id: current_user.id), class: "flex items-center gap-2 px-2 py-1.5 text-sm rounded hover:bg-foreground text-gray-300", data: { action: "click->sidebar#close" } do %>
+                    <span>My issues</span>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+            <div class="p-2 mt-4">
+              <div class="flex items-center justify-between px-2 mb-2">
+                <span class="text-xs font-medium text-gray-500 uppercase">Your Teams</span>
+                <%= link_to new_team_path, class: "p-1 text-gray-500 hover:text-gray-300", data: { action: "click->sidebar#close" } do %>
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                  </svg>
+                <% end %>
+              </div>
+              <div class="space-y-1">
+                <% user_teams.each do |team| %>
+                  <%= link_to team_issues_path(team), class: "flex items-center gap-2 px-2 py-1.5 rounded hover:bg-foreground text-sm #{team.id == current_team&.id ? 'bg-foreground text-gray-100' : 'text-gray-300'}", data: { action: "click->sidebar#close" } do %>
+                    <span class="font-mono text-xs text-gray-500"><%= team.identifier %></span>
+                    <span><%= team.name %></span>
+                  <% end %>
+                <% end %>
+              </div>
+            </div>
+          </div>
+          <!-- Actions -->
+          <% if current_team.present? %>
+            <div class="p-4 border-t border-stroke">
+              <%= link_to new_import_path, class: "text-xs text-gray-400 hover:text-gray-300 block", data: { action: "click->sidebar#close" } do %>
+                Import CSV
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+      <!-- Desktop sidebar -->
+      <%= render "shared/sidebar" %>
+    <% end %>
     <% if controller_name == 'landing' %>
       <%= yield %>
     <% else %>

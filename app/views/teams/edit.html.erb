@@ -2,11 +2,13 @@
   <!-- Top Bar -->
   <div class="h-14 bg-menu border-b border-stroke flex items-center justify-between px-4 shrink-0">
     <div class="flex items-center gap-4">
+      <%= render "shared/mobile_menu_button" %>
       <h1 class="text-base font-semibold">Team Settings</h1>
-      <span class="text-sm text-gray-500"><%= @team.name %></span>
+      <span class="text-sm text-gray-500 hidden sm:inline"><%= @team.name %></span>
     </div>
     <%= link_to team_issues_path(@team), class: "text-sm text-gray-400 hover:text-gray-300" do %>
-      Back to Issues
+      <span class="hidden sm:inline">Back to Issues</span>
+      <span class="sm:hidden">Back</span>
     <% end %>
   </div>
   <!-- Settings Content -->
