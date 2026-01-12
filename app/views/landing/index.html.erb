@@ -1,11 +1,9 @@
 <div class="landing-page bg-background text-gray-100 min-h-screen overflow-y-auto">
   <!-- Navigation -->
-  <nav class="px-8 py-4 flex items-center justify-between border-b border-stroke">
-    <div class="flex items-center gap-8">
-      <div class="flex items-center gap-2">
-        <%= image_tag "icon.png", alt: "JAIT Logo", class: "w-8 h-8" %>
-        <span class="text-xl font-semibold">Just Another Issue Tracker</span>
-      </div>
+  <nav class="px-4 sm:px-8 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-stroke">
+    <div class="flex items-center gap-2">
+      <%= image_tag "icon.png", alt: "JAIT Logo", class: "w-8 h-8" %>
+      <span class="text-xl font-semibold">Just Another Issue Tracker</span>
     </div>
     <div class="flex items-center gap-4">
       <%= link_to "Log in", new_session_path, class: "px-3.5 py-2.5 rounded-md bg-foreground hover:bg-hover-highlight text-gray-300 font-medium transition-colors" %>
