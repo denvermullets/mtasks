@@ -48,8 +48,12 @@ Rails.application.routes.draw do
   root to: redirect { |_params, request|
     # Check if user is authenticated by looking for session cookie
     session_id = request.cookie_jar.signed[:session_id]
-    if session_id && Session.find_by(id: session_id)
+    session = session_id && Session.find_by(id: session_id)
+    if session
+      user = session.user
+      # Try session team_id first, then fall back to user's first team
       team_id = request.session[:current_team_id]
+      team_id ||= user.teams.first&.id
       team_id ? "/teams/#{team_id}/issues" : '/teams/new'
     else
       '/landing'

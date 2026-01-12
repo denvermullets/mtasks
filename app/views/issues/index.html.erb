@@ -2,8 +2,9 @@
   <!-- Top Bar with Team Info and Display Button -->
   <div class="h-14 bg-menu border-b border-stroke flex items-center justify-between px-4 shrink-0">
     <div class="flex items-center gap-4">
+      <%= render "shared/mobile_menu_button" %>
       <h1 class="text-base font-semibold"><%= current_team&.identifier %></h1>
-      <span class="text-sm text-gray-500"><%= current_team&.workspace&.name %></span>
+      <span class="text-sm text-gray-500 hidden sm:inline"><%= current_team&.workspace&.name %></span>
     </div>
     <!-- Display Options Button -->
     <%= turbo_frame_tag "display_options_bar" do %>
