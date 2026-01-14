@@ -65,9 +65,21 @@ module IssuesHelper
   end
 
   def collect_subgroup_names(grouped_issues)
-    grouped_issues.values.flat_map do |group_data|
+    names = grouped_issues.values.flat_map do |group_data|
       group_data[:subgroups]&.keys || []
     end.uniq
+
+    ensure_priority_order_with_all_rows(names)
+  end
+
+  def ensure_priority_order_with_all_rows(names)
+    priority_display_names = Issue.priorities.keys.map { |p| p == 'no_priority' ? 'No Priority' : p.titleize }
+
+    # Check if any names are priority values - if so, return ALL priorities in correct order
+    return names unless names.intersect?(priority_display_names)
+
+    # Return all priority rows in correct order (ensures empty rows maintain position)
+    priority_display_names
   end
 
   def build_swimlanes(subgroup_names, grouped_issues)
