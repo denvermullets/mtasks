@@ -1,7 +1,7 @@
 source "https://rubygems.org"
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
-gem "rails", "~> 8.1.1"
+gem "rails", "~> 8.1.2"
 
 gem "bootsnap", require: false
 gem "dotenv"
@@ -11,7 +11,7 @@ gem "jwt"
 gem "octokit"
 gem "pg", "~> 1.6.3"
 gem "propshaft"
-gem "puma", ">= 7.1.0"
+gem "puma", ">= 7.2.0"
 gem "solid_cable"
 gem "solid_cache"
 gem "solid_queue"
