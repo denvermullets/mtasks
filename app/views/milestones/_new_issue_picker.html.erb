@@ -7,7 +7,7 @@
   <input type="hidden"
          name="issue[milestone_id]"
          value=""
-         data-new-issue-milestone-picker-target="hiddenField" />
+         data-new-issue-milestone-picker-target="hiddenField">
 
   <!-- Picker Overlay -->
   <div data-new-issue-milestone-picker-target="picker"
@@ -16,9 +16,10 @@
     <div class="p-2 border-b border-stroke">
       <input type="text"
              placeholder="Search or create milestones..."
+             autocomplete="off"
              data-new-issue-milestone-picker-target="search"
              data-action="input->new-issue-milestone-picker#filterMilestones keydown->new-issue-milestone-picker#handleKeyDown"
-             class="w-full px-3 py-2 text-sm bg-background border border-stroke rounded text-gray-200 placeholder-gray-500 focus:outline-none focus:border-accent" />
+             class="w-full px-3 py-2 text-sm bg-background border border-stroke rounded text-gray-200 placeholder-gray-500 focus:outline-none focus:border-accent">
     </div>
 
     <!-- Create New Milestone Option (shown dynamically) -->

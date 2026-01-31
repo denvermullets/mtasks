@@ -28,16 +28,17 @@
   <div class="p-2 border-b border-stroke">
     <input type="text"
            placeholder="Search projects..."
+           autocomplete="off"
            data-project-picker-target="search"
            data-action="input->project-picker#filterProjects keydown->project-picker#handleKeyDown"
-           class="w-full px-3 py-2 text-sm bg-background border border-stroke rounded text-gray-200 placeholder-gray-500 focus:outline-none focus:border-accent" />
+           class="w-full px-3 py-2 text-sm bg-background border border-stroke rounded text-gray-200 placeholder-gray-500 focus:outline-none focus:border-accent">
   </div>
 
   <!-- Projects List Container -->
   <div data-project-picker-target="projectList" class="max-h-96 overflow-y-auto">
     <!-- No Project Option -->
     <div class="project-option"
-         data-project-id=""
+         data-project-id
          data-project-name="No project">
       <label class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors cursor-pointer flex items-center gap-2">
         <input type="radio"

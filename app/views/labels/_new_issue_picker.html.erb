@@ -15,9 +15,10 @@
     <div class="p-2 border-b border-stroke">
       <input type="text"
              placeholder="Search or create labels..."
+             autocomplete="off"
              data-new-issue-label-picker-target="search"
              data-action="input->new-issue-label-picker#filterLabels keydown->new-issue-label-picker#handleKeyDown"
-      class="w-full px-3 py-2 text-sm bg-background border border-stroke rounded text-gray-200 placeholder-gray-500 focus:outline-none focus:border-accent" />
+      class="w-full px-3 py-2 text-sm bg-background border border-stroke rounded text-gray-200 placeholder-gray-500 focus:outline-none focus:border-accent">
     </div>
     <!-- Labels List Container -->
     <div data-new-issue-label-picker-target="labelList" class="max-h-96 overflow-y-auto">

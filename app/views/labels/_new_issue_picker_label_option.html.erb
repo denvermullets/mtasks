@@ -9,7 +9,7 @@
   <input type="checkbox"
          <%= 'checked' if selected %>
          class="mr-2 rounded bg-background border-stroke accent-accent focus:ring-0 focus:ring-offset-0"
-         data-action="change->new-issue-label-picker#toggleLabel" />
+         data-action="change->new-issue-label-picker#toggleLabel">
   <span class="w-3 h-3 rounded-full mr-2 shrink-0" style="background-color: <%= label.color %>;"></span>
   <span class="flex-1 truncate"><%= label.name %></span>
 </label>

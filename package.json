@@ -1,0 +1,15 @@
+{
+  "devDependencies": {
+    "@herb-tools/formatter": "^0.8.9",
+    "@herb-tools/linter": "^0.8.9",
+    "husky": "^9.1.7"
+  },
+  "scripts": {
+    "herb:format": "herb-format",
+    "herb:format:check": "herb-format --check",
+    "herb:lint": "herb-lint",
+    "herb:fix": "herb-lint --fix",
+    "herb:lint:fix": "herb-lint --fix",
+    "prepare": "husky"
+  }
+}

@@ -1,0 +1,36 @@
+#!/usr/bin/env sh
+
+echo "🔍 Running pre-commit checks..."
+
+# Step 1: Run rubocop with auto-correct
+echo "Running bin/rubocop -A..."
+bin/rubocop -A
+RUBOCOP_EXIT=$?
+
+# Step 2: Run herb formatter
+echo "Running yarn herb:format..."
+yarn herb:format
+FORMAT_EXIT=$?
+
+# Step 3: Run herb linter with auto-fix
+echo "Running yarn herb:lint:fix..."
+yarn herb:lint:fix
+LINT_EXIT=$?
+
+# Check if any command failed
+if [ $RUBOCOP_EXIT -ne 0 ] || [ $FORMAT_EXIT -ne 0 ] || [ $LINT_EXIT -ne 0 ]; then
+  echo ""
+  echo "❌ Pre-commit checks failed. Commit aborted."
+  exit 1
+fi
+
+# Stage any changes made by the fixers
+if [ -n "$(git diff)" ]; then
+  echo ""
+  echo "⚡ Linters modified files. Staging changes..."
+  git add -u
+  echo "✅ Changes staged into this commit."
+fi
+
+echo ""
+echo "✅ All pre-commit checks passed!"

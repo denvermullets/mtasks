@@ -5,14 +5,14 @@
 
 <template id="label-option-template">
   <label class="label-option flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors cursor-pointer"
-         data-label-id=""
-         data-label-name=""
-         data-label-color=""
+         data-label-id
+         data-label-name
+         data-label-color
          data-action="click->label-picker#handleLabelClick"
          role="option">
     <input type="checkbox"
            class="mr-2 rounded bg-background border-stroke accent-accent focus:ring-0 focus:ring-offset-0"
-           data-label-picker-target="checkbox" />
+           data-label-picker-target="checkbox">
     <span class="w-3 h-3 rounded-full mr-2 flex-shrink-0" data-label-picker-target="colorDot"></span>
     <span class="flex-1 truncate" data-label-picker-target="labelName"></span>
   </label>

@@ -1,11 +1,11 @@
 <% if milestone.nil? %>
   <label class="milestone-option flex items-center px-3 py-2 text-sm text-gray-500 hover:bg-hover-highlight transition-colors cursor-pointer"
-         data-milestone-id=""
+         data-milestone-id
          data-milestone-name="No milestone">
     <input type="radio"
            name="milestone-picker"
            class="mr-2 rounded-full bg-background border-stroke accent-accent focus:ring-0 focus:ring-offset-0"
-           data-action="change->milestone-picker#selectMilestone" />
+           data-action="change->milestone-picker#selectMilestone">
     <span class="text-gray-500 mr-2">◇</span>
     <span class="flex-1">No milestone</span>
   </label>
@@ -17,7 +17,7 @@
            name="milestone-picker"
            <%= 'checked' if selected %>
            class="mr-2 rounded-full bg-background border-stroke accent-accent focus:ring-0 focus:ring-offset-0"
-           data-action="change->milestone-picker#selectMilestone" />
+           data-action="change->milestone-picker#selectMilestone">
     <span style="color: <%= milestone.status_color %>;" class="mr-2">◆</span>
     <span class="flex-1 truncate"><%= milestone.name %></span>
     <% if milestone.formatted_due_date %>
