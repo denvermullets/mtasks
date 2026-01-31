@@ -2,6 +2,7 @@ import { Controller } from "@hotwired/stimulus";
 
 export default class extends Controller {
   static targets = ["dropdown"];
+  static values = { url: String };
 
   connect() {
     this.boundHandleClickOutside = this.handleClickOutside.bind(this);
@@ -35,6 +36,12 @@ export default class extends Controller {
     } else {
       // Just closed, remove click listener
       document.removeEventListener("click", this.boundHandleClickOutside);
+    }
+  }
+
+  navigate(event) {
+    if (this.hasUrlValue) {
+      window.Turbo.visit(this.urlValue);
     }
   }
 
