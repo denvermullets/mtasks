@@ -10,7 +10,9 @@ class UsersController < ApplicationController
     @user = User.new(user_params)
 
     if @user.save
+      invitation_token = session[:pending_invitation_token]
       start_new_session_for @user
+      accept_pending_invitation(@user, invitation_token)
       redirect_to root_path, notice: 'Welcome! Your account has been created.'
     else
       render :new, status: :unprocessable_entity
@@ -21,5 +23,14 @@ class UsersController < ApplicationController
 
   def user_params
     params.require(:user).permit(:name, :email, :password, :password_confirmation)
+  end
+
+  def accept_pending_invitation(user, token)
+    return unless token
+
+    invitation = TeamInvitation.pending.find_by(token: token)
+    return unless invitation
+
+    invitation.accept!(user)
   end
 end

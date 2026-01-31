@@ -16,11 +16,17 @@ Rails.application.routes.draw do
     resources :milestones, only: %i[index create update destroy]
     resources :lanes, only: %i[create update destroy]
     resources :projects
+    resources :team_invitations, only: %i[index create destroy] do
+      delete :remove_member, on: :collection
+    end
     resources :issues do
       resources :comments, only: %i[create destroy]
       resources :issue_labels, only: %i[create destroy]
     end
   end
+
+  # Token-based invitation acceptance (no auth required)
+  resources :invitations, only: %i[show update], param: :token, controller: 'invitation_acceptances'
 
   # CSV Import
   resources :imports, only: %i[new create]

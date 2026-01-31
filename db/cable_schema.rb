@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_11_212211) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_31_181124) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -185,6 +185,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_11_212211) do
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
+  create_table "team_invitations", force: :cascade do |t|
+    t.datetime "accepted_at"
+    t.datetime "created_at", null: false
+    t.string "email", null: false
+    t.bigint "invited_by_id", null: false
+    t.integer "status", default: 0, null: false
+    t.bigint "team_id", null: false
+    t.string "token", null: false
+    t.datetime "updated_at", null: false
+    t.index ["invited_by_id"], name: "index_team_invitations_on_invited_by_id"
+    t.index ["team_id", "email", "status"], name: "index_team_invitations_on_team_email_pending", unique: true, where: "(status = 0)"
+    t.index ["team_id"], name: "index_team_invitations_on_team_id"
+    t.index ["token"], name: "index_team_invitations_on_token", unique: true
+  end
+
   create_table "team_memberships", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "team_id", null: false
@@ -268,6 +283,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_11_212211) do
   add_foreign_key "projects", "teams"
   add_foreign_key "pull_requests", "github_repository_subscriptions"
   add_foreign_key "sessions", "users"
+  add_foreign_key "team_invitations", "teams"
+  add_foreign_key "team_invitations", "users", column: "invited_by_id"
   add_foreign_key "team_memberships", "teams"
   add_foreign_key "team_memberships", "users"
   add_foreign_key "teams", "workspaces"

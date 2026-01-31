@@ -88,6 +88,35 @@
           </div>
         </div>
       </div>
+      <!-- Members Section (workspace owner only) -->
+      <% if workspace_owner?(@team) %>
+        <div class="bg-foreground border border-stroke rounded-lg p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-gray-200">Members</h2>
+            <%= link_to team_team_invitations_path(@team), class: "text-sm text-accent hover:text-accent/80" do %>
+              Manage Members
+            <% end %>
+          </div>
+          <div class="space-y-2">
+            <% @team.users.order(:name).limit(5).each do |member| %>
+              <div class="flex items-center gap-3 p-2">
+                <div class="w-7 h-7 rounded bg-blue-600 flex items-center justify-center text-xs font-medium">
+                  <%= member.name.first.upcase %>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-200"><%= member.name %></p>
+                  <p class="text-xs text-gray-400"><%= member.email %></p>
+                </div>
+              </div>
+            <% end %>
+            <% pending_count = @team.team_invitations.pending.count %>
+            <% if pending_count > 0 %>
+              <p class="text-xs text-gray-500 mt-2"><%= pending_count %> pending invitation<%= pending_count == 1 ? '' : 's' %></p>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+
       <!-- Lanes Section -->
       <div class="bg-foreground border border-stroke rounded-lg p-6"
            data-controller="lane-settings">
