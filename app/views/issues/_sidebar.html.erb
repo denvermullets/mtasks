@@ -117,7 +117,7 @@
         <div data-issue-sidebar-target="estimateDropdown" class="hidden absolute top-full left-0 mt-1 w-full bg-foreground border border-stroke rounded-md shadow-lg z-10">
           <button type="button"
                   data-action="click->issue-sidebar#selectEstimate"
-            data-estimate-value=""
+            data-estimate-value
             data-estimate-label="No estimate"
             class="w-full text-left px-3 py-2 text-sm <%= issue.estimate.blank? ? 'bg-hover-highlight text-accent' : 'text-gray-300' %> hover:bg-hover-highlight transition-colors first:rounded-t-md">
             <% if issue.estimate.blank? %>✓<% end %> No estimate
