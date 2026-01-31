@@ -43,18 +43,20 @@
       <!-- Teams list (collapsible) -->
       <div class="space-y-1" data-teams-section-target="list">
         <% user_teams.each do |team| %>
-          <div class="group flex items-center justify-between px-2 py-1.5 rounded hover:bg-foreground <%= team.id == current_team&.id ? 'bg-foreground' : '' %>"
-               data-controller="team-menu">
-            <%= link_to team_issues_path(team), class: "flex items-center gap-2 flex-1 text-sm #{team.id == current_team&.id ? 'text-gray-100' : 'text-gray-300'}" do %>
+          <div class="group flex items-center justify-between px-2 py-1.5 rounded cursor-pointer hover:bg-foreground <%= team.id == current_team&.id ? 'bg-foreground' : '' %>"
+               data-controller="team-menu"
+               data-action="click->team-menu#navigate"
+               data-team-menu-url-value="<%= team_issues_path(team) %>">
+            <div class="flex items-center gap-2 flex-1 text-sm <%= team.id == current_team&.id ? 'text-gray-100' : 'text-gray-300' %>">
               <span class="font-mono text-xs text-gray-500"><%= team.identifier %></span>
               <span><%= team.name %></span>
-            <% end %>
+            </div>
 
             <!-- Ellipsis menu button -->
             <div class="relative">
               <button type="button"
-                      data-action="click->team-menu#toggleDropdown"
-                      class="p-1 text-gray-500 hover:text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity">
+                      data-action="click->team-menu#toggleDropdown:stop"
+                      class="p-1 cursor-pointer text-gray-500 hover:text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity">
                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
                 </svg>
@@ -72,6 +74,17 @@
                     </svg>
                     Settings
                   </div>
+                <% end %>
+                <% if workspace_owner?(team) %>
+                  <%= link_to team_team_invitations_path(team),
+                      class: "block px-4 py-2 text-sm text-gray-300 hover:bg-hover-highlight rounded-md" do %>
+                    <div class="flex items-center gap-2">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                      </svg>
+                      Members
+                    </div>
+                  <% end %>
                 <% end %>
               </div>
             </div>

@@ -9,7 +9,9 @@ class SessionsController < ApplicationController
 
   def create
     if (user = User.authenticate_by(params.permit(:email, :password)))
+      invitation_token = session[:pending_invitation_token]
       start_new_session_for user
+      accept_pending_invitation(user, invitation_token)
       redirect_to after_authentication_url
     else
       redirect_to new_session_path, alert: 'Try another email or password.'
@@ -19,5 +21,16 @@ class SessionsController < ApplicationController
   def destroy
     terminate_session
     redirect_to new_session_path, status: :see_other
+  end
+
+  private
+
+  def accept_pending_invitation(user, token)
+    return unless token
+
+    invitation = TeamInvitation.pending.find_by(token: token)
+    return unless invitation
+
+    invitation.accept!(user)
   end
 end

@@ -1,0 +1,82 @@
+<div class="flex-1 flex flex-col min-h-0">
+  <!-- Top Bar -->
+  <div class="h-14 bg-menu border-b border-stroke flex items-center justify-between px-4 shrink-0">
+    <div class="flex items-center gap-4">
+      <%= render "shared/mobile_menu_button" %>
+      <h1 class="text-base font-semibold">Team Members</h1>
+      <span class="text-sm text-gray-500 hidden sm:inline"><%= @team.name %></span>
+    </div>
+    <%= link_to edit_team_path(@team), class: "text-sm text-gray-400 hover:text-gray-300" do %>
+      <span class="hidden sm:inline">Back to Settings</span>
+      <span class="sm:hidden">Back</span>
+    <% end %>
+  </div>
+
+  <!-- Content -->
+  <div class="flex-1 overflow-y-auto bg-background p-8">
+    <div class="max-w-4xl mx-auto w-full space-y-6">
+
+      <!-- Invite Form -->
+      <div class="bg-foreground border border-stroke rounded-lg p-6">
+        <h2 class="text-lg font-semibold text-gray-200 mb-4">Invite a Member</h2>
+        <%= form_with model: TeamInvitation.new, url: team_team_invitations_path(@team), method: :post, local: true, class: "flex items-end gap-3" do |f| %>
+          <div class="flex-1">
+            <label class="block text-sm font-medium text-gray-400 mb-2">Email address</label>
+            <%= f.email_field :email, placeholder: "user@justanotherissuetracker.com", class: "w-full px-3 py-2 bg-background border border-stroke rounded text-gray-200 focus:outline-none focus:border-accent", required: true %>
+          </div>
+          <%= f.submit "Send Invite", class: "px-4 py-2 border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 font-medium cursor-pointer rounded-md" %>
+        <% end %>
+        <% if defined?(@invitation) && @invitation&.errors&.any? %>
+          <div class="mt-2">
+            <% @invitation.errors.full_messages.each do |message| %>
+              <p class="text-red-500 text-xs"><%= message %></p>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+
+      <!-- Current Members -->
+      <div class="bg-foreground border border-stroke rounded-lg p-6">
+        <h2 class="text-lg font-semibold text-gray-200 mb-4">Current Members (<%= @members.count %>)</h2>
+        <div class="space-y-2">
+          <% @members.each do |member| %>
+            <div class="flex items-center justify-between p-3 bg-background rounded border border-stroke">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded bg-blue-600 flex items-center justify-center text-sm font-medium">
+                  <%= member.name.first.upcase %>
+                </div>
+                <div>
+                  <p class="text-sm font-medium text-gray-200"><%= member.name %></p>
+                  <p class="text-xs text-gray-400"><%= member.email %></p>
+                </div>
+              </div>
+              <% if member.id == @team.workspace.owner_id %>
+                <span class="text-xs text-gray-500">Owner</span>
+              <% elsif workspace_owner?(@team) %>
+                <%= button_to "Remove", remove_member_team_team_invitations_path(@team, member_id: member.id), method: :delete, class: "text-xs text-red-400 hover:text-red-300", data: { turbo_confirm: "Remove #{member.name} from the team?" } %>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Pending Invitations -->
+      <% if @pending_invitations.any? %>
+        <div class="bg-foreground border border-stroke rounded-lg p-6">
+          <h2 class="text-lg font-semibold text-gray-200 mb-4">Pending Invitations (<%= @pending_invitations.count %>)</h2>
+          <div class="space-y-2">
+            <% @pending_invitations.each do |invitation| %>
+              <div class="flex items-center justify-between p-3 bg-background rounded border border-stroke">
+                <div>
+                  <p class="text-sm font-medium text-gray-200"><%= invitation.email %></p>
+                  <p class="text-xs text-gray-400">Invited by <%= invitation.invited_by.name %> &middot; <%= time_ago_in_words(invitation.created_at) %> ago</p>
+                </div>
+                <%= button_to "Revoke", team_team_invitation_path(@team, invitation), method: :delete, class: "text-xs text-red-400 hover:text-red-300", data: { turbo_confirm: "Revoke this invitation?" } %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,21 @@
+<div class="min-h-screen bg-background flex items-center justify-center p-4">
+  <div class="w-full max-w-md">
+    <div class="bg-foreground border border-stroke rounded-lg p-8 text-center">
+      <h1 class="text-xl font-semibold text-gray-200 mb-2">Team Invitation</h1>
+      <p class="text-gray-400 mb-6">
+        You've been invited to join <span class="text-gray-200 font-medium"><%= @invitation.team.name %></span>
+        by <span class="text-gray-200 font-medium"><%= @invitation.invited_by.name %></span>.
+      </p>
+
+      <% if @can_accept %>
+        <%= button_to "Accept Invitation", invitation_path(token: @invitation.token), method: :patch, class: "w-full px-4 py-2 bg-accent text-gray-800 font-medium rounded-md hover:bg-accent/90 cursor-pointer" %>
+      <% else %>
+        <div class="space-y-3">
+          <p class="text-sm text-gray-400">Please log in or create an account to accept this invitation.</p>
+          <%= link_to "Log In", new_session_path, class: "block w-full px-4 py-2 bg-accent text-gray-800 font-medium rounded-md hover:bg-accent/90 text-center" %>
+          <%= link_to "Create Account", new_user_path, class: "block w-full px-4 py-2 border border-stroke text-gray-200 font-medium rounded-md hover:bg-foreground text-center" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

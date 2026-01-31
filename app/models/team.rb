@@ -8,6 +8,7 @@ class Team < ApplicationRecord
   has_many :milestones, dependent: :destroy
   has_many :issues, dependent: :destroy
   has_many :labels, dependent: :destroy
+  has_many :team_invitations, dependent: :destroy
   has_many :github_repository_subscriptions, dependent: :destroy
   has_many :github_installations, through: :workspace
 

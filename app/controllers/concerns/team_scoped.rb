@@ -3,7 +3,7 @@ module TeamScoped
 
   included do
     before_action :set_current_team, if: :authenticated?
-    helper_method :current_team, :user_teams
+    helper_method :current_team, :user_teams, :workspace_owner?
   end
 
   private
@@ -40,5 +40,9 @@ module TeamScoped
 
   def require_admin!
     redirect_to root_path, alert: 'You must be an admin' unless current_user&.admin?
+  end
+
+  def workspace_owner?(team)
+    team.workspace.owner_id == current_user&.id
   end
 end
