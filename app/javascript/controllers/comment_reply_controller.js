@@ -7,7 +7,11 @@ export default class extends Controller {
     this.formTarget.classList.toggle("hidden");
     if (!this.formTarget.classList.contains("hidden")) {
       const textarea = this.formTarget.querySelector("textarea");
-      if (textarea) textarea.focus();
+      if (textarea) {
+        textarea.style.height = "auto";
+        textarea.style.height = textarea.scrollHeight + "px";
+        textarea.focus();
+      }
     }
   }
 
