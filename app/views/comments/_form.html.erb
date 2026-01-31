@@ -8,9 +8,9 @@
     <div class="flex-1 min-w-0">
       <%= form.text_area :body,
           placeholder: "Leave a comment...",
-          class: "w-full bg-transparent text-gray-300 placeholder-gray-500 focus:outline-none resize-none border-0 p-0",
+          class: "w-full bg-transparent text-gray-300 placeholder-gray-500 focus:outline-none resize-none border-0 p-0 overflow-hidden",
           rows: 2,
-          data: { action: "keydown->submit-on-cmd-enter#submit" } %>
+          data: { controller: "auto-resize", action: "input->auto-resize#resize keydown->submit-on-cmd-enter#submit" } %>
       <% if comment.errors.any? %>
         <div class="text-red-400 text-xs mt-2">
           <%= comment.errors.full_messages.join(', ') %>

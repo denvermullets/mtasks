@@ -45,7 +45,8 @@
               placeholder: "Add description...",
               rows: 4,
               autocomplete: "off",
-              class: "w-full bg-transparent border-0 text-gray-300 placeholder-gray-600 focus:outline-none focus:ring-0 p-0 resize-none" %>
+              class: "w-full bg-transparent border-0 text-gray-300 placeholder-gray-600 focus:outline-none focus:ring-0 p-0 resize-none overflow-hidden",
+              data: { controller: "auto-resize submit-on-cmd-enter", action: "input->auto-resize#resize keydown->submit-on-cmd-enter#submit" } %>
         </div>
         <!-- Property Buttons -->
         <div class="flex flex-wrap gap-2 mb-8">
