@@ -1,6 +1,5 @@
-<%# Reload the entire board/list to handle lane changes and grouping %>
-<%# Use update instead of replace to keep the turbo frame wrapper intact %>
-<%= turbo_stream.update "issues_board" do %>
+<%# Update the board while preserving scroll position %>
+<%= turbo_stream.action(:update_preserving_scroll, "issues_board") do %>
   <%= render "issues_board" %>
 <% end %>
 
