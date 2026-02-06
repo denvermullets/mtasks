@@ -10,7 +10,7 @@
 
   <!-- Issue Rows -->
   <% @grouped_issues.each do |group_name, group_data| %>
-    <div data-controller="swimlane-row">
+    <div id="list_group_<%= group_name.parameterize %>" data-controller="swimlane-row">
       <!-- Group Header -->
       <% unless @display_options[:group_by] == 'none' %>
         <div class="bg-hover-highlight border-b border-stroke px-4 py-2">
