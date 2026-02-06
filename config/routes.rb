@@ -25,6 +25,11 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :notifications, only: [:index] do
+    member { patch :mark_as_read }
+    collection { patch :mark_all_as_read }
+  end
+
   # Token-based invitation acceptance (no auth required)
   resources :invitations, only: %i[show update], param: :token, controller: 'invitation_acceptances'
 

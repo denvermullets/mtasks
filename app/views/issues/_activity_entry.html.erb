@@ -1,0 +1,13 @@
+<div class="flex gap-3 mb-6">
+  <% actor = User.find_by(id: version.whodunnit) %>
+  <div class="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center text-xs font-medium shrink-0">
+    <%= actor&.name&.first&.upcase || '?' %>
+  </div>
+  <div class="flex-1">
+    <div class="text-sm text-gray-400">
+      <span class="text-gray-300"><%= actor&.name || 'Someone' %></span>
+      <%= raw VersionDescriptionService.call(version) %>
+      &middot; <%= time_ago_in_words(version.created_at) %> ago
+    </div>
+  </div>
+</div>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_31_181124) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_06_122732) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -134,6 +134,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_31_181124) do
     t.index ["team_id"], name: "index_milestones_on_team_id"
   end
 
+  create_table "notifications", force: :cascade do |t|
+    t.string "action", null: false
+    t.bigint "actor_id", null: false
+    t.bigint "comment_id"
+    t.datetime "created_at", null: false
+    t.bigint "issue_id", null: false
+    t.text "message", null: false
+    t.datetime "read_at"
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.bigint "version_id"
+    t.index ["actor_id"], name: "index_notifications_on_actor_id"
+    t.index ["comment_id"], name: "index_notifications_on_comment_id"
+    t.index ["issue_id"], name: "index_notifications_on_issue_id"
+    t.index ["user_id", "created_at"], name: "index_notifications_on_user_id_and_created_at"
+    t.index ["user_id", "read_at"], name: "index_notifications_on_user_id_and_read_at"
+    t.index ["user_id"], name: "index_notifications_on_user_id"
+  end
+
   create_table "pending_github_setups", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "expires_at"
@@ -250,6 +269,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_31_181124) do
     t.index ["email"], name: "index_users_on_email", unique: true
   end
 
+  create_table "versions", force: :cascade do |t|
+    t.datetime "created_at"
+    t.string "event", null: false
+    t.bigint "item_id", null: false
+    t.string "item_type", null: false
+    t.jsonb "object"
+    t.jsonb "object_changes"
+    t.string "whodunnit"
+    t.index ["item_type", "item_id"], name: "index_versions_on_item_type_and_item_id"
+  end
+
   create_table "workspaces", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name"
@@ -278,6 +308,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_31_181124) do
   add_foreign_key "labels", "teams"
   add_foreign_key "lanes", "teams"
   add_foreign_key "milestones", "teams"
+  add_foreign_key "notifications", "comments"
+  add_foreign_key "notifications", "issues"
+  add_foreign_key "notifications", "users"
+  add_foreign_key "notifications", "users", column: "actor_id"
   add_foreign_key "pending_github_setups", "workspaces"
   add_foreign_key "projects", "milestones"
   add_foreign_key "projects", "teams"

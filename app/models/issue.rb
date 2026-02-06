@@ -1,4 +1,7 @@
 class Issue < ApplicationRecord
+  has_paper_trail only: %i[title description lane_id priority estimate due_date assignee_id project_id milestone_id
+                           parent_issue_id]
+
   enum :priority, { urgent: 0, high: 1, medium: 2, low: 3, no_priority: 4 }
 
   # Associations
@@ -15,6 +18,7 @@ class Issue < ApplicationRecord
   has_many :comments, dependent: :destroy
   has_many :issue_pull_requests, dependent: :destroy
   has_many :pull_requests, through: :issue_pull_requests
+  has_many :notifications, dependent: :destroy
 
   # Validations
   validates :title, presence: true

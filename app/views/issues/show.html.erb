@@ -59,7 +59,7 @@
           <div class="flex items-center justify-between mb-6">
             <h2 class="text-sm font-semibold text-gray-400">Activity</h2>
           </div>
-          <!-- Activity Item -->
+          <!-- Created entry -->
           <div class="flex gap-3 mb-6">
             <div class="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-xs font-medium shrink-0">
               <%= @issue.creator&.name&.first&.upcase || 'U' %>
@@ -71,12 +71,16 @@
               </div>
             </div>
           </div>
-          <!-- Comments List -->
-          <%= turbo_frame_tag "comments" do %>
-            <div id="comments_list">
-              <%= render @issue.comments.top_level.order(created_at: :asc) %>
-            </div>
-          <% end %>
+          <!-- Activity Timeline -->
+          <div id="activity_list">
+            <% VersionDescriptionService.timeline(@issue).each do |entry| %>
+              <% if entry[:type] == :version %>
+                <%= render 'issues/activity_entry', version: entry[:record] %>
+              <% else %>
+                <%= render entry[:record] %>
+              <% end %>
+            <% end %>
+          </div>
           <!-- Comment Form -->
           <%= turbo_frame_tag "comment_form" do %>
             <%= render 'comments/form', issue: @issue, comment: Comment.new %>

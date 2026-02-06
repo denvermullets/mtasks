@@ -18,7 +18,7 @@
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
   </head>
-  <body class="<%= controller_name == 'landing' ? 'bg-background' : 'bg-background text-gray-100 h-screen overflow-hidden flex' %>" data-controller="keyboard-shortcuts<%= ' sidebar' if authenticated? && controller_name != 'landing' %>">
+  <body class="<%= controller_name == 'landing' ? 'bg-background' : 'bg-background text-gray-100 h-screen overflow-hidden flex' %>" data-controller="keyboard-shortcuts<%= ' sidebar notification-drawer' if authenticated? && controller_name != 'landing' %>">
     <% if authenticated? && controller_name != 'landing' %>
       <!-- Mobile drawer (hidden by default) -->
       <div id="mobile-drawer" class="fixed inset-0 z-50 hidden sm:hidden">
@@ -34,11 +34,23 @@
               </div>
               <span class="text-sm font-medium"><%= current_user.name %></span>
             </div>
-            <button type="button" class="p-1 text-gray-400 hover:text-gray-200" data-action="click->sidebar#close">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-              </svg>
-            </button>
+            <div class="flex items-center gap-1">
+              <button type="button"
+                      class="relative p-1.5 text-gray-400 hover:text-gray-200 rounded-md hover:bg-gray-800"
+                      data-action="click->notification-drawer#toggle"
+                      aria-label="Notifications">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                </svg>
+                <% unread_count = current_user.notifications.unread.count %>
+                <%= render "notifications/badge", count: unread_count %>
+              </button>
+              <button type="button" class="p-1 text-gray-400 hover:text-gray-200" data-action="click->sidebar#close">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
           </div>
           <!-- Navigation -->
           <div class="flex-1 overflow-y-auto">
@@ -83,6 +95,8 @@
       </div>
       <!-- Desktop sidebar -->
       <%= render "shared/sidebar" %>
+      <!-- Notification drawer -->
+      <%= render "notifications/drawer" %>
     <% end %>
     <% if controller_name == 'landing' %>
       <%= yield %>

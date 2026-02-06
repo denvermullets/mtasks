@@ -12,6 +12,7 @@ class User < ApplicationRecord
   has_many :assigned_issues, class_name: 'Issue', foreign_key: :assignee_id
   has_many :comments, dependent: :destroy
   has_many :sent_invitations, class_name: 'TeamInvitation', foreign_key: :invited_by_id, dependent: :destroy
+  has_many :notifications, dependent: :destroy
 
   # Validations
   validates :email, presence: true, uniqueness: true, format: { with: URI::MailTo::EMAIL_REGEXP }

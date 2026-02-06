@@ -53,19 +53,11 @@ class IssuesController < ApplicationController
   def update
     load_form_collections
     if @issue.update(issue_params)
+      @latest_version = @issue.versions.last
+      notify_issue_update
       @issue.reload
       respond_to do |format|
-        format.turbo_stream do
-          # Load display options for rendering the board/list
-          load_display_options
-          base_issues = current_team.issues.not_archived.includes(
-            :lane, :project, :milestone, :labels, :assignee, :creator
-          )
-          @display_service = IssueDisplayService.new(base_issues, @display_options, current_team)
-          @grouped_issues = @display_service.grouped_issues
-          @empty_groups = @display_service.empty_groups
-          render :update
-        end
+        format.turbo_stream { load_board_data && render(:update) }
         format.html { redirect_to team_issue_path(@issue.team, @issue), notice: 'Issue was successfully updated.' }
       end
     else
@@ -79,13 +71,6 @@ class IssuesController < ApplicationController
   end
 
   private
-
-  def issue_update_streams
-    IssueTurboStreamService.new(
-      @issue, Current.user, current_team, view_context,
-      { lanes: @lanes, team_members: @team_members, projects: @projects, labels: @labels, milestones: @milestones }
-    ).update_streams
-  end
 
   def set_issue
     @issue = Issue.includes(:team, :lane, :project, :milestone, :labels, :assignee, :creator,
@@ -108,6 +93,24 @@ class IssuesController < ApplicationController
     return if (Current.user.admin? || @issue.creator == Current.user) && action_name.in?(%w[edit destroy])
 
     redirect_to team_issue_path(@issue.team, @issue), alert: 'You do not have permission to modify this issue.'
+  end
+
+  def load_board_data
+    load_display_options
+    base_issues = current_team.issues.not_archived.includes(
+      :lane, :project, :milestone, :labels, :assignee, :creator
+    )
+    @display_service = IssueDisplayService.new(base_issues, @display_options, current_team)
+    @grouped_issues = @display_service.grouped_issues
+    @empty_groups = @display_service.empty_groups
+  end
+
+  def notify_issue_update
+    version = @issue.versions.last
+    return unless version&.event == 'update'
+
+    action = NotificationService.action_for_version(version)
+    NotificationService.call(issue: @issue, actor: Current.user, action: action, version: version)
   end
 
   def issue_params
