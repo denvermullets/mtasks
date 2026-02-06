@@ -14,9 +14,11 @@
     <% unless notification.read? %>
       <%= button_to mark_as_read_notification_path(notification),
           method: :patch,
-          class: "w-2 h-2 rounded-full bg-blue-500 hover:bg-blue-400 cursor-pointer",
-          title: "Mark as read",
-          data: { turbo_stream: true } %>
+          form: { data: { turbo_stream: true } },
+          class: "w-3 h-3 rounded-full bg-blue-500 hover:bg-blue-400 cursor-pointer",
+          title: "Mark as read" do %>
+        <span class="sr-only">Mark as read</span>
+      <% end %>
     <% end %>
   </div>
 <% end %>

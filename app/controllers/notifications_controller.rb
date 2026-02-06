@@ -1,7 +1,6 @@
 class NotificationsController < ApplicationController
   def index
     @notifications = Current.user.notifications.recent.includes(:actor, :issue)
-    @unread_count = Current.user.notifications.unread.count
 
     respond_to do |format|
       format.turbo_stream do
@@ -18,7 +17,6 @@ class NotificationsController < ApplicationController
   def mark_as_read
     @notification = Current.user.notifications.find(params[:id])
     @notification.mark_as_read!
-    @unread_count = Current.user.notifications.unread.count
 
     respond_to do |format|
       format.turbo_stream do
@@ -28,11 +26,7 @@ class NotificationsController < ApplicationController
             partial: 'notifications/notification',
             locals: { notification: @notification }
           ),
-          turbo_stream.replace(
-            'notification_badge',
-            partial: 'notifications/badge',
-            locals: { count: @unread_count }
-          )
+          replace_all_badges
         ]
       end
       format.html { redirect_to root_path }
@@ -51,14 +45,21 @@ class NotificationsController < ApplicationController
             partial: 'notifications/list',
             locals: { notifications: @notifications }
           ),
-          turbo_stream.replace(
-            'notification_badge',
-            partial: 'notifications/badge',
-            locals: { count: 0 }
-          )
+          replace_all_badges
         ]
       end
       format.html { redirect_to root_path }
     end
+  end
+
+  private
+
+  def replace_all_badges
+    count = Current.user.notifications.unread.count
+    turbo_stream.replace_all(
+      '.notification-badge',
+      partial: 'notifications/badge',
+      locals: { count: count }
+    )
   end
 end

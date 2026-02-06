@@ -3,12 +3,14 @@ source "https://rubygems.org"
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 gem "rails", "~> 8.1.2"
 
+gem "bcrypt", "~> 3.1.21"
 gem "bootsnap", require: false
 gem "dotenv"
 gem "image_processing", "~> 1.14.0"
 gem "importmap-rails"
 gem "jwt"
 gem "octokit"
+gem "paper_trail"
 gem "pg", "~> 1.6.3"
 gem "propshaft"
 gem "puma", ">= 7.2.0"
@@ -20,10 +22,6 @@ gem "tailwindcss-rails"
 gem "thruster", require: false
 gem "turbo-rails"
 gem "tzinfo-data", platforms: %i[windows jruby]
-
-# Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
-gem "bcrypt", "~> 3.1.21"
-gem "paper_trail"
 
 group :development, :test do
   gem "brakeman", require: false

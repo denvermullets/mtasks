@@ -36,7 +36,7 @@ export default class extends Controller {
     drawer.classList.remove("hidden");
     // Trigger reflow for animation
     panel.offsetHeight;
-    panel.classList.remove("translate-x-full");
+    panel.classList.remove("-translate-x-full");
     panel.classList.add("translate-x-0");
   }
 
@@ -47,7 +47,7 @@ export default class extends Controller {
 
     this.openValue = false;
     panel.classList.remove("translate-x-0");
-    panel.classList.add("translate-x-full");
+    panel.classList.add("-translate-x-full");
 
     setTimeout(() => {
       if (!this.openValue) {
