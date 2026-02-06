@@ -1,0 +1,31 @@
+<div id="notification-drawer" class="fixed inset-0 z-50 hidden" data-notification-drawer-target="drawer">
+  <!-- Overlay -->
+  <div class="absolute inset-0 bg-black/50" data-action="click->notification-drawer#close"></div>
+  <!-- Drawer panel (slides in from left) -->
+  <div id="notification-drawer-panel"
+       class="absolute inset-y-0 left-0 w-96 max-w-[90vw] bg-menu flex flex-col transform -translate-x-full transition-transform duration-200 ease-in-out"
+       data-notification-drawer-target="panel">
+    <!-- Header -->
+    <div class="h-14 border-b border-stroke flex items-center justify-between px-4 shrink-0">
+      <span class="text-sm font-semibold text-gray-300">Notifications</span>
+      <div class="flex items-center gap-3">
+        <%= button_to mark_all_as_read_notifications_path,
+            method: :patch,
+            form: { data: { turbo_stream: true } },
+            class: "text-xs text-gray-500 hover:text-gray-300 cursor-pointer" do %>
+          Mark all as read
+        <% end %>
+        <button type="button" class="p-1 text-gray-400 hover:text-gray-200 cursor-pointer" data-action="click->notification-drawer#close">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <!-- Notification list -->
+    <div class="flex-1 overflow-y-auto">
+      <% notifications = Current.user.notifications.recent.includes(:actor, issue: :team) %>
+      <%= render "notifications/list", notifications: notifications %>
+    </div>
+  </div>
+</div>

@@ -8,7 +8,13 @@ class ApplicationController < ActionController::Base
   # Changes to the importmap will invalidate the etag for HTML responses
   stale_when_importmap_changes
 
+  before_action :configure_paper_trail_whodunnit
+
   private
+
+  def configure_paper_trail_whodunnit
+    ::PaperTrail.request.whodunnit = Current.user&.id&.to_s
+  end
 
   def redirect_if_authenticated
     return unless authenticated?

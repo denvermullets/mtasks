@@ -1,0 +1,11 @@
+<div id="notification_list">
+  <% if notifications.any? %>
+    <% notifications.each do |notification| %>
+      <%= render "notifications/notification", notification: notification %>
+    <% end %>
+  <% else %>
+    <div class="px-4 py-8 text-center text-sm text-gray-500">
+      No notifications yet
+    </div>
+  <% end %>
+</div>

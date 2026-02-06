@@ -12,3 +12,8 @@
   labels: @labels,
   milestones: @milestones
 } %>
+
+<%# Append activity entry if on the issue detail page %>
+<% if @latest_version&.event == 'update' %>
+  <%= turbo_stream.append "activity_list", partial: "issues/activity_entry", locals: { version: @latest_version } %>
+<% end %>

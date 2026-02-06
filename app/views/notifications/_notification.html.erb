@@ -1,0 +1,24 @@
+<%= tag.div id: dom_id(notification), class: "flex items-start gap-3 px-4 py-3 hover:bg-foreground transition-colors #{notification.read? ? 'opacity-60' : ''}" do %>
+  <div class="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-xs font-medium shrink-0 mt-0.5">
+    <%= notification.actor.name.first.upcase %>
+  </div>
+  <div class="flex-1 min-w-0">
+    <%= link_to team_issue_path(notification.issue.team, notification.issue),
+        class: "block text-sm text-gray-300 hover:text-gray-100 leading-snug",
+        data: { action: "click->notification-drawer#close" } do %>
+      <%= notification.message %>
+    <% end %>
+    <span class="text-xs text-gray-500"><%= time_ago_in_words(notification.created_at) %> ago</span>
+  </div>
+  <div class="flex items-center gap-2 shrink-0 mt-1">
+    <% unless notification.read? %>
+      <%= button_to mark_as_read_notification_path(notification),
+          method: :patch,
+          form: { data: { turbo_stream: true } },
+          class: "w-3 h-3 rounded-full bg-blue-500 hover:bg-blue-400 cursor-pointer",
+          title: "Mark as read" do %>
+        <span class="sr-only">Mark as read</span>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>
