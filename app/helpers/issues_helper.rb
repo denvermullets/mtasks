@@ -83,8 +83,8 @@ module IssuesHelper
   end
 
   def build_swimlanes(subgroup_names, grouped_issues)
-    subgroup_names.each_with_object({}) do |subgroup_name, swimlanes|
-      swimlanes[subgroup_name] = build_swimlane_columns(subgroup_name, grouped_issues)
+    subgroup_names.to_h do |subgroup_name|
+      [subgroup_name, build_swimlane_columns(subgroup_name, grouped_issues)]
     end
   end
 
