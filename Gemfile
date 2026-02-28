@@ -5,6 +5,7 @@ gem "rails", "~> 8.1.2"
 
 gem "bcrypt", "~> 3.1.21"
 gem "bootsnap", require: false
+gem "csv"
 gem "dotenv"
 gem "image_processing", "~> 1.14.0"
 gem "importmap-rails"
