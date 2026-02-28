@@ -13,7 +13,7 @@ module TeamScoped
   end
 
   def user_teams
-    @user_teams ||= current_user.teams.includes(:workspace)
+    @user_teams ||= current_user.teams.not_archived.includes(:workspace)
   end
 
   def set_current_team

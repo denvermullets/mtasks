@@ -1,8 +1,9 @@
 class TeamsController < ApplicationController
   include TeamScoped
 
-  before_action :set_team, only: %i[edit update]
+  before_action :set_team, only: %i[edit update confirm_archive archive]
   before_action :authorize_team_membership!, only: %i[edit update]
+  before_action :require_admin!, only: %i[confirm_archive archive]
 
   def new
     @workspace = Workspace.new
@@ -32,6 +33,16 @@ class TeamsController < ApplicationController
       @lanes = @team.lanes.order(:position)
       render :edit, status: :unprocessable_entity
     end
+  end
+
+  def confirm_archive
+    @issue_count = @team.issues.not_archived.count
+  end
+
+  def archive
+    @team.archive!
+    session.delete(:current_team_id)
+    redirect_to root_path, notice: "Team \"#{@team.name}\" has been archived"
   end
 
   private

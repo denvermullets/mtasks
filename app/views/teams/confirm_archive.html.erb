@@ -1,0 +1,45 @@
+<div class="flex-1 flex flex-col min-h-0">
+  <!-- Top Bar -->
+  <div class="h-14 bg-menu border-b border-stroke flex items-center justify-between px-4 shrink-0">
+    <div class="flex items-center gap-4">
+      <%= render "shared/mobile_menu_button" %>
+      <h1 class="text-base font-semibold">Archive Team</h1>
+      <span class="text-sm text-gray-500 hidden sm:inline"><%= @team.name %></span>
+    </div>
+    <%= link_to edit_team_path(@team), class: "text-sm text-gray-400 hover:text-gray-300" do %>
+      <span class="hidden sm:inline">Back to Settings</span>
+      <span class="sm:hidden">Back</span>
+    <% end %>
+  </div>
+  <!-- Content -->
+  <div class="flex-1 overflow-y-auto bg-background p-8">
+    <div class="max-w-xl mx-auto w-full">
+      <div class="bg-foreground border border-stroke rounded-lg p-6">
+        <h2 class="text-lg font-semibold text-red-400 mb-4">Archive "<%= @team.name %>"?</h2>
+
+        <div class="space-y-3 text-sm text-gray-300 mb-6">
+          <p>This will archive the team and all of its active issues.</p>
+          <div class="bg-background border border-stroke rounded p-3">
+            <div class="flex justify-between">
+              <span class="text-gray-400">Team</span>
+              <span><%= @team.name %> (<%= @team.identifier %>)</span>
+            </div>
+            <div class="flex justify-between mt-2">
+              <span class="text-gray-400">Active issues</span>
+              <span><%= @issue_count %></span>
+            </div>
+          </div>
+          <p class="text-amber-400 text-xs">Archived teams will no longer appear in the sidebar. This action cannot be undone from the UI.</p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <%= button_to "Archive Team", archive_team_path(@team),
+              method: :delete,
+              class: "px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium cursor-pointer rounded-md" %>
+          <%= link_to "Cancel", edit_team_path(@team),
+              class: "px-4 py-2 border border-stroke text-gray-300 hover:bg-hover-highlight rounded-md" %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
