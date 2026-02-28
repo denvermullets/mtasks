@@ -42,9 +42,7 @@
           <% @members.each do |member| %>
             <div class="flex items-center justify-between p-3 bg-background rounded border border-stroke">
               <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded bg-blue-600 flex items-center justify-center text-sm font-medium">
-                  <%= member.name.first.upcase %>
-                </div>
+                <%= user_avatar(member, size: "xl", shape: "square") %>
                 <div>
                   <p class="text-sm font-medium text-gray-200"><%= member.name %></p>
                   <p class="text-xs text-gray-400"><%= member.email %></p>

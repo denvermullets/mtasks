@@ -67,9 +67,7 @@
           data-dropdown="assignee"
           class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors">
           <% if issue.assignee %>
-            <div class="w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center text-xs font-medium">
-              <%= issue.assignee.name.first.upcase %>
-            </div>
+            <%= user_avatar(issue.assignee, size: "sm") %>
             <span data-issue-sidebar-target="assigneeLabel"><%= issue.assignee.name %></span>
           <% else %>
             <div class="w-5 h-5 rounded-full border border-stroke"></div>

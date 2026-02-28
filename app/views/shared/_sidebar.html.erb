@@ -2,10 +2,8 @@
   <!-- User -->
   <div class="p-4 border-b border-stroke">
     <div class="flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <div class="w-6 h-6 rounded bg-blue-600 flex items-center justify-center text-xs font-medium">
-          <%= current_user.name.first.upcase %>
-        </div>
+      <div class="flex items-center gap-2 relative">
+        <%= render "shared/avatar_color_picker" %>
         <span class="text-sm font-medium"><%= current_user.name %></span>
       </div>
       <button type="button"

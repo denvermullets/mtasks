@@ -100,9 +100,7 @@
           <div class="space-y-2">
             <% @team.users.order(:name).limit(5).each do |member| %>
               <div class="flex items-center gap-3 p-2">
-                <div class="w-7 h-7 rounded bg-blue-600 flex items-center justify-center text-xs font-medium">
-                  <%= member.name.first.upcase %>
-                </div>
+                <%= user_avatar(member, size: "lg", shape: "square") %>
                 <div>
                   <p class="text-sm text-gray-200"><%= member.name %></p>
                   <p class="text-xs text-gray-400"><%= member.email %></p>

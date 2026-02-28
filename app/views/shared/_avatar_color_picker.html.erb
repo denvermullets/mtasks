@@ -1,0 +1,23 @@
+<div id="avatar_color_picker" data-controller="avatar-color-picker">
+  <button type="button" data-action="click->avatar-color-picker#toggle" class="cursor-pointer">
+    <div id="sidebar_avatar">
+      <%= user_avatar(current_user, shape: "square") %>
+    </div>
+  </button>
+  <div data-avatar-color-picker-target="popover" class="hidden absolute z-50 mt-2 p-3 bg-foreground border border-stroke rounded-lg shadow-lg">
+    <div class="text-xs text-gray-400 mb-2">Pick avatar color</div>
+    <div class="grid grid-cols-5 gap-2">
+      <% User::AVATAR_COLORS.each do |color| %>
+        <%= button_to profile_path, method: :patch, params: { avatar_color: color },
+            data: { turbo_stream: true },
+            class: "w-7 h-7 rounded-full #{color} flex items-center justify-center cursor-pointer border-2 #{current_user.avatar_color == color ? 'border-white' : 'border-transparent hover:border-gray-500'}" do %>
+          <% if current_user.avatar_color == color %>
+            <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+            </svg>
+          <% end %>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+</div>

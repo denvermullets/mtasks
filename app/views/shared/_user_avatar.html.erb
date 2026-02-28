@@ -1,0 +1,20 @@
+<%
+  size ||= "md"
+  shape ||= "circle"
+  extra_classes ||= ""
+
+  size_classes = case size
+                 when "sm" then "w-5 h-5 text-xs"
+                 when "md" then "w-6 h-6 text-xs"
+                 when "lg" then "w-7 h-7 text-xs"
+                 when "xl" then "w-8 h-8 text-sm"
+                 else "w-6 h-6 text-xs"
+                 end
+
+  shape_class = shape == "square" ? "rounded" : "rounded-full"
+  bg_color = user&.avatar_color || "bg-blue-600"
+  initial = user&.name&.first&.upcase || "?"
+%>
+<div class="<%= size_classes %> <%= shape_class %> <%= bg_color %> flex items-center justify-center font-medium shrink-0 <%= extra_classes %>">
+  <%= initial %>
+</div>
