@@ -1,6 +1,5 @@
 require 'test_helper'
 
-# rubocop:disable Metrics/ClassLength
 class IssueImporterTest < ActiveSupport::TestCase
   setup do
     @user = User.create!(name: 'Test User', email: 'test@example.com', password: 'password')
@@ -154,4 +153,3 @@ class IssueImporterTest < ActiveSupport::TestCase
     assert_equal 3, team.issues.count
   end
 end
-# rubocop:enable Metrics/ClassLength
