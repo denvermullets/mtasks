@@ -12,6 +12,10 @@ class Team < ApplicationRecord
   has_many :github_repository_subscriptions, dependent: :destroy
   has_many :github_installations, through: :workspace
 
+  # Scopes
+  scope :archived, -> { where.not(archived_at: nil) }
+  scope :not_archived, -> { where(archived_at: nil) }
+
   # Validations
   validates :name, presence: true
   validates :identifier, presence: true, uniqueness: true, length: { in: 3..4 },
@@ -25,6 +29,13 @@ class Team < ApplicationRecord
   def next_issue_number
     increment!(:issue_counter)
     issue_counter
+  end
+
+  def archive!
+    transaction do
+      update!(archived_at: Time.current)
+      issues.not_archived.update_all(archived_at: Time.current)
+    end
   end
 
   private

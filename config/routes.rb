@@ -10,6 +10,10 @@ Rails.application.routes.draw do
   end
 
   resources :teams, only: %i[new create show edit update] do
+    member do
+      get :confirm_archive
+      delete :archive
+    end
     resource :display_preference, only: %i[update]
     # GitHub repositories management
     resources :github_repositories, only: %i[index create destroy], controller: 'team_github_repositories'
