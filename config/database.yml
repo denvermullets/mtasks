@@ -24,6 +24,7 @@ development:
     <<: *default
     database: mtasks_development
     migrations_paths: db/cable_migrate
+    schema_dump: false
 
 test:
   <<: *default
@@ -44,3 +45,4 @@ production:
     <<: *primary_production
     url: <%= ENV['DATABASE_URL'] %>
     migrations_paths: db/cable_migrate
+    schema_dump: false
