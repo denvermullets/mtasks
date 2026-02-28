@@ -2,9 +2,7 @@
              html: { class: "bg-foreground rounded-lg p-4 mb-4" },
              data: { turbo_frame: "_top", controller: "submit-on-cmd-enter" } do |form| %>
   <div class="flex items-start gap-3">
-    <div class="w-6 h-6 rounded-full bg-orange-600 flex items-center justify-center text-xs font-medium shrink-0">
-      <%= Current.user.name.first.upcase %>
-    </div>
+    <%= user_avatar(Current.user) %>
     <div class="flex-1 min-w-0">
       <%= form.text_area :body,
           placeholder: "Leave a comment...",

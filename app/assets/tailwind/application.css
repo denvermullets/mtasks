@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Avatar color safelist — keep these classes so Tailwind won't purge them:
+   bg-blue-600 bg-red-600 bg-green-600 bg-orange-500 bg-purple-600
+   bg-pink-600 bg-teal-600 bg-indigo-600 bg-yellow-500 bg-cyan-600
+*/
+
 @theme {
   /* darkest */
   --color-menu: #000000;

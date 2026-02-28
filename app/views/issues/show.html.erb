@@ -61,9 +61,7 @@
           </div>
           <!-- Created entry -->
           <div class="flex gap-3 mb-6">
-            <div class="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-xs font-medium shrink-0">
-              <%= @issue.creator&.name&.first&.upcase || 'U' %>
-            </div>
+            <%= user_avatar(@issue.creator) %>
             <div class="flex-1">
               <div class="text-sm text-gray-400">
                 <span class="text-gray-300"><%= @issue.creator&.name || 'Unknown' %></span>

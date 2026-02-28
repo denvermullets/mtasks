@@ -4,6 +4,19 @@ class User < ApplicationRecord
 
   enum :role, { member: 0, admin: 1 }
 
+  AVATAR_COLORS = %w[
+    bg-blue-600
+    bg-red-600
+    bg-green-600
+    bg-orange-500
+    bg-purple-600
+    bg-pink-600
+    bg-teal-600
+    bg-indigo-600
+    bg-yellow-500
+    bg-cyan-600
+  ].freeze
+
   # Associations
   has_many :owned_workspaces, class_name: 'Workspace', foreign_key: :owner_id, dependent: :destroy
   has_many :team_memberships, dependent: :destroy
@@ -17,6 +30,7 @@ class User < ApplicationRecord
   # Validations
   validates :email, presence: true, uniqueness: true, format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :name, presence: true
+  validates :avatar_color, inclusion: { in: AVATAR_COLORS }
 
   normalizes :email, with: ->(e) { e.strip.downcase }
 end
