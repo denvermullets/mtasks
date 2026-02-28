@@ -23,7 +23,7 @@ class IssueDisplayService
   def filter_issues
     @empty_groups = [] # Reset empty groups tracking
     result = issues
-    result = filter_by_completion(result) if options[:completed_filter].present?
+    result = filter_by_completion(result)
     result = filter_sub_issues(result) unless options[:show_sub_issues]
     result = filter_by_milestone(result) if options[:milestone_id].present?
     result = filter_by_assignee(result) if options[:assignee_id].present?
