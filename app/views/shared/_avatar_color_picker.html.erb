@@ -4,9 +4,9 @@
       <%= user_avatar(current_user, shape: "square") %>
     </div>
   </button>
-  <div data-avatar-color-picker-target="popover" class="hidden absolute z-50 mt-2 p-3 bg-foreground border border-stroke rounded-lg shadow-lg">
+  <div data-avatar-color-picker-target="popover" class="hidden absolute z-50 mt-2 p-3 bg-foreground border border-stroke rounded-lg shadow-lg min-w-[200px]">
     <div class="text-xs text-gray-400 mb-2">Pick avatar color</div>
-    <div class="grid grid-cols-5 gap-2">
+    <div class="grid grid-cols-5 gap-1.5">
       <% User::AVATAR_COLORS.each do |color| %>
         <%= button_to profile_path, method: :patch, params: { avatar_color: color },
             data: { turbo_stream: true },
@@ -17,6 +17,14 @@
             </svg>
           <% end %>
         <% end %>
+      <% end %>
+    </div>
+    <div class="border-t border-stroke mt-3 pt-2">
+      <%= link_to api_tokens_path, class: "block px-1 py-1.5 text-xs text-gray-400 hover:text-gray-300 rounded hover:bg-hover-highlight" do %>
+        API Tokens
+      <% end %>
+      <%= button_to session_path, method: :delete, class: "block w-full text-left px-1 py-1.5 text-xs text-gray-400 hover:text-gray-300 rounded hover:bg-hover-highlight cursor-pointer" do %>
+        Sign out
       <% end %>
     </div>
   </div>

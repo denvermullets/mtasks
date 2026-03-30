@@ -36,8 +36,8 @@ class IssuesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test 'does not change completed_at when lane is not changing' do
-    original_time = 2.days.ago
-    @issue.update!(lane: @done_lane, completed_at: original_time)
+    @issue.update!(lane: @done_lane)
+    original_time = @issue.reload.completed_at
 
     patch team_issue_path(@team, @issue), params: { issue: { title: 'Updated title' } }
 

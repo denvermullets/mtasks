@@ -44,6 +44,22 @@ Rails.application.routes.draw do
   # GitHub App Installation Callbacks
   get '/github/callback', to: 'workspace_github_installations#callback'
 
+  # API
+  namespace :api do
+    namespace :v1 do
+      resources :teams, only: [:index] do
+        resources :issues, only: %i[index show create update]
+        resources :lanes, only: [:index]
+        resources :labels, only: [:index]
+        resources :projects, only: [:index]
+        resources :members, only: [:index]
+      end
+    end
+  end
+
+  # API Token management (web UI)
+  resources :api_tokens, only: %i[index create destroy]
+
   # GitHub Webhooks
   namespace :webhooks do
     resource :github, only: [:create], controller: 'github'

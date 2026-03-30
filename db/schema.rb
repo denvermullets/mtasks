@@ -10,9 +10,21 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_28_180226) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_30_204521) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "api_tokens", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "last_used_at"
+    t.string "name"
+    t.datetime "revoked_at"
+    t.string "token_digest", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["token_digest"], name: "index_api_tokens_on_token_digest", unique: true
+    t.index ["user_id"], name: "index_api_tokens_on_user_id"
+  end
 
   create_table "comments", force: :cascade do |t|
     t.text "body"
@@ -198,9 +210,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_28_180226) do
   create_table "sessions", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "ip_address"
+    t.string "refresh_token"
     t.datetime "updated_at", null: false
     t.string "user_agent"
     t.bigint "user_id", null: false
+    t.index ["refresh_token"], name: "index_sessions_on_refresh_token", unique: true
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
@@ -290,6 +304,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_28_180226) do
     t.index ["owner_id"], name: "index_workspaces_on_owner_id"
   end
 
+  add_foreign_key "api_tokens", "users"
   add_foreign_key "comments", "comments", column: "parent_id"
   add_foreign_key "comments", "issues"
   add_foreign_key "comments", "users"

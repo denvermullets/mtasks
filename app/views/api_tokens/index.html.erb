@@ -1,0 +1,61 @@
+<div class="min-h-screen flex justify-center px-4 pt-[20vh]">
+  <div class="mx-auto md:w-2/3 w-full max-w-2xl">
+    <% if notice = flash[:notice] %>
+      <p class="py-2 px-3 bg-green-900/20 border border-green-800 mb-5 text-green-400 font-medium rounded-lg inline-block"><%= notice %></p>
+    <% end %>
+
+    <h1 class="font-bold text-4xl mb-4 text-gray-100">API Tokens</h1>
+    <p class="text-sm text-gray-400 mb-6">Generate an API token to use with the mtasks MCP server or other integrations.</p>
+
+    <% if @new_token_value.present? %>
+      <div class="bg-yellow-900/20 border border-yellow-700 rounded-lg p-4 mb-6">
+        <h3 class="font-semibold text-yellow-400 mb-2">Your new API token</h3>
+        <p class="text-sm text-yellow-300/80 mb-3">Copy this token now. It won't be shown again.</p>
+        <div class="flex items-center gap-2">
+          <code id="api-token-value" class="text-sm bg-background text-gray-300 p-2 block rounded flex-1 overflow-x-auto select-all"><%= @new_token_value %></code>
+          <button type="button"
+                  onclick="navigator.clipboard.writeText(document.getElementById('api-token-value').textContent)"
+                  class="rounded-md px-3 py-2 bg-foreground hover:bg-highlight text-gray-300 text-sm font-medium shrink-0">
+            Copy
+          </button>
+        </div>
+      </div>
+    <% end %>
+
+    <div class="bg-foreground border border-stroke rounded-lg p-4">
+      <% if @api_token %>
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="font-semibold text-gray-200"><%= @api_token.name %></h3>
+            <p class="text-sm text-gray-400 mt-1">
+              Created <%= time_ago_in_words(@api_token.created_at) %> ago
+              <% if @api_token.last_used_at %>
+                &middot; Last used <%= time_ago_in_words(@api_token.last_used_at) %> ago
+              <% else %>
+                &middot; Never used
+              <% end %>
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <%= button_to "Regenerate", api_tokens_path, method: :post,
+                  class: "rounded-md px-3 py-2 border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 text-sm font-medium cursor-pointer",
+                  data: { turbo_confirm: "This will revoke your current token and generate a new one. Continue?" } %>
+            <%= button_to "Revoke", api_token_path(@api_token), method: :delete,
+                  class: "rounded-md px-3 py-2 bg-red-900/30 border border-red-800 text-red-400 hover:bg-red-900/50 text-sm font-medium cursor-pointer",
+                  data: { turbo_confirm: "Are you sure? Any integrations using this token will stop working." } %>
+          </div>
+        </div>
+      <% else %>
+        <div class="text-center py-4">
+          <p class="text-gray-400 mb-4">No active API token.</p>
+          <%= button_to "Generate Token", api_tokens_path, method: :post,
+                class: "rounded-md px-3.5 py-2.5 border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 font-medium cursor-pointer" %>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="mt-6">
+      <%= link_to "Back", root_path, class: "text-sm text-gray-400 hover:text-gray-300" %>
+    </div>
+  </div>
+</div>
