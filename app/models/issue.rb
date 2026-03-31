@@ -26,6 +26,7 @@ class Issue < ApplicationRecord
 
   # Callbacks
   before_validation :assign_team_number, on: :create
+  before_update :set_lane_timestamps, if: :lane_id_changed?
 
   # Scopes
   scope :archived, -> { where.not(archived_at: nil) }
@@ -60,5 +61,14 @@ class Issue < ApplicationRecord
     return if team_number.present?
 
     self.team_number = team.next_issue_number
+  end
+
+  def set_lane_timestamps
+    new_lane = Lane.find_by(id: lane_id)
+    if new_lane&.name&.downcase == 'done'
+      self.completed_at = Time.current
+    elsif completed_at.present?
+      self.completed_at = nil
+    end
   end
 end

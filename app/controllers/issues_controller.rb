@@ -52,7 +52,6 @@ class IssuesController < ApplicationController
 
   def update
     load_form_collections
-    set_lane_timestamps
     if @issue.update(issue_params)
       @latest_version = @issue.versions.last
       notify_issue_update
@@ -112,18 +111,6 @@ class IssuesController < ApplicationController
 
     action = NotificationService.action_for_version(version)
     NotificationService.call(issue: @issue, actor: Current.user, action: action, version: version)
-  end
-
-  def set_lane_timestamps
-    new_lane_id = issue_params[:lane_id]
-    return unless new_lane_id.present? && new_lane_id.to_s != @issue.lane_id.to_s
-
-    new_lane = Lane.find_by(id: new_lane_id)
-    if new_lane&.name&.downcase == 'done'
-      @issue.completed_at = Time.current
-    elsif @issue.completed_at.present?
-      @issue.completed_at = nil
-    end
   end
 
   def issue_params
