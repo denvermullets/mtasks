@@ -1,20 +1,17 @@
-<div class="flex h-screen bg-background">
-  <!-- Main Content Area -->
-  <div class="flex-1 flex flex-col overflow-hidden">
-    <!-- Top Bar -->
-    <div class="h-14 bg-menu border-b border-stroke flex items-center justify-between px-4 shrink-0">
-      <div class="flex items-center gap-4">
-        <%= link_to team_project_path(@team, @project),
-            class: "text-sm text-gray-500 hover:text-gray-400 flex items-center gap-2" do %>
-          <span>&#8592;</span>
-          <span><%= @team.name %></span>
-        <% end %>
-        <span class="text-gray-600">&#8250;</span>
-        <span class="text-sm text-gray-400">Edit project</span>
-      </div>
-    </div>
+<!-- Top Bar -->
+<div class="h-14 bg-menu border-b border-stroke flex items-center justify-between px-4 shrink-0">
+  <div class="flex items-center gap-4">
+    <%= link_to team_project_path(@team, @project),
+        class: "text-sm text-gray-500 hover:text-gray-400 flex items-center gap-2" do %>
+      <span>&#8592;</span>
+      <span><%= @team.name %></span>
+    <% end %>
+    <span class="text-gray-600">&#8250;</span>
+    <span class="text-sm text-gray-400">Edit project</span>
+  </div>
+</div>
 
-    <%= form_with model: [@team, @project], data: { controller: "project-form" }, class: "flex-1 flex overflow-hidden" do |form| %>
+<%= form_with model: [@team, @project], data: { controller: "project-form", turbo: false }, class: "flex-1 flex overflow-hidden" do |form| %>
       <!-- Left Content -->
       <div class="flex-1 overflow-y-auto p-8">
         <div class="max-w-3xl">
@@ -293,5 +290,3 @@
         </div>
       </div>
     <% end %>
-  </div>
-</div>
