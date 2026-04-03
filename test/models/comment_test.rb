@@ -11,9 +11,9 @@ class CommentTest < ActiveSupport::TestCase
     assert_respond_to comment, :user
   end
 
-  test 'should validate presence of body' do
+  test 'should require body or files' do
     comment = Comment.new
     assert_not comment.valid?
-    assert_includes comment.errors[:body], "can't be blank"
+    assert_includes comment.errors[:base], 'Comment must have text or an attachment'
   end
 end
