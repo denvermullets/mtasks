@@ -1,7 +1,7 @@
 <aside id="sidebar" class="w-56 bg-menu border-r border-stroke flex-col hidden sm:flex">
   <!-- User -->
-  <div class="p-4 border-b border-stroke">
-    <div class="flex items-center justify-between">
+  <div class="h-14 px-4 border-b border-stroke flex items-center">
+    <div class="flex items-center justify-between w-full">
       <div class="flex items-center gap-2 relative">
         <%= render "shared/avatar_color_picker" %>
         <span class="text-sm font-medium"><%= current_user.name %></span>
@@ -53,61 +53,95 @@
       <!-- Teams list (collapsible) -->
       <div class="space-y-1" data-teams-section-target="list">
         <% user_teams.each do |team| %>
-          <div class="group flex items-center justify-between px-2 py-1.5 rounded cursor-pointer hover:bg-foreground <%= team.id == current_team&.id ? 'bg-foreground' : '' %>"
-               data-controller="team-menu"
-               data-action="click->team-menu#navigate"
-               data-team-menu-url-value="<%= team_issues_path(team) %>">
-            <div class="flex items-center gap-2 flex-1 text-sm <%= team.id == current_team&.id ? 'text-gray-100' : 'text-gray-300' %>">
-              <span class="font-mono text-xs text-gray-500"><%= team.identifier %></span>
-              <span><%= team.name %></span>
-            </div>
-
-            <!-- Ellipsis menu button -->
-            <div class="relative">
-              <button type="button"
-                      data-action="click->team-menu#toggleDropdown:stop"
-                      class="p-1 cursor-pointer text-gray-500 hover:text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity">
-                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+          <% is_current = team.id == current_team&.id %>
+          <div data-controller="team-nav team-menu"
+               data-current-team="<%= is_current %>">
+            <!-- Team row -->
+            <div class="group flex items-center justify-between px-2 py-1.5 rounded cursor-pointer hover:bg-foreground <%= 'bg-foreground' if is_current %>">
+              <div class="flex items-center gap-1 flex-1 text-sm <%= is_current ? 'text-gray-100' : 'text-gray-300' %>"
+                   data-action="click->team-nav#toggle">
+                <svg data-team-nav-target="chevron"
+                     class="w-3 h-3 text-gray-500 transition-transform shrink-0"
+                     fill="currentColor"
+                     viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
                 </svg>
-              </button>
+                <span class="font-mono text-xs text-gray-500"><%= team.identifier %></span>
+                <span class="truncate"><%= team.name %></span>
+              </div>
 
-              <!-- Dropdown menu -->
-              <div data-team-menu-target="dropdown"
-                   class="hidden absolute right-0 mt-1 w-48 bg-foreground border border-stroke rounded-md shadow-lg z-50">
-                <%= link_to edit_team_path(team),
-                    class: "block px-4 py-2 text-sm text-gray-300 hover:bg-hover-highlight rounded-md" do %>
-                  <div class="flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                    </svg>
-                    Settings
-                  </div>
-                <% end %>
-                <% if workspace_owner?(team) %>
-                  <%= link_to team_team_invitations_path(team),
+              <!-- Ellipsis menu button -->
+              <div class="relative">
+                <button type="button"
+                        data-action="click->team-menu#toggleDropdown:stop"
+                        class="p-1 cursor-pointer text-gray-500 hover:text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+                  </svg>
+                </button>
+
+                <!-- Dropdown menu -->
+                <div data-team-menu-target="dropdown"
+                     class="hidden absolute right-0 mt-1 w-48 bg-foreground border border-stroke rounded-md shadow-lg z-50">
+                  <%= link_to edit_team_path(team),
                       class: "block px-4 py-2 text-sm text-gray-300 hover:bg-hover-highlight rounded-md" do %>
                     <div class="flex items-center gap-2">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                       </svg>
-                      Members
+                      Settings
                     </div>
                   <% end %>
-                <% end %>
-                <% if current_user.admin? %>
-                  <%= link_to confirm_archive_team_path(team),
-                      class: "block px-4 py-2 text-sm text-red-400 hover:bg-hover-highlight rounded-md" do %>
-                    <div class="flex items-center gap-2">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
-                      </svg>
-                      Archive Team
-                    </div>
+                  <% if workspace_owner?(team) %>
+                    <%= link_to team_team_invitations_path(team),
+                        class: "block px-4 py-2 text-sm text-gray-300 hover:bg-hover-highlight rounded-md" do %>
+                      <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        Members
+                      </div>
+                    <% end %>
                   <% end %>
-                <% end %>
+                  <% if current_user.admin? %>
+                    <%= link_to confirm_archive_team_path(team),
+                        class: "block px-4 py-2 text-sm text-red-400 hover:bg-hover-highlight rounded-md" do %>
+                      <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+                        </svg>
+                        Archive Team
+                      </div>
+                    <% end %>
+                  <% end %>
+                </div>
               </div>
+            </div>
+
+            <!-- Sub-navigation -->
+            <div data-team-nav-target="subNav" class="hidden ml-4 mt-0.5 space-y-0.5">
+              <%= link_to team_issues_path(team),
+                  class: "flex items-center gap-2 px-3 py-1 text-sm rounded hover:bg-foreground transition-colors #{request.path == team_issues_path(team) ? 'text-gray-100 bg-foreground' : 'text-gray-400'}" do %>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                </svg>
+                <span>Issues</span>
+              <% end %>
+              <%= link_to team_projects_path(team),
+                  class: "flex items-center gap-2 px-3 py-1 text-sm rounded hover:bg-foreground transition-colors #{request.path.start_with?(team_projects_path(team)) ? 'text-gray-100 bg-foreground' : 'text-gray-400'}" do %>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                </svg>
+                <span>Projects</span>
+              <% end %>
+              <%= link_to team_milestones_path(team),
+                  class: "flex items-center gap-2 px-3 py-1 text-sm rounded hover:bg-foreground transition-colors #{request.path.start_with?(team_milestones_path(team)) ? 'text-gray-100 bg-foreground' : 'text-gray-400'}" do %>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span>Milestones</span>
+              <% end %>
             </div>
           </div>
         <% end %>

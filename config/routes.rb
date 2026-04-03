@@ -20,7 +20,10 @@ Rails.application.routes.draw do
     resources :labels, only: %i[index create update destroy]
     resources :milestones, only: %i[index create update destroy]
     resources :lanes, only: %i[create update destroy]
-    resources :projects
+    resources :projects do
+      delete :purge_file, on: :member
+      resources :project_labels, only: %i[create destroy]
+    end
     resources :team_invitations, only: %i[index create destroy] do
       delete :remove_member, on: :collection
     end

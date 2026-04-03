@@ -22,6 +22,8 @@ export default class extends Controller {
     teamId: Number,
     context: String,
     currentLabels: Array,
+    resourceType: { type: String, default: "issue" },
+    resourceId: Number,
   };
 
   connect() {
@@ -250,53 +252,51 @@ export default class extends Controller {
     }
   }
 
+  get labelBasePath() {
+    const id = this.hasResourceIdValue ? this.resourceIdValue : this.issueIdValue;
+    if (this.resourceTypeValue === "project") {
+      return `/teams/${this.teamIdValue}/projects/${id}/project_labels`;
+    }
+    return `/teams/${this.teamIdValue}/issues/${id}/issue_labels`;
+  }
+
   async addLabelToIssue(labelId) {
-    const response = await fetch(
-      `/teams/${this.teamIdValue}/issues/${this.issueIdValue}/issue_labels`,
-      {
-        method: "POST",
-        headers: {
-          Accept: "text/vnd.turbo-stream.html",
-          "Content-Type": "application/json",
-          "X-CSRF-Token": this.csrfToken,
-        },
-        body: JSON.stringify({ label_id: labelId }),
-      }
-    );
+    const response = await fetch(this.labelBasePath, {
+      method: "POST",
+      headers: {
+        Accept: "text/vnd.turbo-stream.html",
+        "Content-Type": "application/json",
+        "X-CSRF-Token": this.csrfToken,
+      },
+      body: JSON.stringify({ label_id: labelId }),
+    });
 
     if (!response.ok) {
       throw new Error("Failed to add label");
     }
 
-    // Turbo will automatically process the turbo-stream response
     const html = await response.text();
     Turbo.renderStreamMessage(html);
 
-    // Update current labels
     this.currentLabelsValue = [...this.currentLabelsValue, labelId];
   }
 
   async removeLabelFromIssue(labelId) {
-    const response = await fetch(
-      `/teams/${this.teamIdValue}/issues/${this.issueIdValue}/issue_labels/${labelId}`,
-      {
-        method: "DELETE",
-        headers: {
-          Accept: "text/vnd.turbo-stream.html",
-          "X-CSRF-Token": this.csrfToken,
-        },
-      }
-    );
+    const response = await fetch(`${this.labelBasePath}/${labelId}`, {
+      method: "DELETE",
+      headers: {
+        Accept: "text/vnd.turbo-stream.html",
+        "X-CSRF-Token": this.csrfToken,
+      },
+    });
 
     if (!response.ok) {
       throw new Error("Failed to remove label");
     }
 
-    // Turbo will automatically process the turbo-stream response
     const html = await response.text();
     Turbo.renderStreamMessage(html);
 
-    // Update current labels
     this.currentLabelsValue = this.currentLabelsValue.filter((id) => id !== labelId);
   }
 
@@ -409,7 +409,8 @@ export default class extends Controller {
       this.pickerTarget.style.left = `${left}px`;
     } else {
       // For sidebar context, find the labels dropdown button
-      referenceElement = this.element.closest('[data-issue-sidebar-target="labelsDropdown"]');
+      referenceElement = this.element.closest('[data-issue-sidebar-target="labelsDropdown"]') ||
+                         this.element.closest('[data-project-sidebar-target="labelsDropdown"]');
       if (!referenceElement) return;
 
       // Get the button that triggers the dropdown

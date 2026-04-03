@@ -6,7 +6,7 @@
     </div>
     <%= link_to "New Project",
         new_team_project_path(current_team),
-        class: "px-4 py-2 bg-accent text-white rounded-md hover:bg-accent-hover transition-colors font-medium" %>
+        class: "px-4 py-2 border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 font-medium cursor-pointer rounded-md" %>
   </div>
 
   <% if @projects.any? %>
@@ -38,7 +38,7 @@
       <p class="text-gray-400 mb-4">No projects yet</p>
       <%= link_to "Create your first project",
           new_team_project_path(current_team),
-          class: "inline-block px-4 py-2 bg-accent text-white rounded-md hover:bg-accent-hover transition-colors font-medium" %>
+          class: "inline-block px-4 py-2 border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 font-medium cursor-pointer rounded-md" %>
     </div>
   <% end %>
 </div>

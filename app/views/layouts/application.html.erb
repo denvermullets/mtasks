@@ -27,7 +27,7 @@
         <!-- Drawer panel -->
         <div id="mobile-drawer-panel" class="absolute inset-y-0 left-0 w-64 bg-menu border-r border-stroke flex flex-col transform -translate-x-full transition-transform duration-200 ease-in-out">
           <!-- Header with close button -->
-          <div class="p-4 border-b border-stroke flex items-center justify-between">
+          <div class="h-14 px-4 border-b border-stroke flex items-center justify-between shrink-0">
             <div class="flex items-center gap-2">
               <div id="mobile_drawer_avatar">
                 <%= user_avatar(current_user, shape: "square") %>
@@ -64,21 +64,70 @@
                 </div>
               </div>
             <% end %>
-            <div class="p-2 mt-4">
+            <div class="p-2 mt-4" data-controller="teams-section">
               <div class="flex items-center justify-between px-2 mb-2">
-                <span class="text-xs font-medium text-gray-500 uppercase">Your Teams</span>
+                <button data-action="click->teams-section#toggle"
+                        class="flex items-center gap-1 text-xs font-medium text-gray-500 uppercase flex-1 text-left hover:text-gray-400">
+                  <svg data-teams-section-target="chevron"
+                       class="w-3 h-3 transition-transform"
+                       fill="currentColor"
+                       viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                  </svg>
+                  <span>Your Teams</span>
+                </button>
                 <%= link_to new_team_path, class: "p-1 text-gray-500 hover:text-gray-300", data: { action: "click->sidebar#close" } do %>
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                   </svg>
                 <% end %>
               </div>
-              <div class="space-y-1">
+              <div class="space-y-1" data-teams-section-target="list">
                 <% user_teams.each do |team| %>
-                  <%= link_to team_issues_path(team), class: "flex items-center gap-2 px-2 py-1.5 rounded hover:bg-foreground text-sm #{team.id == current_team&.id ? 'bg-foreground text-gray-100' : 'text-gray-300'}", data: { action: "click->sidebar#close" } do %>
-                    <span class="font-mono text-xs text-gray-500"><%= team.identifier %></span>
-                    <span><%= team.name %></span>
-                  <% end %>
+                  <% is_current = team.id == current_team&.id %>
+                  <div data-controller="team-nav"
+                       data-current-team="<%= is_current %>">
+                    <!-- Team row -->
+                    <div class="flex items-center gap-1 px-2 py-1.5 rounded cursor-pointer hover:bg-foreground text-sm <%= 'bg-foreground text-gray-100' if is_current %> <%= 'text-gray-300' unless is_current %>"
+                         data-action="click->team-nav#toggle">
+                      <svg data-team-nav-target="chevron"
+                           class="w-3 h-3 text-gray-500 transition-transform shrink-0"
+                           fill="currentColor"
+                           viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                      </svg>
+                      <span class="font-mono text-xs text-gray-500"><%= team.identifier %></span>
+                      <span class="truncate"><%= team.name %></span>
+                    </div>
+
+                    <!-- Sub-navigation -->
+                    <div data-team-nav-target="subNav" class="hidden ml-4 mt-0.5 space-y-0.5">
+                      <%= link_to team_issues_path(team),
+                          class: "flex items-center gap-2 px-3 py-1 text-sm rounded hover:bg-foreground transition-colors #{request.path == team_issues_path(team) ? 'text-gray-100 bg-foreground' : 'text-gray-400'}",
+                          data: { action: "click->sidebar#close" } do %>
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                        </svg>
+                        <span>Issues</span>
+                      <% end %>
+                      <%= link_to team_projects_path(team),
+                          class: "flex items-center gap-2 px-3 py-1 text-sm rounded hover:bg-foreground transition-colors #{request.path.start_with?(team_projects_path(team)) ? 'text-gray-100 bg-foreground' : 'text-gray-400'}",
+                          data: { action: "click->sidebar#close" } do %>
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                        </svg>
+                        <span>Projects</span>
+                      <% end %>
+                      <%= link_to team_milestones_path(team),
+                          class: "flex items-center gap-2 px-3 py-1 text-sm rounded hover:bg-foreground transition-colors #{request.path.start_with?(team_milestones_path(team)) ? 'text-gray-100 bg-foreground' : 'text-gray-400'}",
+                          data: { action: "click->sidebar#close" } do %>
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span>Milestones</span>
+                      <% end %>
+                    </div>
+                  </div>
                 <% end %>
               </div>
             </div>

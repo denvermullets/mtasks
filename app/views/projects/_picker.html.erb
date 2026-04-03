@@ -36,20 +36,22 @@
 
   <!-- Projects List Container -->
   <div data-project-picker-target="projectList" class="max-h-96 overflow-y-auto">
-    <!-- No Project Option -->
-    <div class="project-option"
-         data-project-id
-         data-project-name="No project">
-      <label class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors cursor-pointer flex items-center gap-2">
-        <input type="radio"
-               name="project_<%= issue_id %>"
-               value=""
-               <%= 'checked' if current_project_id == 0 %>
-               data-action="change->project-picker#selectProject"
-               class="w-4 h-4 text-accent bg-background border-stroke focus:ring-accent focus:ring-2">
-        <span class="text-gray-500">No project</span>
-      </label>
-    </div>
+    <!-- No Project Option (only shown when projects exist) -->
+    <% if projects.any? %>
+      <div class="project-option"
+           data-project-id
+           data-project-name="No project">
+        <label class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors cursor-pointer flex items-center gap-2">
+          <input type="radio"
+                 name="project_<%= issue_id %>"
+                 value=""
+                 <%= 'checked' if current_project_id == 0 %>
+                 data-action="change->project-picker#selectProject"
+                 class="w-4 h-4 accent-accent bg-background border-stroke focus:ring-accent focus:ring-2">
+          <span class="text-gray-500">No project</span>
+        </label>
+      </div>
+    <% end %>
 
     <% projects.each do |project| %>
       <div class="project-option"
@@ -61,7 +63,7 @@
                  value="<%= project.id %>"
                  <%= 'checked' if project.id == current_project_id %>
                  data-action="change->project-picker#selectProject"
-                 class="w-4 h-4 text-accent bg-background border-stroke focus:ring-accent focus:ring-2">
+                 class="w-4 h-4 accent-accent bg-background border-stroke focus:ring-accent focus:ring-2">
           <span><%= project.name %></span>
         </label>
       </div>
@@ -76,6 +78,18 @@
       <div data-project-picker-target="emptyState" class="hidden px-3 py-8 text-center text-sm text-gray-500">
         No projects found.
       </div>
+    <% end %>
+  </div>
+
+  <!-- New Project Link -->
+  <div class="border-t border-stroke px-3 py-2">
+    <%= link_to new_team_project_path(issue.team),
+        class: "flex items-center gap-2 text-sm text-accent hover:text-accent-hover transition-colors",
+        data: { turbo_frame: "_top" } do %>
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+      </svg>
+      <span>New Project</span>
     <% end %>
   </div>
 </div>

@@ -175,6 +175,16 @@
               <%= project.name %>
             </button>
           <% end %>
+          <div class="border-t border-stroke">
+            <%= link_to new_team_project_path(issue.team),
+                class: "flex items-center gap-2 w-full text-left px-3 py-2 text-sm text-accent hover:bg-hover-highlight transition-colors rounded-b-md",
+                data: { turbo_frame: "_top" } do %>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+              </svg>
+              <span>New Project</span>
+            <% end %>
+          </div>
         </div>
         <%= form.hidden_field :project_id, value: issue.project_id, data: { issue_sidebar_target: "projectInput" } %>
       </div>

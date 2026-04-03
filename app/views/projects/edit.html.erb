@@ -4,13 +4,13 @@
     <!-- Top Bar -->
     <div class="h-14 bg-menu border-b border-stroke flex items-center justify-between px-4 shrink-0">
       <div class="flex items-center gap-4">
-        <%= link_to team_projects_path(@team),
+        <%= link_to team_project_path(@team, @project),
             class: "text-sm text-gray-500 hover:text-gray-400 flex items-center gap-2" do %>
           <span>&#8592;</span>
           <span><%= @team.name %></span>
         <% end %>
         <span class="text-gray-600">&#8250;</span>
-        <span class="text-sm text-gray-400">New project</span>
+        <span class="text-sm text-gray-400">Edit project</span>
       </div>
     </div>
 
@@ -45,9 +45,39 @@
                 class: "w-full bg-transparent border-0 text-gray-300 placeholder-gray-600 focus:outline-none focus:ring-0 p-0 resize-none" %>
           </div>
 
-          <!-- File Attachments -->
+          <!-- Existing Attachments -->
+          <% if @project.files.attached? %>
+            <div class="mb-8">
+              <h3 class="text-sm font-medium text-gray-400 mb-3">Current Attachments</h3>
+              <div class="space-y-2">
+                <% @project.files.each do |file| %>
+                  <div class="flex items-center justify-between px-3 py-2 bg-foreground border border-stroke rounded-md text-sm">
+                    <div class="flex items-center gap-2 text-gray-300 min-w-0">
+                      <% if file.image? %>
+                        <span class="text-gray-500 shrink-0">&#128444;</span>
+                      <% elsif file.content_type == "application/pdf" %>
+                        <span class="text-gray-500 shrink-0">&#128196;</span>
+                      <% else %>
+                        <span class="text-gray-500 shrink-0">&#128206;</span>
+                      <% end %>
+                      <%= link_to file.filename, rails_blob_path(file, disposition: "attachment"),
+                          class: "text-accent hover:text-accent-hover truncate" %>
+                      <span class="text-gray-500 shrink-0"><%= number_to_human_size(file.byte_size) %></span>
+                    </div>
+                    <%= button_to "Remove",
+                        purge_file_team_project_path(@team, @project, file_id: file.id),
+                        method: :delete,
+                        class: "text-gray-500 hover:text-red-400 transition-colors text-xs shrink-0 ml-2",
+                        data: { turbo_confirm: "Remove this file?" } %>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+
+          <!-- Add New Files -->
           <div class="mb-8" data-controller="file-upload">
-            <h3 class="text-sm font-medium text-gray-400 mb-3">Attachments</h3>
+            <h3 class="text-sm font-medium text-gray-400 mb-3">Add Files</h3>
             <div data-action="dragover->file-upload#dragOver dragenter->file-upload#dragEnter dragleave->file-upload#dragLeave drop->file-upload#drop"
                  class="border-2 border-dashed border-stroke rounded-lg p-6 text-center hover:border-accent/50 transition-colors">
               <svg class="w-8 h-8 mx-auto mb-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -94,13 +124,13 @@
                       data-project-form-target="milestoneButton"
                       class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-background border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors">
                 <% if @project.milestone %>
-                  <span style="color: <%= @project.milestone.status_color %>;">◆</span>
+                  <span style="color: <%= @project.milestone.status_color %>;">&#9670;</span>
                   <span data-project-form-target="milestoneLabel"><%= @project.milestone.name %></span>
                   <% if @project.milestone.due_date %>
-                    <span class="text-xs text-gray-500">• <%= @project.milestone.formatted_due_date %></span>
+                    <span class="text-xs text-gray-500">&#8226; <%= @project.milestone.formatted_due_date %></span>
                   <% end %>
                 <% else %>
-                  <span class="text-gray-500">◇</span>
+                  <span class="text-gray-500">&#9671;</span>
                   <span data-project-form-target="milestoneLabel" class="text-gray-500">No milestone</span>
                 <% end %>
               </button>
@@ -254,10 +284,10 @@
 
           <!-- Actions -->
           <div class="pt-6 border-t border-stroke space-y-3">
-            <%= form.submit "Create Project",
+            <%= form.submit "Update Project",
                 class: "w-full px-4 py-2 border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 font-medium cursor-pointer rounded-md text-sm" %>
             <%= link_to "Cancel",
-                team_projects_path(@team),
+                team_project_path(@team, @project),
                 class: "block w-full px-4 py-2 text-center text-gray-400 hover:text-gray-200 transition-colors text-sm" %>
           </div>
         </div>
