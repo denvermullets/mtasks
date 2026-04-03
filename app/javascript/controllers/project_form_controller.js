@@ -95,7 +95,8 @@ export default class extends Controller {
 
   selectLead(event) {
     event.stopPropagation();
-    this.leadInputTarget.value = event.currentTarget.dataset.leadId || "";
+    const leadId = event.currentTarget.dataset.leadId;
+    this.leadInputTarget.value = leadId === "none" ? "" : leadId;
     this.leadLabelTarget.textContent = event.currentTarget.dataset.leadName;
     this.leadDropdownTarget.classList.add("hidden");
   }

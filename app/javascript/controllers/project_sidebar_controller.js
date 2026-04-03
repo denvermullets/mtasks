@@ -108,7 +108,7 @@ export default class extends Controller {
     event.stopPropagation();
     const value = event.currentTarget.dataset.leadId;
     const label = event.currentTarget.dataset.leadName;
-    this.leadInputTarget.value = value || "";
+    this.leadInputTarget.value = value === "none" ? "" : value;
     this.leadLabelTarget.textContent = label;
     this.leadDropdownTarget.classList.add("hidden");
     this.element.requestSubmit();
@@ -118,7 +118,7 @@ export default class extends Controller {
     event.stopPropagation();
     const value = event.currentTarget.dataset.milestoneId;
     const label = event.currentTarget.dataset.milestoneName;
-    this.milestoneInputTarget.value = value || "";
+    this.milestoneInputTarget.value = value === "none" ? "" : value;
     this.milestoneLabelTarget.textContent = label;
     this.milestoneDropdownTarget.classList.add("hidden");
     this.element.requestSubmit();
