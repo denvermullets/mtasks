@@ -39,11 +39,10 @@ class ProjectsController < ApplicationController
 
   def update
     if @project.update(project_params)
-      respond_to do |format|
-        format.turbo_stream { render_sidebar_stream }
-        format.html do
-          redirect_to team_project_path(current_team, @project), notice: 'Project was successfully updated.'
-        end
+      if turbo_frame_request?
+        render_sidebar_stream
+      else
+        redirect_to team_project_path(current_team, @project), notice: 'Project was successfully updated.'
       end
     else
       render :edit, status: :unprocessable_entity
