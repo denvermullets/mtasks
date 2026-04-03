@@ -1,0 +1,89 @@
+<%# Label Picker for Projects
+  Usage: %= render "labels/project_picker", project: @project, labels: @labels, context: "sidebar" %
+%>
+
+<%
+  project_id = project.id
+  team_id = project.team_id
+  current_label_ids = project.labels.pluck(:id)
+  context ||= "sidebar"
+
+  frequently_used_labels = labels.respond_to?(:frequently_used) ? labels.frequently_used : []
+  all_labels = labels.respond_to?(:by_usage) ? labels.by_usage : labels
+%>
+
+<div data-controller="label-picker"
+     data-label-picker-issue-id-value="<%= project_id %>"
+     data-label-picker-resource-type-value="project"
+     data-label-picker-resource-id-value="<%= project_id %>"
+     data-label-picker-team-id-value="<%= team_id %>"
+     data-label-picker-context-value="<%= context %>"
+     data-label-picker-current-labels-value="<%= current_label_ids.to_json %>"
+     class="hidden fixed z-50 w-80 bg-context-foreground border-2 border-stroke rounded-md shadow-2xl"
+     data-label-picker-target="picker">
+
+  <!-- Header with project name -->
+  <div class="px-3 py-2 border-b border-stroke">
+    <span class="text-xs text-gray-500"><%= project.name.truncate(40) %></span>
+  </div>
+
+  <!-- Search Input -->
+  <div class="p-2 border-b border-stroke">
+    <input type="text"
+           placeholder="Search or create labels..."
+           autocomplete="off"
+           data-label-picker-target="search"
+           data-action="input->label-picker#filterLabels keydown->label-picker#handleKeyDown"
+           class="w-full px-3 py-2 text-sm bg-background border border-stroke rounded text-gray-200 placeholder-gray-500 focus:outline-none focus:border-accent">
+  </div>
+
+  <!-- Create New Label Option (shown dynamically) -->
+  <div data-label-picker-target="createOption" class="hidden border-b border-stroke">
+    <button type="button"
+            data-action="click->label-picker#createAndToggleLabel"
+            data-label-picker-target="createButton"
+            class="w-full text-left px-3 py-2 text-sm text-accent hover:bg-hover-highlight transition-colors flex items-center gap-2">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+      </svg>
+      <span>Create "<span data-label-picker-target="createText"></span>"</span>
+    </button>
+  </div>
+
+  <!-- Labels List Container -->
+  <div data-label-picker-target="labelList" class="max-h-96 overflow-y-auto">
+
+    <!-- Frequently Used Section -->
+    <% if frequently_used_labels.any? %>
+      <div data-label-picker-target="frequentlyUsedSection">
+        <div class="px-3 py-2 text-xs font-medium text-gray-500">Frequently used</div>
+        <div data-label-picker-target="frequentlyUsedList">
+          <% frequently_used_labels.each do |label| %>
+            <%= render 'labels/picker_label_option', label: label, current_label_ids: current_label_ids %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- All Labels Section -->
+    <div>
+      <div class="px-3 py-2 text-xs font-medium text-gray-500" data-label-picker-target="allLabelsHeader">Labels</div>
+      <div data-label-picker-target="allLabelsList">
+        <% all_labels.each do |label| %>
+          <%= render 'labels/picker_label_option', label: label, current_label_ids: current_label_ids %>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <% if all_labels.empty? %>
+      <div data-label-picker-target="emptyState" class="px-3 py-8 text-center text-sm text-gray-500">
+        No labels found. Start typing to create one.
+      </div>
+    <% else %>
+      <div data-label-picker-target="emptyState" class="hidden px-3 py-8 text-center text-sm text-gray-500">
+        No labels found. Start typing to create one.
+      </div>
+    <% end %>
+  </div>
+</div>

@@ -118,60 +118,9 @@
         </div>
       </div>
 
-      <!-- Right Sidebar -->
-      <div class="w-80 border-l border-stroke bg-menu overflow-y-auto p-6 shrink-0 hidden sm:block">
-        <div class="space-y-6">
-          <!-- Milestone -->
-          <div>
-            <div class="text-xs font-medium text-gray-500 mb-2">Milestone</div>
-            <% if @project.milestone %>
-              <div class="flex items-center gap-2 text-sm text-gray-300">
-                <span style="color: <%= @project.milestone.status_color %>;">&#9670;</span>
-                <span><%= @project.milestone.name %></span>
-              </div>
-              <% if @project.milestone.due_date %>
-                <div class="text-xs text-gray-500 mt-1"><%= @project.milestone.formatted_due_date %></div>
-              <% end %>
-            <% else %>
-              <div class="text-sm text-gray-500">No milestone</div>
-            <% end %>
-          </div>
-
-          <!-- Stats -->
-          <div class="pt-6 border-t border-stroke">
-            <div class="text-xs font-medium text-gray-500 mb-3">Details</div>
-            <div class="space-y-3 text-sm">
-              <div class="flex items-center justify-between">
-                <span class="text-gray-500">Issues</span>
-                <span class="text-gray-300"><%= @issues.count %></span>
-              </div>
-              <div class="flex items-center justify-between">
-                <span class="text-gray-500">Created</span>
-                <span class="text-gray-300"><%= @project.created_at.strftime('%b %d, %Y') %></span>
-              </div>
-              <div class="flex items-center justify-between">
-                <span class="text-gray-500">Updated</span>
-                <span class="text-gray-300"><%= @project.updated_at.strftime('%b %d, %Y') %></span>
-              </div>
-              <% if @project.files.attached? %>
-                <div class="flex items-center justify-between">
-                  <span class="text-gray-500">Attachments</span>
-                  <span class="text-gray-300"><%= @project.files.count %></span>
-                </div>
-              <% end %>
-            </div>
-          </div>
-
-          <!-- Actions -->
-          <div class="pt-6 border-t border-stroke space-y-3">
-            <%= link_to "Edit Project", edit_team_project_path(@team, @project),
-                class: "block w-full px-4 py-2 text-center border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 font-medium cursor-pointer rounded-md text-sm" %>
-            <%= button_to "Delete Project", team_project_path(@team, @project),
-                method: :delete,
-                class: "w-full px-4 py-2 text-center text-red-400 hover:text-red-300 transition-colors text-sm",
-                data: { turbo_confirm: "Are you sure you want to delete this project? Issues will be unlinked but not deleted." } %>
-          </div>
-        </div>
+      <!-- Right Sidebar - Properties -->
+      <div class="hidden sm:block">
+        <%= render 'sidebar', project: @project, lanes: @lanes, team_members: @team_members, labels: @labels, milestones: @milestones %>
       </div>
     </div>
   </div>

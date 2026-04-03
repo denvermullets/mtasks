@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_03_103914) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_03_112523) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -204,13 +204,28 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_03_103914) do
     t.index ["workspace_id"], name: "index_pending_github_setups_on_workspace_id"
   end
 
+  create_table "project_labels", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "label_id", null: false
+    t.bigint "project_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["label_id"], name: "index_project_labels_on_label_id"
+    t.index ["project_id"], name: "index_project_labels_on_project_id"
+  end
+
   create_table "projects", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "description"
+    t.date "due_date"
+    t.bigint "lead_id"
     t.bigint "milestone_id"
     t.string "name"
+    t.integer "priority", default: 4
+    t.date "start_date"
+    t.string "status", default: "backlog"
     t.bigint "team_id", null: false
     t.datetime "updated_at", null: false
+    t.index ["lead_id"], name: "index_projects_on_lead_id"
     t.index ["milestone_id"], name: "index_projects_on_milestone_id"
     t.index ["team_id"], name: "index_projects_on_team_id"
   end
@@ -360,8 +375,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_03_103914) do
   add_foreign_key "notifications", "users"
   add_foreign_key "notifications", "users", column: "actor_id"
   add_foreign_key "pending_github_setups", "workspaces"
+  add_foreign_key "project_labels", "labels"
+  add_foreign_key "project_labels", "projects"
   add_foreign_key "projects", "milestones"
   add_foreign_key "projects", "teams"
+  add_foreign_key "projects", "users", column: "lead_id"
   add_foreign_key "pull_requests", "github_repository_subscriptions"
   add_foreign_key "sessions", "users"
   add_foreign_key "team_invitations", "teams"

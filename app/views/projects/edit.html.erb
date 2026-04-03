@@ -141,42 +141,145 @@
             </div>
           </div>
 
-          <!-- Future Properties (Placeholders) -->
-          <div class="pt-6 border-t border-stroke">
-            <div class="text-xs font-medium text-gray-500 mb-3">Future Properties</div>
-            <div class="space-y-3 text-xs text-gray-600">
-              <div class="flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                <span>Status</span>
+          <!-- Status -->
+          <div class="mb-4">
+            <div class="text-xs font-medium text-gray-500 mb-2">Status</div>
+            <div class="relative">
+              <button type="button"
+                      data-action="click->project-form#toggleDropdown"
+                      data-dropdown="status"
+                      class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-background border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors">
+                <div class="w-4 h-4 flex items-center justify-center">
+                  <%= render_project_status_icon(@project.status || "backlog") %>
+                </div>
+                <span data-project-form-target="statusLabel"><%= (@project.status || "backlog").titleize %></span>
+              </button>
+              <div data-project-form-target="statusDropdown" class="hidden absolute top-full left-0 mt-1 w-full bg-foreground border border-stroke rounded-md shadow-lg z-10">
+                <% Project::STATUSES.each do |status| %>
+                  <button type="button"
+                          data-action="click->project-form#selectStatus"
+                          data-status-value="<%= status %>"
+                          data-status-label="<%= status.titleize %>"
+                          class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors first:rounded-t-md last:rounded-b-md flex items-center gap-2">
+                    <div class="w-4 h-4 flex items-center justify-center">
+                      <%= render_project_status_icon(status) %>
+                    </div>
+                    <%= status.titleize %>
+                  </button>
+                <% end %>
               </div>
-              <div class="flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                </svg>
-                <span>Priority</span>
+              <%= form.hidden_field :status, value: @project.status || "backlog", data: { project_form_target: "statusInput" } %>
+            </div>
+          </div>
+
+          <!-- Priority -->
+          <div class="mb-4">
+            <div class="text-xs font-medium text-gray-500 mb-2">Priority</div>
+            <div class="relative">
+              <button type="button"
+                      data-action="click->project-form#toggleDropdown"
+                      data-dropdown="priority"
+                      class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-background border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors">
+                <div class="w-4 h-4 flex items-center justify-center">
+                  <%= render_priority_icon(@project.priority || "no_priority") %>
+                </div>
+                <span data-project-form-target="priorityLabel" class="capitalize"><%= (@project.priority || "no_priority").humanize %></span>
+              </button>
+              <div data-project-form-target="priorityDropdown" class="hidden absolute top-full left-0 mt-1 w-full bg-foreground border border-stroke rounded-md shadow-lg z-10">
+                <% [["No priority", "no_priority"], ["Urgent", "urgent"], ["High", "high"], ["Medium", "medium"], ["Low", "low"]].each do |label, value| %>
+                  <button type="button"
+                          data-action="click->project-form#selectPriority"
+                          data-priority-value="<%= value %>"
+                          data-priority-label="<%= label %>"
+                          class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors first:rounded-t-md last:rounded-b-md">
+                    <%= label %>
+                  </button>
+                <% end %>
               </div>
-              <div class="flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                </svg>
-                <span>Lead & Members</span>
+              <%= form.hidden_field :priority, value: @project.priority || "no_priority", data: { project_form_target: "priorityInput" } %>
+            </div>
+          </div>
+
+          <!-- Lead -->
+          <div class="mb-4">
+            <div class="text-xs font-medium text-gray-500 mb-2">Lead</div>
+            <div class="relative">
+              <button type="button"
+                      data-action="click->project-form#toggleDropdown"
+                      data-dropdown="lead"
+                      class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-background border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors">
+                <% if @project.lead %>
+                  <%= user_avatar(@project.lead, size: "sm") %>
+                  <span data-project-form-target="leadLabel"><%= @project.lead.name %></span>
+                <% else %>
+                  <div class="w-5 h-5 rounded-full border border-stroke"></div>
+                  <span data-project-form-target="leadLabel" class="text-gray-500">No lead</span>
+                <% end %>
+              </button>
+              <div data-project-form-target="leadDropdown" class="hidden absolute top-full left-0 mt-1 w-full bg-foreground border border-stroke rounded-md shadow-lg z-10">
+                <button type="button"
+                        data-action="click->project-form#selectLead"
+                        data-lead-id=""
+                        data-lead-name="No lead"
+                        class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors first:rounded-t-md">
+                  No lead
+                </button>
+                <% @team_members.each do |member| %>
+                  <button type="button"
+                          data-action="click->project-form#selectLead"
+                          data-lead-id="<%= member.id %>"
+                          data-lead-name="<%= member.name %>"
+                          class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors last:rounded-b-md">
+                    <%= member.name %>
+                  </button>
+                <% end %>
               </div>
-              <div class="flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                </svg>
-                <span>Dates</span>
-              </div>
-              <div class="flex items-center gap-2">
+              <%= form.hidden_field :lead_id, value: @project.lead_id, data: { project_form_target: "leadInput" } %>
+            </div>
+          </div>
+
+          <!-- Dates -->
+          <div class="mb-4">
+            <div class="text-xs font-medium text-gray-500 mb-2">Start Date</div>
+            <%= form.date_field :start_date,
+                class: "w-full px-3 py-1.5 rounded-md bg-background border border-stroke text-gray-300 text-sm focus:outline-none focus:border-accent cursor-pointer" %>
+          </div>
+          <div class="mb-4">
+            <div class="text-xs font-medium text-gray-500 mb-2">Due Date</div>
+            <%= form.date_field :due_date,
+                class: "w-full px-3 py-1.5 rounded-md bg-background border border-stroke text-gray-300 text-sm focus:outline-none focus:border-accent cursor-pointer" %>
+          </div>
+
+          <!-- Labels -->
+          <div class="mb-4">
+            <div class="text-xs font-medium text-gray-500 mb-2">Labels</div>
+            <div class="relative">
+              <button type="button"
+                      data-action="click->project-form#toggleDropdown"
+                      data-dropdown="labels"
+                      class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-background border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
                 </svg>
-                <span>Labels</span>
+                <span class="text-gray-500">Labels</span>
+              </button>
+              <div data-project-form-target="labelsDropdown" class="hidden absolute top-full left-0 mt-1 w-full bg-foreground border border-stroke rounded-md shadow-lg z-10 max-h-48 overflow-y-auto">
+                <% @labels.each do |label| %>
+                  <label class="flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors cursor-pointer">
+                    <input type="checkbox"
+                           name="project[label_ids][]"
+                           value="<%= label.id %>"
+                           <%= 'checked' if @project.label_ids.include?(label.id) %>
+                           class="rounded bg-background border-stroke accent-accent focus:ring-accent focus:ring-2">
+                    <span class="w-2 h-2 rounded-full shrink-0" style="background-color: <%= label.color %>;"></span>
+                    <span><%= label.name %></span>
+                  </label>
+                <% end %>
+                <% if @labels.empty? %>
+                  <div class="px-3 py-4 text-center text-sm text-gray-500">No labels available</div>
+                <% end %>
               </div>
             </div>
-            <p class="text-xs text-gray-600 mt-4 italic">Additional properties can be added as the model expands</p>
           </div>
 
           <!-- Actions -->

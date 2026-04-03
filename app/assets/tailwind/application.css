@@ -21,3 +21,9 @@
   /* Fonts */
   /* --font-display: "Inter var", system-ui, sans-serif; */
 }
+
+/* Make native date/time input icons visible on dark backgrounds */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}

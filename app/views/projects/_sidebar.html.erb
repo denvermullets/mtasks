@@ -1,0 +1,198 @@
+<%= turbo_frame_tag "project_sidebar", class: "flex" do %>
+  <div class="w-80 border-l border-stroke p-6 overflow-y-auto self-stretch">
+    <%= form_with model: [project.team, project],
+                  method: :patch,
+                  data: { controller: "project-sidebar" } do |form| %>
+    <h3 class="text-xs font-semibold text-gray-500 uppercase mb-4">Properties</h3>
+
+    <!-- Status -->
+    <div class="mb-6">
+      <div class="text-xs font-medium text-gray-500 mb-2">Status</div>
+      <div class="relative">
+        <button type="button"
+                data-action="click->project-sidebar#toggleDropdown"
+                data-dropdown="status"
+                class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors">
+          <div class="w-4 h-4 flex items-center justify-center">
+            <%= render_project_status_icon(project.status) %>
+          </div>
+          <span data-project-sidebar-target="statusLabel"><%= project.status&.titleize || 'Backlog' %></span>
+        </button>
+        <div data-project-sidebar-target="statusDropdown" class="hidden absolute top-full left-0 mt-1 w-full bg-foreground border border-stroke rounded-md shadow-lg z-10">
+          <% Project::STATUSES.each do |status| %>
+            <button type="button"
+                    data-action="click->project-sidebar#selectStatus"
+                    data-status-value="<%= status %>"
+                    data-status-label="<%= status.titleize %>"
+                    class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors first:rounded-t-md last:rounded-b-md flex items-center gap-2">
+              <div class="w-4 h-4 flex items-center justify-center">
+                <%= render_project_status_icon(status) %>
+              </div>
+              <%= status.titleize %>
+            </button>
+          <% end %>
+        </div>
+        <%= form.hidden_field :status, value: project.status || "backlog", data: { project_sidebar_target: "statusInput" } %>
+      </div>
+    </div>
+
+    <!-- Priority -->
+    <div class="mb-6">
+      <div class="text-xs font-medium text-gray-500 mb-2">Priority</div>
+      <div class="relative">
+        <button type="button"
+                data-action="click->project-sidebar#toggleDropdown"
+                data-dropdown="priority"
+                class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors">
+          <div class="w-4 h-4 flex items-center justify-center">
+            <%= render_priority_icon(project.priority) %>
+          </div>
+          <span data-project-sidebar-target="priorityLabel" class="capitalize"><%= project.priority&.humanize || 'No priority' %></span>
+        </button>
+        <div data-project-sidebar-target="priorityDropdown" class="hidden absolute top-full left-0 mt-1 w-full bg-foreground border border-stroke rounded-md shadow-lg z-10">
+          <% [["No priority", "no_priority"], ["Urgent", "urgent"], ["High", "high"], ["Medium", "medium"], ["Low", "low"]].each do |label, value| %>
+            <button type="button"
+                    data-action="click->project-sidebar#selectPriority"
+                    data-priority-value="<%= value %>"
+                    data-priority-label="<%= label %>"
+                    class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors first:rounded-t-md last:rounded-b-md">
+              <%= label %>
+            </button>
+          <% end %>
+        </div>
+        <%= form.hidden_field :priority, value: project.priority || "no_priority", data: { project_sidebar_target: "priorityInput" } %>
+      </div>
+    </div>
+
+    <!-- Lead -->
+    <div class="mb-6">
+      <div class="text-xs font-medium text-gray-500 mb-2">Lead</div>
+      <div class="relative">
+        <button type="button"
+                data-action="click->project-sidebar#toggleDropdown"
+                data-dropdown="lead"
+                class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors">
+          <% if project.lead %>
+            <%= user_avatar(project.lead, size: "sm") %>
+            <span data-project-sidebar-target="leadLabel"><%= project.lead.name %></span>
+          <% else %>
+            <div class="w-5 h-5 rounded-full border border-stroke"></div>
+            <span data-project-sidebar-target="leadLabel" class="text-gray-500">No lead</span>
+          <% end %>
+        </button>
+        <div data-project-sidebar-target="leadDropdown" class="hidden absolute top-full left-0 mt-1 w-full bg-foreground border border-stroke rounded-md shadow-lg z-10">
+          <button type="button"
+                  data-action="click->project-sidebar#selectLead"
+                  data-lead-id=""
+                  data-lead-name="No lead"
+                  class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors first:rounded-t-md">
+            No lead
+          </button>
+          <% team_members.each do |member| %>
+            <button type="button"
+                    data-action="click->project-sidebar#selectLead"
+                    data-lead-id="<%= member.id %>"
+                    data-lead-name="<%= member.name %>"
+                    class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors last:rounded-b-md">
+              <%= member.name %>
+            </button>
+          <% end %>
+        </div>
+        <%= form.hidden_field :lead_id, value: project.lead_id, data: { project_sidebar_target: "leadInput" } %>
+      </div>
+    </div>
+
+    <!-- Labels -->
+    <div class="mb-6">
+      <div class="text-xs font-medium text-gray-500 mb-2">Labels</div>
+      <div class="relative">
+        <button type="button"
+                data-action="click->project-sidebar#toggleDropdown"
+                data-dropdown="labels"
+                class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+          </svg>
+          <% if project.labels.any? %>
+            <div class="flex flex-wrap gap-1 flex-1">
+              <% project.labels.each do |label| %>
+                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-background border border-stroke">
+                  <span class="w-1.5 h-1.5 rounded-full" style="background-color: <%= label.color %>;"></span>
+                  <%= label.name %>
+                </span>
+              <% end %>
+            </div>
+          <% else %>
+            <span class="text-gray-500">No labels</span>
+          <% end %>
+        </button>
+        <div data-project-sidebar-target="labelsDropdown">
+          <%= render "labels/project_picker", project: project, labels: labels, context: "sidebar" %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Milestone -->
+    <div class="mb-6">
+      <div class="text-xs font-medium text-gray-500 mb-2">Milestone</div>
+      <div class="relative">
+        <button type="button"
+                data-action="click->project-sidebar#toggleDropdown"
+                data-dropdown="milestone"
+                class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors">
+          <% if project.milestone %>
+            <span style="color: <%= project.milestone.status_color %>;">&#9670;</span>
+            <span data-project-sidebar-target="milestoneLabel"><%= project.milestone.name %></span>
+          <% else %>
+            <span class="text-gray-500">&#9671;</span>
+            <span data-project-sidebar-target="milestoneLabel" class="text-gray-500">No milestone</span>
+          <% end %>
+        </button>
+        <div data-project-sidebar-target="milestoneDropdown" class="hidden absolute top-full left-0 mt-1 w-full bg-foreground border border-stroke rounded-md shadow-lg z-10 max-h-64 overflow-y-auto">
+          <button type="button"
+                  data-action="click->project-sidebar#selectMilestone"
+                  data-milestone-id=""
+                  data-milestone-name="No milestone"
+                  class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors first:rounded-t-md">
+            No milestone
+          </button>
+          <% milestones.each do |milestone| %>
+            <button type="button"
+                    data-action="click->project-sidebar#selectMilestone"
+                    data-milestone-id="<%= milestone.id %>"
+                    data-milestone-name="<%= milestone.name %>"
+                    class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors last:rounded-b-md flex items-center gap-2">
+              <span style="color: <%= milestone.status_color %>;">&#9670;</span>
+              <%= milestone.name %>
+            </button>
+          <% end %>
+        </div>
+        <%= form.hidden_field :milestone_id, value: project.milestone_id, data: { project_sidebar_target: "milestoneInput" } %>
+      </div>
+    </div>
+
+    <!-- Dates -->
+    <div class="mb-6">
+      <div class="text-xs font-medium text-gray-500 mb-2">Start Date</div>
+      <%= form.date_field :start_date,
+          value: project.start_date,
+          data: { project_sidebar_target: "startDateInput", action: "click->project-sidebar#openDatePicker change->project-sidebar#dateChanged" },
+          class: "w-full px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors focus:outline-none focus:border-accent cursor-pointer" %>
+    </div>
+
+    <div class="mb-6">
+      <div class="text-xs font-medium text-gray-500 mb-2">Due Date</div>
+      <%= form.date_field :due_date,
+          value: project.due_date,
+          data: { project_sidebar_target: "dueDateInput", action: "click->project-sidebar#openDatePicker change->project-sidebar#dateChanged" },
+          class: "w-full px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors focus:outline-none focus:border-accent cursor-pointer" %>
+    </div>
+
+    <!-- Created/Updated -->
+    <div class="pt-6 border-t border-stroke text-xs text-gray-500 space-y-1">
+      <div>Created <%= time_ago_in_words(project.created_at) %> ago</div>
+      <div>Updated <%= time_ago_in_words(project.updated_at) %> ago</div>
+    </div>
+    <% end %>
+  </div>
+<% end %>
