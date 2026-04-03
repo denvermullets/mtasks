@@ -1,6 +1,9 @@
 // Configure your import map in config/importmap.rb. Read more: https://github.com/rails/importmap-rails
 import "@hotwired/turbo-rails"
+import * as ActiveStorage from "@rails/activestorage"
 import "controllers"
+
+ActiveStorage.start()
 
 // Custom Turbo Stream action: updates innerHTML while preserving scroll positions
 Turbo.StreamActions.update_preserving_scroll = function () {

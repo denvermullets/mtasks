@@ -3,13 +3,15 @@ class ProjectsController < ApplicationController
 
   before_action :require_team!
   before_action :set_team
-  before_action :set_project, only: %i[show edit update destroy]
+  before_action :set_project, only: %i[show edit update destroy purge_file]
 
   def index
     @projects = current_team.projects.includes(:milestone).order(created_at: :desc)
   end
 
-  def show; end
+  def show
+    @issues = @project.issues.not_archived.includes(:lane, :assignee, :labels).order(created_at: :desc)
+  end
 
   def new
     @project = current_team.projects.new
@@ -19,7 +21,7 @@ class ProjectsController < ApplicationController
     @project = current_team.projects.new(project_params)
 
     if @project.save
-      redirect_to team_projects_path(current_team), notice: 'Project was successfully created.'
+      redirect_to team_project_path(current_team, @project), notice: 'Project was successfully created.'
     else
       render :new, status: :unprocessable_entity
     end
@@ -40,6 +42,12 @@ class ProjectsController < ApplicationController
     redirect_to team_projects_path(current_team), notice: 'Project was successfully deleted.'
   end
 
+  def purge_file
+    attachment = @project.files.find(params[:file_id])
+    attachment.purge
+    redirect_to edit_team_project_path(current_team, @project), notice: 'File removed.'
+  end
+
   private
 
   def set_team
@@ -53,6 +61,6 @@ class ProjectsController < ApplicationController
   end
 
   def project_params
-    params.require(:project).permit(:name, :description, :milestone_id)
+    params.require(:project).permit(:name, :description, :milestone_id, files: [])
   end
 end
