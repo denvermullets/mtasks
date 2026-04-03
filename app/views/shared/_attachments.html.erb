@@ -1,0 +1,44 @@
+<%# Renders attached files with lightbox for images and download cards for other files
+    Usage: render "shared/attachments", files: @project.files
+    Optional: heading (default: "Attachments"), compact (default: false - for comments)
+%>
+<% heading ||= "Attachments" %>
+<% compact ||= false %>
+<% images = files.select(&:image?) %>
+<% other_files = files.reject(&:image?) %>
+
+<% if images.any? %>
+  <div class="<%= compact ? 'flex flex-wrap gap-2' : 'grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4' %>">
+    <% images.each do |file| %>
+      <button type="button"
+              data-action="click->lightbox#open"
+              data-lightbox-url="<%= url_for(file) %>"
+              data-lightbox-filename="<%= file.filename %>"
+              class="<%= compact ? 'block max-w-xs' : 'block' %> text-left">
+        <div class="<%= compact ? 'max-h-40' : 'aspect-video' %> bg-foreground border border-stroke rounded-md overflow-hidden hover:border-accent/50 transition-colors">
+          <%= image_tag url_for(file), class: "#{compact ? 'max-h-40' : 'w-full h-full'} object-cover", alt: file.filename %>
+        </div>
+        <% unless compact %>
+          <p class="text-xs text-gray-500 mt-1 truncate"><%= file.filename %></p>
+        <% end %>
+      </button>
+    <% end %>
+  </div>
+<% end %>
+
+<% if other_files.any? %>
+  <div class="<%= compact ? 'space-y-1' : 'space-y-2' %>">
+    <% other_files.each do |file| %>
+      <%= link_to rails_blob_path(file, disposition: "attachment"),
+          class: "flex items-center gap-2 #{compact ? 'text-xs text-gray-400' : 'px-3 py-2 bg-foreground border border-stroke rounded-md text-sm text-gray-300'} hover:text-accent transition-colors" do %>
+        <% if file.content_type == "application/pdf" %>
+          <span class="text-gray-500 shrink-0">&#128196;</span>
+        <% else %>
+          <span class="text-gray-500 shrink-0">&#128206;</span>
+        <% end %>
+        <span class="truncate"><%= file.filename %></span>
+        <span class="text-gray-500 shrink-0"><%= number_to_human_size(file.byte_size) %></span>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>

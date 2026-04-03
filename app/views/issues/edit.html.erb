@@ -234,6 +234,52 @@
             <%= render "milestones/new_issue_picker", team_id: @issue.team_id %>
           </div>
         </div>
+        <!-- Existing Attachments -->
+        <% if @issue.files.attached? %>
+          <div class="mb-8">
+            <h3 class="text-sm font-medium text-gray-400 mb-3">Attachments</h3>
+            <div class="space-y-2">
+              <% @issue.files.each do |file| %>
+                <div class="flex items-center justify-between px-3 py-2 bg-foreground border border-stroke rounded-md text-sm">
+                  <div class="flex items-center gap-2 text-gray-300 min-w-0">
+                    <% if file.image? %>
+                      <span class="text-gray-500 shrink-0">&#128444;</span>
+                    <% elsif file.content_type == "application/pdf" %>
+                      <span class="text-gray-500 shrink-0">&#128196;</span>
+                    <% else %>
+                      <span class="text-gray-500 shrink-0">&#128206;</span>
+                    <% end %>
+                    <%= link_to file.filename, rails_blob_path(file, disposition: "attachment"),
+                        class: "text-accent hover:text-accent-hover truncate" %>
+                    <span class="text-gray-500 shrink-0"><%= number_to_human_size(file.byte_size) %></span>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+
+        <!-- Add Files -->
+        <div class="mb-8" data-controller="file-upload">
+          <div data-action="dragover->file-upload#dragOver dragenter->file-upload#dragEnter dragleave->file-upload#dragLeave drop->file-upload#drop"
+               class="border-2 border-dashed border-stroke rounded-lg p-6 text-center hover:border-accent/50 transition-colors">
+            <svg class="w-8 h-8 mx-auto mb-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+            </svg>
+            <p class="text-sm text-gray-400 mb-2">Drag and drop files here, or</p>
+            <%= form.file_field :files, multiple: true,
+                data: { file_upload_target: "input", action: "change->file-upload#handleFiles" },
+                class: "hidden" %>
+            <button type="button"
+                    data-action="click->file-upload#openFilePicker"
+                    class="px-3 py-1.5 text-sm bg-foreground border border-stroke rounded-md text-gray-300 hover:bg-hover-highlight transition-colors">
+              Browse files
+            </button>
+            <p class="text-xs text-gray-500 mt-2">Images, PDFs, Markdown, and other files</p>
+          </div>
+          <div data-file-upload-target="fileList" class="mt-3 space-y-2"></div>
+        </div>
+
         <!-- Bottom Actions -->
         <div class="flex items-center justify-end pt-6 border-t border-stroke">
           <div class="flex items-center gap-4">

@@ -16,7 +16,7 @@
   <!-- Form Content -->
   <div class="flex-1 overflow-y-auto p-8">
     <div class="max-w-4xl mx-auto">
-      <%= form_with model: [@team, @issue], data: { controller: "issue-form" } do |form| %>
+      <%= form_with model: [@team, @issue], data: { controller: "issue-form file-upload" } do |form| %>
         <!-- Team Display (Read-only) -->
         <div class="mb-6 flex items-center gap-2">
           <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm font-medium">
@@ -45,10 +45,12 @@
             </div>
           <% end %>
         </div>
-        <!-- Description -->
-        <div class="mb-6">
+        <!-- Description (drop zone for files) -->
+        <div class="mb-6 rounded-lg transition-colors"
+             data-action="dragover->file-upload#dragOver dragenter->file-upload#dragEnterZone dragleave->file-upload#dragLeaveZone drop->file-upload#dropOnZone"
+             data-file-upload-target="dropzone">
           <%= form.text_area :description,
-              placeholder: "Add description...",
+              placeholder: "Add description (drop files here)...",
               rows: 4,
               autocomplete: "off",
               class: "w-full bg-transparent border-0 text-gray-300 placeholder-gray-600 focus:outline-none focus:ring-0 p-0 resize-none overflow-hidden",
@@ -235,15 +237,20 @@
             <%= render "milestones/new_issue_picker", team_id: @team.id %>
           </div>
         </div>
+        <!-- Attached files list -->
+        <div data-file-upload-target="fileList" class="space-y-2 mb-6"></div>
         <!-- Bottom Actions -->
         <div class="flex items-center justify-between pt-6 border-t border-stroke">
           <div class="flex items-center gap-4">
-            <!-- Attachment button -->
-            <button type="button" class="text-gray-500 hover:text-gray-400">
+            <label class="text-gray-500 hover:text-gray-400 flex items-center gap-1.5 text-sm cursor-pointer">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
               </svg>
-            </button>
+              <span>Attach files</span>
+              <%= form.file_field :files, multiple: true,
+                  data: { file_upload_target: "input", action: "change->file-upload#handleFiles" },
+                  class: "hidden" %>
+            </label>
           </div>
           <div class="flex items-center gap-4">
             <!-- Create more toggle -->

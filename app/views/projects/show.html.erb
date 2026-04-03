@@ -1,4 +1,4 @@
-<div class="flex h-screen bg-background">
+<div class="flex h-screen bg-background" data-controller="lightbox">
   <div class="flex-1 flex flex-col overflow-hidden">
     <!-- Top Bar -->
     <div class="h-14 bg-menu border-b border-stroke flex items-center justify-between px-4 shrink-0">
@@ -46,43 +46,7 @@
           <% if @project.files.attached? %>
             <div class="mb-8">
               <h2 class="text-sm font-semibold text-gray-400 mb-4">Attachments</h2>
-
-              <!-- Image attachments -->
-              <% images = @project.files.select(&:image?) %>
-              <% if images.any? %>
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
-                  <% images.each do |file| %>
-                    <%= link_to url_for(file), target: "_blank", class: "block" do %>
-                      <div class="aspect-video bg-foreground border border-stroke rounded-md overflow-hidden hover:border-accent/50 transition-colors">
-                        <%= image_tag url_for(file), class: "w-full h-full object-cover", alt: file.filename %>
-                      </div>
-                      <p class="text-xs text-gray-500 mt-1 truncate"><%= file.filename %></p>
-                    <% end %>
-                  <% end %>
-                </div>
-              <% end %>
-
-              <!-- Non-image attachments -->
-              <% other_files = @project.files.reject(&:image?) %>
-              <% if other_files.any? %>
-                <div class="space-y-2">
-                  <% other_files.each do |file| %>
-                    <div class="flex items-center justify-between px-3 py-2 bg-foreground border border-stroke rounded-md text-sm">
-                      <div class="flex items-center gap-2 text-gray-300 min-w-0">
-                        <% if file.content_type == "application/pdf" %>
-                          <span class="text-gray-500 shrink-0">&#128196;</span>
-                        <% else %>
-                          <span class="text-gray-500 shrink-0">&#128206;</span>
-                        <% end %>
-                        <span class="truncate"><%= file.filename %></span>
-                        <span class="text-gray-500 shrink-0"><%= number_to_human_size(file.byte_size) %></span>
-                      </div>
-                      <%= link_to "Download", rails_blob_path(file, disposition: "attachment"),
-                          class: "text-accent hover:text-accent-hover text-xs shrink-0 ml-2" %>
-                    </div>
-                  <% end %>
-                </div>
-              <% end %>
+              <%= render "shared/attachments", files: @project.files %>
             </div>
           <% end %>
 
@@ -124,4 +88,5 @@
       </div>
     </div>
   </div>
+  <%= render "shared/lightbox" %>
 </div>

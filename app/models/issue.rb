@@ -19,6 +19,7 @@ class Issue < ApplicationRecord
   has_many :issue_pull_requests, dependent: :destroy
   has_many :pull_requests, through: :issue_pull_requests
   has_many :notifications, dependent: :destroy
+  has_many_attached :files
 
   # Validations
   validates :title, presence: true

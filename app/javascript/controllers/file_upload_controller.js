@@ -11,10 +11,39 @@ export default class extends Controller {
     this.renderFileList();
   }
 
+  // Drop zone methods (for description/comment areas)
   dragOver(event) {
     event.preventDefault();
   }
 
+  dragEnterZone(event) {
+    event.preventDefault();
+    if (this.hasDropzoneTarget) {
+      this.dropzoneTarget.classList.add("border-2", "border-dashed", "border-accent");
+    }
+  }
+
+  dragLeaveZone(event) {
+    event.preventDefault();
+    if (this.hasDropzoneTarget && !this.dropzoneTarget.contains(event.relatedTarget)) {
+      this.dropzoneTarget.classList.remove("border-2", "border-dashed", "border-accent");
+    }
+  }
+
+  dropOnZone(event) {
+    event.preventDefault();
+    if (this.hasDropzoneTarget) {
+      this.dropzoneTarget.classList.remove("border-2", "border-dashed", "border-accent");
+    }
+
+    const droppedFiles = event.dataTransfer.files;
+    if (droppedFiles.length === 0) return;
+
+    this.mergeFiles(droppedFiles);
+    this.renderFileList();
+  }
+
+  // Legacy drop methods (for dedicated drag-and-drop areas like project forms)
   dragEnter(event) {
     event.preventDefault();
     this.element.classList.add("border-accent");
@@ -37,16 +66,7 @@ export default class extends Controller {
     const droppedFiles = event.dataTransfer.files;
     if (droppedFiles.length === 0) return;
 
-    // Merge with existing files
-    const dt = new DataTransfer();
-    const existing = this.inputTarget.files;
-    for (let i = 0; i < existing.length; i++) {
-      dt.items.add(existing[i]);
-    }
-    for (let i = 0; i < droppedFiles.length; i++) {
-      dt.items.add(droppedFiles[i]);
-    }
-    this.inputTarget.files = dt.files;
+    this.mergeFiles(droppedFiles);
     this.renderFileList();
   }
 
@@ -64,7 +84,21 @@ export default class extends Controller {
     this.renderFileList();
   }
 
+  mergeFiles(newFiles) {
+    const dt = new DataTransfer();
+    const existing = this.inputTarget.files;
+    for (let i = 0; i < existing.length; i++) {
+      dt.items.add(existing[i]);
+    }
+    for (let i = 0; i < newFiles.length; i++) {
+      dt.items.add(newFiles[i]);
+    }
+    this.inputTarget.files = dt.files;
+  }
+
   renderFileList() {
+    if (!this.hasFileListTarget) return;
+
     const files = this.inputTarget.files;
     this.fileListTarget.innerHTML = "";
 
@@ -100,10 +134,10 @@ export default class extends Controller {
   }
 
   fileIcon(mimeType) {
-    if (mimeType.startsWith("image/")) return "🖼";
-    if (mimeType === "application/pdf") return "📄";
-    if (mimeType.includes("markdown") || mimeType === "text/markdown") return "📝";
-    return "📎";
+    if (mimeType.startsWith("image/")) return "&#128444;";
+    if (mimeType === "application/pdf") return "&#128196;";
+    if (mimeType.includes("markdown") || mimeType === "text/markdown") return "&#128221;";
+    return "&#128206;";
   }
 
   escapeHtml(str) {
