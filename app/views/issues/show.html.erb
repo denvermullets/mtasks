@@ -1,4 +1,4 @@
-<div class="flex-1 flex flex-col min-h-0" data-controller="issue-properties-drawer">
+<div class="flex-1 flex flex-col min-h-0" data-controller="issue-properties-drawer lightbox">
   <!-- Top Bar -->
   <div class="h-14 bg-menu border-b border-stroke flex items-center justify-between px-4">
     <div class="flex items-center gap-4">
@@ -45,6 +45,14 @@
             </div>
           <% end %>
         </div>
+        <!-- Attachments -->
+        <% if @issue.files.attached? %>
+          <div class="mb-8">
+            <h2 class="text-sm font-semibold text-gray-400 mb-4">Attachments</h2>
+            <%= render "shared/attachments", files: @issue.files %>
+          </div>
+        <% end %>
+
         <!-- Sub-issues Section -->
         <% if @issue.sub_issues.any? %>
           <div class="mb-8">
@@ -113,6 +121,7 @@
       </div>
     </div>
   </div>
+  <%= render "shared/lightbox" %>
 </div>
 <% content_for :head do %>
   <style>
