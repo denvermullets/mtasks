@@ -12,7 +12,7 @@
         <button type="button"
                 data-action="click->project-sidebar#toggleDropdown"
                 data-dropdown="status"
-                class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors">
+                class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors cursor-pointer">
           <div class="w-4 h-4 flex items-center justify-center">
             <%= render_project_status_icon(project.status) %>
           </div>
@@ -24,7 +24,7 @@
                     data-action="click->project-sidebar#selectStatus"
                     data-status-value="<%= status %>"
                     data-status-label="<%= status.titleize %>"
-                    class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors first:rounded-t-md last:rounded-b-md flex items-center gap-2">
+                    class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors cursor-pointer first:rounded-t-md last:rounded-b-md flex items-center gap-2">
               <div class="w-4 h-4 flex items-center justify-center">
                 <%= render_project_status_icon(status) %>
               </div>
@@ -43,7 +43,7 @@
         <button type="button"
                 data-action="click->project-sidebar#toggleDropdown"
                 data-dropdown="priority"
-                class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors">
+                class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors cursor-pointer">
           <div class="w-4 h-4 flex items-center justify-center">
             <%= render_priority_icon(project.priority) %>
           </div>
@@ -55,7 +55,7 @@
                     data-action="click->project-sidebar#selectPriority"
                     data-priority-value="<%= value %>"
                     data-priority-label="<%= label %>"
-                    class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors first:rounded-t-md last:rounded-b-md">
+                    class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors cursor-pointer first:rounded-t-md last:rounded-b-md">
               <%= label %>
             </button>
           <% end %>
@@ -71,7 +71,7 @@
         <button type="button"
                 data-action="click->project-sidebar#toggleDropdown"
                 data-dropdown="lead"
-                class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors">
+                class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors cursor-pointer">
           <% if project.lead %>
             <%= user_avatar(project.lead, size: "sm") %>
             <span data-project-sidebar-target="leadLabel"><%= project.lead.name %></span>
@@ -85,7 +85,7 @@
                   data-action="click->project-sidebar#selectLead"
                   data-lead-id="none"
                   data-lead-name="No lead"
-                  class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors first:rounded-t-md">
+                  class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors cursor-pointer first:rounded-t-md">
             No lead
           </button>
           <% team_members.each do |member| %>
@@ -93,7 +93,7 @@
                     data-action="click->project-sidebar#selectLead"
                     data-lead-id="<%= member.id %>"
                     data-lead-name="<%= member.name %>"
-                    class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors last:rounded-b-md">
+                    class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors cursor-pointer last:rounded-b-md">
               <%= member.name %>
             </button>
           <% end %>
@@ -109,7 +109,7 @@
         <button type="button"
                 data-action="click->project-sidebar#toggleDropdown"
                 data-dropdown="labels"
-                class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors">
+                class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors cursor-pointer">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
           </svg>
@@ -139,7 +139,7 @@
         <button type="button"
                 data-action="click->project-sidebar#toggleDropdown"
                 data-dropdown="milestone"
-                class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors">
+                class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors cursor-pointer">
           <% if project.milestone %>
             <span style="color: <%= project.milestone.status_color %>;">&#9670;</span>
             <span data-project-sidebar-target="milestoneLabel"><%= project.milestone.name %></span>
@@ -153,7 +153,7 @@
                   data-action="click->project-sidebar#selectMilestone"
                   data-milestone-id="none"
                   data-milestone-name="No milestone"
-                  class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors first:rounded-t-md">
+                  class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors cursor-pointer first:rounded-t-md">
             No milestone
           </button>
           <% milestones.each do |milestone| %>
@@ -161,7 +161,7 @@
                     data-action="click->project-sidebar#selectMilestone"
                     data-milestone-id="<%= milestone.id %>"
                     data-milestone-name="<%= milestone.name %>"
-                    class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors last:rounded-b-md flex items-center gap-2">
+                    class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors cursor-pointer last:rounded-b-md flex items-center gap-2">
               <span style="color: <%= milestone.status_color %>;">&#9670;</span>
               <%= milestone.name %>
             </button>
@@ -177,7 +177,7 @@
       <%= form.date_field :start_date,
           value: project.start_date,
           data: { project_sidebar_target: "startDateInput", action: "click->project-sidebar#openDatePicker change->project-sidebar#dateChanged" },
-          class: "w-full px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors focus:outline-none focus:border-accent cursor-pointer" %>
+          class: "w-full px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors cursor-pointer focus:outline-none focus:border-accent cursor-pointer" %>
     </div>
 
     <div class="mb-6">
@@ -185,7 +185,7 @@
       <%= form.date_field :due_date,
           value: project.due_date,
           data: { project_sidebar_target: "dueDateInput", action: "click->project-sidebar#openDatePicker change->project-sidebar#dateChanged" },
-          class: "w-full px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors focus:outline-none focus:border-accent cursor-pointer" %>
+          class: "w-full px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors cursor-pointer focus:outline-none focus:border-accent cursor-pointer" %>
     </div>
 
     <!-- Created/Updated -->
