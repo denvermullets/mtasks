@@ -30,7 +30,12 @@ Rails.application.routes.draw do
     resources :issues do
       resources :comments, only: %i[create destroy]
       resources :issue_labels, only: %i[create destroy]
-      resources :issue_dependencies, only: %i[create destroy]
+      resources :issue_dependencies, only: %i[create destroy] do
+        collection do
+          get :search
+          post :bulk_create
+        end
+      end
       get :search, on: :collection
     end
   end

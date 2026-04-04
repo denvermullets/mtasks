@@ -1,0 +1,13 @@
+<turbo-frame id="dependency_search_results">
+  <% issues.each do |issue| %>
+    <label class="flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer hover:bg-hover-highlight text-sm transition-colors">
+      <input type="checkbox" name="target_issue_ids[]" value="<%= issue.id %>"
+             class="w-4 h-4 rounded border-stroke bg-background text-accent focus:ring-accent cursor-pointer">
+      <span class="font-mono text-xs text-gray-500 shrink-0"><%= issue.identifier %></span>
+      <span class="text-gray-300 truncate"><%= issue.title %></span>
+    </label>
+  <% end %>
+  <% if issues.empty? %>
+    <div class="px-3 py-8 text-center text-sm text-gray-500">No issues found</div>
+  <% end %>
+</turbo-frame>

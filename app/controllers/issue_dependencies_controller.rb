@@ -3,6 +3,31 @@ class IssueDependenciesController < ApplicationController
 
   before_action :set_issue
 
+  def search
+    issues = search_candidates(params[:q].to_s.strip)
+    render partial: 'issue_dependencies/search_results', locals: { issues: issues }
+  end
+
+  def bulk_create
+    target_ids = Array(params[:target_issue_ids]).map(&:to_i).uniq
+    direction = params[:direction]
+
+    target_ids.each do |target_id|
+      target_issue = current_team.issues.find_by(id: target_id)
+      next unless target_issue
+
+      dependency = if direction == 'blocked_by'
+                     IssueDependency.new(blocking_issue: target_issue, blocked_issue: @issue)
+                   else
+                     IssueDependency.new(blocking_issue: @issue, blocked_issue: target_issue)
+                   end
+      dependency.save
+    end
+
+    @issue.reload
+    render_relations
+  end
+
   def create
     target_issue = current_team.issues.find(params[:target_issue_id])
     direction = params[:direction]
@@ -37,6 +62,20 @@ class IssueDependenciesController < ApplicationController
   end
 
   private
+
+  def search_candidates(query)
+    exclude_ids = [@issue.id] + @issue.blocked_issues.pluck(:id) + @issue.blocking_issues.pluck(:id)
+    issues = current_team.issues.not_archived.where.not(id: exclude_ids).order(:team_number)
+
+    if query.present?
+      issues = issues.joins(:team).where(
+        "issues.title ILIKE :q OR CONCAT(teams.identifier, '-', issues.team_number::text) ILIKE :q",
+        q: "%#{query}%"
+      )
+    end
+
+    issues.limit(20)
+  end
 
   def set_issue
     @issue = current_team.issues.includes(:blocked_issues, :blocking_issues,

@@ -1,98 +1,124 @@
 <%= turbo_frame_tag "issue_relations" do %>
   <% blocked_issues = issue.blocked_issues.to_a %>
   <% blocking_issues = issue.blocking_issues.to_a %>
-  <% existing_ids = blocked_issues.map(&:id) + blocking_issues.map(&:id) + [issue.id] %>
-  <% candidates = issue.team.issues.not_archived.where.not(id: existing_ids).order(:team_number) %>
 
-  <!-- Blocking -->
-  <div class="mb-6">
-    <div class="text-xs font-medium text-gray-500 mb-2">Blocking</div>
-    <% blocked_issues.each do |blocked| %>
-      <% dep = issue.blocking_dependencies.find_by(blocked_issue: blocked) %>
-      <div class="flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-sm group mb-1">
-        <%= link_to team_issue_path(issue.team, blocked),
-            data: { turbo_frame: "_top" },
-            class: "flex items-center gap-2 flex-1 min-w-0 text-gray-300 hover:text-accent transition-colors" do %>
-          <span class="font-mono text-xs text-gray-500 shrink-0"><%= blocked.identifier %></span>
-          <span class="truncate"><%= blocked.title %></span>
-        <% end %>
-        <% if dep %>
-          <%= link_to team_issue_issue_dependency_path(issue.team, issue, dep),
-              data: { turbo_method: :delete, turbo_frame: "issue_relations" },
-              class: "shrink-0 text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all cursor-pointer" do %>
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
+  <div data-controller="dependency-modal"
+       data-dependency-modal-search-url-value="<%= search_team_issue_issue_dependencies_path(issue.team, issue) %>">
+
+    <!-- Blocking -->
+    <div class="mb-6">
+      <div class="text-xs font-medium text-gray-500 mb-2">Blocking</div>
+      <% blocked_issues.each do |blocked| %>
+        <% dep = issue.blocking_dependencies.find_by(blocked_issue: blocked) %>
+        <div class="flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-sm group mb-1">
+          <%= link_to team_issue_path(issue.team, blocked),
+              data: { turbo_frame: "_top" },
+              class: "flex items-center gap-2 flex-1 min-w-0 text-gray-300 hover:text-accent transition-colors" do %>
+            <span class="font-mono text-xs text-gray-500 shrink-0"><%= blocked.identifier %></span>
+            <span class="truncate"><%= blocked.title %></span>
           <% end %>
-        <% end %>
-      </div>
-    <% end %>
-    <details class="relative">
-      <summary class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-500 text-sm hover:bg-hover-highlight transition-colors cursor-pointer list-none">
+          <% if dep %>
+            <%= link_to team_issue_issue_dependency_path(issue.team, issue, dep),
+                data: { turbo_method: :delete, turbo_frame: "issue_relations" },
+                class: "shrink-0 text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all cursor-pointer" do %>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            <% end %>
+          <% end %>
+        </div>
+      <% end %>
+      <button type="button"
+              data-action="click->dependency-modal#open"
+              data-dependency-modal-direction-param="blocking"
+              class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-500 text-sm hover:bg-hover-highlight transition-colors cursor-pointer">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
         </svg>
         <span>Add blocking issue...</span>
-      </summary>
-      <div class="absolute top-full left-0 mt-1 w-full bg-foreground border border-stroke rounded-md shadow-lg z-10 max-h-48 overflow-y-auto">
-        <% candidates.each do |candidate| %>
-          <%= link_to team_issue_issue_dependencies_path(issue.team, issue, target_issue_id: candidate.id, direction: "blocking"),
-              data: { turbo_method: :post, turbo_frame: "issue_relations" },
-              class: "block px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors cursor-pointer" do %>
-            <span class="font-mono text-xs text-gray-500"><%= candidate.identifier %></span>
-            <span class="ml-2"><%= candidate.title.truncate(30) %></span>
-          <% end %>
-        <% end %>
-        <% if candidates.empty? %>
-          <div class="px-3 py-3 text-sm text-gray-500 text-center">No available issues</div>
-        <% end %>
-      </div>
-    </details>
-  </div>
+      </button>
+    </div>
 
-  <!-- Blocked By -->
-  <div class="mb-6">
-    <div class="text-xs font-medium text-gray-500 mb-2">Blocked by</div>
-    <% blocking_issues.each do |blocker| %>
-      <% dep = issue.blocked_dependencies.find_by(blocking_issue: blocker) %>
-      <div class="flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-sm group mb-1">
-        <%= link_to team_issue_path(issue.team, blocker),
-            data: { turbo_frame: "_top" },
-            class: "flex items-center gap-2 flex-1 min-w-0 text-gray-300 hover:text-accent transition-colors" do %>
-          <span class="font-mono text-xs text-gray-500 shrink-0"><%= blocker.identifier %></span>
-          <span class="truncate"><%= blocker.title %></span>
-        <% end %>
-        <% if dep %>
-          <%= link_to team_issue_issue_dependency_path(issue.team, issue, dep),
-              data: { turbo_method: :delete, turbo_frame: "issue_relations" },
-              class: "shrink-0 text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all cursor-pointer" do %>
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
+    <!-- Blocked By -->
+    <div class="mb-6">
+      <div class="text-xs font-medium text-gray-500 mb-2">Blocked by</div>
+      <% blocking_issues.each do |blocker| %>
+        <% dep = issue.blocked_dependencies.find_by(blocking_issue: blocker) %>
+        <div class="flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-sm group mb-1">
+          <%= link_to team_issue_path(issue.team, blocker),
+              data: { turbo_frame: "_top" },
+              class: "flex items-center gap-2 flex-1 min-w-0 text-gray-300 hover:text-accent transition-colors" do %>
+            <span class="font-mono text-xs text-gray-500 shrink-0"><%= blocker.identifier %></span>
+            <span class="truncate"><%= blocker.title %></span>
           <% end %>
-        <% end %>
-      </div>
-    <% end %>
-    <details class="relative">
-      <summary class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-500 text-sm hover:bg-hover-highlight transition-colors cursor-pointer list-none">
+          <% if dep %>
+            <%= link_to team_issue_issue_dependency_path(issue.team, issue, dep),
+                data: { turbo_method: :delete, turbo_frame: "issue_relations" },
+                class: "shrink-0 text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all cursor-pointer" do %>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            <% end %>
+          <% end %>
+        </div>
+      <% end %>
+      <button type="button"
+              data-action="click->dependency-modal#open"
+              data-dependency-modal-direction-param="blocked_by"
+              class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-500 text-sm hover:bg-hover-highlight transition-colors cursor-pointer">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
         </svg>
         <span>Add blocked by issue...</span>
-      </summary>
-      <div class="absolute top-full left-0 mt-1 w-full bg-foreground border border-stroke rounded-md shadow-lg z-10 max-h-48 overflow-y-auto">
-        <% candidates.each do |candidate| %>
-          <%= link_to team_issue_issue_dependencies_path(issue.team, issue, target_issue_id: candidate.id, direction: "blocked_by"),
-              data: { turbo_method: :post, turbo_frame: "issue_relations" },
-              class: "block px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors cursor-pointer" do %>
-            <span class="font-mono text-xs text-gray-500"><%= candidate.identifier %></span>
-            <span class="ml-2"><%= candidate.title.truncate(30) %></span>
+      </button>
+    </div>
+
+    <!-- Modal -->
+    <div data-dependency-modal-target="modal" class="hidden fixed inset-0 z-50">
+      <div class="absolute inset-0 bg-black bg-opacity-50"
+           data-action="click->dependency-modal#closeOnBackdrop"></div>
+      <div class="relative z-10 flex items-center justify-center min-h-screen p-4">
+        <div class="bg-foreground border border-stroke rounded-lg w-full max-w-lg shadow-xl">
+          <div class="px-4 pt-4 pb-2">
+            <h3 class="text-sm font-medium text-gray-300" data-dependency-modal-target="title">
+              Add blocking issues
+            </h3>
+          </div>
+
+          <%= form_with url: bulk_create_team_issue_issue_dependencies_path(issue.team, issue),
+                        method: :post,
+                        data: { turbo_frame: "issue_relations" } do |f| %>
+            <input type="hidden" name="direction" value="blocking" data-dependency-modal-target="directionInput">
+
+            <div class="px-4 pb-2">
+              <input type="text"
+                     data-dependency-modal-target="search"
+                     data-action="input->dependency-modal#search"
+                     placeholder="Search issues by title or identifier..."
+                     class="w-full px-3 py-2 bg-background border border-stroke rounded text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-accent"
+                     autocomplete="off">
+            </div>
+
+            <div class="max-h-64 overflow-y-auto px-2 py-1">
+              <turbo-frame id="dependency_search_results" data-dependency-modal-target="frame">
+                <div class="px-3 py-8 text-center text-sm text-gray-500">Search for issues above</div>
+              </turbo-frame>
+            </div>
+
+            <div class="px-4 py-3 border-t border-stroke flex items-center justify-end gap-2">
+              <button type="button"
+                      data-action="click->dependency-modal#close"
+                      class="px-3 py-1.5 text-sm text-gray-400 hover:text-gray-200 rounded cursor-pointer">
+                Cancel
+              </button>
+              <button type="submit"
+                      class="px-3 py-1.5 text-sm bg-accent text-white rounded hover:bg-accent/80 cursor-pointer">
+                Add issues
+              </button>
+            </div>
           <% end %>
-        <% end %>
-        <% if candidates.empty? %>
-          <div class="px-3 py-3 text-sm text-gray-500 text-center">No available issues</div>
-        <% end %>
+        </div>
       </div>
-    </details>
+    </div>
   </div>
 <% end %>
