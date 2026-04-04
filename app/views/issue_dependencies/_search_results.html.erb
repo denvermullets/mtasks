@@ -2,7 +2,7 @@
   <% issues.each do |issue| %>
     <label class="flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer hover:bg-hover-highlight text-sm transition-colors">
       <input type="checkbox" name="target_issue_ids[]" value="<%= issue.id %>"
-             class="w-4 h-4 rounded border-stroke bg-background text-accent focus:ring-accent cursor-pointer">
+             class="rounded bg-background border-stroke accent-accent focus:ring-0 focus:ring-offset-0 cursor-pointer">
       <span class="font-mono text-xs text-gray-500 shrink-0"><%= issue.identifier %></span>
       <span class="text-gray-300 truncate"><%= issue.title %></span>
     </label>
