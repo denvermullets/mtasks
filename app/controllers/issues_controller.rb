@@ -70,11 +70,30 @@ class IssuesController < ApplicationController
     redirect_to team_issues_path(@issue.team), notice: 'Issue was successfully deleted.'
   end
 
+  def search
+    issues = search_issues
+    render json: issues.limit(20).map { |issue|
+      { id: issue.id, identifier: issue.identifier, title: issue.title }
+    }
+  end
+
   private
+
+  def search_issues
+    query = params[:q].to_s.strip
+    issues = current_team.issues.not_archived.includes(:lane)
+    issues = issues.where.not(id: params[:exclude_id]) if params[:exclude_id].present?
+    return issues unless query.present?
+
+    issues.joins(:team).where(
+      "title ILIKE :q OR CONCAT(teams.identifier, '-', issues.team_number::text) ILIKE :q",
+      q: "%#{query}%"
+    )
+  end
 
   def set_issue
     @issue = Issue.includes(:team, :lane, :project, :milestone, :labels, :assignee, :creator,
-                            :sub_issues, comments: :user).find(params[:id])
+                            :sub_issues, :blocked_issues, :blocking_issues, comments: :user).find(params[:id])
   rescue ActiveRecord::RecordNotFound
     redirect_to root_path, alert: 'Issue not found.'
   end
