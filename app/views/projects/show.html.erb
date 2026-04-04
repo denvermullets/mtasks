@@ -1,17 +1,28 @@
-<div class="flex flex-1 min-h-0 bg-background" data-controller="lightbox">
+<div class="flex flex-1 min-h-0 bg-background" data-controller="properties-drawer lightbox">
   <div class="flex-1 flex flex-col overflow-hidden">
     <!-- Top Bar -->
     <div class="h-14 bg-menu border-b border-stroke flex items-center justify-between px-4 shrink-0">
       <div class="flex items-center gap-4">
+        <%= render "shared/mobile_menu_button" %>
         <%= link_to team_projects_path(@team),
             class: "text-sm text-gray-500 hover:text-gray-400 flex items-center gap-2" do %>
           <span>&#8592;</span>
-          <span><%= @team.name %></span>
+          <span class="hidden sm:inline"><%= @team.name %></span>
+          <span class="sm:hidden">Back</span>
         <% end %>
         <span class="text-gray-600">&#8250;</span>
-        <span class="text-sm text-gray-400"><%= @project.name %></span>
+        <span class="text-sm text-gray-400 truncate"><%= @project.name %></span>
       </div>
       <div class="flex items-center gap-2">
+        <!-- Mobile Properties Button -->
+        <button type="button"
+                class="sm:hidden p-2 text-gray-400 hover:text-gray-200 rounded-md hover:bg-gray-800"
+                data-action="click->properties-drawer#toggle"
+                aria-label="Open properties">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
+          </svg>
+        </button>
         <%= link_to "Edit", edit_team_project_path(@team, @project),
             class: "px-3 py-1.5 text-xs font-medium rounded bg-gray-800 text-gray-300 hover:bg-gray-700" %>
       </div>
@@ -95,5 +106,27 @@
       </div>
     </div>
   </div>
+  <!-- Mobile Properties Drawer -->
+  <div data-properties-drawer-target="drawer" class="fixed inset-0 z-50 hidden sm:hidden">
+    <!-- Overlay -->
+    <div class="absolute inset-0 bg-black/50" data-action="click->properties-drawer#close"></div>
+    <!-- Drawer panel (slides in from right, full width) -->
+    <div data-properties-drawer-target="panel" class="absolute inset-y-0 right-0 w-full bg-menu flex flex-col transform translate-x-full transition-transform duration-200 ease-in-out">
+      <!-- Header with close button -->
+      <div class="h-14 border-b border-stroke flex items-center justify-between px-4 shrink-0">
+        <span class="text-sm font-medium text-gray-300">Properties</span>
+        <button type="button" class="p-1 text-gray-400 hover:text-gray-200" data-action="click->properties-drawer#close">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <!-- Sidebar content -->
+      <div class="flex-1 overflow-y-auto">
+        <%= render 'sidebar', project: @project, lanes: @lanes, team_members: @team_members, labels: @labels, milestones: @milestones, mobile: true %>
+      </div>
+    </div>
+  </div>
+
   <%= render "shared/lightbox" %>
 </div>

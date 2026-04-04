@@ -1,4 +1,4 @@
-<div class="flex-1 flex flex-col min-h-0" data-controller="issue-properties-drawer lightbox">
+<div class="flex-1 flex flex-col min-h-0" data-controller="properties-drawer lightbox">
   <!-- Top Bar -->
   <div class="h-14 bg-menu border-b border-stroke flex items-center justify-between px-4">
     <div class="flex items-center gap-4">
@@ -16,7 +16,7 @@
       <!-- Mobile Properties Button -->
       <button type="button"
               class="sm:hidden p-2 text-gray-400 hover:text-gray-200 rounded-md hover:bg-gray-800"
-              data-action="click->issue-properties-drawer#toggle"
+              data-action="click->properties-drawer#toggle"
               aria-label="Open properties">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
@@ -101,15 +101,15 @@
   </div>
 
   <!-- Mobile Properties Drawer -->
-  <div id="issue-properties-drawer" class="fixed inset-0 z-50 hidden sm:hidden">
+  <div data-properties-drawer-target="drawer" class="fixed inset-0 z-50 hidden sm:hidden">
     <!-- Overlay -->
-    <div class="absolute inset-0 bg-black/50" data-action="click->issue-properties-drawer#close"></div>
-    <!-- Drawer panel (slides in from right) -->
-    <div id="issue-properties-panel" class="absolute inset-y-0 right-0 w-80 max-w-[85vw] bg-menu flex flex-col transform translate-x-full transition-transform duration-200 ease-in-out">
+    <div class="absolute inset-0 bg-black/50" data-action="click->properties-drawer#close"></div>
+    <!-- Drawer panel (slides in from right, full width) -->
+    <div data-properties-drawer-target="panel" class="absolute inset-y-0 right-0 w-full bg-menu flex flex-col transform translate-x-full transition-transform duration-200 ease-in-out">
       <!-- Header with close button -->
       <div class="h-14 border-b border-stroke flex items-center justify-between px-4 shrink-0">
         <span class="text-sm font-medium text-gray-300">Properties</span>
-        <button type="button" class="p-1 text-gray-400 hover:text-gray-200" data-action="click->issue-properties-drawer#close">
+        <button type="button" class="p-1 text-gray-400 hover:text-gray-200" data-action="click->properties-drawer#close">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>

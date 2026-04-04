@@ -1,5 +1,5 @@
-<%= turbo_frame_tag "issue_sidebar#{"_mobile" if local_assigns[:mobile]}", class: "flex" do %>
-  <div class="<%= local_assigns[:mobile] ? 'p-6' : 'w-80 border-l border-stroke p-6 overflow-y-auto self-stretch' %>">
+<%= turbo_frame_tag "issue_sidebar#{"_mobile" if local_assigns[:mobile]}", class: local_assigns[:mobile] ? 'flex w-full' : 'flex' do %>
+  <div class="<%= local_assigns[:mobile] ? 'p-6 w-full' : 'w-80 border-l border-stroke p-6 overflow-y-auto self-stretch' %>">
     <%= form_with model: [issue.team, issue],
                   method: :patch,
                   data: { controller: "issue-sidebar" } do |form| %>
