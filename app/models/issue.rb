@@ -19,6 +19,10 @@ class Issue < ApplicationRecord
   has_many :issue_pull_requests, dependent: :destroy
   has_many :pull_requests, through: :issue_pull_requests
   has_many :notifications, dependent: :destroy
+  has_many :blocking_dependencies, class_name: 'IssueDependency', foreign_key: :blocking_issue_id, dependent: :destroy
+  has_many :blocked_dependencies, class_name: 'IssueDependency', foreign_key: :blocked_issue_id, dependent: :destroy
+  has_many :blocked_issues, through: :blocking_dependencies, source: :blocked_issue
+  has_many :blocking_issues, through: :blocked_dependencies, source: :blocking_issue
   has_many_attached :files
 
   # Validations
@@ -28,6 +32,7 @@ class Issue < ApplicationRecord
   # Callbacks
   before_validation :assign_team_number, on: :create
   before_update :set_lane_timestamps, if: :lane_id_changed?
+  after_update :remove_blocking_dependencies, if: :completed?
 
   # Scopes
   scope :archived, -> { where.not(archived_at: nil) }
@@ -56,12 +61,20 @@ class Issue < ApplicationRecord
     update(started_at: Time.current) if started_at.nil?
   end
 
+  def completed?
+    completed_at.present?
+  end
+
   private
 
   def assign_team_number
     return if team_number.present?
 
     self.team_number = team.next_issue_number
+  end
+
+  def remove_blocking_dependencies
+    blocking_dependencies.destroy_all
   end
 
   def set_lane_timestamps

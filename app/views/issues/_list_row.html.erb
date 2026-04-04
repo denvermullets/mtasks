@@ -11,7 +11,16 @@
       class: "block px-4 py-3 text-sm" do %>
   <div class="flex items-center gap-4">
     <!-- ID (fixed width) -->
-    <div class="w-24 text-gray-400 font-mono shrink-0"><%= issue.identifier %></div>
+    <div class="w-24 text-gray-400 font-mono shrink-0 flex items-center gap-1.5">
+      <%= issue.identifier %>
+      <% if issue.blocking_dependencies.any? || issue.blocked_dependencies.any? %>
+        <span class="inline-flex items-center" title="<%= [issue.blocking_dependencies.any? ? "Blocking #{issue.blocking_dependencies.size}" : nil, issue.blocked_dependencies.any? ? "Blocked by #{issue.blocked_dependencies.size}" : nil].compact.join(' · ') %>">
+          <svg class="w-3 h-3 <%= issue.blocked_dependencies.any? ? 'text-red-400' : 'text-yellow-400' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+          </svg>
+        </span>
+      <% end %>
+    </div>
 
     <!-- Title (flexible, takes available space) -->
     <div class="flex-1 text-gray-200 truncate"><%= issue.title %></div>

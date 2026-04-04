@@ -1,5 +1,5 @@
-<%= turbo_frame_tag "issue_sidebar#{"_mobile" if local_assigns[:mobile]}", class: "flex" do %>
-  <div class="<%= local_assigns[:mobile] ? 'p-6' : 'w-80 border-l border-stroke p-6 overflow-y-auto self-stretch' %>">
+<%= turbo_frame_tag "issue_sidebar#{"_mobile" if local_assigns[:mobile]}", class: local_assigns[:mobile] ? 'flex w-full' : 'flex' do %>
+  <div class="<%= local_assigns[:mobile] ? 'p-6 w-full' : 'w-80 border-l border-stroke p-6 overflow-y-auto self-stretch' %>">
     <%= form_with model: [issue.team, issue],
                   method: :patch,
                   data: { controller: "issue-sidebar" } do |form| %>
@@ -11,7 +11,7 @@
         <button type="button"
                 data-action="click->issue-sidebar#toggleDropdown"
           data-dropdown="lane"
-          class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors">
+          class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors cursor-pointer">
           <div class="w-4 h-4 flex items-center justify-center">
             <%= render_lane_icon(issue.lane) %>
           </div>
@@ -23,7 +23,7 @@
                     data-action="click->issue-sidebar#selectLane"
               data-lane-id="<%= lane.id %>"
               data-lane-name="<%= lane.name %>"
-              class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors first:rounded-t-md last:rounded-b-md">
+              class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors cursor-pointer first:rounded-t-md last:rounded-b-md">
               <%= lane.name %>
             </button>
           <% end %>
@@ -38,7 +38,7 @@
         <button type="button"
                 data-action="click->issue-sidebar#toggleDropdown"
           data-dropdown="priority"
-          class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors">
+          class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors cursor-pointer">
           <div class="w-4 h-4 flex items-center justify-center">
             <%= render_priority_icon(issue.priority) %>
           </div>
@@ -50,7 +50,7 @@
                     data-action="click->issue-sidebar#selectPriority"
               data-priority-value="<%= value %>"
               data-priority-label="<%= label %>"
-              class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors first:rounded-t-md last:rounded-b-md">
+              class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors cursor-pointer first:rounded-t-md last:rounded-b-md">
               <%= label %>
             </button>
           <% end %>
@@ -65,7 +65,7 @@
         <button type="button"
                 data-action="click->issue-sidebar#toggleDropdown"
           data-dropdown="assignee"
-          class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors">
+          class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors cursor-pointer">
           <% if issue.assignee %>
             <%= user_avatar(issue.assignee, size: "sm") %>
             <span data-issue-sidebar-target="assigneeLabel"><%= issue.assignee.name %></span>
@@ -79,7 +79,7 @@
                   data-action="click->issue-sidebar#selectAssignee"
             data-assignee-id
             data-assignee-name="No assignee"
-            class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors first:rounded-t-md">
+            class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors cursor-pointer first:rounded-t-md">
             No assignee
           </button>
           <% team_members.each do |member| %>
@@ -87,7 +87,7 @@
                     data-action="click->issue-sidebar#selectAssignee"
               data-assignee-id="<%= member.id %>"
               data-assignee-name="<%= member.name %>"
-              class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors last:rounded-b-md">
+              class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors cursor-pointer last:rounded-b-md">
               <%= member.name %>
             </button>
           <% end %>
@@ -102,7 +102,7 @@
         <button type="button"
                 data-action="click->issue-sidebar#toggleDropdown"
           data-dropdown="estimate"
-          class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors">
+          class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors cursor-pointer">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
           </svg>
@@ -117,7 +117,7 @@
                   data-action="click->issue-sidebar#selectEstimate"
             data-estimate-value
             data-estimate-label="No estimate"
-            class="w-full text-left px-3 py-2 text-sm <%= issue.estimate.blank? ? 'bg-hover-highlight text-accent' : 'text-gray-300' %> hover:bg-hover-highlight transition-colors first:rounded-t-md">
+            class="w-full text-left px-3 py-2 text-sm <%= issue.estimate.blank? ? 'bg-hover-highlight text-accent' : 'text-gray-300' %> hover:bg-hover-highlight transition-colors cursor-pointer first:rounded-t-md">
             <% if issue.estimate.blank? %>✓<% end %> No estimate
           </button>
           <%
@@ -133,7 +133,7 @@
                     data-action="click->issue-sidebar#selectEstimate"
               data-estimate-value="<%= points %>"
               data-estimate-label="<%= points %> <%= 'point'.pluralize(points) %>"
-              class="w-full text-left px-3 py-2 text-sm <%= is_selected ? 'bg-hover-highlight text-accent' : 'text-gray-300' %> hover:bg-hover-highlight transition-colors last:rounded-b-md">
+              class="w-full text-left px-3 py-2 text-sm <%= is_selected ? 'bg-hover-highlight text-accent' : 'text-gray-300' %> hover:bg-hover-highlight transition-colors cursor-pointer last:rounded-b-md">
               <% if is_selected %>✓<% end %> <%= points %> <%= 'point'.pluralize(points) %>
             </button>
           <% end %>
@@ -148,7 +148,7 @@
         <button type="button"
                 data-action="click->issue-sidebar#toggleDropdown"
           data-dropdown="project"
-          class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors">
+          class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors cursor-pointer">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
           </svg>
@@ -163,7 +163,7 @@
                   data-action="click->issue-sidebar#selectProject"
             data-project-id
             data-project-name="No project"
-            class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors first:rounded-t-md">
+            class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors cursor-pointer first:rounded-t-md">
             No project
           </button>
           <% projects.each do |project| %>
@@ -171,13 +171,13 @@
                     data-action="click->issue-sidebar#selectProject"
               data-project-id="<%= project.id %>"
               data-project-name="<%= project.name %>"
-              class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors last:rounded-b-md">
+              class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors cursor-pointer last:rounded-b-md">
               <%= project.name %>
             </button>
           <% end %>
           <div class="border-t border-stroke">
             <%= link_to new_team_project_path(issue.team),
-                class: "flex items-center gap-2 w-full text-left px-3 py-2 text-sm text-accent hover:bg-hover-highlight transition-colors rounded-b-md",
+                class: "flex items-center gap-2 w-full text-left px-3 py-2 text-sm text-accent hover:bg-hover-highlight transition-colors cursor-pointer rounded-b-md",
                 data: { turbo_frame: "_top" } do %>
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
@@ -196,7 +196,7 @@
         <button type="button"
                 data-action="click->issue-sidebar#toggleDropdown"
           data-dropdown="labels"
-          class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors">
+          class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors cursor-pointer">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
           </svg>
@@ -225,7 +225,7 @@
         <button type="button"
                 data-action="click->issue-sidebar#toggleDropdown"
                 data-dropdown="milestone"
-                class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors">
+                class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors cursor-pointer">
           <% if issue.milestone %>
             <span style="color: <%= issue.milestone.status_color %>;">◆</span>
             <span data-issue-sidebar-target="milestoneLabel"><%= issue.milestone.name %></span>
@@ -242,6 +242,8 @@
         </div>
       </div>
     </div>
+    <!-- Relations -->
+    <%= render "issue_dependencies/relations", issue: issue %>
     <!-- Due Date -->
     <% if issue.due_date %>
       <div class="mb-6">
@@ -256,7 +258,7 @@
         <div class="space-y-2">
           <% issue.pull_requests.recent.each do |pr| %>
             <a href="<%= pr.html_url %>" target="_blank" rel="noopener noreferrer"
-               class="block px-3 py-2 rounded-md bg-foreground border border-stroke hover:bg-hover-highlight transition-colors">
+               class="block px-3 py-2 rounded-md bg-foreground border border-stroke hover:bg-hover-highlight transition-colors cursor-pointer">
               <div class="flex items-center justify-between gap-2">
                 <div class="flex-1 min-w-0">
                   <div class="text-sm text-gray-300 truncate">#<%= pr.pr_number %> <%= pr.title %></div>

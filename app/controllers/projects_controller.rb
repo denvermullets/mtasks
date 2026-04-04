@@ -10,7 +10,9 @@ class ProjectsController < ApplicationController
   end
 
   def show
-    @issues = @project.issues.not_archived.includes(:lane, :assignee, :labels).order(created_at: :desc)
+    @issues = @project.issues.not_archived
+                      .includes(:lane, :assignee, :labels, :blocking_dependencies, :blocked_dependencies)
+                      .order(created_at: :desc)
     @lanes = current_team.lanes.order(:position)
     @team_members = current_team.users.order(:name)
     @labels = current_team.labels.order(:name)

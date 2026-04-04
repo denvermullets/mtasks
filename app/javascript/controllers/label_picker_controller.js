@@ -421,25 +421,42 @@ export default class extends Controller {
         rect = referenceElement.getBoundingClientRect();
       }
 
-      // Position to the left of the reference element
-      let top = rect.top;
-      let left = rect.left - overlayWidth - 8; // 8px gap
+      const isMobile = window.innerWidth < 640;
 
-      // If it would go off the left edge, position to the right instead
-      if (left < 8) {
-        left = rect.right + 8;
-      }
+      if (isMobile) {
+        // On mobile, position below the button and center horizontally
+        let top = rect.bottom + 4;
+        let left = (window.innerWidth - overlayWidth) / 2;
 
-      // Check if overlay would go off-screen vertically
-      if (top + overlayHeight > window.innerHeight) {
-        top = window.innerHeight - overlayHeight - 8;
-      }
-      if (top < 8) {
-        top = 8;
-      }
+        if (left < 8) left = 8;
+        if (top + overlayHeight > window.innerHeight) {
+          top = rect.top - overlayHeight - 4;
+        }
+        if (top < 8) top = 8;
 
-      this.pickerTarget.style.top = `${top}px`;
-      this.pickerTarget.style.left = `${left}px`;
+        this.pickerTarget.style.top = `${top}px`;
+        this.pickerTarget.style.left = `${left}px`;
+      } else {
+        // Position to the left of the reference element
+        let top = rect.top;
+        let left = rect.left - overlayWidth - 8; // 8px gap
+
+        // If it would go off the left edge, position to the right instead
+        if (left < 8) {
+          left = rect.right + 8;
+        }
+
+        // Check if overlay would go off-screen vertically
+        if (top + overlayHeight > window.innerHeight) {
+          top = window.innerHeight - overlayHeight - 8;
+        }
+        if (top < 8) {
+          top = 8;
+        }
+
+        this.pickerTarget.style.top = `${top}px`;
+        this.pickerTarget.style.left = `${left}px`;
+      }
     }
   }
 
