@@ -65,7 +65,9 @@ class IssueDependenciesController < ApplicationController
 
   def search_candidates(query)
     exclude_ids = [@issue.id] + @issue.blocked_issues.pluck(:id) + @issue.blocking_issues.pluck(:id)
-    issues = current_team.issues.not_archived.where.not(id: exclude_ids).order(:team_number)
+    issues = current_team.issues.not_archived.not_completed
+                         .where(canceled_at: nil)
+                         .where.not(id: exclude_ids).order(:team_number)
 
     if query.present?
       issues = issues.joins(:team).where(

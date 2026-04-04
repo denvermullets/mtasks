@@ -64,7 +64,14 @@
                 <% @issues.each do |issue| %>
                   <%= link_to team_issue_path(@team, issue),
                       class: "flex items-center gap-4 px-3 py-2.5 rounded-md hover:bg-hover-highlight transition-colors" do %>
-                    <span class="font-mono text-xs text-gray-500 w-20 shrink-0"><%= issue.identifier %></span>
+                    <span class="font-mono text-xs text-gray-500 w-20 shrink-0 inline-flex items-center gap-1.5">
+                      <%= issue.identifier %>
+                      <% if issue.blocking_dependencies.any? || issue.blocked_dependencies.any? %>
+                        <svg class="w-3 h-3 <%= issue.blocked_dependencies.any? ? 'text-red-400' : 'text-yellow-400' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" title="<%= [issue.blocking_dependencies.any? ? "Blocking #{issue.blocking_dependencies.size}" : nil, issue.blocked_dependencies.any? ? "Blocked by #{issue.blocked_dependencies.size}" : nil].compact.join(' · ') %>">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+                        </svg>
+                      <% end %>
+                    </span>
                     <span class="text-sm text-gray-200 flex-1 truncate"><%= issue.title %></span>
                     <% if issue.lane %>
                       <span class="text-xs text-gray-500"><%= issue.lane.name %></span>
