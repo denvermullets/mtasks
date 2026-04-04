@@ -1,4 +1,6 @@
 class IssueDependency < ApplicationRecord
+  has_paper_trail
+
   belongs_to :blocking_issue, class_name: 'Issue'
   belongs_to :blocked_issue, class_name: 'Issue'
 

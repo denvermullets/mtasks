@@ -32,6 +32,7 @@ class Issue < ApplicationRecord
   # Callbacks
   before_validation :assign_team_number, on: :create
   before_update :set_lane_timestamps, if: :lane_id_changed?
+  after_update :remove_blocking_dependencies, if: :completed?
 
   # Scopes
   scope :archived, -> { where.not(archived_at: nil) }
@@ -60,12 +61,20 @@ class Issue < ApplicationRecord
     update(started_at: Time.current) if started_at.nil?
   end
 
+  def completed?
+    completed_at.present?
+  end
+
   private
 
   def assign_team_number
     return if team_number.present?
 
     self.team_number = team.next_issue_number
+  end
+
+  def remove_blocking_dependencies
+    blocking_dependencies.destroy_all
   end
 
   def set_lane_timestamps

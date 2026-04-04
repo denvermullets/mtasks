@@ -10,6 +10,8 @@ class VersionDescriptionService < Service
   end
 
   def call
+    return describe_dependency if @version.item_type == 'IssueDependency'
+
     descriptions = TRACKED_ATTRIBUTES.filter_map { |attr| describe_attribute(attr) }
     descriptions.empty? ? 'updated the issue' : descriptions.join(', ')
   end
@@ -17,12 +19,24 @@ class VersionDescriptionService < Service
   def self.timeline(issue)
     versions = issue.versions.where.not(event: 'create')
     comments = issue.comments.top_level.includes(:user)
+    dep_versions = dependency_versions(issue)
 
     entries = versions.map { |v| { type: :version, record: v, created_at: v.created_at } }
+    dep_versions.each { |v| entries << { type: :version, record: v, created_at: v.created_at } }
     comments.each { |c| entries << { type: :comment, record: c, created_at: c.created_at } }
 
     entries.sort_by { |e| e[:created_at] }
   end
+
+  def self.dependency_versions(issue)
+    id = issue.id
+    PaperTrail::Version.where(item_type: 'IssueDependency').where(
+      "object_changes -> 'blocking_issue_id' @> :arr OR object_changes -> 'blocked_issue_id' @> :arr " \
+      "OR object ->> 'blocking_issue_id' = :id_str OR object ->> 'blocked_issue_id' = :id_str",
+      arr: "[#{id}]", id_str: id.to_s
+    )
+  end
+  private_class_method :dependency_versions
 
   private
 
@@ -86,6 +100,28 @@ class VersionDescriptionService < Service
 
   def describe_parent_issue_id(_old_val, _new_val)
     'changed parent issue'
+  end
+
+  def describe_dependency
+    ids = dependency_issue_ids
+    blocking_name = h(issue_identifier(ids[:blocking]) || 'Unknown')
+    blocked_name = h(issue_identifier(ids[:blocked]) || 'Unknown')
+    action = @version.event == 'destroy' ? 'removed' : 'added'
+
+    "#{action} dependency: <strong>#{blocking_name}</strong> blocking <strong>#{blocked_name}</strong>"
+  end
+
+  def dependency_issue_ids
+    data = @version.event == 'destroy' ? (@version.object || {}) : @changes
+    if @version.event == 'destroy'
+      { blocking: data['blocking_issue_id'], blocked: data['blocked_issue_id'] }
+    else
+      { blocking: data['blocking_issue_id']&.last, blocked: data['blocked_issue_id']&.last }
+    end
+  end
+
+  def issue_identifier(id)
+    Issue.find_by(id: id)&.identifier
   end
 
   def user_name(id)

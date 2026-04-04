@@ -9,7 +9,8 @@ class IssuesController < ApplicationController
 
   def index
     base_issues = current_team.issues.not_archived.includes(
-      :lane, :project, :milestone, :labels, :assignee, :creator
+      :lane, :project, :milestone, :labels, :assignee, :creator,
+      :blocking_dependencies, :blocked_dependencies
     )
 
     @display_service = IssueDisplayService.new(base_issues, @display_options, current_team)
@@ -117,7 +118,8 @@ class IssuesController < ApplicationController
   def load_board_data
     load_display_options
     base_issues = current_team.issues.not_archived.includes(
-      :lane, :project, :milestone, :labels, :assignee, :creator
+      :lane, :project, :milestone, :labels, :assignee, :creator,
+      :blocking_dependencies, :blocked_dependencies
     )
     @display_service = IssueDisplayService.new(base_issues, @display_options, current_team)
     @grouped_issues = @display_service.grouped_issues
