@@ -20,8 +20,6 @@ export default class extends Controller {
     "labelsDropdown",
     "milestoneDropdown",
     "milestoneLabel",
-    "blockingDropdown",
-    "blockedByDropdown",
   ];
 
   connect() {
@@ -88,8 +86,6 @@ export default class extends Controller {
       "estimateDropdown",
       "labelsDropdown",
       "milestoneDropdown",
-      "blockingDropdown",
-      "blockedByDropdown",
     ];
 
     dropdowns.forEach((dropdown) => {
@@ -152,70 +148,6 @@ export default class extends Controller {
 
     // Submit the form
     this.element.requestSubmit();
-  }
-
-  async addDependency(event) {
-    event.stopPropagation();
-    const targetIssueId = event.currentTarget.dataset.targetIssueId;
-    const direction = event.currentTarget.dataset.direction;
-    const issueId = event.currentTarget.dataset.issueId;
-    const teamId = event.currentTarget.dataset.teamId;
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-
-    try {
-      const response = await fetch(
-        `/teams/${teamId}/issues/${issueId}/issue_dependencies`,
-        {
-          method: "POST",
-          headers: {
-            Accept: "text/vnd.turbo-stream.html",
-            "Content-Type": "application/json",
-            "X-CSRF-Token": csrfToken,
-          },
-          body: JSON.stringify({
-            target_issue_id: targetIssueId,
-            direction: direction,
-          }),
-        }
-      );
-
-      if (response.ok) {
-        const { Turbo } = await import("@hotwired/turbo-rails");
-        const html = await response.text();
-        Turbo.renderStreamMessage(html);
-      }
-    } catch (error) {
-      console.error("Failed to add dependency:", error);
-    }
-  }
-
-  async removeDependency(event) {
-    event.stopPropagation();
-    const dependencyId = event.currentTarget.dataset.dependencyId;
-    const issueId = event.currentTarget.dataset.issueId;
-    const teamId = event.currentTarget.dataset.teamId;
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-
-    try {
-      const response = await fetch(
-        `/teams/${teamId}/issues/${issueId}/issue_dependencies/${dependencyId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Accept: "text/vnd.turbo-stream.html",
-            "X-CSRF-Token": csrfToken,
-          },
-        }
-      );
-
-      if (response.ok) {
-        const { Turbo } = await import("@hotwired/turbo-rails");
-        const html = await response.text();
-        Turbo.renderStreamMessage(html);
-      }
-    } catch (error) {
-      console.error("Failed to remove dependency:", error);
-    }
   }
 
   handleKeyDown(event) {

@@ -1,9 +1,0 @@
-<%# Update the sidebar %>
-<%= turbo_stream.replace "issue_sidebar", partial: "issues/sidebar", locals: {
-  issue: @issue,
-  lanes: @lanes,
-  team_members: @team_members,
-  projects: @projects,
-  labels: @labels,
-  milestones: @milestones
-} %>
