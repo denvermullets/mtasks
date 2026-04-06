@@ -5,9 +5,28 @@ module Api
 
       def index
         labels = current_team.labels.order(:name)
-        render json: labels.map { |l|
-          { id: l.id, name: l.name, color: l.color }
-        }
+        render json: labels.map { |l| serialize(l) }
+      end
+
+      def create
+        label = current_team.labels.new(label_params)
+        label.color ||= Label.random_color
+
+        if label.save
+          render json: serialize(label), status: :created
+        else
+          render_validation_errors(label)
+        end
+      end
+
+      private
+
+      def label_params
+        params.require(:label).permit(:name, :color)
+      end
+
+      def serialize(label)
+        { id: label.id, name: label.name, color: label.color }
       end
     end
   end
