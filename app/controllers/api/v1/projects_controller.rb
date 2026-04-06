@@ -2,12 +2,57 @@ module Api
   module V1
     class ProjectsController < BaseController
       before_action :set_current_team
+      before_action :set_project, only: %i[show update destroy]
 
       def index
-        projects = current_team.projects.order(:name)
-        render json: projects.map { |p|
-          { id: p.id, name: p.name, description: p.description }
-        }
+        projects = current_team.projects.includes(:lead, :milestone).order(:name)
+        render json: projects.map { |p| serialize(p) }
+      end
+
+      def show
+        render json: serialize(@project, detailed: true)
+      end
+
+      def create
+        project = current_team.projects.new(project_params)
+
+        if project.save
+          render json: serialize(project), status: :created
+        else
+          render_validation_errors(project)
+        end
+      end
+
+      def update
+        if @project.update(project_params)
+          render json: serialize(@project)
+        else
+          render_validation_errors(@project)
+        end
+      end
+
+      def destroy
+        @project.destroy
+        head :no_content
+      end
+
+      private
+
+      def set_project
+        @project = current_team.projects.find(params[:id])
+      rescue ActiveRecord::RecordNotFound
+        render json: { error: 'Not Found', message: 'Project not found' }, status: :not_found
+      end
+
+      def project_params
+        params.require(:project).permit(
+          :name, :description, :milestone_id, :priority, :status,
+          :lead_id, :start_date, :due_date, label_ids: []
+        )
+      end
+
+      def serialize(project, detailed: false)
+        ProjectSerializer.new(project, detailed: detailed).as_json
       end
     end
   end

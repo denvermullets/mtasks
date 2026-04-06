@@ -58,10 +58,12 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       resources :teams, only: [:index] do
-        resources :issues, only: %i[index show create update]
+        resources :issues, only: %i[index show create update] do
+          resources :issue_dependencies, only: %i[create destroy], controller: 'issue_dependencies'
+        end
         resources :lanes, only: [:index]
-        resources :labels, only: [:index]
-        resources :projects, only: [:index]
+        resources :labels, only: %i[index create]
+        resources :projects, only: %i[index show create update destroy]
         resources :members, only: [:index]
       end
     end
