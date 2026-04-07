@@ -90,7 +90,7 @@ export default class extends Controller {
           <span class="text-gray-300 font-medium ml-1">${lastStarted}</span>
         </div>
         <div class="flex items-center gap-1.5">
-          <span class="w-2.5 h-2.5 rounded-sm" style="background: #6366f1"></span>
+          <span class="w-2.5 h-2.5 rounded-sm" style="background: #92E8D4"></span>
           <span class="text-gray-400">Completed</span>
           <span class="text-gray-300 font-medium ml-1">${lastCompleted}</span>
         </div>
@@ -113,8 +113,8 @@ export default class extends Controller {
         <path d="${startedArea}" fill="#eab308" opacity="0.1" />
 
         <!-- Completed area -->
-        <path d="${completedArea}" fill="#6366f1" opacity="0.3" />
-        <path d="${completedLine}" fill="none" stroke="#6366f1" stroke-width="2" />
+        <path d="${completedArea}" fill="#92E8D4" opacity="0.3" />
+        <path d="${completedLine}" fill="none" stroke="#92E8D4" stroke-width="2" />
 
         <!-- Expected line -->
         ${expectedLine}
@@ -139,7 +139,7 @@ export default class extends Controller {
 
     this.element.innerHTML = `
       <svg viewBox="0 0 ${width} ${height}" class="w-full h-8">
-        <path d="${completedArea}" fill="#6366f1" opacity="0.4" />
+        <path d="${completedArea}" fill="#92E8D4" opacity="0.4" />
         <path d="${scopeLine}" fill="none" stroke="#6b7280" stroke-width="1" />
       </svg>
     `

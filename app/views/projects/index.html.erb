@@ -13,14 +13,6 @@
       <span class="text-sm text-gray-400">Projects</span>
     </div>
     <div class="flex items-center gap-2">
-      <div class="flex items-center gap-1 mr-2">
-        <span class="text-xs text-gray-600 mr-1">Sort:</span>
-        <% %w[created velocity].each do |sort_option| %>
-          <%= link_to sort_option.capitalize,
-              team_projects_path(current_team, sort: sort_option),
-              class: "px-2 py-0.5 text-xs rounded #{@index_sort == sort_option ? 'bg-foreground border border-stroke text-gray-100' : 'text-gray-500 hover:text-gray-300'}" %>
-        <% end %>
-      </div>
       <%= link_to "New Project",
           new_team_project_path(current_team),
           class: "px-3 py-1.5 text-xs font-medium rounded bg-gray-800 text-gray-300 hover:bg-gray-700" %>
@@ -28,6 +20,28 @@
   </div>
 
   <div class="flex-1 overflow-y-auto p-6">
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center gap-3">
+        <span class="text-xs text-gray-500">Sort by</span>
+        <% %w[created velocity].each do |sort_option| %>
+          <% active = @index_sort == sort_option %>
+          <% if active %>
+            <% next_dir = @sort_dir == 'desc' ? 'asc' : 'desc' %>
+            <%= link_to team_projects_path(current_team, sort: sort_option, dir: next_dir),
+                class: "flex items-center gap-1 px-2 py-0.5 text-xs rounded bg-foreground border border-stroke text-gray-100" do %>
+              <span><%= sort_option.capitalize %></span>
+              <span class="text-gray-400"><%= @sort_dir == 'desc' ? '▼' : '▲' %></span>
+            <% end %>
+          <% else %>
+            <%= link_to sort_option.capitalize,
+                team_projects_path(current_team, sort: sort_option, dir: 'desc'),
+                class: "px-2 py-0.5 text-xs rounded text-gray-500 hover:text-gray-300" %>
+          <% end %>
+        <% end %>
+      </div>
+      <span class="text-xs text-gray-600"><%= pluralize(@projects.size, 'project') %></span>
+    </div>
+
     <% if @projects.any? %>
       <div class="space-y-3">
         <% @projects.each do |project| %>

@@ -17,3 +17,34 @@
 <% if @latest_version&.event == 'update' %>
   <%= turbo_stream.append "activity_list", partial: "issues/activity_entry", locals: { version: @latest_version } %>
 <% end %>
+
+<%# Update project progress chart and issues list if issue belongs to a project %>
+<% if @issue.project %>
+  <% project = @issue.project.reload %>
+  <%= turbo_stream.replace "project_progress_chart_#{project.id}" do %>
+    <div id="project_progress_chart_<%= project.id %>">
+      <% if project.total_issues_count > 0 %>
+        <div class="mb-6"
+             data-controller="progress-chart"
+             data-progress-chart-data-value="<%= project.progress_chart_data.to_json %>"
+             data-progress-chart-expected-value="<%= (project.expected_progress_line || []).to_json %>"
+             data-progress-chart-behind-schedule-value="<%= project.behind_schedule? %>">
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% project_issues = project.issues.not_archived
+       .includes(:lane, :assignee, :labels, :blocking_dependencies, :blocked_dependencies)
+       .order(created_at: :desc) %>
+  <%= turbo_stream.replace "project_issues_list_#{project.id}" do %>
+    <div id="project_issues_list_<%= project.id %>">
+      <%= render "projects/issues_list",
+          project: project,
+          issues: project_issues,
+          team: @issue.team,
+          lanes: @issue.team.lanes.order(:position),
+          labels: @issue.team.labels.order(:name) %>
+    </div>
+  <% end %>
+<% end %>
