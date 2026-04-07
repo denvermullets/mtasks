@@ -7,10 +7,12 @@ class ProjectsController < ApplicationController
 
   def index
     @index_sort = params[:sort].presence_in(%w[created velocity]) || 'created'
+    @sort_dir = params[:dir].presence_in(%w[asc desc]) || 'desc'
     @projects = current_team.projects.includes(:milestone)
+    direction = @sort_dir.to_sym
     @projects = case @index_sort
-                when 'velocity' then @projects.order(velocity_score: :desc, created_at: :desc)
-                else @projects.order(created_at: :desc)
+                when 'velocity' then @projects.order(velocity_score: direction, created_at: direction)
+                else @projects.order(created_at: direction)
                 end
   end
 

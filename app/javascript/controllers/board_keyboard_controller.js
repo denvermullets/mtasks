@@ -145,7 +145,15 @@ export default class extends Controller {
     const teamIndex = pathParts.indexOf("teams");
     if (teamIndex !== -1 && pathParts[teamIndex + 1]) {
       const teamId = pathParts[teamIndex + 1];
-      window.location.href = `/teams/${teamId}/issues/new`;
+      let url = `/teams/${teamId}/issues/new`;
+
+      // If on a project page, pre-select the project
+      const projectIndex = pathParts.indexOf("projects");
+      if (projectIndex !== -1 && pathParts[projectIndex + 1]) {
+        url += `?project_id=${pathParts[projectIndex + 1]}`;
+      }
+
+      window.location.href = url;
     } else {
       console.error("Could not determine team ID from URL");
     }

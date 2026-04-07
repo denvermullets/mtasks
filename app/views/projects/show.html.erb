@@ -1,4 +1,4 @@
-<div class="flex flex-1 min-h-0 bg-background" data-controller="properties-drawer lightbox">
+<div class="flex flex-1 min-h-0 bg-background" data-controller="properties-drawer lightbox board-keyboard">
   <div class="flex-1 flex flex-col overflow-hidden">
     <!-- Top Bar -->
     <div class="h-14 bg-menu border-b border-stroke flex items-center justify-between px-4 shrink-0">
@@ -63,15 +63,16 @@
 
           <!-- Issues Section -->
           <div class="border-t border-stroke pt-8">
-            <% if @project.total_issues_count > 0 %>
-              <!-- Progress Chart -->
-              <div class="mb-6"
-                   data-controller="progress-chart"
-                   data-progress-chart-data-value="<%= @project.progress_chart_data.to_json %>"
-                   data-progress-chart-expected-value="<%= (@project.expected_progress_line || []).to_json %>"
-                   data-progress-chart-behind-schedule-value="<%= @project.behind_schedule? %>">
-              </div>
-            <% end %>
+            <div id="project_progress_chart_<%= @project.id %>">
+              <% if @project.total_issues_count > 0 %>
+                <div class="mb-6"
+                     data-controller="progress-chart"
+                     data-progress-chart-data-value="<%= @project.progress_chart_data.to_json %>"
+                     data-progress-chart-expected-value="<%= (@project.expected_progress_line || []).to_json %>"
+                     data-progress-chart-behind-schedule-value="<%= @project.behind_schedule? %>">
+                </div>
+              <% end %>
+            </div>
 
             <div class="flex items-center justify-between mb-4">
               <h2 class="text-sm font-semibold text-gray-400">
@@ -88,32 +89,9 @@
               </div>
             </div>
 
-            <% if @issues.any? %>
-              <div class="space-y-1">
-                <% @issues.each do |issue| %>
-                  <%= link_to team_issue_path(@team, issue),
-                      class: "flex items-center gap-4 px-3 py-2.5 rounded-md hover:bg-hover-highlight transition-colors" do %>
-                    <span class="font-mono text-xs text-gray-500 w-20 shrink-0 inline-flex items-center gap-1.5">
-                      <%= issue.identifier %>
-                      <% if issue.blocking_dependencies.any? || issue.blocked_dependencies.any? %>
-                        <svg class="w-3 h-3 <%= issue.blocked_dependencies.any? ? 'text-red-400' : 'text-yellow-400' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" title="<%= [issue.blocking_dependencies.any? ? "Blocking #{issue.blocking_dependencies.size}" : nil, issue.blocked_dependencies.any? ? "Blocked by #{issue.blocked_dependencies.size}" : nil].compact.join(' · ') %>">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
-                        </svg>
-                      <% end %>
-                    </span>
-                    <span class="text-sm text-gray-200 flex-1 truncate"><%= issue.title %></span>
-                    <% if issue.lane %>
-                      <span class="text-xs text-gray-500"><%= issue.lane.name %></span>
-                    <% end %>
-                    <% if issue.assignee %>
-                      <span class="text-xs text-gray-400"><%= issue.assignee.name %></span>
-                    <% end %>
-                  <% end %>
-                <% end %>
-              </div>
-            <% else %>
-              <p class="text-sm text-gray-500 py-4">No issues assigned to this project yet.</p>
-            <% end %>
+            <div id="project_issues_list_<%= @project.id %>">
+              <%= render "projects/issues_list", project: @project, issues: @issues, team: @team, lanes: @lanes, labels: @labels %>
+            </div>
           </div>
         </div>
       </div>
