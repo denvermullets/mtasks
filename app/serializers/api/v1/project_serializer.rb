@@ -22,6 +22,11 @@ module Api
           lead: serialize_record(@project.lead, :name),
           start_date: @project.start_date,
           due_date: @project.due_date,
+          velocity_score: @project.velocity_score,
+          completed_issues_count: @project.completed_issues_count,
+          total_issues_count: @project.total_issues_count,
+          progress_percentage: @project.progress_percentage,
+          behind_schedule: @project.behind_schedule?,
           created_at: @project.created_at,
           updated_at: @project.updated_at
         }

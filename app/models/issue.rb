@@ -33,6 +33,8 @@ class Issue < ApplicationRecord
   before_validation :assign_team_number, on: :create
   before_update :set_lane_timestamps, if: :lane_id_changed?
   after_update :remove_blocking_dependencies, if: :completed?
+  after_save :update_project_velocity
+  after_destroy :update_project_velocity
 
   # Scopes
   scope :archived, -> { where.not(archived_at: nil) }
@@ -75,6 +77,14 @@ class Issue < ApplicationRecord
 
   def remove_blocking_dependencies
     blocking_dependencies.destroy_all
+  end
+
+  def update_project_velocity
+    project&.recalculate_velocity!
+    # If project_id changed, recalculate the old project too
+    return unless saved_change_to_project_id? && project_id_before_last_save.present?
+
+    Project.find_by(id: project_id_before_last_save)&.recalculate_velocity!
   end
 
   def set_lane_timestamps

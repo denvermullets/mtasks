@@ -6,13 +6,17 @@ class ProjectsController < ApplicationController
   before_action :set_project, only: %i[show edit update destroy purge_file]
 
   def index
-    @projects = current_team.projects.includes(:milestone).order(created_at: :desc)
+    @index_sort = params[:sort].presence_in(%w[created velocity]) || 'created'
+    @projects = current_team.projects.includes(:milestone)
+    @projects = case @index_sort
+                when 'velocity' then @projects.order(velocity_score: :desc, created_at: :desc)
+                else @projects.order(created_at: :desc)
+                end
   end
 
   def show
-    @issues = @project.issues.not_archived
-                      .includes(:lane, :assignee, :labels, :blocking_dependencies, :blocked_dependencies)
-                      .order(created_at: :desc)
+    @sort = params[:sort].presence_in(%w[newest status updated priority]) || 'newest'
+    @issues = sorted_project_issues
     @lanes = current_team.lanes.order(:position)
     @team_members = current_team.users.order(:name)
     @labels = current_team.labels.order(:name)
@@ -81,6 +85,18 @@ class ProjectsController < ApplicationController
       partial: 'projects/sidebar',
       locals: { project: @project, team_members: @team_members, labels: @labels, milestones: @milestones }
     )
+  end
+
+  def sorted_project_issues
+    base = @project.issues.not_archived
+                   .includes(:lane, :assignee, :labels, :blocking_dependencies, :blocked_dependencies)
+
+    case @sort
+    when 'status'   then base.joins(:lane).order('lanes.position ASC, issues.created_at DESC')
+    when 'updated'  then base.order(updated_at: :desc)
+    when 'priority' then base.order(priority: :asc, created_at: :desc)
+    else base.order(created_at: :desc)
+    end
   end
 
   def load_form_data
