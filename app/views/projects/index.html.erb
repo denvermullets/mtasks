@@ -13,6 +13,14 @@
       <span class="text-sm text-gray-400">Projects</span>
     </div>
     <div class="flex items-center gap-2">
+      <div class="flex items-center gap-1 mr-2">
+        <span class="text-xs text-gray-600 mr-1">Sort:</span>
+        <% %w[created velocity].each do |sort_option| %>
+          <%= link_to sort_option.capitalize,
+              team_projects_path(current_team, sort: sort_option),
+              class: "px-2 py-0.5 text-xs rounded #{@index_sort == sort_option ? 'bg-foreground border border-stroke text-gray-100' : 'text-gray-500 hover:text-gray-300'}" %>
+        <% end %>
+      </div>
       <%= link_to "New Project",
           new_team_project_path(current_team),
           class: "px-3 py-1.5 text-xs font-medium rounded bg-gray-800 text-gray-300 hover:bg-gray-700" %>
@@ -32,13 +40,26 @@
                     <p class="text-sm text-gray-400 line-clamp-2"><%= project.description %></p>
                   <% end %>
                   <div class="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                    <span><%= pluralize(project.issues.count, 'issue') %></span>
+                    <span><%= pluralize(project.total_issues_count, 'issue') %></span>
+                    <span>• <%= project.progress_percentage %>% complete</span>
+                    <% if project.velocity_score > 0 %>
+                      <span>• <%= project.velocity_score %> done last 14d</span>
+                    <% end %>
                     <% if project.milestone %>
                       <span>• <%= project.milestone.name %></span>
                     <% end %>
-                    <span>• Created <%= project.created_at.strftime('%b %d, %Y') %></span>
+                    <% if project.behind_schedule? %>
+                      <span class="text-red-400">• Behind schedule</span>
+                    <% end %>
                   </div>
                 </div>
+                <% if project.total_issues_count > 0 %>
+                  <div class="w-28 shrink-0 ml-4"
+                       data-controller="progress-chart"
+                       data-progress-chart-data-value="<%= project.progress_chart_data.to_json %>"
+                       data-progress-chart-mini-value="true">
+                  </div>
+                <% end %>
               </div>
             <% end %>
           </div>

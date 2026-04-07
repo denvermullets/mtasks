@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_04_010015) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_07_105007) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -224,6 +224,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_04_010015) do
   end
 
   create_table "projects", force: :cascade do |t|
+    t.integer "completed_issues_count", default: 0, null: false
     t.datetime "created_at", null: false
     t.text "description"
     t.date "due_date"
@@ -234,7 +235,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_04_010015) do
     t.date "start_date"
     t.string "status", default: "backlog"
     t.bigint "team_id", null: false
+    t.integer "total_issues_count", default: 0, null: false
     t.datetime "updated_at", null: false
+    t.integer "velocity_score", default: 0, null: false
     t.index ["lead_id"], name: "index_projects_on_lead_id"
     t.index ["milestone_id"], name: "index_projects_on_milestone_id"
     t.index ["team_id"], name: "index_projects_on_team_id"
