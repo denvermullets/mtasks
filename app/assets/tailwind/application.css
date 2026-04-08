@@ -22,6 +22,16 @@
   /* --font-display: "Inter var", system-ui, sans-serif; */
 }
 
+/* Optimistic lane move animation */
+.optimistic-moving {
+  animation: optimistic-land 250ms ease-out;
+}
+
+@keyframes optimistic-land {
+  0% { opacity: 0.5; transform: scale(0.97); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
 /* Make native date/time input icons visible on dark backgrounds */
 input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(1);

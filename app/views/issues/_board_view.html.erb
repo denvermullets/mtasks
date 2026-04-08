@@ -6,12 +6,12 @@
     <div class="flex flex-col flex-1">
       <!-- Column Headers (sticky at top) -->
       <div class="flex gap-3 mb-4 sticky top-0 bg-background z-30 pb-2">
-        <% column_names = swimlanes.values.first.keys %>
-        <% column_names.each do |column_name| %>
+        <% first_row_columns = swimlanes.values.first %>
+        <% first_row_columns.each do |column_name, col_data| %>
           <div class="shrink-0 w-80">
             <div class="flex items-center justify-between">
               <h3 class="text-sm font-medium text-accent"><%= column_name %></h3>
-              <span class="text-xs text-gray-500">
+              <span class="text-xs text-gray-500" data-lane-count="<%= col_data[:object].id if col_data[:object].respond_to?(:id) %>">
                 <%= swimlanes.sum { |_, cols| cols[column_name][:issues].count } %>
               </span>
             </div>
@@ -24,7 +24,7 @@
         <% swimlanes.each do |row_name, columns| %>
           <% row_issue_count = columns.sum { |_, col_data| col_data[:issues].count } %>
           <% row_empty = row_issue_count.zero? %>
-          <div id="swimlane_<%= row_name.parameterize %>" class="flex flex-col gap-2" data-controller="swimlane-row">
+          <div id="swimlane_<%= row_name.parameterize %>" class="flex flex-col gap-2" data-controller="swimlane-row" data-swimlane-row-name="<%= row_name %>">
             <!-- Row Header (Swimlane) -->
             <div class="flex items-center gap-2 px-3 py-1.5 bg-hover-highlight rounded-md">
               <button type="button" data-action="swimlane-row#toggle" class="flex items-center gap-2 cursor-pointer">
@@ -39,9 +39,9 @@
             <!-- Columns within this row -->
             <div class="flex gap-3 <%= 'hidden' if row_empty %>" data-swimlane-row-target="content">
               <% columns.each do |column_name, column_data| %>
-                <div class="shrink-0 w-80 flex flex-col group/cell">
+                <div class="shrink-0 w-80 flex flex-col group/cell" data-lane-id="<%= column_data[:object].id if column_data[:object].respond_to?(:id) %>">
                   <!-- Issues in this cell -->
-                  <div class="space-y-1.5 min-h-[60px]">
+                  <div class="space-y-1.5 min-h-[60px]" data-lane-issues-container="<%= column_data[:object].id if column_data[:object].respond_to?(:id) %>">
                     <% column_data[:issues].each do |issue| %>
                       <%= render "issue_card", issue: issue, visible_properties: @display_options[:visible_properties] %>
                     <% end %>
@@ -91,18 +91,18 @@
   <div class="flex h-full overflow-auto">
     <div class="flex gap-3 flex-1">
       <% @grouped_issues.each do |group_name, group_data| %>
-        <div id="board_column_<%= group_name.parameterize %>" class="shrink-0 w-80 flex flex-col h-full group">
+        <div id="board_column_<%= group_name.parameterize %>" class="shrink-0 w-80 flex flex-col h-full group" data-lane-id="<%= group_data[:object].id if group_data[:object].respond_to?(:id) %>">
           <!-- Group Header -->
           <div class="flex items-center justify-between mb-3 shrink-0">
             <div class="flex items-center gap-2">
               <h3 class="text-sm font-medium text-accent"><%= group_name %></h3>
-              <span class="text-xs text-gray-500"><%= group_data[:issues].count %></span>
+              <span class="text-xs text-gray-500" data-lane-count="<%= group_data[:object].id if group_data[:object].respond_to?(:id) %>"><%= group_data[:issues].count %></span>
             </div>
           </div>
 
           <!-- Issues -->
           <div class="flex-1 overflow-y-auto min-h-0">
-            <div class="space-y-1.5">
+            <div class="space-y-1.5" data-lane-issues-container="<%= group_data[:object].id if group_data[:object].respond_to?(:id) %>">
               <% group_data[:issues].each do |issue| %>
                 <%= render "issue_card", issue: issue, visible_properties: @display_options[:visible_properties] %>
               <% end %>

@@ -154,6 +154,15 @@ export default class extends Controller {
   }
 
   async updateIssueLane(laneId) {
+    if (laneId === this.currentLaneValue) {
+      this.close();
+      return;
+    }
+
+    // Optimistically move the card and close picker immediately
+    const revertInfo = this.optimisticMove(laneId);
+    this.close();
+
     try {
       const response = await fetch(`/teams/${this.teamIdValue}/issues/${this.issueIdValue}`, {
         method: "PATCH",
@@ -172,21 +181,97 @@ export default class extends Controller {
       if (response.ok) {
         this.currentLaneValue = laneId;
 
-        // Process the turbo stream response
+        // Process the turbo stream response (server is source of truth, overwrites board)
         const turboStream = await response.text();
         Turbo.renderStreamMessage(turboStream);
-
-        // Close the picker after a short delay to allow the board to reload
-        setTimeout(() => {
-          if (this.hasPickerTarget && !this.pickerTarget.classList.contains("hidden")) {
-            this.close();
-          }
-        }, 100);
       } else {
-        console.error("Failed to update lane");
+        console.error("Failed to update lane, reverting");
+        this.revertOptimisticMove(revertInfo);
       }
     } catch (error) {
       console.error("Error updating lane:", error);
+      this.revertOptimisticMove(revertInfo);
+    }
+  }
+
+  optimisticMove(newLaneId) {
+    const card = document.getElementById(`issue_${this.issueIdValue}`);
+    if (!card) return null;
+
+    // Only optimistically move when board is grouped by lane/status
+    const board = document.querySelector("[data-group-by]");
+    const groupBy = board?.dataset.groupBy;
+    if (groupBy !== "lane" && groupBy !== "status") return null;
+
+    // Save revert info
+    const originalParent = card.parentElement;
+    const originalNextSibling = card.nextElementSibling;
+
+    // Find target container — scope to same swimlane row if applicable
+    const swimlaneRow = card.closest("[data-swimlane-row-name]");
+    const scope = swimlaneRow || document;
+    const targetContainer = scope.querySelector(
+      `[data-lane-issues-container="${newLaneId}"]`
+    );
+
+    if (!targetContainer) return null;
+
+    // Move the card
+    card.classList.add("optimistic-moving");
+    targetContainer.prepend(card);
+
+    // Remove animation class after it completes
+    setTimeout(() => card.classList.remove("optimistic-moving"), 300);
+
+    // Update column counts
+    this.updateColumnCount(originalParent, -1);
+    this.updateColumnCount(targetContainer, 1);
+
+    return {
+      card,
+      originalParent,
+      originalNextSibling,
+      previousLaneId: this.currentLaneValue,
+    };
+  }
+
+  revertOptimisticMove(revertInfo) {
+    if (!revertInfo) return;
+    const { card, originalParent, originalNextSibling, previousLaneId } =
+      revertInfo;
+
+    // Card may have been replaced by server response already
+    if (!document.contains(card)) return;
+
+    if (originalNextSibling && document.contains(originalNextSibling)) {
+      originalParent.insertBefore(card, originalNextSibling);
+    } else if (document.contains(originalParent)) {
+      originalParent.appendChild(card);
+    }
+
+    // Restore counts
+    this.updateColumnCount(card.parentElement, 1);
+    this.updateColumnCount(
+      document.querySelector(
+        `[data-lane-issues-container="${revertInfo.previousLaneId}"]`
+      ),
+      -1
+    );
+  }
+
+  updateColumnCount(container, delta) {
+    if (!container) return;
+    const laneId =
+      container.dataset.laneIssuesContainer ||
+      container.closest("[data-lane-id]")?.dataset.laneId;
+    if (!laneId) return;
+
+    const countSpan = document.querySelector(
+      `[data-lane-count="${laneId}"]`
+    );
+    if (countSpan) {
+      const current = parseInt(countSpan.textContent.trim()) || 0;
+      countSpan.textContent = Math.max(0, current + delta);
     }
   }
 
