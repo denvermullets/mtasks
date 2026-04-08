@@ -1,4 +1,4 @@
-<div class="h-full p-4 overflow-y-hidden">
+<div class="h-full p-4 overflow-y-hidden" data-group-by="<%= @display_options[:group_by] %>">
   <% if @display_options[:view_mode] == 'board' %>
     <%= render "board_view" %>
   <% else %>
