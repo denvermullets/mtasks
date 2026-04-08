@@ -1,0 +1,10 @@
+<div id="project_progress_chart_<%= project.id %>">
+  <% if project.total_issues_count > 0 %>
+    <div class="mb-6"
+         data-controller="progress-chart"
+         data-progress-chart-data-value="<%= project.progress_chart_data.to_json %>"
+         data-progress-chart-expected-value="<%= (project.expected_progress_line || []).to_json %>"
+         data-progress-chart-behind-schedule-value="<%= project.behind_schedule? %>">
+    </div>
+  <% end %>
+</div>

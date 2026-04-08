@@ -30,7 +30,12 @@ module Api
       end
 
       def update
-        if @issue.update(issue_params)
+        @issue.assign_attributes(issue_params)
+        @issue.apply_lane_timestamps!
+
+        if @issue.save
+          @issue.remove_blocking_dependencies!
+          @issue.enqueue_velocity_recalculation!
           render json: serialize(@issue)
         else
           render_validation_errors(@issue)

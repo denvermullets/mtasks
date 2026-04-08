@@ -42,21 +42,23 @@ class IssueTest < ActiveSupport::TestCase
     assert_includes issue_b.blocking_issues, issue_a
   end
 
-  test 'completing issue removes its blocking dependencies' do
+  test 'remove_blocking_dependencies! removes blocking deps when completed' do
     issue_a = @team.issues.create!(title: 'A', lane: @backlog, creator: @user)
     issue_b = @team.issues.create!(title: 'B', lane: @backlog, creator: @user)
     IssueDependency.create!(blocking_issue: issue_a, blocked_issue: issue_b)
 
-    issue_a.update!(lane: @done)
+    issue_a.update!(completed_at: Time.current)
+    issue_a.remove_blocking_dependencies!
     assert_equal 0, issue_a.reload.blocking_dependencies.count
   end
 
-  test 'completing issue does not remove blocked_by dependencies' do
+  test 'remove_blocking_dependencies! does not remove blocked_by dependencies' do
     issue_a = @team.issues.create!(title: 'A', lane: @backlog, creator: @user)
     issue_b = @team.issues.create!(title: 'B', lane: @backlog, creator: @user)
     IssueDependency.create!(blocking_issue: issue_b, blocked_issue: issue_a)
 
-    issue_a.update!(lane: @done)
+    issue_a.update!(completed_at: Time.current)
+    issue_a.remove_blocking_dependencies!
     assert_equal 1, issue_a.reload.blocked_dependencies.count
   end
 

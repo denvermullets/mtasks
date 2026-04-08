@@ -54,7 +54,12 @@ class IssuesController < ApplicationController
 
   def update
     load_form_collections
-    if @issue.update(issue_params)
+    @issue.assign_attributes(issue_params)
+    @issue.apply_lane_timestamps!
+
+    if @issue.save
+      @issue.remove_blocking_dependencies!
+      @issue.enqueue_velocity_recalculation!
       @latest_version = @issue.versions.last
       notify_issue_update
       @issue.reload
@@ -68,7 +73,9 @@ class IssuesController < ApplicationController
   end
 
   def destroy
+    project_id = @issue.project_id
     @issue.destroy
+    ProjectVelocityJob.perform_later(project_id) if project_id.present?
     redirect_to team_issues_path(@issue.team), notice: 'Issue was successfully deleted.'
   end
 
@@ -132,7 +139,12 @@ class IssuesController < ApplicationController
     return unless version&.event == 'update'
 
     action = NotificationService.action_for_version(version)
-    NotificationService.call(issue: @issue, actor: Current.user, action: action, version: version)
+    NotificationJob.perform_later(
+      issue_id: @issue.id,
+      actor_id: Current.user.id,
+      action: action,
+      version_id: version.id
+    )
   end
 
   def issue_params
