@@ -6,14 +6,10 @@ class ProjectsController < ApplicationController
   before_action :set_project, only: %i[show edit update destroy purge_file]
 
   def index
-    @index_sort = params[:sort].presence_in(%w[created velocity]) || 'created'
-    @sort_dir = params[:dir].presence_in(%w[asc desc]) || 'desc'
-    @projects = current_team.projects.includes(:milestone)
-    direction = @sort_dir.to_sym
-    @projects = case @index_sort
-                when 'velocity' then @projects.order(velocity_score: direction, created_at: direction)
-                else @projects.order(created_at: direction)
-                end
+    @index_sort = params[:sort].presence_in(%w[created name priority due_date velocity]) || 'created'
+    @sort_dir = params[:dir].presence_in(%w[asc desc]) || 'asc'
+    @hide_completed = params[:hide_completed] == '1'
+    @projects = sorted_projects
   end
 
   def show
@@ -105,6 +101,23 @@ class ProjectsController < ApplicationController
     @team_members = current_team.users.order(:name)
     @labels = current_team.labels.order(:name)
     @milestones = current_team.milestones.order(:name)
+  end
+
+  def sorted_projects
+    scope = current_team.projects.includes(:milestone, :lead)
+    scope = scope.where.not(status: 'completed') if @hide_completed
+    direction = @sort_dir.to_sym
+    case @index_sort
+    when 'name'     then scope.order(name: direction)
+    when 'priority' then scope.order(priority: direction, created_at: :asc)
+    when 'due_date' then scope.order(due_date_order(direction))
+    when 'velocity' then scope.order(velocity_score: direction, created_at: direction)
+    else scope.order(created_at: direction)
+    end
+  end
+
+  def due_date_order(direction)
+    Arel.sql("due_date IS NULL, due_date #{direction == :asc ? 'ASC' : 'DESC'}")
   end
 
   def project_params
