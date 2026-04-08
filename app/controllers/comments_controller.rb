@@ -20,10 +20,13 @@ class CommentsController < ApplicationController
   end
 
   def destroy
-    @comment.destroy
-    respond_to do |format|
-      format.turbo_stream
-      format.html { redirect_to team_issue_path(@issue.team, @issue), notice: 'Comment was successfully deleted.' }
+    if @comment.destroy
+      respond_to do |format|
+        format.turbo_stream
+        format.html { redirect_to team_issue_path(@issue.team, @issue), notice: 'Comment was successfully deleted.' }
+      end
+    else
+      redirect_to team_issue_path(@issue.team, @issue), alert: 'Failed to delete comment.'
     end
   end
 
