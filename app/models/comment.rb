@@ -5,7 +5,7 @@ class Comment < ApplicationRecord
   belongs_to :user
   belongs_to :parent, class_name: 'Comment', optional: true
   has_many :replies, class_name: 'Comment', foreign_key: :parent_id, dependent: :destroy
-  has_many :notifications, dependent: :nullify
+  has_many :notifications, dependent: :destroy
   has_many_attached :files
 
   validate :body_or_files_present
