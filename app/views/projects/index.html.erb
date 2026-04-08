@@ -20,63 +20,116 @@
   </div>
 
   <div class="flex-1 overflow-y-auto p-6">
+    <!-- Controls row -->
     <div class="flex items-center justify-between mb-4">
       <div class="flex items-center gap-3">
         <span class="text-xs text-gray-500">Sort by</span>
-        <% %w[created velocity].each do |sort_option| %>
+        <% %w[created name priority due_date velocity].each do |sort_option| %>
           <% active = @index_sort == sort_option %>
+          <% label = sort_option == 'due_date' ? 'Due date' : sort_option.capitalize %>
           <% if active %>
             <% next_dir = @sort_dir == 'desc' ? 'asc' : 'desc' %>
-            <%= link_to team_projects_path(current_team, sort: sort_option, dir: next_dir),
+            <%= link_to team_projects_path(current_team, sort: sort_option, dir: next_dir, hide_completed: @hide_completed ? '1' : nil),
                 class: "flex items-center gap-1 px-2 py-0.5 text-xs rounded bg-foreground border border-stroke text-gray-100" do %>
-              <span><%= sort_option.capitalize %></span>
+              <span><%= label %></span>
               <span class="text-gray-400"><%= @sort_dir == 'desc' ? '▼' : '▲' %></span>
             <% end %>
           <% else %>
-            <%= link_to sort_option.capitalize,
-                team_projects_path(current_team, sort: sort_option, dir: 'desc'),
+            <%= link_to label,
+                team_projects_path(current_team, sort: sort_option, dir: 'asc', hide_completed: @hide_completed ? '1' : nil),
                 class: "px-2 py-0.5 text-xs rounded text-gray-500 hover:text-gray-300" %>
           <% end %>
         <% end %>
       </div>
-      <span class="text-xs text-gray-600"><%= pluralize(@projects.size, 'project') %></span>
+      <div class="flex items-center gap-4">
+        <%= link_to team_projects_path(current_team, sort: @index_sort, dir: @sort_dir, hide_completed: @hide_completed ? nil : '1'),
+            class: "flex items-center gap-1.5 px-2 py-0.5 text-xs rounded #{@hide_completed ? 'bg-foreground border border-stroke text-gray-100' : 'text-gray-500 hover:text-gray-300'}" do %>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <% if @hide_completed %>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878l4.242 4.242M21 21l-4.879-4.879" />
+            <% else %>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            <% end %>
+          </svg>
+          <span>Hide completed</span>
+        <% end %>
+        <span class="text-xs text-gray-600"><%= pluralize(@projects.size, 'project') %></span>
+      </div>
     </div>
 
     <% if @projects.any? %>
-      <div class="space-y-3">
+      <!-- Table header -->
+      <div class="flex items-center px-4 py-2 text-xs text-gray-500 font-medium border-b border-stroke">
+        <div class="flex-1 min-w-0">Name</div>
+        <div class="w-40 hidden md:block">Health</div>
+        <div class="w-16 text-center">Priority</div>
+        <div class="w-16 text-center hidden sm:block">Lead</div>
+        <div class="w-32 hidden lg:block">Target date</div>
+        <div class="w-24 text-right">Status</div>
+        <div class="w-28 hidden lg:block"></div>
+      </div>
+
+      <!-- Table rows -->
+      <div class="divide-y divide-stroke/50">
         <% @projects.each do |project| %>
-          <div class="bg-foreground border border-stroke rounded-md p-4 hover:bg-hover-highlight transition-colors">
-            <%= link_to team_project_path(current_team, project), class: "block" do %>
-              <div class="flex items-start justify-between">
-                <div class="flex-1">
-                  <h3 class="text-base font-medium text-gray-200 mb-1"><%= project.name %></h3>
-                  <% if project.description.present? %>
-                    <p class="text-sm text-gray-400 line-clamp-2"><%= project.description %></p>
-                  <% end %>
-                  <div class="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                    <span><%= pluralize(project.total_issues_count, 'issue') %></span>
-                    <span>• <%= project.progress_percentage %>% complete</span>
-                    <% if project.velocity_score > 0 %>
-                      <span>• <%= project.velocity_score %> done last 14d</span>
-                    <% end %>
-                    <% if project.milestone %>
-                      <span>• <%= project.milestone.name %></span>
-                    <% end %>
-                    <% if project.behind_schedule? %>
-                      <span class="text-red-400">• Behind schedule</span>
-                    <% end %>
-                  </div>
+          <%= link_to team_project_path(current_team, project),
+              class: "flex items-center px-4 py-3 hover:bg-hover-highlight transition-colors group" do %>
+            <!-- Name -->
+            <div class="flex-1 min-w-0 pr-4">
+              <span class="text-sm text-gray-200 truncate block"><%= project.name %></span>
+            </div>
+
+            <!-- Health -->
+            <div class="w-40 hidden md:block">
+              <%= render_project_health(project) %>
+            </div>
+
+            <!-- Priority -->
+            <div class="w-16 flex justify-center">
+              <%= render_priority_icon(project.priority) %>
+            </div>
+
+            <!-- Lead -->
+            <div class="w-16 flex justify-center hidden sm:flex">
+              <% if project.lead %>
+                <%= user_avatar(project.lead, size: "sm") %>
+              <% else %>
+                <div class="w-5 h-5 rounded-full border border-stroke bg-foreground"></div>
+              <% end %>
+            </div>
+
+            <!-- Target date -->
+            <div class="w-32 hidden lg:block">
+              <% if project.due_date %>
+                <span class="text-sm <%= project.behind_schedule? ? 'text-red-400' : 'text-gray-400' %>">
+                  <%= format_target_date(project.due_date) %>
+                </span>
+              <% else %>
+                <div class="w-5 h-5 rounded border border-stroke bg-foreground flex items-center justify-center">
+                  <svg class="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
                 </div>
-                <% if project.total_issues_count > 0 %>
-                  <div class="w-28 shrink-0 ml-4"
-                       data-controller="progress-chart"
-                       data-progress-chart-data-value="<%= project.progress_chart_data.to_json %>"
-                       data-progress-chart-mini-value="true">
-                  </div>
-                <% end %>
-              </div>
-            <% end %>
-          </div>
+              <% end %>
+            </div>
+
+            <!-- Status (progress) -->
+            <div class="w-24 flex justify-end">
+              <%= render_progress_status(project) %>
+            </div>
+
+            <!-- Mini chart -->
+            <div class="w-28 hidden lg:block pl-3">
+              <% if project.total_issues_count > 0 %>
+                <div class="h-6"
+                     data-controller="progress-chart"
+                     data-progress-chart-data-value="<%= project.progress_chart_data.to_json %>"
+                     data-progress-chart-mini-value="true">
+                </div>
+              <% end %>
+            </div>
+          <% end %>
         <% end %>
       </div>
     <% else %>
