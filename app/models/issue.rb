@@ -31,10 +31,6 @@ class Issue < ApplicationRecord
 
   # Callbacks
   before_validation :assign_team_number, on: :create
-  before_update :set_lane_timestamps, if: :lane_id_changed?
-  after_update :remove_blocking_dependencies, if: :completed?
-  after_save :update_project_velocity
-  after_destroy :update_project_velocity
 
   # Scopes
   scope :archived, -> { where.not(archived_at: nil) }
@@ -67,32 +63,35 @@ class Issue < ApplicationRecord
     completed_at.present?
   end
 
-  private
+  def apply_lane_timestamps!
+    return unless lane_id_changed?
 
-  def assign_team_number
-    return if team_number.present?
-
-    self.team_number = team.next_issue_number
-  end
-
-  def remove_blocking_dependencies
-    blocking_dependencies.destroy_all
-  end
-
-  def update_project_velocity
-    project&.recalculate_velocity!
-    # If project_id changed, recalculate the old project too
-    return unless saved_change_to_project_id? && project_id_before_last_save.present?
-
-    Project.find_by(id: project_id_before_last_save)&.recalculate_velocity!
-  end
-
-  def set_lane_timestamps
     new_lane = Lane.find_by(id: lane_id)
     if new_lane&.name&.downcase == 'done'
       self.completed_at = Time.current
     elsif completed_at.present?
       self.completed_at = nil
     end
+  end
+
+  def remove_blocking_dependencies!
+    blocking_dependencies.destroy_all if completed?
+  end
+
+  def enqueue_velocity_recalculation!
+    return unless saved_change_to_project_id? || saved_change_to_completed_at? || saved_change_to_archived_at?
+
+    ProjectVelocityJob.perform_later(project_id) if project_id.present?
+    return unless saved_change_to_project_id? && project_id_before_last_save.present?
+
+    ProjectVelocityJob.perform_later(project_id_before_last_save)
+  end
+
+  private
+
+  def assign_team_number
+    return if team_number.present?
+
+    self.team_number = team.next_issue_number
   end
 end
