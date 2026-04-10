@@ -5,7 +5,7 @@ module IssueReferenceHelper
     issues_by_identifier = IssueReferenceParser.find_issues(text, team)
                                                .index_by(&:identifier)
 
-    escaped = ERB::Util.html_escape(text)
+    escaped = ERB::Util.html_escape(text).to_str
 
     escaped.gsub(IssueReferenceParser::ISSUE_REFERENCE_REGEX) do |match|
       issue = issues_by_identifier[match]
