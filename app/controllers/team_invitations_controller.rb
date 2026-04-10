@@ -28,6 +28,12 @@ class TeamInvitationsController < ApplicationController
     redirect_to team_team_invitations_path(@team), notice: 'Invitation revoked.'
   end
 
+  def resend
+    @invitation = @team.team_invitations.pending.find(params[:id])
+    TeamInvitationMailer.invite(@invitation).deliver_later
+    redirect_to team_team_invitations_path(@team), notice: "Invitation resent to #{@invitation.email}."
+  end
+
   def remove_member
     member = @team.users.find(params[:member_id])
     if member.id == @team.workspace.owner_id
