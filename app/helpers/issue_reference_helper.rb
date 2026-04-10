@@ -11,7 +11,8 @@ module IssueReferenceHelper
       issue = issues_by_identifier[match]
       if issue
         link_to(match, team_issue_path(team, issue),
-                class: 'text-accent hover:underline font-mono text-sm')
+                class: 'text-accent hover:underline font-mono text-sm',
+                data: { turbo_frame: '_top' })
       else
         match
       end
