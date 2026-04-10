@@ -19,6 +19,8 @@ class Issue < ApplicationRecord
   has_many :issue_pull_requests, dependent: :destroy
   has_many :pull_requests, through: :issue_pull_requests
   has_many :notifications, dependent: :destroy
+  has_many :outgoing_references, class_name: 'IssueReference', foreign_key: :source_issue_id, dependent: :destroy
+  has_many :incoming_references, class_name: 'IssueReference', foreign_key: :referenced_issue_id, dependent: :destroy
   has_many :blocking_dependencies, class_name: 'IssueDependency', foreign_key: :blocking_issue_id, dependent: :destroy
   has_many :blocked_dependencies, class_name: 'IssueDependency', foreign_key: :blocked_issue_id, dependent: :destroy
   has_many :blocked_issues, through: :blocking_dependencies, source: :blocked_issue

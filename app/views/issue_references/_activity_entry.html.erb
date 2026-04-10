@@ -1,0 +1,11 @@
+<div class="mb-1 activity-entry">
+  <div class="text-xs text-gray-500">
+    <%= reference.user.name %>
+    referenced this issue in
+    <%= link_to reference.source_issue.identifier,
+        team_issue_path(reference.source_issue.team, reference.source_issue),
+        class: "font-mono text-accent hover:underline" %>
+    (<%= reference.source_issue.title %>)
+    &middot; <%= time_ago_in_words(reference.created_at) %> ago
+  </div>
+</div>

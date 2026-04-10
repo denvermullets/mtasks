@@ -9,6 +9,7 @@ class CommentsController < ApplicationController
     @comment.user = Current.user
 
     if @comment.save
+      detect_issue_references
       notify_comment_created
       respond_to do |format|
         format.turbo_stream
@@ -61,6 +62,15 @@ class CommentsController < ApplicationController
       end
       format.html { redirect_to team_issue_path(@issue.team, @issue), alert: 'Failed to create comment.' }
     end
+  end
+
+  def detect_issue_references
+    IssueReferenceService.call(
+      source_issue: @issue,
+      text: @comment.body,
+      source_type: 'comment',
+      user: Current.user
+    )
   end
 
   def notify_comment_created

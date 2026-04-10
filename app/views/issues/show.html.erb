@@ -79,6 +79,8 @@
             <% VersionDescriptionService.timeline(@issue).each do |entry| %>
               <% if entry[:type] == :version %>
                 <%= render 'issues/activity_entry', version: entry[:record] %>
+              <% elsif entry[:type] == :reference %>
+                <%= render 'issue_references/activity_entry', reference: entry[:record] %>
               <% else %>
                 <%= render entry[:record] %>
               <% end %>

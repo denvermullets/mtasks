@@ -244,6 +244,8 @@
     </div>
     <!-- Relations -->
     <%= render "issue_dependencies/relations", issue: issue %>
+    <!-- Referenced In -->
+    <%= render "issue_references/referenced_in", issue: issue %>
     <!-- Due Date -->
     <% if issue.due_date %>
       <div class="mb-6">

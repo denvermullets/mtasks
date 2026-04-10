@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_07_105007) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_10_130312) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -122,6 +122,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_07_105007) do
     t.index ["issue_id", "pull_request_id"], name: "index_issue_pull_requests_on_issue_and_pr", unique: true
     t.index ["issue_id"], name: "index_issue_pull_requests_on_issue_id"
     t.index ["pull_request_id"], name: "index_issue_pull_requests_on_pull_request_id"
+  end
+
+  create_table "issue_references", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "referenced_issue_id", null: false
+    t.bigint "source_issue_id", null: false
+    t.string "source_type", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["referenced_issue_id"], name: "index_issue_references_on_referenced_issue_id"
+    t.index ["source_issue_id", "referenced_issue_id", "source_type"], name: "idx_issue_refs_unique", unique: true
+    t.index ["source_issue_id"], name: "index_issue_references_on_source_issue_id"
+    t.index ["user_id"], name: "index_issue_references_on_user_id"
   end
 
   create_table "issues", force: :cascade do |t|
@@ -375,6 +388,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_07_105007) do
   add_foreign_key "issue_labels", "labels"
   add_foreign_key "issue_pull_requests", "issues"
   add_foreign_key "issue_pull_requests", "pull_requests"
+  add_foreign_key "issue_references", "issues", column: "referenced_issue_id"
+  add_foreign_key "issue_references", "issues", column: "source_issue_id"
+  add_foreign_key "issue_references", "users"
   add_foreign_key "issues", "issues", column: "parent_issue_id"
   add_foreign_key "issues", "lanes"
   add_foreign_key "issues", "milestones"
