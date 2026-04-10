@@ -65,11 +65,20 @@
           <div class="space-y-2">
             <% @pending_invitations.each do |invitation| %>
               <div class="flex items-center justify-between p-3 bg-background rounded border border-stroke">
-                <div>
-                  <p class="text-sm font-medium text-gray-200"><%= invitation.email %></p>
-                  <p class="text-xs text-gray-400">Invited by <%= invitation.invited_by.name %> &middot; <%= time_ago_in_words(invitation.created_at) %> ago</p>
+                <div class="flex items-center gap-3">
+                  <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-foreground border border-stroke text-gray-400">
+                    <span class="w-1.5 h-1.5 rounded-full bg-yellow-400"></span>
+                    Pending
+                  </span>
+                  <div>
+                    <p class="text-sm font-medium text-gray-200"><%= invitation.email %></p>
+                    <p class="text-xs text-gray-400">Invited by <%= invitation.invited_by.name %> &middot; <%= time_ago_in_words(invitation.created_at) %> ago</p>
+                  </div>
                 </div>
-                <%= button_to "Revoke", team_team_invitation_path(@team, invitation), method: :delete, class: "text-xs text-red-400 hover:text-red-300", data: { turbo_confirm: "Revoke this invitation?" } %>
+                <div class="flex items-center gap-3">
+                  <%= button_to "Resend", resend_team_team_invitation_path(@team, invitation), method: :post, class: "text-xs text-accent hover:text-gray-200" %>
+                  <%= button_to "Revoke", team_team_invitation_path(@team, invitation), method: :delete, class: "text-xs text-red-400 hover:text-red-300", data: { turbo_confirm: "Revoke this invitation?" } %>
+                </div>
               </div>
             <% end %>
           </div>

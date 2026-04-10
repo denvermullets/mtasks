@@ -25,6 +25,7 @@ Rails.application.routes.draw do
       resources :project_labels, only: %i[create destroy]
     end
     resources :team_invitations, only: %i[index create destroy] do
+      post :resend, on: :member
       delete :remove_member, on: :collection
     end
     resources :issues do
