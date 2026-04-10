@@ -46,7 +46,11 @@ module Authentication
   end
 
   def after_authentication_url
-    session.delete(:return_to_after_authenticating) || root_url
+    url = session.delete(:return_to_after_authenticating)
+    return url if url.present?
+
+    team = Current.user.teams.first
+    team ? "/teams/#{team.id}/issues" : '/teams/new'
   end
 
   def start_new_session_for(user)
