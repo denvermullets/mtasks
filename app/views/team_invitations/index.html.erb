@@ -19,6 +19,7 @@
       <!-- Invite Form -->
       <div class="bg-foreground border border-stroke rounded-lg p-6">
         <h2 class="text-lg font-semibold text-gray-200 mb-4">Invite a Member</h2>
+        <p class="text-sm text-gray-400 mb-4">If the email belongs to an existing account, they'll be added to the team and notified by email. Otherwise, they'll receive an invitation to sign up.</p>
         <%= form_with model: TeamInvitation.new, url: team_team_invitations_path(@team), method: :post, local: true, class: "flex items-end gap-3" do |f| %>
           <div class="flex-1">
             <label class="block text-sm font-medium text-gray-400 mb-2">Email address</label>
@@ -76,8 +77,8 @@
                   </div>
                 </div>
                 <div class="flex items-center gap-3">
-                  <%= button_to "Resend", resend_team_team_invitation_path(@team, invitation), method: :post, class: "text-xs text-accent hover:text-gray-200" %>
-                  <%= button_to "Revoke", team_team_invitation_path(@team, invitation), method: :delete, class: "text-xs text-red-400 hover:text-red-300", data: { turbo_confirm: "Revoke this invitation?" } %>
+                  <%= button_to "Resend", resend_team_team_invitation_path(@team, invitation), method: :post, class: "text-xs text-accent hover:text-gray-200 cursor-pointer" %>
+                  <%= button_to "Revoke", team_team_invitation_path(@team, invitation), method: :delete, class: "text-xs text-red-400 hover:text-red-300 cursor-pointer", data: { turbo_confirm: "Revoke this invitation?" } %>
                 </div>
               </div>
             <% end %>
