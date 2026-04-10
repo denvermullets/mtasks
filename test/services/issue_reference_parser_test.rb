@@ -43,6 +43,11 @@ class IssueReferenceParserTest < ActiveSupport::TestCase
     assert_equal [], result
   end
 
+  test 'parses shortcodes with digits in prefix' do
+    result = IssueReferenceParser.parse('see 99S-2 for details')
+    assert_equal ['99S-2'], result
+  end
+
   test 'find_issues returns matching issues for a team' do
     user = User.create!(name: 'Test User', email: 'parser_test@example.com', password: 'password')
     workspace = Workspace.create!(name: 'Test Workspace', owner: user)
