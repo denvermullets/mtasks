@@ -1,11 +1,8 @@
-<div class="flex gap-2 mb-2 items-center">
-  <% actor = User.find_by(id: version.whodunnit) %>
-  <%= user_avatar(actor, size: "xs") %>
-  <div class="flex-1">
-    <div class="text-xs text-gray-400">
-      <span class="text-gray-300"><%= actor&.name || 'Someone' %></span>
-      <%= raw VersionDescriptionService.call(version) %>
-      &middot; <%= time_ago_in_words(version.created_at) %> ago
-    </div>
+<div class="mb-1 activity-entry">
+  <div class="text-xs text-gray-500">
+    <% actor = User.find_by(id: version.whodunnit) %>
+    <%= actor&.name || 'Someone' %>
+    <%= raw VersionDescriptionService.call(version) %>
+    &middot; <%= time_ago_in_words(version.created_at) %> ago
   </div>
 </div>

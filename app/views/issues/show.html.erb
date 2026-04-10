@@ -68,13 +68,10 @@
             <h2 class="text-sm font-semibold text-gray-400">Activity</h2>
           </div>
           <!-- Created entry -->
-          <div class="flex gap-3 mb-6">
-            <%= user_avatar(@issue.creator) %>
-            <div class="flex-1">
-              <div class="text-sm text-gray-400">
-                <span class="text-gray-300"><%= @issue.creator&.name || 'Unknown' %></span>
-                created the issue &middot; <%= time_ago_in_words(@issue.created_at) %> ago
-              </div>
+          <div class="mb-1">
+            <div class="text-xs text-gray-500">
+              <%= @issue.creator&.name || 'Unknown' %>
+              created the issue &middot; <%= time_ago_in_words(@issue.created_at) %> ago
             </div>
           </div>
           <!-- Activity Timeline -->
@@ -88,6 +85,7 @@
             <% end %>
           </div>
           <!-- Comment Form -->
+          <div class="mt-5"></div>
           <%= turbo_frame_tag "comment_form" do %>
             <%= render 'comments/form', issue: @issue, comment: Comment.new %>
           <% end %>
