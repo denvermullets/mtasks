@@ -40,13 +40,17 @@
           <% end %>
         </div>
         <!-- Description -->
-        <div class="mb-6">
+        <div class="mb-6 relative"
+             data-controller="issue-mention"
+             data-issue-mention-search-url-value="<%= search_team_issues_path(@issue.team) %>"
+             data-issue-mention-team-identifier-value="<%= @issue.team.identifier %>">
           <%= form.text_area :description,
               placeholder: "Add description...",
               rows: 4,
               autocomplete: "off",
               class: "w-full bg-transparent border-0 text-gray-300 placeholder-gray-600 focus:outline-none focus:ring-0 p-0 resize-none overflow-hidden",
-              data: { controller: "auto-resize submit-on-cmd-enter", action: "input->auto-resize#resize keydown->submit-on-cmd-enter#submit" } %>
+              data: { controller: "auto-resize submit-on-cmd-enter", action: "input->auto-resize#resize keydown->submit-on-cmd-enter#submit input->issue-mention#onInput keydown->issue-mention#onKeydown paste->issue-mention#onPaste", issue_mention_target: "textarea" } %>
+          <%= render "issue_mentions/dropdown" %>
         </div>
         <!-- Property Buttons -->
         <div class="flex flex-wrap gap-2 mb-8">

@@ -46,7 +46,10 @@
           <% end %>
         </div>
         <!-- Description (drop zone for files) -->
-        <div class="mb-6 rounded-lg transition-colors"
+        <div class="mb-6 rounded-lg transition-colors relative"
+             data-controller="issue-mention"
+             data-issue-mention-search-url-value="<%= search_team_issues_path(@team) %>"
+             data-issue-mention-team-identifier-value="<%= @team.identifier %>"
              data-action="dragover->file-upload#dragOver dragenter->file-upload#dragEnterZone dragleave->file-upload#dragLeaveZone drop->file-upload#dropOnZone"
              data-file-upload-target="dropzone">
           <%= form.text_area :description,
@@ -54,7 +57,8 @@
               rows: 4,
               autocomplete: "off",
               class: "w-full bg-transparent border-0 text-gray-300 placeholder-gray-600 focus:outline-none focus:ring-0 p-0 resize-none overflow-hidden",
-              data: { controller: "auto-resize submit-on-cmd-enter", action: "input->auto-resize#resize keydown->submit-on-cmd-enter#submit" } %>
+              data: { controller: "auto-resize submit-on-cmd-enter", action: "input->auto-resize#resize keydown->submit-on-cmd-enter#submit input->issue-mention#onInput keydown->issue-mention#onKeydown paste->issue-mention#onPaste", issue_mention_target: "textarea" } %>
+          <%= render "issue_mentions/dropdown" %>
         </div>
         <!-- Property Buttons -->
         <div class="flex flex-wrap gap-2 mb-8">

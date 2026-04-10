@@ -8,7 +8,7 @@
             <span class="text-sm text-gray-300 font-medium"><%= comment.user.name %></span>
             <span class="text-xs text-gray-500"><%= time_ago_in_words(comment.created_at) %> ago</span>
           </div>
-          <div class="text-sm text-gray-300 whitespace-pre-wrap"><%= comment.body %></div>
+          <div class="text-sm text-gray-300 whitespace-pre-wrap"><%= linkify_issue_references(comment.body, comment.issue.team) %></div>
           <% if comment.files.attached? %>
             <div class="mt-2">
               <%= render "shared/attachments", files: comment.files, compact: true %>
@@ -46,12 +46,16 @@
           <%= form.hidden_field :parent_id, value: comment.id %>
           <div class="flex items-start gap-3">
             <%= user_avatar(Current.user, size: "sm") %>
-            <div class="flex-1 min-w-0">
+            <div class="flex-1 min-w-0 relative"
+                 data-controller="issue-mention"
+                 data-issue-mention-search-url-value="<%= search_team_issues_path(comment.issue.team) %>"
+                 data-issue-mention-team-identifier-value="<%= comment.issue.team.identifier %>">
               <%= form.text_area :body,
                   placeholder: "Write a reply...",
                   class: "w-full bg-transparent text-gray-300 placeholder-gray-500 focus:outline-none resize-none border-0 p-0 text-sm overflow-hidden",
                   rows: 2,
-                  data: { controller: "auto-resize", action: "focus->auto-resize#resize input->auto-resize#resize keydown->submit-on-cmd-enter#submit" } %>
+                  data: { controller: "auto-resize", action: "focus->auto-resize#resize input->auto-resize#resize keydown->submit-on-cmd-enter#submit input->issue-mention#onInput keydown->issue-mention#onKeydown paste->issue-mention#onPaste", issue_mention_target: "textarea" } %>
+              <%= render "issue_mentions/dropdown" %>
             </div>
             <div class="flex items-center gap-2 shrink-0">
               <button type="button" class="text-gray-500 hover:text-gray-400 text-xs cursor-pointer" data-action="click->comment-reply#hide">

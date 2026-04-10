@@ -41,7 +41,7 @@
         <div class="mb-8">
           <% if @issue.description.present? %>
             <div class="text-gray-300 prose prose-invert max-w-none">
-              <%= simple_format(@issue.description) %>
+              <%= format_with_issue_links(@issue.description, @issue.team) %>
             </div>
           <% end %>
         </div>
@@ -79,6 +79,8 @@
             <% VersionDescriptionService.timeline(@issue).each do |entry| %>
               <% if entry[:type] == :version %>
                 <%= render 'issues/activity_entry', version: entry[:record] %>
+              <% elsif entry[:type] == :reference %>
+                <%= render 'issue_references/activity_entry', reference: entry[:record] %>
               <% else %>
                 <%= render entry[:record] %>
               <% end %>

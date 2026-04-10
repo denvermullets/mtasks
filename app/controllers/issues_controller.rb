@@ -37,6 +37,7 @@ class IssuesController < ApplicationController
     @issue.creator = Current.user
 
     if @issue.save
+      detect_issue_references
       if params[:create_more] == '1'
         redirect_to new_team_issue_path(@issue.team), notice: 'Issue was successfully created. Create another?'
       else
@@ -58,6 +59,7 @@ class IssuesController < ApplicationController
     @issue.apply_lane_timestamps!
 
     if @issue.save
+      detect_issue_references
       @issue.remove_blocking_dependencies!
       @issue.enqueue_velocity_recalculation!
       @latest_version = @issue.versions.last
@@ -132,6 +134,15 @@ class IssuesController < ApplicationController
     @display_service = IssueDisplayService.new(base_issues, @display_options, current_team)
     @grouped_issues = @display_service.grouped_issues
     @empty_groups = @display_service.empty_groups
+  end
+
+  def detect_issue_references
+    IssueReferenceService.call(
+      source_issue: @issue,
+      text: @issue.description,
+      source_type: 'description',
+      user: Current.user
+    )
   end
 
   def notify_issue_update

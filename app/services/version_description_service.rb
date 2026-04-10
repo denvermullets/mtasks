@@ -17,16 +17,22 @@ class VersionDescriptionService < Service
   end
 
   def self.timeline(issue)
-    versions = issue.versions.where.not(event: 'create')
-    comments = issue.comments.top_level.includes(:user)
-    dep_versions = dependency_versions(issue)
-
-    entries = versions.map { |v| { type: :version, record: v, created_at: v.created_at } }
-    dep_versions.each { |v| entries << { type: :version, record: v, created_at: v.created_at } }
-    comments.each { |c| entries << { type: :comment, record: c, created_at: c.created_at } }
-
+    entries = timeline_entries(issue)
     entries.sort_by { |e| e[:created_at] }
   end
+
+  def self.timeline_entries(issue)
+    as_entries(:version, issue.versions.where.not(event: 'create')) +
+      as_entries(:version, dependency_versions(issue)) +
+      as_entries(:comment, issue.comments.top_level.includes(:user)) +
+      as_entries(:reference, issue.incoming_references.includes(:source_issue, :user))
+  end
+  private_class_method :timeline_entries
+
+  def self.as_entries(type, records)
+    records.map { |r| { type: type, record: r, created_at: r.created_at } }
+  end
+  private_class_method :as_entries
 
   def self.dependency_versions(issue)
     id = issue.id

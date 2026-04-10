@@ -1,5 +1,5 @@
 class IssueReferenceParser
-  ISSUE_REFERENCE_REGEX = /\b([A-Z]{3,4}-\d+)\b/
+  ISSUE_REFERENCE_REGEX = /\b([A-Z0-9]{3,4}-\d+)\b/
 
   def initialize(text)
     @text = text

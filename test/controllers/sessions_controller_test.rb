@@ -11,7 +11,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
   test 'create with valid credentials' do
     post session_path, params: { email: @user.email, password: 'password' }
 
-    assert_redirected_to root_path
+    assert_redirected_to '/teams/new'
     assert cookies[:session_id]
   end
 
