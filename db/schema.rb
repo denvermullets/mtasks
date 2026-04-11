@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_10_130312) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_11_111547) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -227,6 +227,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_10_130312) do
     t.index ["workspace_id"], name: "index_pending_github_setups_on_workspace_id"
   end
 
+  create_table "pr_automation_rules", force: :cascade do |t|
+    t.string "branch_pattern"
+    t.datetime "created_at", null: false
+    t.bigint "github_repository_subscription_id", null: false
+    t.bigint "lane_id", null: false
+    t.string "trigger", null: false
+    t.datetime "updated_at", null: false
+    t.index ["github_repository_subscription_id", "trigger", "branch_pattern"], name: "idx_pr_auto_rules_unique_trigger", unique: true
+    t.index ["lane_id"], name: "index_pr_automation_rules_on_lane_id"
+  end
+
   create_table "project_labels", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "label_id", null: false
@@ -406,6 +417,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_10_130312) do
   add_foreign_key "notifications", "users"
   add_foreign_key "notifications", "users", column: "actor_id"
   add_foreign_key "pending_github_setups", "workspaces"
+  add_foreign_key "pr_automation_rules", "github_repository_subscriptions"
+  add_foreign_key "pr_automation_rules", "lanes"
   add_foreign_key "project_labels", "labels"
   add_foreign_key "project_labels", "projects"
   add_foreign_key "projects", "milestones"
