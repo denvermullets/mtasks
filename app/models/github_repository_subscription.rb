@@ -2,6 +2,7 @@ class GithubRepositorySubscription < ApplicationRecord
   belongs_to :team
   belongs_to :github_installation
   has_many :pull_requests, dependent: :destroy
+  has_many :pr_automation_rules, dependent: :destroy
 
   validates :team_id, uniqueness: { scope: %i[github_installation_id github_repo_full_name] }
   validates :github_repo_full_name, presence: true
