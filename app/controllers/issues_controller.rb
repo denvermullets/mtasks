@@ -156,6 +156,15 @@ class IssuesController < ApplicationController
     )
   end
 
+  def detect_issue_references
+    IssueReferenceService.call(
+      source_issue: @issue,
+      text: @issue.description,
+      source_type: 'description',
+      user: Current.user
+    )
+  end
+
   def issue_params
     params.require(:issue).permit(
       :title, :description, :lane_id, :priority, :estimate, :due_date, :assignee_id, :project_id,
