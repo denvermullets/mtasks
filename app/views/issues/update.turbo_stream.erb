@@ -1,7 +1,7 @@
-<%# Update the board while preserving scroll position %>
-<%= turbo_stream.action(:update_preserving_scroll, "issues_board") do %>
-  <%= render "issues_board" %>
-<% end %>
+<%# Replace only the individual issue card — the optimistic UI already moved it to the right lane %>
+<%= turbo_stream.replace "issue_#{@issue.id}",
+    partial: "issues/issue_card",
+    locals: { issue: @issue, visible_properties: @visible_properties } %>
 
 <%# Update the sidebar if it's open %>
 <%= turbo_stream.replace "issue_sidebar", partial: "issues/sidebar", locals: {

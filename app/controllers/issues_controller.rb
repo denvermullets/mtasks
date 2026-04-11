@@ -59,14 +59,13 @@ class IssuesController < ApplicationController
     @issue.apply_lane_timestamps!
 
     if @issue.save
-      detect_issue_references
-      @issue.remove_blocking_dependencies!
       @issue.enqueue_velocity_recalculation!
       @latest_version = @issue.versions.last
       notify_issue_update
-      @issue.reload
+      enqueue_after_update_job
+
       respond_to do |format|
-        format.turbo_stream { load_board_data && render(:update) }
+        format.turbo_stream { render(:update) }
         format.html { redirect_to team_issue_path(@issue.team, @issue), notice: 'Issue was successfully updated.' }
       end
     else
@@ -136,12 +135,11 @@ class IssuesController < ApplicationController
     @empty_groups = @display_service.empty_groups
   end
 
-  def detect_issue_references
-    IssueReferenceService.call(
-      source_issue: @issue,
-      text: @issue.description,
-      source_type: 'description',
-      user: Current.user
+  def enqueue_after_update_job
+    IssueAfterUpdateJob.perform_later(
+      issue_id: @issue.id,
+      user_id: Current.user.id,
+      description_changed: @issue.saved_change_to_description?
     )
   end
 
