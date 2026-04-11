@@ -34,8 +34,8 @@ module Api
         @issue.apply_lane_timestamps!
 
         if @issue.save
-          @issue.remove_blocking_dependencies!
           @issue.enqueue_velocity_recalculation!
+          IssueAfterUpdateJob.perform_later(issue_id: @issue.id, user_id: current_user.id)
           render json: serialize(@issue)
         else
           render_validation_errors(@issue)
