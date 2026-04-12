@@ -1,5 +1,5 @@
 class IssueReferenceParser
-  ISSUE_REFERENCE_REGEX = /\b([A-Z0-9]{3,4}-\d+)\b/
+  ISSUE_REFERENCE_REGEX = /\b([A-Za-z0-9]{3,4}-\d+)\b/
 
   def initialize(text)
     @text = text
@@ -17,7 +17,7 @@ class IssueReferenceParser
 
     identifiers.filter_map do |identifier|
       prefix, number = identifier.split('-')
-      next unless prefix == team.identifier
+      next unless prefix.upcase == team.identifier
 
       team.issues.find_by(team_number: number.to_i)
     end
