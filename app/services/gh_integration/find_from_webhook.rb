@@ -44,7 +44,7 @@ module GhIntegration
         return []
       end
 
-      shortcodes.map { |sc| sc.split('-').first }.uniq
+      shortcodes.map { |sc| sc.split('-').first.upcase }.uniq
     end
 
     def filter_by_team_identifiers(subscriptions, team_identifiers)

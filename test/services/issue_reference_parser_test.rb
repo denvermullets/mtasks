@@ -38,9 +38,19 @@ class IssueReferenceParserTest < ActiveSupport::TestCase
     assert_equal [], result
   end
 
-  test 'does not match lowercase prefixes' do
+  test 'matches lowercase prefixes' do
     result = IssueReferenceParser.parse('abc-1')
-    assert_equal [], result
+    assert_equal ['abc-1'], result
+  end
+
+  test 'matches mixed case prefixes' do
+    result = IssueReferenceParser.parse('Jait-456')
+    assert_equal ['Jait-456'], result
+  end
+
+  test 'extracts shortcodes from branch-name-like strings' do
+    result = IssueReferenceParser.parse('feature/jait-123-fix-bug')
+    assert_equal ['jait-123'], result
   end
 
   test 'parses shortcodes with digits in prefix' do
@@ -56,6 +66,18 @@ class IssueReferenceParserTest < ActiveSupport::TestCase
     issue = Issue.create!(title: 'Test Issue', team: team, lane: lane, creator: user, team_number: 4)
 
     result = IssueReferenceParser.find_issues('fixes HOUR-4', team)
+
+    assert_equal [issue], result
+  end
+
+  test 'find_issues resolves lowercase shortcodes' do
+    user = User.create!(name: 'Test User', email: 'parser_lower@example.com', password: 'password')
+    workspace = Workspace.create!(name: 'Test Workspace', owner: user)
+    team = Team.create!(name: 'Hourglass', identifier: 'HOUR', workspace: workspace)
+    lane = Lane.create!(name: 'Backlog', team: team, position: 0)
+    issue = Issue.create!(title: 'Test Issue', team: team, lane: lane, creator: user, team_number: 4)
+
+    result = IssueReferenceParser.find_issues('fixes hour-4', team)
 
     assert_equal [issue], result
   end
