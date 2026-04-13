@@ -42,8 +42,8 @@ class GithubPrSyncService
   end
 
   def link_issues_and_queue_comments(pull_request, pr_data)
-    # Parse issue references from PR title and body
-    text = "#{pr_data['title']} #{pr_data['body']}"
+    # Parse issue references from PR title, body, and branch name
+    text = "#{pr_data['title']} #{pr_data['body']} #{pr_data.dig('head', 'ref')}"
     referenced_issues = IssueReferenceParser.find_issues(text, @team)
 
     return if referenced_issues.empty?

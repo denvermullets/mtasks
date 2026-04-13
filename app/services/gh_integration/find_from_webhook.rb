@@ -36,7 +36,8 @@ module GhIntegration
     end
 
     def extract_team_identifiers_from_pr
-      pr_text = "#{@pr_data['title']} #{@pr_data['body']}"
+      branch_name = @pr_data.dig('head', 'ref') || ''
+      pr_text = "#{@pr_data['title']} #{@pr_data['body']} #{branch_name}"
       shortcodes = IssueReferenceParser.parse(pr_text)
 
       if shortcodes.empty?
