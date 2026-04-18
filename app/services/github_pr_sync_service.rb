@@ -4,7 +4,7 @@ class GithubPrSyncService
     @team = @subscription.team
   end
 
-  def sync_pull_request(pr_data)
+  def sync_pull_request(pr_data, _action: nil)
     pull_request = find_or_initialize_pull_request(pr_data)
     pull_request.assign_attributes(build_pr_attributes(pr_data))
 

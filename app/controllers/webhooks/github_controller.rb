@@ -114,9 +114,10 @@ module Webhooks
     end
 
     def process_subscriptions(subscriptions, pr_data)
+      action = webhook_payload['action']
       subscriptions.each do |subscription|
         subscription.update(last_webhook_at: Time.current)
-        GithubWebhookProcessorJob.perform_later(subscription.id, pr_data.to_json)
+        GithubWebhookProcessorJob.perform_later(subscription.id, pr_data.to_json, action)
 
         Rails.logger.info(
           "Processing PR ##{pr_data['number']} for team #{subscription.team.identifier}"

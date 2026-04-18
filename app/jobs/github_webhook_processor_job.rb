@@ -3,7 +3,7 @@ class GithubWebhookProcessorJob < ApplicationJob
 
   retry_on StandardError, wait: :exponentially_longer, attempts: 3
 
-  def perform(subscription_id, pr_data_json)
+  def perform(subscription_id, pr_data_json, action = nil)
     subscription = GithubRepositorySubscription.find_by(id: subscription_id)
 
     unless subscription
@@ -14,7 +14,7 @@ class GithubWebhookProcessorJob < ApplicationJob
     pr_data = JSON.parse(pr_data_json)
 
     sync_service = GithubPrSyncService.new(subscription)
-    pr = sync_service.sync_pull_request(pr_data)
+    pr = sync_service.sync_pull_request(pr_data, _action: action)
 
     if pr
       log_success(pr, subscription)
