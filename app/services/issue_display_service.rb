@@ -22,8 +22,11 @@ class IssueDisplayService
 
   def filter_issues
     @empty_groups = [] # Reset empty groups tracking
-    result = issues
-    result = filter_by_completion(result)
+    result = if options[:search_query].present?
+               filter_by_search_term(issues)
+             else
+               filter_by_completion(issues)
+             end
     result = filter_sub_issues(result) unless options[:show_sub_issues]
     result = filter_by_milestone(result) if options[:milestone_id].present?
     result = filter_by_assignee(result) if options[:assignee_id].present?
@@ -76,8 +79,17 @@ class IssueDisplayService
       show_sub_issues: true,
       show_empty_groups: false,
       completed_filter: nil,
+      search_query: nil,
       visible_properties: UserPreference::AVAILABLE_PROPERTIES
     }
+  end
+
+  def filter_by_search_term(issue_scope)
+    term = options[:search_query].to_s.strip
+    return issue_scope if term.blank?
+
+    pattern = "%#{ActiveRecord::Base.sanitize_sql_like(term)}%"
+    issue_scope.where('title ILIKE :q OR description ILIKE :q', q: pattern)
   end
 
   def filter_by_completion(issue_scope)
