@@ -14,7 +14,7 @@ class GithubWebhookProcessorJob < ApplicationJob
     pr_data = JSON.parse(pr_data_json)
 
     sync_service = GithubPrSyncService.new(subscription)
-    pr = sync_service.sync_pull_request(pr_data, _action: action)
+    pr = sync_service.sync_pull_request(pr_data, action: action)
 
     if pr
       log_success(pr, subscription)
