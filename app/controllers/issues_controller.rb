@@ -13,7 +13,7 @@ class IssuesController < ApplicationController
       :blocking_dependencies, :blocked_dependencies, :comments
     )
 
-    @display_service = IssueDisplayService.new(base_issues, @display_options, current_team)
+    @display_service = build_display_service(base_issues)
     @grouped_issues = @display_service.grouped_issues
     @empty_groups = @display_service.empty_groups
     @lanes = current_team.lanes.order(:position)
@@ -130,9 +130,13 @@ class IssuesController < ApplicationController
       :lane, :project, :milestone, :labels, :assignee, :creator,
       :blocking_dependencies, :blocked_dependencies, :comments
     )
-    @display_service = IssueDisplayService.new(base_issues, @display_options, current_team)
+    @display_service = build_display_service(base_issues)
     @grouped_issues = @display_service.grouped_issues
     @empty_groups = @display_service.empty_groups
+  end
+
+  def build_display_service(base_issues)
+    IssueDisplayService.new(base_issues, @display_options.merge(search_query: params[:q]), current_team)
   end
 
   def enqueue_after_update_job

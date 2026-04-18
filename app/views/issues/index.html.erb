@@ -6,10 +6,13 @@
       <h1 class="text-base font-semibold"><%= current_team&.identifier %></h1>
       <span class="text-sm text-gray-500 hidden sm:inline"><%= current_team&.workspace&.name %></span>
     </div>
-    <!-- Display Options Button -->
-    <%= turbo_frame_tag "display_options_bar" do %>
-      <%= render "display_options_bar" %>
-    <% end %>
+    <!-- Search + Display Options -->
+    <div class="flex items-center gap-2">
+      <%= render "issue_search" %>
+      <%= turbo_frame_tag "display_options_bar" do %>
+        <%= render "display_options_bar" %>
+      <% end %>
+    </div>
   </div>
 
   <!-- Board -->
