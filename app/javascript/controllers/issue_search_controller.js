@@ -14,11 +14,10 @@ export default class extends Controller {
   }
 
   handleKeyPress(event) {
-    const isModifier = event.metaKey || event.ctrlKey;
-    const isQuestion =
-      event.key === "?" || (event.shiftKey && event.key === "/");
+    const isModifier = (event.metaKey || event.ctrlKey) && event.shiftKey;
+    const isF = event.code === "KeyF" || event.key === "f" || event.key === "F";
 
-    if (isModifier && isQuestion) {
+    if (isModifier && isF) {
       event.preventDefault();
       this.inputTarget.focus();
       this.inputTarget.select();
