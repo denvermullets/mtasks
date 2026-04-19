@@ -1,0 +1,26 @@
+<div class="min-h-screen flex justify-center px-4 pt-[20vh]">
+  <div class="mx-auto md:w-2/3 w-full max-w-2xl">
+    <h1 class="font-bold text-4xl mb-4 text-gray-100">Export Issues to CSV</h1>
+    <div class="bg-foreground border border-stroke rounded-lg p-4 mb-6">
+      <h3 class="font-semibold text-gray-200 mb-2">Team</h3>
+      <p class="text-sm text-gray-400 mb-4">
+        <span class="font-mono text-gray-300"><%= @team.identifier %></span>
+        <span class="ml-2"><%= @team.name %></span>
+      </p>
+      <h3 class="font-semibold text-gray-200 mb-2">What will be exported</h3>
+      <p class="text-sm text-gray-400 mb-2">
+        <strong class="text-gray-300"><%= @issue_count %></strong> issue<%= 's' unless @issue_count == 1 %> from this team, including archived issues.
+      </p>
+      <p class="text-sm text-gray-400 mb-2">The CSV will include these columns:</p>
+      <code class="text-xs bg-background text-gray-300 p-2 block rounded overflow-x-auto">
+        <%= IssueExporter::HEADERS.join(', ') %>
+      </code>
+    </div>
+    <%= form_with url: team_export_path(@team), method: :post, data: { turbo: false }, class: "contents" do |form| %>
+      <div class="inline-flex gap-2">
+        <%= form.submit "Export", class: "rounded-md px-3.5 py-2.5 border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 font-medium cursor-pointer" %>
+        <%= link_to "Cancel", team_issues_path(@team), class: "rounded-md px-3.5 py-2.5 bg-foreground hover:bg-highlight text-gray-300 font-medium" %>
+      </div>
+    <% end %>
+  </div>
+</div>

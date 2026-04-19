@@ -15,6 +15,7 @@ Rails.application.routes.draw do
       delete :archive
     end
     resource :display_preference, only: %i[update]
+    resource :export, only: %i[show create], controller: 'team_exports'
     # GitHub repositories management
     resources :github_repositories, only: %i[index create update destroy], controller: 'team_github_repositories'
     resources :labels, only: %i[index create update destroy]
