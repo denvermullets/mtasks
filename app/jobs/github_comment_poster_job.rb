@@ -51,7 +51,6 @@ class GithubCommentPosterJob < ApplicationJob
       **Title:** #{issue.title}
       **Status:** #{issue.lane.name}
       **Priority:** #{issue.priority&.humanize || 'Not set'}
-      **Assignee:** #{issue.assignee ? "@#{issue.assignee.email.split('@').first}" : 'Unassigned'}
 
       This pull request has been automatically linked to the issue.
     COMMENT

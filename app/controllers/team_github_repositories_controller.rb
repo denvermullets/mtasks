@@ -4,7 +4,8 @@ class TeamGithubRepositoriesController < ApplicationController
 
   def index
     @installation = @team.workspace.github_installation
-    @subscribed_repos = @team.github_repository_subscriptions.active
+    @subscribed_repos = @team.github_repository_subscriptions.active.includes(:pr_automation_rules)
+    @lanes = @team.lanes
     @available_repos = fetch_available_repos if @installation
   end
 
@@ -21,6 +22,17 @@ class TeamGithubRepositoriesController < ApplicationController
                 alert: "Failed to add repository: #{e.message}"
   end
 
+  def update
+    subscription = @team.github_repository_subscriptions.find(params[:id])
+    save_automation_rules(subscription, params[:automation_rules] || {})
+
+    redirect_to team_github_repositories_path(@team),
+                notice: 'Automation rules updated!'
+  rescue ActiveRecord::RecordInvalid => e
+    redirect_to team_github_repositories_path(@team),
+                alert: "Failed to save rules: #{e.message}"
+  end
+
   def destroy
     subscription = @team.github_repository_subscriptions.find(params[:id])
     subscription.destroy
@@ -30,6 +42,33 @@ class TeamGithubRepositoriesController < ApplicationController
   end
 
   private
+
+  def save_automation_rules(subscription, rules_params)
+    PrAutomationRule.transaction do
+      subscription.pr_automation_rules.destroy_all
+      create_simple_rule(subscription, 'pr_opened', rules_params[:pr_opened_lane_id])
+      create_simple_rule(subscription, 'pr_closed', rules_params[:pr_closed_lane_id])
+      create_merge_rules(subscription, rules_params[:merge_rules])
+    end
+  end
+
+  def create_simple_rule(subscription, trigger, lane_id)
+    return if lane_id.blank?
+
+    subscription.pr_automation_rules.create!(trigger: trigger, lane_id: lane_id)
+  end
+
+  def create_merge_rules(subscription, merge_rules)
+    Array(merge_rules).each do |rule|
+      next if rule[:branch_pattern].blank? || rule[:lane_id].blank?
+
+      subscription.pr_automation_rules.create!(
+        trigger: 'pr_merged',
+        branch_pattern: rule[:branch_pattern].strip,
+        lane_id: rule[:lane_id]
+      )
+    end
+  end
 
   def set_team
     @team = Team.find(params[:team_id])

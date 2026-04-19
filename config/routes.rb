@@ -16,7 +16,7 @@ Rails.application.routes.draw do
     end
     resource :display_preference, only: %i[update]
     # GitHub repositories management
-    resources :github_repositories, only: %i[index create destroy], controller: 'team_github_repositories'
+    resources :github_repositories, only: %i[index create update destroy], controller: 'team_github_repositories'
     resources :labels, only: %i[index create update destroy]
     resources :milestones, only: %i[index create update destroy]
     resources :lanes, only: %i[create update destroy]

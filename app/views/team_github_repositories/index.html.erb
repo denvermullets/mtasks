@@ -31,22 +31,98 @@
           <h2 class="text-lg font-semibold text-gray-200 mb-4">Subscribed Repositories</h2>
 
           <% if @subscribed_repos.any? %>
-            <div class="space-y-2">
+            <div class="space-y-3">
               <% @subscribed_repos.each do |subscription| %>
-                <div class="flex items-center justify-between p-3 border border-stroke rounded-lg hover:bg-background transition-colors">
-                  <div class="flex items-center gap-3">
-                    <div class="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-                    <div>
-                      <div class="text-sm font-mono text-gray-200"><%= subscription.github_repo_full_name %></div>
-                      <% if subscription.last_webhook_at %>
-                        <div class="text-xs text-gray-500">Last webhook: <%= time_ago_in_words(subscription.last_webhook_at) %> ago</div>
-                      <% end %>
+                <% opened_rule = subscription.pr_automation_rules.find { |r| r.trigger == 'pr_opened' } %>
+                <% closed_rule = subscription.pr_automation_rules.find { |r| r.trigger == 'pr_closed' } %>
+                <% merge_rules = subscription.pr_automation_rules.select { |r| r.trigger == 'pr_merged' } %>
+                <div class="border border-stroke rounded-lg" data-controller="automation-rules">
+                  <div class="flex items-center justify-between p-3 hover:bg-background transition-colors">
+                    <div class="flex items-center gap-3">
+                      <div class="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                      <div>
+                        <div class="text-sm font-mono text-gray-200"><%= subscription.github_repo_full_name %></div>
+                        <% if subscription.last_webhook_at %>
+                          <div class="text-xs text-gray-500">Last webhook: <%= time_ago_in_words(subscription.last_webhook_at) %> ago</div>
+                        <% end %>
+                      </div>
                     </div>
+                    <%= button_to "Remove", team_github_repository_path(@team, subscription),
+                        method: :delete,
+                        data: { turbo_confirm: "Are you sure you want to unsubscribe from this repository?" },
+                        class: "px-3 py-1.5 text-xs border border-red-500 text-red-400 hover:bg-red-500 hover:text-white font-medium cursor-pointer rounded-md" %>
                   </div>
-                  <%= button_to "Remove", team_github_repository_path(@team, subscription),
-                      method: :delete,
-                      data: { turbo_confirm: "Are you sure you want to unsubscribe from this repository?" },
-                      class: "px-3 py-1.5 text-xs border border-red-500 text-red-400 hover:bg-red-500 hover:text-white font-medium cursor-pointer rounded-md" %>
+
+                  <div class="border-t border-stroke px-3 py-2">
+                    <button type="button" class="flex items-center gap-2 text-sm text-gray-300 hover:text-gray-100 cursor-pointer" data-action="click->automation-rules#toggle">
+                      <svg data-automation-rules-target="toggleIcon" class="w-4 h-4 transition-transform" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                      </svg>
+                      <span>Automation Rules</span>
+                      <% if subscription.pr_automation_rules.any? %>
+                        <span class="text-xs text-gray-500">(<%= subscription.pr_automation_rules.size %>)</span>
+                      <% end %>
+                    </button>
+                  </div>
+
+                  <div class="hidden border-t border-stroke p-4 bg-background rounded-b-lg" data-automation-rules-target="section">
+                    <%= form_with url: team_github_repository_path(@team, subscription), method: :patch, local: true, class: "space-y-5" do |f| %>
+                      <div>
+                        <label class="block text-sm font-medium text-gray-200 mb-2">When a PR is opened</label>
+                        <select name="automation_rules[pr_opened_lane_id]" class="w-full px-3 py-2 bg-foreground border border-stroke rounded-md text-sm text-gray-200 focus:outline-none focus:border-accent">
+                          <option value="">-- No action --</option>
+                          <% @lanes.each do |lane| %>
+                            <option value="<%= lane.id %>" <%= 'selected' if opened_rule && opened_rule.lane_id == lane.id %>><%= lane.name %></option>
+                          <% end %>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label class="block text-sm font-medium text-gray-200 mb-2">When a PR is merged into</label>
+                        <div class="space-y-2" data-automation-rules-target="mergeRules">
+                          <% merge_rules.each do |rule| %>
+                            <div class="flex items-center gap-2" data-merge-rule-row>
+                              <input type="text" name="automation_rules[merge_rules][][branch_pattern]" value="<%= rule.branch_pattern %>" placeholder="e.g., main, release/*" autocomplete="off" class="flex-1 px-3 py-2 bg-foreground border border-stroke rounded-md text-sm text-gray-200 font-mono focus:outline-none focus:border-accent">
+                              <span class="text-gray-500 text-sm">→</span>
+                              <select name="automation_rules[merge_rules][][lane_id]" class="flex-1 px-3 py-2 bg-foreground border border-stroke rounded-md text-sm text-gray-200 focus:outline-none focus:border-accent">
+                                <% @lanes.each do |lane| %>
+                                  <option value="<%= lane.id %>" <%= 'selected' if rule.lane_id == lane.id %>><%= lane.name %></option>
+                                <% end %>
+                              </select>
+                              <button type="button" class="px-2 py-1 text-sm text-red-400 hover:text-red-300 cursor-pointer" data-action="click->automation-rules#removeMergeRule" aria-label="Remove rule">✕</button>
+                            </div>
+                          <% end %>
+                        </div>
+                        <template data-automation-rules-target="template">
+                          <div class="flex items-center gap-2" data-merge-rule-row>
+                            <input type="text" name="automation_rules[merge_rules][][branch_pattern]" placeholder="e.g., main, release/*" autocomplete="off" class="flex-1 px-3 py-2 bg-foreground border border-stroke rounded-md text-sm text-gray-200 font-mono focus:outline-none focus:border-accent">
+                            <span class="text-gray-500 text-sm">→</span>
+                            <select name="automation_rules[merge_rules][][lane_id]" class="flex-1 px-3 py-2 bg-foreground border border-stroke rounded-md text-sm text-gray-200 focus:outline-none focus:border-accent">
+                              <% @lanes.each do |lane| %>
+                                <option value="<%= lane.id %>"><%= lane.name %></option>
+                              <% end %>
+                            </select>
+                            <button type="button" class="px-2 py-1 text-sm text-red-400 hover:text-red-300 cursor-pointer" data-action="click->automation-rules#removeMergeRule" aria-label="Remove rule">✕</button>
+                          </div>
+                        </template>
+                        <button type="button" class="mt-2 text-xs text-accent hover:underline cursor-pointer" data-action="click->automation-rules#addMergeRule">+ Add merge rule</button>
+                      </div>
+
+                      <div>
+                        <label class="block text-sm font-medium text-gray-200 mb-2">When a PR is closed (not merged)</label>
+                        <select name="automation_rules[pr_closed_lane_id]" class="w-full px-3 py-2 bg-foreground border border-stroke rounded-md text-sm text-gray-200 focus:outline-none focus:border-accent">
+                          <option value="">-- No action --</option>
+                          <% @lanes.each do |lane| %>
+                            <option value="<%= lane.id %>" <%= 'selected' if closed_rule && closed_rule.lane_id == lane.id %>><%= lane.name %></option>
+                          <% end %>
+                        </select>
+                      </div>
+
+                      <div class="flex justify-end pt-2 border-t border-stroke">
+                        <%= f.submit "Save Rules", class: "px-4 py-2 text-sm border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 font-medium cursor-pointer rounded-md" %>
+                      </div>
+                    <% end %>
+                  </div>
                 </div>
               <% end %>
             </div>
@@ -110,6 +186,18 @@
             <div class="flex gap-3">
               <span class="text-accent font-semibold">🔗</span>
               <p>PRs without shortcodes won't be linked to any team automatically.</p>
+            </div>
+            <div class="flex gap-3">
+              <span class="text-accent font-semibold">🌿</span>
+              <p>Shortcodes can appear in the <strong>branch name</strong>, not just the title or body (e.g., <code class="px-1 py-0.5 bg-background rounded font-mono"><%= @team.identifier.downcase %>-123-my-feature</code>).</p>
+            </div>
+            <div class="flex gap-3">
+              <span class="text-accent font-semibold">🔡</span>
+              <p>Lowercase shortcodes are supported (e.g., <code class="px-1 py-0.5 bg-background rounded font-mono"><%= @team.identifier.downcase %>-123</code>).</p>
+            </div>
+            <div class="flex gap-3">
+              <span class="text-accent font-semibold">🎯</span>
+              <p>Merge rule branch patterns support globs (e.g., <code class="px-1 py-0.5 bg-background rounded font-mono">release/*</code>).</p>
             </div>
           </div>
         </div>
