@@ -95,6 +95,8 @@ class GithubPrSyncService
       issue.lane = lane
       issue.apply_lane_timestamps!
       issue.save!
+      issue.enqueue_velocity_recalculation!
+      IssueAfterUpdateJob.perform_later(issue_id: issue.id, user_id: nil)
       Rails.logger.info("Moved issue #{issue.identifier} to lane '#{lane.name}' via PR automation")
     end
   end
