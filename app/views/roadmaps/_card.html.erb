@@ -21,7 +21,7 @@
     elsif status == "started" && pct < 50 then "#EF9F27"
     else "#5DCAA5"
     end
-  show_progress = commitment == "now" || (commitment == "next" && pct.positive?)
+  show_progress = project.total_issues_count.positive?
 %>
 <div id="<%= dom_id(project, :roadmap_card) %>"
      class="bg-foreground border border-stroke rounded-md p-2.5 hover:border-stroke/80 transition-colors relative group"
@@ -35,7 +35,7 @@
     <span class="text-[10px] whitespace-nowrap" style="color: <%= status_color %>;"><%= status_label %></span>
     <button type="button"
             data-action="click->commitment-picker#open:stop"
-            class="text-gray-500 hover:text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity"
+            class="text-gray-500 hover:text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
             aria-label="Change commitment">
       <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
         <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
