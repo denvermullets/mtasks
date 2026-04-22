@@ -1,0 +1,67 @@
+<%# locals: (project:, commitment: nil) %>
+<%
+  status = project.status&.to_s
+  status_label, status_color =
+    if project.behind_schedule?
+      ["Behind", "#F09595"]
+    elsif status == "completed"
+      ["Completed", "#5DCAA5"]
+    elsif status == "cancelled"
+      ["Cancelled", "#888780"]
+    elsif status == "paused"
+      ["Paused", "#EF9F27"]
+    elsif status == "started"
+      project.progress_percentage.positive? ? ["In progress", "#5DCAA5"] : ["Started", "#EF9F27"]
+    else
+      ["Planned", "#888780"]
+    end
+  pct = project.progress_percentage
+  bar_color =
+    if project.behind_schedule? then "#E24B4A"
+    elsif status == "started" && pct < 50 then "#EF9F27"
+    else "#5DCAA5"
+    end
+  show_progress = project.total_issues_count.positive?
+%>
+<div id="<%= dom_id(project, :roadmap_card) %>"
+     class="bg-foreground border border-stroke rounded-md p-2.5 hover:border-stroke/80 transition-colors relative group"
+     data-controller="commitment-picker"
+     data-commitment-picker-project-id-value="<%= project.id %>"
+     data-commitment-picker-team-id-value="<%= project.team_id %>"
+     data-commitment-picker-current-commitment-value="<%= project.roadmap_commitment || '' %>">
+  <!-- Top row: team identifier + status + menu trigger -->
+  <div class="flex justify-between items-center mb-1.5 gap-2">
+    <span class="font-mono text-[10px] text-gray-500 truncate"><%= project.team.identifier %></span>
+    <span class="text-[10px] whitespace-nowrap" style="color: <%= status_color %>;"><%= status_label %></span>
+    <button type="button"
+            data-action="click->commitment-picker#open:stop"
+            class="text-gray-500 hover:text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+            aria-label="Change commitment">
+      <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Project name -->
+  <%= link_to project.name,
+      team_project_path(project.team, project),
+      class: "block text-xs text-gray-200 leading-snug mb-2 hover:underline" %>
+
+  <!-- Due date -->
+  <% if project.due_date %>
+    <div class="text-[10px] <%= project.behind_schedule? ? 'text-red-400' : 'text-gray-500' %> mb-2">
+      Due <%= project.due_date.strftime('%b %-d, %Y') %>
+    </div>
+  <% end %>
+
+  <!-- Progress bar -->
+  <% if show_progress %>
+    <div class="h-[3px] bg-stroke rounded-sm overflow-hidden">
+      <div class="h-full rounded-sm" style="width: <%= [pct, 2].max %>%; background-color: <%= bar_color %>;"></div>
+    </div>
+  <% end %>
+
+  <!-- Commitment picker overlay -->
+  <%= render "roadmaps/commitment_picker", project: project %>
+</div>

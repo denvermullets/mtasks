@@ -43,13 +43,21 @@ class ProjectsController < ApplicationController
 
   def update
     if @project.update(project_params)
-      if turbo_frame_request?
-        render_sidebar_stream
-      else
-        redirect_to team_project_path(current_team, @project), notice: 'Project was successfully updated.'
+      respond_to do |format|
+        format.turbo_stream { render_roadmap_card_stream }
+        format.html do
+          if turbo_frame_request?
+            render_sidebar_stream
+          else
+            redirect_to team_project_path(current_team, @project), notice: 'Project was successfully updated.'
+          end
+        end
       end
     else
-      render :edit, status: :unprocessable_entity
+      respond_to do |format|
+        format.turbo_stream { head :unprocessable_entity }
+        format.html { render :edit, status: :unprocessable_entity }
+      end
     end
   end
 
@@ -74,6 +82,14 @@ class ProjectsController < ApplicationController
     @project = current_team.projects.find(params[:id])
   rescue ActiveRecord::RecordNotFound
     redirect_to team_projects_path(current_team), alert: 'Project not found.'
+  end
+
+  def render_roadmap_card_stream
+    render turbo_stream: turbo_stream.replace(
+      ActionView::RecordIdentifier.dom_id(@project, :roadmap_card),
+      partial: 'roadmaps/card',
+      locals: { project: @project }
+    )
   end
 
   def render_sidebar_stream
@@ -122,6 +138,6 @@ class ProjectsController < ApplicationController
 
   def project_params
     params.require(:project).permit(:name, :description, :milestone_id, :priority, :status, :lead_id, :start_date,
-                                    :due_date, files: [], label_ids: [])
+                                    :due_date, :roadmap_commitment, files: [], label_ids: [])
   end
 end

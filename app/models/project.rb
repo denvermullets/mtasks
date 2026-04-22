@@ -1,5 +1,6 @@
 class Project < ApplicationRecord
   STATUSES = %w[backlog started paused completed cancelled].freeze
+  ROADMAP_COMMITMENTS = %w[now next later].freeze
 
   enum :priority, { urgent: 0, high: 1, medium: 2, low: 3, no_priority: 4 }
 
@@ -11,8 +12,16 @@ class Project < ApplicationRecord
   has_many :labels, through: :project_labels
   has_many_attached :files
 
+  scope :on_roadmap, -> { where.not(roadmap_commitment: nil) }
+  scope :in_commitment, lambda { |commitment|
+    where(roadmap_commitment: commitment).order(Arel.sql('due_date ASC NULLS LAST'), :id)
+  }
+
   validates :name, presence: true
   validates :status, inclusion: { in: STATUSES }, allow_nil: true
+  validates :roadmap_commitment, inclusion: { in: ROADMAP_COMMITMENTS }, allow_nil: true
+
+  normalizes :roadmap_commitment, with: lambda(&:presence)
 
   def recalculate_velocity!
     update_columns(

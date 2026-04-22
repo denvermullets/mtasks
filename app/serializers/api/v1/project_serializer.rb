@@ -27,6 +27,7 @@ module Api
           total_issues_count: @project.total_issues_count,
           progress_percentage: @project.progress_percentage,
           behind_schedule: @project.behind_schedule?,
+          roadmap_commitment: @project.roadmap_commitment,
           created_at: @project.created_at,
           updated_at: @project.updated_at
         }

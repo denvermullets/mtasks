@@ -25,6 +25,7 @@ Rails.application.routes.draw do
       delete :purge_file, on: :member
       resources :project_labels, only: %i[create destroy]
     end
+    resource :roadmap, only: [:show], controller: 'roadmaps'
     resources :team_invitations, only: %i[index create destroy] do
       post :resend, on: :member
       delete :remove_member, on: :collection

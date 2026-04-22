@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_11_111547) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_22_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -256,6 +256,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_11_111547) do
     t.bigint "milestone_id"
     t.string "name"
     t.integer "priority", default: 4
+    t.string "roadmap_commitment"
     t.date "start_date"
     t.string "status", default: "backlog"
     t.bigint "team_id", null: false
@@ -264,6 +265,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_11_111547) do
     t.integer "velocity_score", default: 0, null: false
     t.index ["lead_id"], name: "index_projects_on_lead_id"
     t.index ["milestone_id"], name: "index_projects_on_milestone_id"
+    t.index ["team_id", "roadmap_commitment"], name: "index_projects_on_team_id_and_roadmap_commitment"
     t.index ["team_id"], name: "index_projects_on_team_id"
   end
 
