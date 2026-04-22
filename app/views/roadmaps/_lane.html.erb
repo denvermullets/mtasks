@@ -11,7 +11,7 @@
   </div>
 
   <!-- Lane body -->
-  <div class="p-2.5 bg-menu">
+  <div class="p-2.5 bg-menu space-y-2">
     <% if projects.any? %>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2"
            data-roadmap-lane="<%= commitment %>">
@@ -20,8 +20,13 @@
         <% end %>
       </div>
     <% else %>
-      <%= render "roadmaps/empty_lane",
+      <div class="py-2 px-1 text-xs text-gray-500">No projects in this lane.</div>
+    <% end %>
+
+    <% if projects_off_roadmap.any? %>
+      <%= render "roadmaps/add_to_lane",
           commitment: commitment,
+          label: label,
           projects_off_roadmap: projects_off_roadmap,
           team: team %>
     <% end %>
