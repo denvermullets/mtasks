@@ -72,7 +72,7 @@ Rails.application.routes.draw do
   end
 
   # API Token management (web UI)
-  resources :api_tokens, only: %i[index create destroy]
+  resources :api_tokens, path: 'api-tokens', only: %i[index create destroy]
 
   # GitHub Webhooks
   namespace :webhooks do
