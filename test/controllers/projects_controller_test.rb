@@ -77,4 +77,25 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, 'Project Issue'
   end
+
+  test 'update sets roadmap_commitment and responds with turbo_stream' do
+    patch team_project_path(@team, @project),
+          params: { project: { roadmap_commitment: 'now' } },
+          as: :turbo_stream
+
+    assert_response :success
+    assert_equal 'now', @project.reload.roadmap_commitment
+    assert_match(/turbo-stream/, @response.content_type)
+  end
+
+  test 'update clears roadmap_commitment when blank' do
+    @project.update!(roadmap_commitment: 'next')
+
+    patch team_project_path(@team, @project),
+          params: { project: { roadmap_commitment: '' } },
+          as: :turbo_stream
+
+    assert_response :success
+    assert_nil @project.reload.roadmap_commitment
+  end
 end

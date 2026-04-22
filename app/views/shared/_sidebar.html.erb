@@ -144,6 +144,13 @@
                 </svg>
                 <span>Projects</span>
               <% end %>
+              <%= link_to team_roadmap_path(team),
+                  class: "flex items-center gap-2 px-3 py-1 text-sm rounded hover:bg-foreground transition-colors #{request.path.start_with?(team_roadmap_path(team)) ? 'text-gray-100 bg-foreground' : 'text-gray-400'}" do %>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 6h18M3 14h12M3 18h12"></path>
+                </svg>
+                <span>Roadmap</span>
+              <% end %>
               <%= link_to team_milestones_path(team),
                   class: "flex items-center gap-2 px-3 py-1 text-sm rounded hover:bg-foreground transition-colors #{request.path.start_with?(team_milestones_path(team)) ? 'text-gray-100 bg-foreground' : 'text-gray-400'}" do %>
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

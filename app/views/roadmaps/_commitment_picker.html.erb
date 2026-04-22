@@ -1,0 +1,43 @@
+<%# locals: (project:) %>
+<%
+  current = project.roadmap_commitment
+  options = [
+    { value: "now",   label: "Now",   subtitle: "shipping soon",   color: "#5DCAA5" },
+    { value: "next",  label: "Next",  subtitle: "up after Now",    color: "#378ADD" },
+    { value: "later", label: "Later", subtitle: "on the radar",    color: "#B4B2A9" }
+  ]
+%>
+<div data-commitment-picker-target="picker"
+     class="hidden fixed z-50 w-72 bg-context-foreground border-2 border-stroke rounded-md shadow-2xl">
+  <div class="px-3 py-2 border-b border-stroke">
+    <span class="text-xs text-gray-500"><%= project.team.identifier %> • <%= project.name.to_s.truncate(30) %></span>
+  </div>
+
+  <div class="py-1">
+    <% options.each do |opt| %>
+      <label class="flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight cursor-pointer">
+        <input type="radio"
+               name="commitment_<%= project.id %>"
+               value="<%= opt[:value] %>"
+               <%= 'checked' if opt[:value] == current %>
+               data-action="change->commitment-picker#select"
+               class="w-4 h-4 text-accent bg-background border-stroke focus:ring-accent focus:ring-2">
+        <span class="w-1.5 h-1.5 rounded-full" style="background-color: <%= opt[:color] %>;"></span>
+        <span><%= opt[:label] %></span>
+        <span class="text-xs text-gray-500 ml-auto"><%= opt[:subtitle] %></span>
+      </label>
+    <% end %>
+    <div class="border-t border-stroke mt-1">
+      <label class="flex items-center gap-2 px-3 py-2 text-sm text-gray-400 hover:bg-hover-highlight cursor-pointer">
+        <input type="radio"
+               name="commitment_<%= project.id %>"
+               value=""
+               <%= 'checked' if current.blank? %>
+               data-action="change->commitment-picker#select"
+               class="w-4 h-4 text-accent bg-background border-stroke focus:ring-accent focus:ring-2">
+        <span class="w-1.5 h-1.5 rounded-full bg-gray-600"></span>
+        <span>Remove from roadmap</span>
+      </label>
+    </div>
+  </div>
+</div>

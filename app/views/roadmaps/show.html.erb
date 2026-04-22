@@ -1,0 +1,61 @@
+<div class="flex-1 flex flex-col min-h-0">
+  <!-- Top Bar -->
+  <div class="h-14 bg-menu border-b border-stroke flex items-center justify-between px-4 shrink-0">
+    <div class="flex items-center gap-4">
+      <%= render "shared/mobile_menu_button" %>
+      <%= link_to team_issues_path(current_team),
+          class: "text-sm text-gray-500 hover:text-gray-400 flex items-center gap-2" do %>
+        <span>&#8592;</span>
+        <span class="hidden sm:inline"><%= current_team.name %></span>
+        <span class="sm:hidden">Back</span>
+      <% end %>
+      <span class="text-gray-600">&#8250;</span>
+      <span class="text-sm text-gray-400">Roadmap</span>
+    </div>
+  </div>
+
+  <div class="flex-1 overflow-y-auto p-6">
+    <div class="max-w-6xl mx-auto">
+      <!-- Header -->
+      <div class="flex items-baseline justify-between mb-1">
+        <h2 class="text-base font-medium text-gray-200 m-0">Now / next / later</h2>
+        <span class="text-xs text-gray-500">Commitment-level swimlanes</span>
+      </div>
+      <p class="text-sm text-gray-400 mb-4">
+        No specific dates — just intent. Good for sharing externally or thinking strategically without committing to weeks.
+      </p>
+
+      <div class="bg-background border border-stroke rounded-lg p-4 space-y-3.5">
+        <%= render "lane", commitment: "now",
+            label: "Now",
+            subtitle: "shipping in the next ~6 weeks",
+            border_color: "#1D9E75",
+            dot_color: "#5DCAA5",
+            text_color: "#5DCAA5",
+            projects: @lanes["now"],
+            projects_off_roadmap: @projects_off_roadmap,
+            team: current_team %>
+
+        <%= render "lane", commitment: "next",
+            label: "Next",
+            subtitle: "starting once Now slots open",
+            border_color: "#185FA5",
+            dot_color: "#378ADD",
+            text_color: "#85B7EB",
+            projects: @lanes["next"],
+            projects_off_roadmap: @projects_off_roadmap,
+            team: current_team %>
+
+        <%= render "lane", commitment: "later",
+            label: "Later",
+            subtitle: "on the radar, not committed",
+            border_color: "#5F5E5A",
+            dot_color: "#888780",
+            text_color: "#B4B2A9",
+            projects: @lanes["later"],
+            projects_off_roadmap: @projects_off_roadmap,
+            team: current_team %>
+      </div>
+    </div>
+  </div>
+</div>

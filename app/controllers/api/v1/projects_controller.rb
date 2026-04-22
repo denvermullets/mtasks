@@ -47,7 +47,7 @@ module Api
       def project_params
         params.require(:project).permit(
           :name, :description, :milestone_id, :priority, :status,
-          :lead_id, :start_date, :due_date, label_ids: []
+          :lead_id, :start_date, :due_date, :roadmap_commitment, label_ids: []
         )
       end
 

@@ -76,6 +76,27 @@ module Api
         assert_equal 'started', json['status']
       end
 
+      test 'updates roadmap_commitment' do
+        patch api_v1_team_project_path(@team, @project),
+              params: { project: { roadmap_commitment: 'now' } }.to_json,
+              headers: @headers
+
+        assert_response :success
+        json = JSON.parse(response.body)
+        assert_equal 'now', json['roadmap_commitment']
+        assert_equal 'now', @project.reload.roadmap_commitment
+      end
+
+      test 'show exposes roadmap_commitment' do
+        @project.update!(roadmap_commitment: 'later')
+
+        get api_v1_team_project_path(@team, @project), headers: @headers
+
+        assert_response :success
+        json = JSON.parse(response.body)
+        assert_equal 'later', json['roadmap_commitment']
+      end
+
       # Destroy
       test 'destroys project' do
         assert_difference 'Project.count', -1 do
