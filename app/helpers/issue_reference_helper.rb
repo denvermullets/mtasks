@@ -20,8 +20,10 @@ module IssueReferenceHelper
   end
 
   def format_with_issue_links(text, team)
-    return '' if text.blank?
+    render_markdown(text, team: team)
+  end
 
-    simple_format(linkify_issue_references(text, team))
+  def render_markdown(text, team: nil)
+    MarkdownRenderer.render(text, team: team)
   end
 end

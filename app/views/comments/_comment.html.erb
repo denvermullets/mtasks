@@ -8,7 +8,7 @@
             <span class="text-sm text-gray-300 font-medium"><%= comment.user.name %></span>
             <span class="text-xs text-gray-500"><%= time_ago_in_words(comment.created_at) %> ago</span>
           </div>
-          <div class="text-sm text-gray-300 whitespace-pre-wrap"><%= linkify_issue_references(comment.body, comment.issue.team) %></div>
+          <div class="markdown markdown-sm text-sm text-gray-300"><%= render_markdown(comment.body, team: comment.issue.team) %></div>
           <% if comment.files.attached? %>
             <div class="mt-2">
               <%= render "shared/attachments", files: comment.files, compact: true %>

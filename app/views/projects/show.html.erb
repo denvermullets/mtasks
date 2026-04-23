@@ -48,8 +48,8 @@
           <!-- Description -->
           <% if @project.description.present? %>
             <div class="mb-8">
-              <div class="text-gray-300 prose prose-invert max-w-none">
-                <%= simple_format(@project.description) %>
+              <div class="markdown text-gray-300">
+                <%= render_markdown(@project.description, team: @project.team) %>
               </div>
             </div>
           <% end %>
