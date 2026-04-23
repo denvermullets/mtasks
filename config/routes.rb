@@ -19,7 +19,6 @@ Rails.application.routes.draw do
     # GitHub repositories management
     resources :github_repositories, only: %i[index create update destroy], controller: 'team_github_repositories'
     resources :labels, only: %i[index create update destroy]
-    resources :milestones, only: %i[index create update destroy]
     resources :lanes, only: %i[create update destroy]
     resources :projects do
       delete :purge_file, on: :member

@@ -33,7 +33,6 @@ module Api
       def detail_json
         {
           description: @issue.description,
-          milestone: serialize_record(@issue.milestone, :name),
           parent_issue: serialize_record(@issue.parent_issue, :identifier),
           blocking_issues: @issue.blocking_issues.map { |i| { id: i.id, identifier: i.identifier, title: i.title } },
           blocked_issues: @issue.blocked_issues.map { |i| { id: i.id, identifier: i.identifier, title: i.title } },

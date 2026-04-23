@@ -2,6 +2,5 @@
 <%= turbo_stream.replace "project_sidebar", partial: "projects/sidebar", locals: {
   project: @project,
   team_members: @team_members,
-  labels: @labels,
-  milestones: @milestones
+  labels: @labels
 } %>

@@ -1,5 +1,5 @@
 class Issue < ApplicationRecord
-  has_paper_trail only: %i[title description lane_id priority estimate due_date assignee_id project_id milestone_id
+  has_paper_trail only: %i[title description lane_id priority estimate due_date assignee_id project_id
                            parent_issue_id]
 
   enum :priority, { urgent: 0, high: 1, medium: 2, low: 3, no_priority: 4 }
@@ -8,7 +8,6 @@ class Issue < ApplicationRecord
   belongs_to :team
   belongs_to :lane
   belongs_to :project, optional: true
-  belongs_to :milestone, optional: true
   belongs_to :creator, class_name: 'User', optional: true
   belongs_to :assignee, class_name: 'User', optional: true
   belongs_to :parent_issue, class_name: 'Issue', optional: true

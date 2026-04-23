@@ -10,7 +10,7 @@ class IssuesController < ApplicationController
 
   def index
     base_issues = current_team.issues.not_archived.includes(
-      :lane, :project, :milestone, :labels, :assignee, :creator,
+      :lane, :project, :labels, :assignee, :creator,
       :blocking_dependencies, :blocked_dependencies, :comments
     )
 
@@ -105,7 +105,7 @@ class IssuesController < ApplicationController
   end
 
   def set_issue
-    @issue = Issue.includes(:team, :lane, :project, :milestone, :labels, :assignee, :creator,
+    @issue = Issue.includes(:team, :lane, :project, :labels, :assignee, :creator,
                             :sub_issues, :blocked_issues, :blocking_issues, comments: :user).find(params[:id])
   rescue ActiveRecord::RecordNotFound
     redirect_to root_path, alert: 'Issue not found.'
@@ -130,7 +130,7 @@ class IssuesController < ApplicationController
   def load_board_data
     load_display_options
     base_issues = current_team.issues.not_archived.includes(
-      :lane, :project, :milestone, :labels, :assignee, :creator,
+      :lane, :project, :labels, :assignee, :creator,
       :blocking_dependencies, :blocked_dependencies, :comments
     )
     @display_service = build_display_service(base_issues)
@@ -171,7 +171,7 @@ class IssuesController < ApplicationController
   def issue_params
     params.require(:issue).permit(
       :title, :description, :lane_id, :priority, :estimate, :due_date, :assignee_id, :project_id,
-      :milestone_id, :parent_issue_id, label_ids: [], files: []
+      :parent_issue_id, label_ids: [], files: []
     )
   end
 

@@ -36,6 +36,5 @@ class ProjectLabelsController < ApplicationController
   def load_sidebar_data
     @team_members = current_team.users.order(:name)
     @labels = current_team.labels.order(:name)
-    @milestones = current_team.milestones.order(:name)
   end
 end

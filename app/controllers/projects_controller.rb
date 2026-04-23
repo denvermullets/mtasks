@@ -18,7 +18,6 @@ class ProjectsController < ApplicationController
     @lanes = current_team.lanes.order(:position)
     @team_members = current_team.users.order(:name)
     @labels = current_team.labels.order(:name)
-    @milestones = current_team.milestones.order(:name)
   end
 
   def new
@@ -98,7 +97,7 @@ class ProjectsController < ApplicationController
     render turbo_stream: turbo_stream.replace(
       'project_sidebar',
       partial: 'projects/sidebar',
-      locals: { project: @project, team_members: @team_members, labels: @labels, milestones: @milestones }
+      locals: { project: @project, team_members: @team_members, labels: @labels }
     )
   end
 
@@ -117,11 +116,10 @@ class ProjectsController < ApplicationController
   def load_form_data
     @team_members = current_team.users.order(:name)
     @labels = current_team.labels.order(:name)
-    @milestones = current_team.milestones.order(:name)
   end
 
   def sorted_projects
-    scope = current_team.projects.includes(:milestone, :lead)
+    scope = current_team.projects.includes(:lead)
     scope = scope.where.not(status: 'completed') if @hide_completed
     direction = @sort_dir.to_sym
     case @index_sort
@@ -138,7 +136,7 @@ class ProjectsController < ApplicationController
   end
 
   def project_params
-    params.require(:project).permit(:name, :description, :milestone_id, :priority, :status, :lead_id, :start_date,
+    params.require(:project).permit(:name, :description, :priority, :status, :lead_id, :start_date,
                                     :due_date, :roadmap_commitment, files: [], label_ids: [])
   end
 end

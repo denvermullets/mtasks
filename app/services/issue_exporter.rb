@@ -5,7 +5,7 @@ class IssueExporter
     'ID', 'Team', 'Title', 'Description', 'Status', 'Estimate', 'Priority',
     'Project ID', 'Project', 'Creator', 'Assignee', 'Labels',
     'Created', 'Updated', 'Started', 'Completed', 'Canceled', 'Archived',
-    'Due Date', 'Parent issue', 'Project Milestone ID', 'Project Milestone'
+    'Due Date', 'Parent issue'
   ].freeze
 
   PRIORITY_LABELS = {
@@ -34,7 +34,7 @@ class IssueExporter
   private
 
   def issues
-    @issues ||= @team.issues.includes(:lane, :project, :milestone, :assignee, :creator, :labels,
+    @issues ||= @team.issues.includes(:lane, :project, :assignee, :creator, :labels,
                                       :parent_issue).order(:team_number)
   end
 
@@ -78,9 +78,7 @@ class IssueExporter
   def trailing_fields(issue)
     [
       issue.due_date&.iso8601,
-      issue.parent_issue&.identifier,
-      issue.milestone_id,
-      issue.milestone&.name
+      issue.parent_issue&.identifier
     ]
   end
 end

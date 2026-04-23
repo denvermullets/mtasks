@@ -90,7 +90,7 @@
 
       <!-- Right Sidebar - Properties -->
       <div class="hidden sm:block">
-        <%= render 'sidebar', project: @project, lanes: @lanes, team_members: @team_members, labels: @labels, milestones: @milestones %>
+        <%= render 'sidebar', project: @project, lanes: @lanes, team_members: @team_members, labels: @labels %>
       </div>
     </div>
   </div>
@@ -111,7 +111,7 @@
       </div>
       <!-- Sidebar content -->
       <div class="flex-1 overflow-y-auto">
-        <%= render 'sidebar', project: @project, lanes: @lanes, team_members: @team_members, labels: @labels, milestones: @milestones, mobile: true %>
+        <%= render 'sidebar', project: @project, lanes: @lanes, team_members: @team_members, labels: @labels, mobile: true %>
       </div>
     </div>
   </div>

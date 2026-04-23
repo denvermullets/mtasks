@@ -24,7 +24,6 @@ module IconHelper
     when Lane      then render_lane_icon(group_object)
     when String    then render_priority_icon(group_object)
     when Project   then svg_icon('text-gray-500', PROJECT_PATH)
-    when Milestone then svg_icon('text-gray-500', CHECKMARK_CIRCLE)
     when Label     then svg_icon('text-gray-500', LABEL_PATH)
     when User      then svg_icon('text-gray-500', USER_PATH)
     else content_tag(:div, class: 'w-4 h-4 rounded-full border border-gray-600') { '' }

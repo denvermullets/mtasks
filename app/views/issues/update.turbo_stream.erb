@@ -9,8 +9,7 @@
   lanes: @lanes,
   team_members: @team_members,
   projects: @projects,
-  labels: @labels,
-  milestones: @milestones
+  labels: @labels
 } %>
 <%= turbo_stream.replace "issue_sidebar_mobile", partial: "issues/sidebar", locals: {
   issue: @issue,
@@ -18,7 +17,6 @@
   team_members: @team_members,
   projects: @projects,
   labels: @labels,
-  milestones: @milestones,
   mobile: true
 } %>
 

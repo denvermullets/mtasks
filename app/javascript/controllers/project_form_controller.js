@@ -2,7 +2,6 @@ import { Controller } from "@hotwired/stimulus";
 
 export default class extends Controller {
   static targets = [
-    "milestoneButton", "milestoneLabel", "milestoneInput", "milestoneDropdown",
     "statusDropdown", "statusLabel", "statusInput",
     "priorityDropdown", "priorityLabel", "priorityInput",
     "leadDropdown", "leadLabel", "leadInput",
@@ -26,24 +25,12 @@ export default class extends Controller {
       return;
     }
 
-    if (event.key === "m" || event.key === "M") {
-      event.preventDefault();
-      this.openMilestoneDropdown();
-    }
-
     if (event.key === "Escape") {
       this.closeAllDropdowns();
     }
   }
 
   handleClickOutside(event) {
-    if (this.hasMilestoneDropdownTarget &&
-        !this.milestoneDropdownTarget.contains(event.target) &&
-        !this.milestoneButtonTarget.contains(event.target)) {
-      this.closeMilestoneDropdown();
-    }
-
-    // Close flyout dropdowns when clicking outside
     const dropdowns = ["statusDropdown", "priorityDropdown", "leadDropdown", "labelsDropdown"];
     dropdowns.forEach((dropdown) => {
       try {
@@ -76,7 +63,6 @@ export default class extends Controller {
         }
       } catch (e) {}
     });
-    this.closeMilestoneDropdown();
   }
 
   selectStatus(event) {
@@ -99,53 +85,5 @@ export default class extends Controller {
     this.leadInputTarget.value = leadId === "none" ? "" : leadId;
     this.leadLabelTarget.textContent = event.currentTarget.dataset.leadName;
     this.leadDropdownTarget.classList.add("hidden");
-  }
-
-  toggleMilestonePicker(event) {
-    event.preventDefault();
-    event.stopPropagation();
-
-    const milestonePicker = this.milestoneDropdownTarget.querySelector('[data-controller="milestone-form-picker"]');
-    if (!milestonePicker) return;
-
-    const controller = this.application.getControllerForElementAndIdentifier(
-      milestonePicker,
-      "milestone-form-picker"
-    );
-
-    if (controller) {
-      const isHidden = controller.pickerTarget.classList.contains("hidden");
-      if (isHidden) {
-        controller.open();
-      } else {
-        controller.close();
-      }
-    }
-  }
-
-  openMilestoneDropdown() {
-    const milestonePicker = this.milestoneDropdownTarget.querySelector('[data-controller="milestone-form-picker"]');
-    if (!milestonePicker) return;
-
-    const controller = this.application.getControllerForElementAndIdentifier(
-      milestonePicker,
-      "milestone-form-picker"
-    );
-    if (controller && controller.open) {
-      controller.open();
-    }
-  }
-
-  closeMilestoneDropdown() {
-    const milestonePicker = this.milestoneDropdownTarget.querySelector('[data-controller="milestone-form-picker"]');
-    if (!milestonePicker) return;
-
-    const controller = this.application.getControllerForElementAndIdentifier(
-      milestonePicker,
-      "milestone-form-picker"
-    );
-    if (controller && controller.close) {
-      controller.close();
-    }
   }
 }

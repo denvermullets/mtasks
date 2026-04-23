@@ -39,7 +39,6 @@
                    (visible_properties.include?('due_date') && issue.due_date) ||
                    (visible_properties.include?('estimate') && issue.estimate) ||
                    (visible_properties.include?('project') && issue.project) ||
-                   (visible_properties.include?('milestone') && issue.milestone) ||
                    (visible_properties.include?('lane') && issue.lane) ||
                    (visible_properties.include?('assignee') && issue.assignee)
     %>
@@ -99,16 +98,6 @@
           </span>
         <% end %>
 
-        <% if visible_properties.include?('milestone') && issue.milestone %>
-          <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-foreground border border-stroke text-gray-400">
-            <span style="color: <%= issue.milestone.status_color %>;">◆</span>
-            <%= issue.milestone.name %>
-            <% if issue.milestone.due_date %>
-              <span class="text-xs">• <%= issue.milestone.formatted_due_date %></span>
-            <% end %>
-          </span>
-        <% end %>
-
         <% if visible_properties.include?('lane') && issue.lane %>
           <span class="px-1.5 py-0.5 rounded bg-foreground border border-stroke text-gray-400">
             <%= issue.lane.name %>
@@ -126,11 +115,6 @@
   <!-- Label Picker Overlay (for 'L' keyboard shortcut) -->
   <div>
     <%= render "labels/picker", issue: issue, labels: labels, context: "card" %>
-  </div>
-
-  <!-- Milestone Picker Overlay (for 'M' keyboard shortcut) -->
-  <div>
-    <%= render "milestones/picker", issue: issue, context: "card" %>
   </div>
 
   <!-- Lane Picker Overlay (for 'S' keyboard shortcut) -->
