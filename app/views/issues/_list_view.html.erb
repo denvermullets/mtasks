@@ -1,6 +1,6 @@
 <div class="overflow-y-auto h-full">
-  <!-- Header -->
-  <div class="sticky top-0 z-10 bg-menu border-b border-stroke px-4 py-3 text-xs text-gray-400 font-medium">
+  <!-- Header (desktop only) -->
+  <div class="hidden sm:block sticky top-0 z-10 bg-menu border-b border-stroke px-4 py-3 text-xs text-gray-400 font-medium">
     <div class="flex items-center gap-4">
       <div class="w-24">ID</div>
       <div class="flex-1">Title</div>
@@ -11,9 +11,9 @@
   <!-- Issue Rows -->
   <% @grouped_issues.each do |group_name, group_data| %>
     <div id="list_group_<%= group_name.parameterize %>" data-controller="swimlane-row">
-      <!-- Group Header -->
+      <!-- Group Header (desktop only — mobile uses filter chips) -->
       <% unless @display_options[:group_by] == 'none' %>
-        <div class="bg-hover-highlight border-b border-stroke px-4 py-2">
+        <div class="hidden sm:block bg-hover-highlight border-b border-stroke px-4 py-2">
           <button type="button" data-action="swimlane-row#toggle" class="flex items-center gap-2 cursor-pointer">
             <svg data-swimlane-row-target="chevron" class="w-3 h-3 text-gray-500 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -26,16 +26,21 @@
       <!-- Issues -->
       <div data-swimlane-row-target="content">
         <% group_data[:issues].each do |issue| %>
-          <%= render "issues/list_row", issue: issue, display_options: @display_options, labels: @labels %>
+          <div class="hidden sm:block">
+            <%= render "issues/list_row", issue: issue, display_options: @display_options, labels: @labels %>
+          </div>
+          <div class="sm:hidden">
+            <%= render "issues/list_row_mobile", issue: issue, display_options: @display_options %>
+          </div>
         <% end %>
       </div>
     </div>
   <% end %>
 
-  <!-- Add New Issue Row -->
+  <!-- Add New Issue Row (desktop only — mobile uses FAB) -->
   <%= link_to new_team_issue_path(current_team),
       data: { turbo_frame: "_top" },
-      class: "block border-b border-stroke hover:bg-hover-highlight transition-colors px-4 py-3 text-sm" do %>
+      class: "hidden sm:block border-b border-stroke hover:bg-hover-highlight transition-colors px-4 py-3 text-sm" do %>
     <div class="flex items-center gap-2 text-gray-400">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
