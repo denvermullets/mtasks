@@ -1,7 +1,7 @@
 <div class="flex-1 flex flex-col min-h-0">
   <!-- Top Bar -->
-  <div class="h-14 bg-menu border-b border-stroke flex items-center justify-between px-4 shrink-0">
-    <div class="flex items-center gap-4">
+  <div class="h-12 sm:h-14 bg-menu border-b border-stroke flex items-center justify-between px-3 sm:px-4 shrink-0">
+    <div class="flex items-center gap-2 sm:gap-4 min-w-0">
       <%= render "shared/mobile_menu_button" %>
       <%= link_to team_issues_path(current_team),
           class: "text-sm text-gray-500 hover:text-gray-400 flex items-center gap-2" do %>
@@ -9,19 +9,31 @@
         <span class="hidden sm:inline"><%= current_team.name %></span>
         <span class="sm:hidden">Back</span>
       <% end %>
-      <span class="text-gray-600">&#8250;</span>
+      <span class="text-gray-600 hidden sm:inline">&#8250;</span>
       <span class="text-sm text-gray-400">Projects</span>
     </div>
     <div class="flex items-center gap-2">
-      <%= link_to "New Project",
-          new_team_project_path(current_team),
-          class: "px-3 py-1.5 text-xs font-medium rounded bg-gray-800 text-gray-300 hover:bg-gray-700" %>
+      <%= link_to new_team_project_path(current_team),
+          class: "px-3 py-1.5 text-xs font-medium rounded bg-gray-800 text-gray-300 hover:bg-gray-700" do %>
+        <span class="hidden sm:inline">New Project</span>
+        <span class="sm:hidden">+ New</span>
+      <% end %>
     </div>
   </div>
 
-  <div class="flex-1 overflow-y-auto p-6">
-    <!-- Controls row -->
-    <div class="flex items-center justify-between mb-4">
+  <div class="flex-1 overflow-y-auto p-3 sm:p-6">
+    <!-- Mobile filter chips -->
+    <div class="sm:hidden flex gap-1.5 pb-3 overflow-x-auto">
+      <%= link_to "Active",
+          team_projects_path(current_team, sort: @index_sort, dir: @sort_dir, hide_completed: '1'),
+          class: "whitespace-nowrap rounded-full text-xs px-2.5 py-1 transition-colors #{@hide_completed ? 'bg-foreground text-gray-100 border border-stroke' : 'text-gray-500'}" %>
+      <%= link_to "All",
+          team_projects_path(current_team, sort: @index_sort, dir: @sort_dir),
+          class: "whitespace-nowrap rounded-full text-xs px-2.5 py-1 transition-colors #{@hide_completed ? 'text-gray-500' : 'bg-foreground text-gray-100 border border-stroke'}" %>
+    </div>
+
+    <!-- Desktop controls row -->
+    <div class="hidden sm:flex items-center justify-between mb-4">
       <div class="flex items-center gap-3">
         <span class="text-xs text-gray-500">Sort by</span>
         <% %w[created name priority due_date velocity].each do |sort_option| %>
@@ -59,8 +71,8 @@
     </div>
 
     <% if @projects.any? %>
-      <!-- Table header -->
-      <div class="flex items-center px-4 py-2 text-xs text-gray-500 font-medium border-b border-stroke">
+      <!-- Desktop table header -->
+      <div class="hidden sm:flex items-center px-4 py-2 text-xs text-gray-500 font-medium border-b border-stroke">
         <div class="flex-1 min-w-0">Name</div>
         <div class="w-40 hidden md:block">Health</div>
         <div class="w-16 text-center">Priority</div>
@@ -70,8 +82,8 @@
         <div class="w-28 hidden lg:block"></div>
       </div>
 
-      <!-- Table rows -->
-      <div class="divide-y divide-stroke/50">
+      <!-- Desktop rows -->
+      <div class="hidden sm:block divide-y divide-stroke/50">
         <% @projects.each do |project| %>
           <%= link_to team_project_path(current_team, project),
               class: "flex items-center px-4 py-3 hover:bg-hover-highlight transition-colors group" do %>
@@ -130,6 +142,13 @@
               <% end %>
             </div>
           <% end %>
+        <% end %>
+      </div>
+
+      <!-- Mobile rows -->
+      <div class="sm:hidden">
+        <% @projects.each do |project| %>
+          <%= render "project_row_mobile", project: project %>
         <% end %>
       </div>
     <% else %>

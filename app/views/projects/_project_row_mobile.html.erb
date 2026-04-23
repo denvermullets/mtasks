@@ -1,0 +1,31 @@
+<%# Mobile project row — matches .notes/refs/jait_mockups-mobile.jsx Projects %>
+<% pct = project.progress_percentage %>
+<% pct_color = pct >= 100 ? 'text-green-400' : pct.positive? ? 'text-yellow-400' : 'text-gray-500' %>
+<% bar_color = pct >= 100 ? 'bg-green-400' : pct.positive? ? 'bg-yellow-400' : 'bg-gray-600' %>
+<%= link_to team_project_path(current_team, project),
+    class: "block px-3.5 py-3.5 border-b border-stroke hover:bg-hover-highlight transition-colors" do %>
+  <div class="flex items-center gap-2.5 mb-2.5 min-w-0">
+    <!-- Status tile -->
+    <div class="w-7 h-7 rounded-md bg-foreground border border-stroke flex items-center justify-center flex-shrink-0">
+      <%= render_project_status_icon(project.status) %>
+    </div>
+    <!-- Name + priority + meta -->
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-1.5 min-w-0">
+        <span class="text-sm font-medium text-gray-100 truncate"><%= project.name %></span>
+        <span class="flex-shrink-0"><%= render_priority_icon(project.priority) %></span>
+      </div>
+      <p class="text-[11px] text-gray-500 mt-0.5 truncate">
+        <%= pluralize(project.total_issues_count, 'issue') %> · <%= project.due_date ? format_target_date(project.due_date) : 'no due date' %>
+      </p>
+    </div>
+    <!-- Percentage -->
+    <span class="text-xs font-medium flex-shrink-0 <%= pct_color %>">
+      <%= pct %>%
+    </span>
+  </div>
+  <!-- Progress bar -->
+  <div class="h-0.5 bg-stroke rounded-sm overflow-hidden">
+    <div class="h-full rounded-sm <%= bar_color %>" style="width: <%= [pct, 100].min %>%;"></div>
+  </div>
+<% end %>

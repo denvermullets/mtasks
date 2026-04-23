@@ -1,7 +1,7 @@
-<div class="flex-1 flex flex-col min-h-0" data-controller="properties-drawer lightbox">
+<div class="flex-1 flex flex-col min-h-0" data-controller="lightbox">
   <!-- Top Bar -->
-  <div class="h-14 bg-menu border-b border-stroke flex items-center justify-between px-4">
-    <div class="flex items-center gap-4">
+  <div class="h-12 sm:h-14 bg-menu border-b border-stroke flex items-center justify-between px-3 sm:px-4">
+    <div class="flex items-center gap-2 sm:gap-4 min-w-0">
       <%= render "shared/mobile_menu_button" %>
       <%= link_to team_issues_path(current_team),
           class: "text-sm text-gray-500 hover:text-gray-400 flex items-center gap-2" do %>
@@ -9,19 +9,10 @@
         <span class="hidden sm:inline"><%= current_team.name %></span>
         <span class="sm:hidden">Back</span>
       <% end %>
-      <span class="text-gray-600">&#8250;</span>
-      <span class="text-sm text-gray-400 font-mono"><%= @issue.identifier %></span>
+      <span class="text-gray-600 hidden sm:inline">&#8250;</span>
+      <span class="text-sm text-gray-400 font-mono truncate"><%= @issue.identifier %></span>
     </div>
     <div class="flex items-center gap-2">
-      <!-- Mobile Properties Button -->
-      <button type="button"
-              class="sm:hidden p-2 text-gray-400 hover:text-gray-200 rounded-md hover:bg-gray-800"
-              data-action="click->properties-drawer#toggle"
-              aria-label="Open properties">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
-        </svg>
-      </button>
       <% if Current.user.admin? || @issue.creator == Current.user %>
         <%= link_to "Edit", edit_team_issue_path(@issue.team, @issue), class: "px-3 py-1.5 text-xs font-medium rounded bg-gray-800 text-gray-300 hover:bg-gray-700" %>
       <% end %>
@@ -30,24 +21,24 @@
   <div class="flex-1 flex bg-background overflow-hidden min-h-0">
     <!-- Issue Detail Content -->
     <div class="flex-1 overflow-y-auto">
-      <div class="max-w-4xl mx-auto p-8">
+      <div class="max-w-4xl mx-auto p-4 sm:p-8">
         <!-- Issue Title -->
-        <div class="mb-6">
-          <h1 class="text-2xl font-semibold text-gray-100">
+        <div class="mb-3 sm:mb-6">
+          <h1 class="text-lg sm:text-2xl font-semibold text-gray-100 leading-tight">
             <%= @issue.title %>
           </h1>
         </div>
         <!-- Description -->
-        <div class="mb-8">
-          <% if @issue.description.present? %>
+        <% if @issue.description.present? %>
+          <div class="mb-6 sm:mb-8">
             <div class="markdown text-gray-300">
               <%= render_markdown(@issue.description, team: @issue.team) %>
             </div>
-          <% end %>
-        </div>
+          </div>
+        <% end %>
         <!-- Attachments -->
         <% if @issue.files.attached? %>
-          <div class="mb-8">
+          <div class="mb-6 sm:mb-8">
             <h2 class="text-sm font-semibold text-gray-400 mb-4">Attachments</h2>
             <%= render "shared/attachments", files: @issue.files %>
           </div>
@@ -55,16 +46,22 @@
 
         <!-- Sub-issues Section -->
         <% if @issue.sub_issues.any? %>
-          <div class="mb-8">
+          <div class="mb-6 sm:mb-8">
             <button class="flex items-center gap-2 mb-4 text-sm text-gray-400 hover:text-gray-300">
               <span>&#9654;</span>
               <span>+ Add sub-issues</span>
             </button>
           </div>
         <% end %>
+
+        <!-- Mobile Properties (inline, replaces the hidden drawer) -->
+        <div class="sm:hidden border-t border-stroke -mx-4 px-0 mb-6">
+          <%= render 'sidebar', issue: @issue, lanes: @lanes, team_members: @team_members, projects: @projects, labels: @labels, milestones: @milestones, mobile: true %>
+        </div>
+
         <!-- Activity Section -->
-        <div class="border-t border-stroke pt-8">
-          <div class="flex items-center justify-between mb-6">
+        <div class="border-t border-stroke pt-6 sm:pt-8">
+          <div class="flex items-center justify-between mb-4 sm:mb-6">
             <h2 class="text-sm font-semibold text-gray-400">Activity</h2>
           </div>
           <!-- Created entry -->
@@ -100,27 +97,6 @@
     </div>
   </div>
 
-  <!-- Mobile Properties Drawer -->
-  <div data-properties-drawer-target="drawer" class="fixed inset-0 z-50 hidden sm:hidden">
-    <!-- Overlay -->
-    <div class="absolute inset-0 bg-black/50" data-action="click->properties-drawer#close"></div>
-    <!-- Drawer panel (slides in from right, full width) -->
-    <div data-properties-drawer-target="panel" class="absolute inset-y-0 right-0 w-full bg-menu flex flex-col transform translate-x-full transition-transform duration-200 ease-in-out">
-      <!-- Header with close button -->
-      <div class="h-14 border-b border-stroke flex items-center justify-between px-4 shrink-0">
-        <span class="text-sm font-medium text-gray-300">Properties</span>
-        <button type="button" class="p-1 text-gray-400 hover:text-gray-200" data-action="click->properties-drawer#close">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
-        </button>
-      </div>
-      <!-- Sidebar content -->
-      <div class="flex-1 overflow-y-auto">
-        <%= render 'sidebar', issue: @issue, lanes: @lanes, team_members: @team_members, projects: @projects, labels: @labels, milestones: @milestones, mobile: true %>
-      </div>
-    </div>
-  </div>
   <%= render "shared/lightbox" %>
 </div>
 <% content_for :head do %>

@@ -72,7 +72,7 @@ class IssueDisplayService
 
   def default_options
     {
-      view_mode: 'board',
+      view_mode: 'list',
       group_by: 'lane',
       sub_group_by: 'none',
       order_by: 'manual',

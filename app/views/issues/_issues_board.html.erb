@@ -1,6 +1,12 @@
-<div class="h-full p-4 overflow-y-hidden" data-group-by="<%= @display_options[:group_by] %>">
+<div class="h-full p-2 sm:p-4 overflow-y-hidden" data-group-by="<%= @display_options[:group_by] %>">
   <% if @display_options[:view_mode] == 'board' %>
-    <%= render "board_view" %>
+    <%# Desktop honors the board preference; mobile always gets the list view. %>
+    <div class="hidden sm:block h-full">
+      <%= render "board_view" %>
+    </div>
+    <div class="sm:hidden h-full">
+      <%= render "list_view" %>
+    </div>
   <% else %>
     <%= render "list_view" %>
   <% end %>

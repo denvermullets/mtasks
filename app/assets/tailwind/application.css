@@ -38,3 +38,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(1);
   cursor: pointer;
 }
+
+/* Mobile-only group filter: hide non-selected groups below the sm breakpoint */
+@media (max-width: 639px) {
+  .mobile-group-hidden {
+    display: none;
+  }
+}

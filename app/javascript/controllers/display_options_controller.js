@@ -12,51 +12,10 @@ export default class extends Controller {
 
     // Check initial state
     this.checkIfChanged();
-
-    // Force list view on mobile
-    this.enforceListViewOnMobile();
-    this.boundEnforceListViewOnMobile = this.enforceListViewOnMobile.bind(this);
-    window.addEventListener("resize", this.boundEnforceListViewOnMobile);
   }
 
   disconnect() {
     document.removeEventListener("click", this.boundHandleClickOutside);
-    window.removeEventListener("resize", this.boundEnforceListViewOnMobile);
-  }
-
-  isMobile() {
-    return window.innerWidth < 640; // Tailwind's sm breakpoint
-  }
-
-  enforceListViewOnMobile() {
-    const boardButton = this.element.querySelector('[data-view-mode="board"]');
-
-    if (this.isMobile()) {
-      // Disable board view button on mobile
-      if (boardButton) {
-        boardButton.disabled = true;
-        boardButton.classList.add("opacity-50", "cursor-not-allowed");
-        boardButton.title = "Board view is not available on mobile";
-      }
-
-      // If currently on board view, switch to list
-      const url = new URL(window.location.href);
-      const currentMode = url.searchParams.get("view_mode") || "board";
-      if (currentMode === "board") {
-        url.searchParams.set("view_mode", "list");
-        window.history.replaceState({}, "", url.toString());
-        window.Turbo.visit(url.toString(), { frame: "issues_board" });
-        this.updateViewModeButtons("list");
-        this.updateOptionsForViewMode("list");
-      }
-    } else {
-      // Re-enable board view button on desktop
-      if (boardButton) {
-        boardButton.disabled = false;
-        boardButton.classList.remove("opacity-50", "cursor-not-allowed");
-        boardButton.title = "";
-      }
-    }
   }
 
   togglePanel(event) {
@@ -266,7 +225,7 @@ export default class extends Controller {
     // Update view_mode
     const viewModeInput = form.querySelector('input[name="view_mode"]');
     if (viewModeInput) {
-      viewModeInput.value = params.get("view_mode") || "board";
+      viewModeInput.value = params.get("view_mode") || "list";
     }
 
     // Update group_by
@@ -371,7 +330,7 @@ export default class extends Controller {
       .join(",");
 
     return {
-      view_mode: form.querySelector('input[name="view_mode"]')?.value || "board",
+      view_mode: form.querySelector('input[name="view_mode"]')?.value || "list",
       group_by: form.querySelector('input[name="group_by"]')?.value || "none",
       sub_group_by: form.querySelector('input[name="sub_group_by"]')?.value || "none",
       order_by: form.querySelector('input[name="order_by"]')?.value || "manual",
@@ -395,7 +354,7 @@ export default class extends Controller {
       .join(",");
 
     return {
-      view_mode: params.get("view_mode") || "board",
+      view_mode: params.get("view_mode") || "list",
       group_by: params.get("group_by") || "none",
       sub_group_by: params.get("sub_group_by") || "none",
       order_by: params.get("order_by") || "manual",

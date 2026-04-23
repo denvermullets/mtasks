@@ -1,0 +1,16 @@
+<% non_empty_groups = grouped_issues.reject { |_name, data| data[:issues].empty? } %>
+<% if non_empty_groups.size > 1 %>
+  <div class="sm:hidden overflow-x-auto" data-controller="mobile-group-filter">
+    <div class="flex gap-1.5 px-3 pb-2.5">
+      <% non_empty_groups.each_with_index do |(group_name, group_data), idx| %>
+        <button type="button"
+                class="whitespace-nowrap rounded-full text-xs px-2.5 py-1 transition-colors <%= idx.zero? ? 'bg-foreground text-gray-100 border border-stroke' : 'text-gray-500' %>"
+                data-action="click->mobile-group-filter#select"
+                data-group-id="<%= group_name.parameterize %>"
+                data-mobile-group-filter-target="chip">
+          <%= group_name %> · <%= group_data[:issues].count %>
+        </button>
+      <% end %>
+    </div>
+  </div>
+<% end %>
