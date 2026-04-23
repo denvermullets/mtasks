@@ -1,7 +1,10 @@
-<div class="flex-1 flex flex-col min-h-0">
+<div class="flex-1 flex flex-col min-h-0"
+     data-controller="roadmap-add"
+     data-roadmap-add-team-id-value="<%= current_team.id %>"
+     data-roadmap-add-lane-value="now">
   <!-- Top Bar -->
-  <div class="h-14 bg-menu border-b border-stroke flex items-center justify-between px-4 shrink-0">
-    <div class="flex items-center gap-4">
+  <div class="h-12 sm:h-14 bg-menu border-b border-stroke flex items-center justify-between px-3 sm:px-4 shrink-0">
+    <div class="flex items-center gap-2 sm:gap-4 min-w-0">
       <%= render "shared/mobile_menu_button" %>
       <%= link_to team_issues_path(current_team),
           class: "text-sm text-gray-500 hover:text-gray-400 flex items-center gap-2" do %>
@@ -9,27 +12,57 @@
         <span class="hidden sm:inline"><%= current_team.name %></span>
         <span class="sm:hidden">Back</span>
       <% end %>
-      <span class="text-gray-600">&#8250;</span>
+      <span class="text-gray-600 hidden sm:inline">&#8250;</span>
       <span class="text-sm text-gray-400">Roadmap</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <button type="button"
+              data-action="click->roadmap-add#open"
+              data-lane="now"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 transition-colors cursor-pointer">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+        <span class="hidden sm:inline">Add project</span>
+        <span class="sm:hidden">New</span>
+      </button>
     </div>
   </div>
 
-  <div class="flex-1 overflow-y-auto p-6">
+  <div class="flex-1 overflow-y-auto p-3 sm:p-6">
     <div class="max-w-6xl mx-auto">
       <!-- Header -->
-      <div class="flex items-baseline justify-between mb-1">
-        <h2 class="text-base font-medium text-gray-200 m-0">Now / next / later</h2>
-        <span class="text-xs text-gray-500">Commitment-level swimlanes</span>
+      <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
+        <div class="min-w-0">
+          <h2 class="text-base font-medium text-gray-200 m-0 mb-1">Now / next / later</h2>
+          <p class="text-sm text-gray-400 max-w-xl leading-relaxed">
+            No specific dates — just intent. Good for sharing externally or thinking strategically without committing to weeks.
+          </p>
+        </div>
+        <div class="flex items-center flex-wrap gap-1.5 shrink-0">
+          <% if @status_counts[:behind].positive? %>
+            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-foreground border border-stroke text-gray-400">
+              <span class="w-1.5 h-1.5 rounded-full" style="background-color: #F09595;"></span>
+              <%= @status_counts[:behind] %> behind
+            </span>
+          <% end %>
+          <% if @status_counts[:in_progress].positive? %>
+            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-foreground border border-stroke text-gray-400">
+              <span class="w-1.5 h-1.5 rounded-full" style="background-color: #EF9F27;"></span>
+              <%= @status_counts[:in_progress] %> in progress
+            </span>
+          <% end %>
+          <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-foreground border border-stroke text-gray-400">
+            <span class="w-1.5 h-1.5 rounded-full" style="background-color: #888780;"></span>
+            <%= @status_counts[:planned] %> planned
+          </span>
+        </div>
       </div>
-      <p class="text-sm text-gray-400 mb-4">
-        No specific dates — just intent. Good for sharing externally or thinking strategically without committing to weeks.
-      </p>
 
-      <div class="bg-background border border-stroke rounded-lg p-4 space-y-3.5">
+      <div class="space-y-3">
         <%= render "lane", commitment: "now",
             label: "Now",
-            subtitle: "shipping in the next ~6 weeks",
-            border_color: "#92E8D4",
+            subtitle: "Shipping in the next ~6 weeks",
             dot_color: "#92E8D4",
             text_color: "#92E8D4",
             projects: @lanes["now"],
@@ -38,8 +71,7 @@
 
         <%= render "lane", commitment: "next",
             label: "Next",
-            subtitle: "starting once Now slots open",
-            border_color: "#BAD4F7",
+            subtitle: "Starting once Now slots open",
             dot_color: "#BAD4F7",
             text_color: "#BAD4F7",
             projects: @lanes["next"],
@@ -48,8 +80,7 @@
 
         <%= render "lane", commitment: "later",
             label: "Later",
-            subtitle: "on the radar, not committed",
-            border_color: "#5F5E5A",
+            subtitle: "On the radar, not committed",
             dot_color: "#888780",
             text_color: "#B4B2A9",
             projects: @lanes["later"],
@@ -58,4 +89,6 @@
       </div>
     </div>
   </div>
+
+  <%= render "roadmaps/add_modal", projects_off_roadmap: @projects_off_roadmap, team: current_team %>
 </div>

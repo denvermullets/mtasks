@@ -1,34 +1,34 @@
-<%# locals: (commitment:, label:, subtitle:, border_color:, dot_color:, text_color:, projects:, projects_off_roadmap:, team:) %>
-<div class="rounded-md border overflow-hidden" style="border-color: <%= border_color %>;">
-  <!-- Lane header -->
-  <div class="flex items-center justify-between px-3 py-2.5 bg-foreground">
-    <div class="flex items-center gap-2.5">
-      <span class="w-1.5 h-1.5 rounded-full" style="background-color: <%= dot_color %>;"></span>
-      <span class="text-sm font-medium" style="color: <%= text_color %>;"><%= label %></span>
-      <span class="text-xs text-gray-500"><%= subtitle %></span>
+<%# locals: (commitment:, label:, subtitle:, dot_color:, text_color:, projects:, projects_off_roadmap:, team:) %>
+<details open
+         class="group rounded-xl border border-stroke bg-foreground overflow-hidden sm:grid sm:grid-cols-[160px_1fr] sm:gap-5 sm:p-4 <%= 'opacity-90' if commitment == 'later' %>">
+  <!-- Lane header (tappable on mobile; static column on desktop) -->
+  <summary class="list-none w-full flex items-center justify-between px-3 py-2.5 sm:p-0 sm:pt-0.5 cursor-pointer sm:cursor-default sm:pointer-events-none select-none">
+    <div class="flex items-center gap-2.5 sm:flex-col sm:items-start sm:gap-1.5 min-w-0">
+      <div class="flex items-center gap-2">
+        <span class="w-1.5 h-1.5 rounded-full shrink-0" style="background-color: <%= dot_color %>;"></span>
+        <span class="text-sm font-medium" style="color: <%= text_color %>;"><%= label %></span>
+        <span class="text-[11px] text-gray-500 px-1.5 py-0.5 rounded bg-background border border-stroke" data-lane-count="<%= commitment %>"><%= projects.length %></span>
+      </div>
+      <p class="text-[11px] text-gray-500 leading-snug hidden sm:block"><%= subtitle %></p>
     </div>
-    <span class="text-xs text-gray-500" data-lane-count="<%= commitment %>"><%= projects.length %></span>
-  </div>
+    <svg class="w-4 h-4 text-gray-500 shrink-0 sm:hidden transition-transform group-open:rotate-180"
+         fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+    </svg>
+  </summary>
 
   <!-- Lane body -->
-  <div class="p-2.5 bg-menu space-y-2">
-    <% if projects.any? %>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2"
-           data-roadmap-lane="<%= commitment %>">
-        <% projects.each do |project| %>
-          <%= render "roadmaps/card", project: project, commitment: commitment %>
-        <% end %>
-      </div>
-    <% else %>
-      <div class="py-2 px-1 text-xs text-gray-500">No projects in this lane.</div>
-    <% end %>
-
-    <% if projects_off_roadmap.any? %>
+  <div class="px-2.5 pb-2.5 sm:p-0 bg-menu sm:bg-transparent space-y-2">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2"
+         data-roadmap-lane="<%= commitment %>">
+      <% projects.each do |project| %>
+        <%= render "roadmaps/card", project: project, commitment: commitment %>
+      <% end %>
       <%= render "roadmaps/add_to_lane",
           commitment: commitment,
           label: label,
           projects_off_roadmap: projects_off_roadmap,
           team: team %>
-    <% end %>
+    </div>
   </div>
-</div>
+</details>

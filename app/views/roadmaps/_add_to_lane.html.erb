@@ -1,20 +1,11 @@
 <%# locals: (commitment:, label:, projects_off_roadmap:, team:) %>
-<div class="py-1 px-1 text-xs text-gray-500"
-     data-controller="commitment-picker-adder"
-     data-commitment-picker-adder-team-id-value="<%= team.id %>"
-     data-commitment-picker-adder-commitment-value="<%= commitment %>">
-  <details class="cursor-pointer">
-    <summary class="hover:text-gray-300 list-none cursor-pointer">+ Add project to <%= label %>…</summary>
-    <div class="mt-2 divide-y divide-stroke/50">
-      <% projects_off_roadmap.each do |project| %>
-        <button type="button"
-                data-action="click->commitment-picker-adder#add"
-                data-project-id="<%= project.id %>"
-                class="block w-full text-left px-2 py-1.5 text-xs text-gray-300 hover:bg-hover-highlight rounded cursor-pointer">
-          <span class="font-mono text-[10px] text-gray-500 mr-2"><%= project.team.identifier %></span>
-          <%= project.name %>
-        </button>
-      <% end %>
-    </div>
-  </details>
-</div>
+<button type="button"
+        data-action="click->roadmap-add#open"
+        data-lane="<%= commitment %>"
+        class="rounded-lg border border-dashed border-stroke hover:border-gray-500 transition-colors min-h-[98px] flex items-center justify-center gap-1.5 text-xs text-gray-500 hover:text-gray-300 cursor-pointer">
+  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+  </svg>
+  <span class="hidden sm:inline">Add project</span>
+  <span class="sm:hidden">Add to <%= label %></span>
+</button>
