@@ -31,7 +31,7 @@ class UserPreference < ApplicationRecord
 
   def default_attributes
     {
-      view_mode: 'board',
+      view_mode: 'list',
       group_by: 'status',
       sub_group_by: 'none',
       order_by: 'manual',

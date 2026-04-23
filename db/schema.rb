@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_22_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_23_120100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -352,7 +352,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_22_130000) do
     t.bigint "team_id", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
-    t.string "view_mode", default: "board"
+    t.string "view_mode", default: "list"
     t.json "visible_properties", default: ["id", "priority", "assignee", "labels"]
     t.index ["team_id"], name: "index_user_preferences_on_team_id"
     t.index ["user_id", "team_id"], name: "index_user_preferences_on_user_id_and_team_id", unique: true
