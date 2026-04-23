@@ -35,6 +35,7 @@ class MarkdownRenderer
 
     highlight_code_blocks(fragment)
     linkify_issue_refs(fragment) if @team
+    linkify_user_mentions(fragment) if @team
 
     fragment.to_html.html_safe
   end
@@ -65,6 +66,42 @@ class MarkdownRenderer
       replacement = replace_refs(node.content, issues_by_identifier)
       node.replace(Nokogiri::HTML5.fragment(replacement))
     end
+  end
+
+  def linkify_user_mentions(fragment)
+    members = @team.users.to_a
+    return if members.empty?
+
+    pattern = UserMentionParser.build_pattern(members)
+    by_downcased = members.index_by { |u| u.name.downcase }
+
+    fragment.traverse do |node|
+      next unless node.text?
+      next if skip_node?(node)
+      next unless node.content.include?('@')
+      next unless node.content.match?(pattern)
+
+      replacement = replace_user_mentions(node.content, pattern, by_downcased)
+      node.replace(Nokogiri::HTML5.fragment(replacement))
+    end
+  end
+
+  def replace_user_mentions(text, pattern, by_downcased)
+    result = +''
+    last_index = 0
+    text.scan(pattern) do
+      md = Regexp.last_match
+      result << CGI.escapeHTML(text[last_index...md.begin(0)])
+      user = by_downcased[md[1].downcase]
+      result << if user
+                  %(<span class="mention text-accent font-medium">@#{CGI.escapeHTML(user.name)}</span>)
+                else
+                  CGI.escapeHTML(md[0])
+                end
+      last_index = md.end(0)
+    end
+    result << CGI.escapeHTML(text[last_index..])
+    result
   end
 
   def skip_node?(node)

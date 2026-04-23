@@ -5,17 +5,19 @@
     <%= user_avatar(Current.user) %>
     <div class="flex-1 min-w-0">
       <div data-file-upload-target="dropzone"
-           data-controller="issue-mention"
+           data-controller="issue-mention user-mention"
            data-issue-mention-search-url-value="<%= search_team_issues_path(issue.team) %>"
            data-issue-mention-team-identifier-value="<%= issue.team.identifier %>"
+           data-user-mention-search-url-value="<%= search_team_members_path(issue.team) %>"
            data-action="dragover->file-upload#dragOver dragenter->file-upload#dragEnterZone dragleave->file-upload#dragLeaveZone drop->file-upload#dropOnZone"
            class="rounded transition-colors relative">
         <%= form.text_area :body,
             placeholder: "Leave a comment (drop files here)...",
             class: "w-full bg-transparent text-gray-300 placeholder-gray-500 focus:outline-none resize-none border-0 p-0 overflow-hidden",
             rows: 2,
-            data: { controller: "auto-resize", action: "input->auto-resize#resize keydown->submit-on-cmd-enter#submit input->issue-mention#onInput keydown->issue-mention#onKeydown paste->issue-mention#onPaste", issue_mention_target: "textarea" } %>
+            data: { controller: "auto-resize", action: "input->auto-resize#resize keydown->submit-on-cmd-enter#submit input->issue-mention#onInput keydown->issue-mention#onKeydown paste->issue-mention#onPaste input->user-mention#onInput keydown->user-mention#onKeydown", issue_mention_target: "textarea", user_mention_target: "textarea" } %>
         <%= render "issue_mentions/dropdown" %>
+        <%= render "user_mentions/dropdown" %>
       </div>
       <div data-file-upload-target="fileList" class="space-y-1 mt-2"></div>
       <% if comment.errors.any? %>

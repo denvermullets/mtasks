@@ -30,6 +30,9 @@ Rails.application.routes.draw do
       post :resend, on: :member
       delete :remove_member, on: :collection
     end
+    resources :members, only: [], controller: 'team_members' do
+      collection { get :search }
+    end
     resources :issues do
       resources :comments, only: %i[create destroy]
       resources :issue_labels, only: %i[create destroy]

@@ -1,4 +1,6 @@
 class CommentsController < ApplicationController
+  include MentionNotifying
+
   before_action :require_team!
   before_action :set_issue
   before_action :set_comment, only: :destroy
@@ -11,6 +13,7 @@ class CommentsController < ApplicationController
     if @comment.save
       detect_issue_references
       notify_comment_created
+      notify_mentions
       respond_to do |format|
         format.turbo_stream
         format.html { redirect_to team_issue_path(@issue.team, @issue), notice: 'Comment was successfully created.' }
@@ -75,6 +78,10 @@ class CommentsController < ApplicationController
 
   def notify_comment_created
     NotificationService.call(issue: @issue, actor: Current.user, action: 'commented', comment: @comment)
+  end
+
+  def notify_mentions
+    notify_mentions_on(@issue, text: @comment.body, comment: @comment)
   end
 
   def comment_params
