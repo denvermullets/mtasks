@@ -29,7 +29,7 @@
                   autofocus: true,
                   required: true,
                   autocomplete: "off",
-                  class: "w-full bg-transparent border-0 text-gray-200 text-2xl font-semibold placeholder-gray-600 focus:outline-none focus:ring-0 p-0" %>
+                  class: "w-full bg-transparent border border-transparent rounded-md px-2 py-1 text-gray-200 text-2xl font-semibold placeholder-gray-600 focus:outline-none focus:border-accent focus:ring-0" %>
             </div>
           </div>
 
@@ -40,7 +40,8 @@
                 placeholder: "Add description...",
                 rows: 6,
                 autocomplete: "off",
-                class: "w-full bg-transparent border-0 text-gray-300 placeholder-gray-600 focus:outline-none focus:ring-0 p-0 resize-none" %>
+                data: { controller: "auto-resize", action: "input->auto-resize#resize" },
+                class: "w-full bg-transparent border border-transparent rounded-md px-2 py-1 text-gray-300 placeholder-gray-600 focus:outline-none focus:border-accent focus:ring-0 resize-none overflow-hidden" %>
           </div>
 
           <!-- Existing Attachments -->
