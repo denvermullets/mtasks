@@ -81,7 +81,7 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
   test 'update sets roadmap_commitment and responds with turbo_stream' do
     patch team_project_path(@team, @project),
           params: { project: { roadmap_commitment: 'now' } },
-          as: :turbo_stream
+          headers: { 'Accept' => 'text/vnd.turbo-stream.html' }
 
     assert_response :success
     assert_equal 'now', @project.reload.roadmap_commitment
@@ -93,7 +93,7 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
 
     patch team_project_path(@team, @project),
           params: { project: { roadmap_commitment: '' } },
-          as: :turbo_stream
+          headers: { 'Accept' => 'text/vnd.turbo-stream.html' }
 
     assert_response :success
     assert_nil @project.reload.roadmap_commitment

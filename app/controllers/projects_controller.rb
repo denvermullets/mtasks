@@ -43,15 +43,12 @@ class ProjectsController < ApplicationController
 
   def update
     if @project.update(project_params)
-      respond_to do |format|
-        format.turbo_stream { render_roadmap_card_stream }
-        format.html do
-          if turbo_frame_request?
-            render_sidebar_stream
-          else
-            redirect_to team_project_path(current_team, @project), notice: 'Project was successfully updated.'
-          end
-        end
+      if turbo_stream_only_request?
+        render_roadmap_card_stream
+      elsif turbo_frame_request?
+        render_sidebar_stream
+      else
+        redirect_to team_project_path(current_team, @project), notice: 'Project was successfully updated.'
       end
     else
       respond_to do |format|
@@ -82,6 +79,10 @@ class ProjectsController < ApplicationController
     @project = current_team.projects.find(params[:id])
   rescue ActiveRecord::RecordNotFound
     redirect_to team_projects_path(current_team), alert: 'Project not found.'
+  end
+
+  def turbo_stream_only_request?
+    request.format.turbo_stream? && !request.accept.to_s.include?('text/html')
   end
 
   def render_roadmap_card_stream
