@@ -4,7 +4,7 @@ class UserPreference < ApplicationRecord
 
   validates :view_mode, inclusion: { in: %w[board list] }
   validates :group_by, inclusion: {
-    in: %w[none status assignee project priority label parent_issue milestone]
+    in: %w[none status assignee project priority label parent_issue]
   }
   validates :sub_group_by, inclusion: {
     in: %w[none status priority assignee project]
@@ -14,13 +14,13 @@ class UserPreference < ApplicationRecord
   }
 
   AVAILABLE_PROPERTIES = %w[
-    id status assignee priority due_date project milestone
+    id status assignee priority due_date project
     estimate labels links time_in_status created_at updated_at
     pull_requests_and_commits
   ].freeze
 
   DEFAULT_VISIBLE_PROPERTIES = %w[
-    assignee priority due_date project milestone estimate labels
+    assignee priority due_date project estimate labels
   ].freeze
 
   after_initialize :set_defaults, if: :new_record?

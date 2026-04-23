@@ -56,7 +56,7 @@
 
         <!-- Mobile Properties (inline, replaces the hidden drawer) -->
         <div class="sm:hidden border-t border-stroke -mx-4 px-0 mb-6">
-          <%= render 'sidebar', issue: @issue, lanes: @lanes, team_members: @team_members, projects: @projects, labels: @labels, milestones: @milestones, mobile: true %>
+          <%= render 'sidebar', issue: @issue, lanes: @lanes, team_members: @team_members, projects: @projects, labels: @labels, mobile: true %>
         </div>
 
         <!-- Activity Section -->
@@ -93,7 +93,7 @@
     </div>
     <!-- Right Sidebar - Properties (Desktop) -->
     <div class="hidden sm:block">
-      <%= render 'sidebar', issue: @issue, lanes: @lanes, team_members: @team_members, projects: @projects, labels: @labels, milestones: @milestones %>
+      <%= render 'sidebar', issue: @issue, lanes: @lanes, team_members: @team_members, projects: @projects, labels: @labels %>
     </div>
   </div>
 

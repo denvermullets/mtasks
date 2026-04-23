@@ -18,8 +18,6 @@ export default class extends Controller {
     "estimateLabel",
     "estimateInput",
     "labelsDropdown",
-    "milestoneDropdown",
-    "milestoneLabel",
   ];
 
   connect() {
@@ -59,21 +57,6 @@ export default class extends Controller {
         }
       }
 
-      // If this is the milestone dropdown and we're opening it, also open the milestone picker
-      if (dropdownType === "milestone" && wasHidden) {
-        const milestonePicker = this[dropdownTarget].querySelector(
-          '[data-controller="milestone-picker"]'
-        );
-        if (milestonePicker) {
-          const controller = this.application.getControllerForElementAndIdentifier(
-            milestonePicker,
-            "milestone-picker"
-          );
-          if (controller && controller.open) {
-            controller.open();
-          }
-        }
-      }
     }
   }
 
@@ -85,7 +68,6 @@ export default class extends Controller {
       "projectDropdown",
       "estimateDropdown",
       "labelsDropdown",
-      "milestoneDropdown",
     ];
 
     dropdowns.forEach((dropdown) => {
@@ -170,28 +152,6 @@ export default class extends Controller {
           const controller = this.application.getControllerForElementAndIdentifier(
             labelPicker,
             "label-picker"
-          );
-          if (controller && controller.open) {
-            controller.open();
-          }
-        }
-      }
-    }
-
-    // Open milestone dropdown with 'M' key
-    if (event.key === "m" || event.key === "M") {
-      event.preventDefault();
-      this.closeAllDropdowns();
-      if (this.hasMilestoneDropdownTarget) {
-        this.milestoneDropdownTarget.classList.remove("hidden");
-        // Find and open the milestone picker
-        const milestonePicker = this.milestoneDropdownTarget.querySelector(
-          '[data-controller="milestone-picker"]'
-        );
-        if (milestonePicker) {
-          const controller = this.application.getControllerForElementAndIdentifier(
-            milestonePicker,
-            "milestone-picker"
           );
           if (controller && controller.open) {
             controller.open();

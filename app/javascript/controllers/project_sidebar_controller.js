@@ -12,9 +12,6 @@ export default class extends Controller {
     "leadLabel",
     "leadInput",
     "labelsDropdown",
-    "milestoneDropdown",
-    "milestoneLabel",
-    "milestoneInput",
     "startDateInput",
     "dueDateInput",
   ];
@@ -63,7 +60,6 @@ export default class extends Controller {
       "priorityDropdown",
       "leadDropdown",
       "labelsDropdown",
-      "milestoneDropdown",
     ];
 
     dropdowns.forEach((dropdown) => {
@@ -111,16 +107,6 @@ export default class extends Controller {
     this.leadInputTarget.value = value === "none" ? "" : value;
     this.leadLabelTarget.textContent = label;
     this.leadDropdownTarget.classList.add("hidden");
-    this.element.requestSubmit();
-  }
-
-  selectMilestone(event) {
-    event.stopPropagation();
-    const value = event.currentTarget.dataset.milestoneId;
-    const label = event.currentTarget.dataset.milestoneName;
-    this.milestoneInputTarget.value = value === "none" ? "" : value;
-    this.milestoneLabelTarget.textContent = label;
-    this.milestoneDropdownTarget.classList.add("hidden");
     this.element.requestSubmit();
   }
 

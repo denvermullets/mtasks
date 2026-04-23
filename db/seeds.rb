@@ -31,20 +31,9 @@ puts "Created team: #{team.name} with #{team.lanes.count} lanes"
 # Add admin to team
 TeamMembership.find_or_create_by!(user: admin, team: team)
 
-# Create a milestone
-milestone = Milestone.find_or_create_by!(name: "Q1 2024") do |m|
-  m.team = team
-  m.start_date = Date.parse("2024-01-01")
-  m.due_date = Date.parse("2024-03-31")
-  m.description = "First quarter goals"
-end
-
-puts "Created milestone: #{milestone.name}"
-
 # Create a project
 project = Project.find_or_create_by!(name: "User Authentication") do |p|
   p.team = team
-  p.milestone = milestone
   p.description = "Implement user authentication system"
 end
 
@@ -88,7 +77,6 @@ issues_data.each_with_index do |issue_data, index|
     lane: issue_data[:lane],
     priority: issue_data[:priority],
     project: issue_data[:project],
-    milestone: issue_data[:project]&.milestone,
     creator: admin,
     assignee: index.even? ? admin : nil
   )

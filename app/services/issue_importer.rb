@@ -1,6 +1,5 @@
 require 'csv'
 
-# rubocop:disable Metrics/ClassLength
 class IssueImporter
   attr_reader :workspace, :user, :errors, :imported_count
 
@@ -65,8 +64,7 @@ class IssueImporter
 
   def issue_associations(row, team)
     {
-      project: find_or_create_project(row['Project'], row['Project Milestone'], team),
-      milestone: find_milestone_for_row(row, team),
+      project: find_or_create_project(row['Project'], team),
       creator: find_user_by_name(row['Creator'], team),
       assignee: find_user_by_name(row['Assignee'], team)
     }
@@ -88,11 +86,6 @@ class IssueImporter
     attach_labels(issue, row['Labels'], issue.team)
     store_parent_issue_id(issue, row['Parent issue'])
     @imported_count += 1
-  end
-
-  def find_milestone_for_row(row, team)
-    project = find_or_create_project(row['Project'], row['Project Milestone'], team)
-    project&.milestone || find_or_create_milestone(row['Project Milestone'], team)
   end
 
   def attach_labels(issue, labels_string, team)
@@ -160,20 +153,10 @@ class IssueImporter
     end
   end
 
-  def find_or_create_project(project_name, milestone_name, team)
+  def find_or_create_project(project_name, team)
     return nil unless project_name.present?
 
-    milestone = find_or_create_milestone(milestone_name, team) if milestone_name.present?
-
-    team.projects.find_or_create_by!(name: project_name) do |project|
-      project.milestone = milestone
-    end
-  end
-
-  def find_or_create_milestone(milestone_name, team)
-    return nil unless milestone_name.present?
-
-    team.milestones.find_or_create_by!(name: milestone_name)
+    team.projects.find_or_create_by!(name: project_name)
   end
 
   def find_or_create_label(label_name, team)
@@ -214,4 +197,3 @@ class IssueImporter
     colors.sample
   end
 end
-# rubocop:enable Metrics/ClassLength

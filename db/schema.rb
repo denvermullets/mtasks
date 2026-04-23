@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_23_120100) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_23_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -151,7 +151,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_23_120100) do
     t.date "due_date"
     t.integer "estimate"
     t.bigint "lane_id", null: false
-    t.bigint "milestone_id"
     t.bigint "parent_issue_id"
     t.integer "priority", default: 4
     t.bigint "project_id"
@@ -163,7 +162,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_23_120100) do
     t.index ["assignee_id"], name: "index_issues_on_assignee_id"
     t.index ["creator_id"], name: "index_issues_on_creator_id"
     t.index ["lane_id"], name: "index_issues_on_lane_id"
-    t.index ["milestone_id"], name: "index_issues_on_milestone_id"
     t.index ["parent_issue_id"], name: "index_issues_on_parent_issue_id"
     t.index ["project_id"], name: "index_issues_on_project_id"
     t.index ["team_id", "team_number"], name: "index_issues_on_team_id_and_team_number", unique: true
@@ -187,17 +185,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_23_120100) do
     t.bigint "team_id", null: false
     t.datetime "updated_at", null: false
     t.index ["team_id"], name: "index_lanes_on_team_id"
-  end
-
-  create_table "milestones", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.text "description"
-    t.date "due_date"
-    t.string "name"
-    t.date "start_date"
-    t.bigint "team_id", null: false
-    t.datetime "updated_at", null: false
-    t.index ["team_id"], name: "index_milestones_on_team_id"
   end
 
   create_table "notifications", force: :cascade do |t|
@@ -256,7 +243,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_23_120100) do
     t.text "description"
     t.date "due_date"
     t.bigint "lead_id"
-    t.bigint "milestone_id"
     t.string "name"
     t.integer "priority", default: 4
     t.string "roadmap_commitment"
@@ -267,7 +253,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_23_120100) do
     t.datetime "updated_at", null: false
     t.integer "velocity_score", default: 0, null: false
     t.index ["lead_id"], name: "index_projects_on_lead_id"
-    t.index ["milestone_id"], name: "index_projects_on_milestone_id"
     t.index ["team_id", "roadmap_commitment"], name: "index_projects_on_team_id_and_roadmap_commitment"
     t.index ["team_id"], name: "index_projects_on_team_id"
   end
@@ -410,14 +395,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_23_120100) do
   add_foreign_key "issue_references", "users"
   add_foreign_key "issues", "issues", column: "parent_issue_id"
   add_foreign_key "issues", "lanes"
-  add_foreign_key "issues", "milestones"
   add_foreign_key "issues", "projects"
   add_foreign_key "issues", "teams"
   add_foreign_key "issues", "users", column: "assignee_id"
   add_foreign_key "issues", "users", column: "creator_id"
   add_foreign_key "labels", "teams"
   add_foreign_key "lanes", "teams"
-  add_foreign_key "milestones", "teams"
   add_foreign_key "notifications", "comments"
   add_foreign_key "notifications", "issues"
   add_foreign_key "notifications", "users"
@@ -427,7 +410,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_23_120100) do
   add_foreign_key "pr_automation_rules", "lanes"
   add_foreign_key "project_labels", "labels"
   add_foreign_key "project_labels", "projects"
-  add_foreign_key "projects", "milestones"
   add_foreign_key "projects", "teams"
   add_foreign_key "projects", "users", column: "lead_id"
   add_foreign_key "pull_requests", "github_repository_subscriptions"

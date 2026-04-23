@@ -18,7 +18,6 @@ export default class extends Controller {
     "estimateLabel",
     "estimateInput",
     "labelsLabel",
-    "milestoneLabel",
   ];
 
   connect() {
@@ -174,24 +173,4 @@ export default class extends Controller {
     }
   }
 
-  toggleMilestonesDropdown(event) {
-    event.stopPropagation();
-
-    // Close all other dropdowns
-    this.closeAllDropdowns();
-
-    // Find and open the milestone picker
-    const milestonePickerElement = event.currentTarget.parentElement.querySelector(
-      '[data-controller="new-issue-milestone-picker"]'
-    );
-    if (milestonePickerElement) {
-      const controller = this.application.getControllerForElementAndIdentifier(
-        milestonePickerElement,
-        "new-issue-milestone-picker"
-      );
-      if (controller && controller.open) {
-        controller.open();
-      }
-    }
-  }
 }

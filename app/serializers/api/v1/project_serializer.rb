@@ -35,7 +35,6 @@ module Api
 
       def detail_json
         {
-          milestone: serialize_record(@project.milestone, :name),
           labels: @project.labels.map { |l| { id: l.id, name: l.name } },
           issues_count: @project.issues.not_archived.count
         }

@@ -44,8 +44,7 @@ class IssueTurboStreamService
         lanes: form_collections[:lanes],
         team_members: form_collections[:team_members],
         projects: form_collections[:projects],
-        labels: form_collections[:labels],
-        milestones: form_collections[:milestones]
+        labels: form_collections[:labels]
       }
     )
   end

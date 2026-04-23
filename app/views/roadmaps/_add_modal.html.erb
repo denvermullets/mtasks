@@ -1,0 +1,70 @@
+<%# locals: (projects_off_roadmap:, team:) %>
+<div data-roadmap-add-target="modal"
+     data-action="click->roadmap-add#backdropClick"
+     class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+  <div class="bg-foreground border border-stroke rounded-lg shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col">
+    <!-- Header -->
+    <div class="flex items-center justify-between px-4 py-3 border-b border-stroke shrink-0">
+      <h3 class="text-sm font-medium text-gray-200">Add project to roadmap</h3>
+      <button type="button"
+              data-action="click->roadmap-add#close"
+              class="text-gray-500 hover:text-gray-300 cursor-pointer"
+              aria-label="Close">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Lane chip selector -->
+    <div class="px-4 py-3 border-b border-stroke shrink-0">
+      <div class="text-[11px] text-gray-500 mb-2">Add to lane</div>
+      <div class="flex items-center gap-1.5">
+        <% [{ lane: 'now', label: 'Now', color: '#92E8D4' },
+            { lane: 'next', label: 'Next', color: '#BAD4F7' },
+            { lane: 'later', label: 'Later', color: '#888780' }].each do |opt| %>
+          <button type="button"
+                  data-roadmap-add-target="chip"
+                  data-action="click->roadmap-add#selectLane"
+                  data-lane="<%= opt[:lane] %>"
+                  class="inline-flex items-center gap-1.5 px-2 py-1 rounded border border-stroke text-gray-400 text-xs cursor-pointer hover:text-gray-200 transition-colors">
+            <span class="w-1.5 h-1.5 rounded-full" style="background-color: <%= opt[:color] %>;"></span>
+            <%= opt[:label] %>
+          </button>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Project list -->
+    <div class="flex-1 overflow-y-auto">
+      <% if projects_off_roadmap.any? %>
+        <div class="divide-y divide-stroke/50">
+          <% projects_off_roadmap.each do |project| %>
+            <button type="button"
+                    data-action="click->roadmap-add#add"
+                    data-project-id="<%= project.id %>"
+                    class="block w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-hover-highlight cursor-pointer disabled:opacity-50 disabled:cursor-wait">
+              <span class="font-mono text-[10px] text-gray-500 mr-2"><%= project.team.identifier %></span>
+              <%= project.name %>
+            </button>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="px-4 py-8 text-center text-xs text-gray-500">
+          No projects off the roadmap. Create a new one below.
+        </div>
+      <% end %>
+    </div>
+
+    <!-- Footer -->
+    <div class="px-4 py-3 border-t border-stroke shrink-0">
+      <%= link_to new_team_project_path(team),
+          class: "inline-flex items-center gap-1.5 text-xs text-accent hover:text-accent-hover transition-colors" do %>
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+        Create new project
+      <% end %>
+    </div>
+  </div>
+</div>

@@ -1,7 +1,7 @@
 class VersionDescriptionService < Service
   TRACKED_ATTRIBUTES = %w[
     lane_id assignee_id priority title description
-    estimate due_date project_id milestone_id parent_issue_id
+    estimate due_date project_id parent_issue_id
   ].freeze
 
   def initialize(version)
@@ -97,11 +97,6 @@ class VersionDescriptionService < Service
   def describe_project_id(_old_val, new_val)
     new_name = h(Project.find_by(id: new_val)&.name || 'None')
     "moved to project <strong>#{new_name}</strong>"
-  end
-
-  def describe_milestone_id(_old_val, new_val)
-    new_name = h(Milestone.find_by(id: new_val)&.name || 'None')
-    "changed milestone to <strong>#{new_name}</strong>"
   end
 
   def describe_parent_issue_id(_old_val, _new_val)

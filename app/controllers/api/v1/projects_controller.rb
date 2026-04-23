@@ -5,7 +5,7 @@ module Api
       before_action :set_project, only: %i[show update destroy]
 
       def index
-        projects = current_team.projects.includes(:lead, :milestone).order(:name)
+        projects = current_team.projects.includes(:lead).order(:name)
         render json: projects.map { |p| serialize(p) }
       end
 
@@ -46,7 +46,7 @@ module Api
 
       def project_params
         params.require(:project).permit(
-          :name, :description, :milestone_id, :priority, :status,
+          :name, :description, :priority, :status,
           :lead_id, :start_date, :due_date, :roadmap_commitment, label_ids: []
         )
       end

@@ -28,7 +28,6 @@ class IssueDisplayService
                filter_by_completion(issues)
              end
     result = filter_sub_issues(result) unless options[:show_sub_issues]
-    result = filter_by_milestone(result) if options[:milestone_id].present?
     result = filter_by_assignee(result) if options[:assignee_id].present?
     result
   end
@@ -56,7 +55,7 @@ class IssueDisplayService
                        group_by_status(issue_scope)
                      when 'none'
                        { 'All Issues' => { object: nil, issues: issue_scope } }
-                     when 'lane', 'label', 'parent_issue', 'project', 'milestone', 'assignee'
+                     when 'lane', 'label', 'parent_issue', 'project', 'assignee'
                        group_by_association(issue_scope, options[:group_by].to_sym)
                      end
 
@@ -111,10 +110,6 @@ class IssueDisplayService
     issue_scope.where(parent_issue_id: nil)
   end
 
-  def filter_by_milestone(issue_scope)
-    issue_scope.where(milestone_id: options[:milestone_id])
-  end
-
   def filter_by_assignee(issue_scope)
     issue_scope.where(assignee_id: options[:assignee_id])
   end
@@ -130,8 +125,6 @@ class IssueDisplayService
                    team.lanes.order(:position)
                  when :project
                    team.projects
-                 when :milestone
-                   team.milestones
                  when :assignee
                    team.users
                  when :label
@@ -214,7 +207,7 @@ class IssueDisplayService
                     group_by_priority(issues_in_primary_group)
                   when 'status'
                     group_by_status(issues_in_primary_group)
-                  when 'lane', 'label', 'parent_issue', 'project', 'milestone', 'assignee'
+                  when 'lane', 'label', 'parent_issue', 'project', 'assignee'
                     group_by_association(issues_in_primary_group, options[:sub_group_by].to_sym)
                   else
                     { 'All' => { object: nil, issues: issues_in_primary_group } }

@@ -24,18 +24,20 @@
   show_progress = project.total_issues_count.positive?
 %>
 <div id="<%= dom_id(project, :roadmap_card) %>"
-     class="bg-foreground border border-stroke rounded-md p-2.5 hover:border-stroke/80 transition-colors relative group"
+     class="relative overflow-hidden bg-background border border-stroke rounded-lg p-3.5 hover:border-stroke/80 transition-colors group min-h-[98px]"
      data-controller="commitment-picker"
      data-commitment-picker-project-id-value="<%= project.id %>"
      data-commitment-picker-team-id-value="<%= project.team_id %>"
      data-commitment-picker-current-commitment-value="<%= project.roadmap_commitment || '' %>">
-  <!-- Top row: team identifier + status + menu trigger -->
-  <div class="flex justify-between items-center mb-1.5 gap-2">
-    <span class="font-mono text-[10px] text-gray-500 truncate"><%= project.team.identifier %></span>
-    <span class="text-[10px] whitespace-nowrap" style="color: <%= status_color %>;"><%= status_label %></span>
+  <!-- Top row: status pill + menu trigger -->
+  <div class="flex items-center justify-between gap-2 mb-1.5">
+    <span class="inline-flex items-center gap-1.5 min-w-0">
+      <span class="w-1.5 h-1.5 rounded-full shrink-0" style="background-color: <%= status_color %>;"></span>
+      <span class="text-[10px] uppercase tracking-wider font-medium truncate" style="color: <%= status_color %>;"><%= status_label %></span>
+    </span>
     <button type="button"
             data-action="click->commitment-picker#open:stop"
-            class="text-gray-500 hover:text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+            class="text-gray-500 hover:text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shrink-0"
             aria-label="Change commitment">
       <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
         <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
@@ -46,20 +48,25 @@
   <!-- Project name -->
   <%= link_to project.name,
       team_project_path(project.team, project),
-      class: "block text-xs text-gray-200 leading-snug mb-2 hover:underline" %>
+      class: "block text-[13px] font-medium text-gray-100 leading-snug mb-2 hover:underline" %>
 
-  <!-- Due date -->
-  <% if project.due_date %>
-    <div class="text-[10px] <%= project.behind_schedule? ? 'text-red-400' : 'text-gray-500' %> mb-2">
-      Due <%= project.due_date.strftime('%b %-d, %Y') %>
-    </div>
-  <% end %>
+  <!-- Bottom row: due date + team identifier pill -->
+  <div class="flex items-center justify-between gap-2">
+    <% if project.due_date %>
+      <span class="text-[11px] <%= project.behind_schedule? ? 'text-red-400' : 'text-gray-500' %>">
+        Due <%= project.due_date.strftime('%b %-d, %Y') %>
+      </span>
+    <% else %>
+      <span></span>
+    <% end %>
+    <span class="font-mono text-[10px] text-gray-500 bg-background border border-stroke px-1.5 py-0.5 rounded shrink-0">
+      <%= project.team.identifier %>
+    </span>
+  </div>
 
   <!-- Progress bar -->
   <% if show_progress %>
-    <div class="h-[3px] bg-stroke rounded-sm overflow-hidden">
-      <div class="h-full rounded-sm" style="width: <%= [pct, 2].max %>%; background-color: <%= bar_color %>;"></div>
-    </div>
+    <div class="absolute bottom-0 left-0 h-[2px]" style="width: <%= [pct, 2].max %>%; background-color: <%= bar_color %>;"></div>
   <% end %>
 
   <!-- Commitment picker overlay -->

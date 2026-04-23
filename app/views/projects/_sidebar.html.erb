@@ -132,45 +132,6 @@
       </div>
     </div>
 
-    <!-- Milestone -->
-    <div class="mb-6">
-      <div class="text-xs font-medium text-gray-500 mb-2">Milestone</div>
-      <div class="relative">
-        <button type="button"
-                data-action="click->project-sidebar#toggleDropdown"
-                data-dropdown="milestone"
-                class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors cursor-pointer">
-          <% if project.milestone %>
-            <span style="color: <%= project.milestone.status_color %>;">&#9670;</span>
-            <span data-project-sidebar-target="milestoneLabel"><%= project.milestone.name %></span>
-          <% else %>
-            <span class="text-gray-500">&#9671;</span>
-            <span data-project-sidebar-target="milestoneLabel" class="text-gray-500">No milestone</span>
-          <% end %>
-        </button>
-        <div data-project-sidebar-target="milestoneDropdown" class="hidden absolute top-full left-0 mt-1 w-full bg-foreground border border-stroke rounded-md shadow-lg z-10 max-h-64 overflow-y-auto">
-          <button type="button"
-                  data-action="click->project-sidebar#selectMilestone"
-                  data-milestone-id="none"
-                  data-milestone-name="No milestone"
-                  class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors cursor-pointer first:rounded-t-md">
-            No milestone
-          </button>
-          <% milestones.each do |milestone| %>
-            <button type="button"
-                    data-action="click->project-sidebar#selectMilestone"
-                    data-milestone-id="<%= milestone.id %>"
-                    data-milestone-name="<%= milestone.name %>"
-                    class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors cursor-pointer last:rounded-b-md flex items-center gap-2">
-              <span style="color: <%= milestone.status_color %>;">&#9670;</span>
-              <%= milestone.name %>
-            </button>
-          <% end %>
-        </div>
-        <%= form.hidden_field :milestone_id, value: project.milestone_id, data: { project_sidebar_target: "milestoneInput" } %>
-      </div>
-    </div>
-
     <!-- Dates -->
     <div class="mb-6">
       <div class="text-xs font-medium text-gray-500 mb-2">Start Date</div>
