@@ -3,7 +3,9 @@
     <%= user_avatar(notification.actor) %>
   </div>
   <div class="flex-1 min-w-0">
-    <%= link_to team_issue_path(notification.issue.team, notification.issue),
+    <% issue_link = team_issue_path(notification.issue.team, notification.issue) %>
+    <% issue_link += "##{dom_id(notification.comment)}" if notification.comment %>
+    <%= link_to issue_link,
         class: "block text-sm text-gray-300 hover:text-gray-100 leading-snug",
         data: { action: "click->notification-drawer#close" } do %>
       <%= notification.message %>

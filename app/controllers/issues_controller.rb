@@ -1,5 +1,6 @@
 class IssuesController < ApplicationController
   include FormCollections
+  include MentionNotifying
 
   before_action :require_team!
   before_action :set_issue, only: %i[show edit update destroy]
@@ -38,6 +39,7 @@ class IssuesController < ApplicationController
 
     if @issue.save
       detect_issue_references
+      notify_mentions_on(@issue, text: @issue.description)
       if params[:create_more] == '1'
         redirect_to new_team_issue_path(@issue.team), notice: 'Issue was successfully created. Create another?'
       else
@@ -62,6 +64,7 @@ class IssuesController < ApplicationController
       @issue.enqueue_velocity_recalculation!
       @latest_version = @issue.versions.last
       notify_issue_update
+      notify_mentions_on(@issue, text: @issue.description, previous_text: @issue.description_previously_was)
       enqueue_after_update_job
 
       respond_to do |format|
@@ -161,12 +164,8 @@ class IssuesController < ApplicationController
   end
 
   def detect_issue_references
-    IssueReferenceService.call(
-      source_issue: @issue,
-      text: @issue.description,
-      source_type: 'description',
-      user: Current.user
-    )
+    IssueReferenceService.call(source_issue: @issue, text: @issue.description,
+                               source_type: 'description', user: Current.user)
   end
 
   def issue_params
