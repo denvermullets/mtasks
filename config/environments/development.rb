@@ -31,26 +31,13 @@ Rails.application.configure do
   # Store uploaded files on the local file system (see config/storage.yml for options).
   config.active_storage.service = :local
 
-  # Raise errors if mailer can't send (useful for debugging SMTP issues).
+  # Mail is not actually delivered in development — invitation URLs are logged instead
+  # (see TeamInvitationService). Set raise_delivery_errors so any misconfigured mailer
+  # still surfaces loudly rather than silently swallowing.
   config.action_mailer.raise_delivery_errors = true
-
-  # Make template changes take effect immediately.
   config.action_mailer.perform_caching = false
-
-  # Set localhost to be used by links generated in mailer templates.
   config.action_mailer.default_url_options = { host: 'localhost', port: 3000 }
-
-  # Brevo SMTP relay
-  config.action_mailer.delivery_method = :smtp
-  config.action_mailer.smtp_settings = {
-    address: 'smtp-relay.brevo.com',
-    port: 587,
-    user_name: ENV.fetch('BREVO_SMTP_USERNAME', nil),
-    password: ENV.fetch('BREVO_SMTP_PASSWORD', nil),
-    authentication: :plain,
-    enable_starttls_auto: true,
-    openssl_verify_mode: OpenSSL::SSL::VERIFY_NONE
-  }
+  config.action_mailer.delivery_method = :test
 
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log

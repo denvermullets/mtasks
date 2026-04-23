@@ -80,8 +80,14 @@ export default class extends Controller {
     }
 
     const queryText = textBeforeCursor.substring(atIndex + 1);
-    // Close dropdown if query contains newline or another @.
-    if (queryText.includes("\n") || queryText.includes("@")) {
+    // Close on space/newline/second-@. Names with spaces are still reachable:
+    // typing a partial first name (e.g. "Ja") surfaces "Jane Doe" in the
+    // dropdown, and selecting it inserts the full name in one shot.
+    if (
+      queryText.includes(" ") ||
+      queryText.includes("\n") ||
+      queryText.includes("@")
+    ) {
       return { query: null };
     }
 
