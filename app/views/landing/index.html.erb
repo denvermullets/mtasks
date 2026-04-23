@@ -10,33 +10,268 @@
       <%= link_to "Sign up", new_user_path, class: "px-3.5 py-2.5 rounded-md border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 font-medium transition-colors" %>
     </div>
   </nav>
+
   <!-- Hero Section -->
   <section class="px-8 py-20 max-w-7xl mx-auto">
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
       <div>
         <h1 class="text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-          Track issues that matter to your team
+          Issue tracking that moves with your code
         </h1>
         <p class="text-xl text-gray-400 mb-8">
-          Powerful, self-serve issue tracking to help you organize, prioritize, and ship faster.
+          Plan work, ship it, and let GitHub keep the board in sync. Roadmaps, dependencies, and an MCP layer built in.
         </p>
         <div class="flex gap-4">
           <%= link_to "Sign up", new_user_path, class: "px-3.5 py-2.5 rounded-md border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 font-medium transition-colors" %>
         </div>
       </div>
-      <div class="relative">
-        <%= image_tag "full-issue.png", alt: "Issue tracking interface", class: "rounded-lg shadow-2xl border border-stroke" %>
+
+      <!-- Mock: Issue detail -->
+      <div class="relative rounded-lg shadow-2xl border border-stroke bg-foreground overflow-hidden">
+        <!-- Fake top bar -->
+        <div class="h-9 bg-menu border-b border-stroke flex items-center px-3 gap-2">
+          <span class="w-2 h-2 rounded-full bg-gray-700"></span>
+          <span class="w-2 h-2 rounded-full bg-gray-700"></span>
+          <span class="w-2 h-2 rounded-full bg-gray-700"></span>
+          <span class="ml-3 font-mono text-[11px] text-gray-500">JAIT-128</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-[1fr_180px]">
+          <!-- Body -->
+          <div class="p-4 border-b md:border-b-0 md:border-r border-stroke">
+            <div class="flex items-center gap-2 mb-2 text-xs">
+              <span class="font-mono text-gray-500">JAIT-128</span>
+              <span class="inline-flex items-center gap-1 text-yellow-400" title="Blocked by 1">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+                </svg>
+                <span>Blocked by 1</span>
+              </span>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-100 mb-3 leading-snug">Migrate auth middleware to new session store</h3>
+            <p class="text-sm text-gray-400 mb-4 leading-relaxed">Rip out legacy session tokens and replace with the new compliant storage layer. Coordinate with platform team before merge.</p>
+            <div class="flex flex-wrap items-center gap-1.5 text-xs">
+              <div class="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-foreground border border-stroke">
+                <svg class="w-3 h-3 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                <span class="text-gray-400">High</span>
+              </div>
+              <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-foreground border border-stroke text-gray-400">
+                <span class="w-1.5 h-1.5 rounded-full" style="background-color: #92E8D4;"></span>
+                auth
+              </span>
+              <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-foreground border border-stroke text-gray-400">
+                <span class="w-1.5 h-1.5 rounded-full" style="background-color: #BAD4F7;"></span>
+                platform
+              </span>
+              <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-foreground border border-stroke text-gray-400">
+                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M3 3h14v2H3zM3 7h14v2H3zM3 11h14v2H3zM3 15h10v2H3z"/></svg>
+                Compliance rewrite
+              </span>
+            </div>
+          </div>
+          <!-- Sidebar -->
+          <div class="p-3 bg-context-foreground text-xs space-y-3">
+            <div>
+              <div class="text-[10px] uppercase tracking-wide text-gray-500 mb-1">Status</div>
+              <div class="flex items-center gap-1.5 text-gray-300">
+                <span class="w-1.5 h-1.5 rounded-full" style="background-color: #EF9F27;"></span>
+                In Progress
+              </div>
+            </div>
+            <div>
+              <div class="text-[10px] uppercase tracking-wide text-gray-500 mb-1">Assignee</div>
+              <div class="flex items-center gap-1.5">
+                <span class="w-4 h-4 rounded-full bg-purple-600 inline-flex items-center justify-center text-[9px] font-semibold">RV</span>
+                <span class="text-gray-300">ryan</span>
+              </div>
+            </div>
+            <div>
+              <div class="text-[10px] uppercase tracking-wide text-gray-500 mb-1">PR</div>
+              <div class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-foreground border border-stroke text-gray-300">
+                <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                #1247 open
+              </div>
+            </div>
+            <div>
+              <div class="text-[10px] uppercase tracking-wide text-gray-500 mb-1">Blocked by</div>
+              <div class="text-gray-300 truncate">JAIT-115 · Session schema</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
-  <!-- Features Section -->
+
+  <!-- Roadmaps Section -->
+  <section class="px-8 py-20 bg-foreground">
+    <div class="max-w-7xl mx-auto">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <div>
+          <p class="text-accent font-medium mb-4">Roadmaps</p>
+          <h2 class="text-4xl font-bold mb-4">Now / Next / Later, without the Gantt</h2>
+          <p class="text-lg text-gray-400 mb-4">
+            Share where things are heading without pretending to know the exact week. Commitment-level swimlanes let you tell stakeholders what's shipping soon, what's up next, and what's on the radar.
+          </p>
+          <p class="text-sm text-gray-500">
+            Drag projects across lanes as plans shift. Multiple projects per lane, ordered however you like.
+          </p>
+        </div>
+
+        <!-- Mock: Roadmap lanes -->
+        <div class="bg-background border border-stroke rounded-lg p-4 space-y-3.5 shadow-2xl">
+          <!-- Now lane -->
+          <div class="rounded-md border overflow-hidden" style="border-color: #92E8D4;">
+            <div class="flex items-center justify-between px-3 py-2.5 bg-foreground">
+              <div class="flex items-center gap-2.5">
+                <span class="w-1.5 h-1.5 rounded-full" style="background-color: #92E8D4;"></span>
+                <span class="text-sm font-medium" style="color: #92E8D4;">Now</span>
+                <span class="text-xs text-gray-500">shipping in the next ~6 weeks</span>
+              </div>
+              <span class="text-xs text-gray-500">2</span>
+            </div>
+            <div class="p-2.5 bg-menu grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div class="bg-foreground border border-stroke rounded-md p-2.5">
+                <div class="flex justify-between items-center mb-1.5">
+                  <span class="font-mono text-[10px] text-gray-500">JAIT</span>
+                  <span class="text-[10px]" style="color: #5DCAA5;">In progress</span>
+                </div>
+                <div class="text-xs text-gray-200 mb-2">Auth middleware rewrite</div>
+                <div class="text-[10px] text-gray-500 mb-2">Due May 12, 2026</div>
+                <div class="h-[3px] bg-stroke rounded-sm overflow-hidden">
+                  <div class="h-full rounded-sm" style="width: 62%; background-color: #5DCAA5;"></div>
+                </div>
+              </div>
+              <div class="bg-foreground border border-stroke rounded-md p-2.5">
+                <div class="flex justify-between items-center mb-1.5">
+                  <span class="font-mono text-[10px] text-gray-500">JAIT</span>
+                  <span class="text-[10px]" style="color: #EF9F27;">Started</span>
+                </div>
+                <div class="text-xs text-gray-200 mb-2">Billing plan limits</div>
+                <div class="text-[10px] text-gray-500 mb-2">Due May 28, 2026</div>
+                <div class="h-[3px] bg-stroke rounded-sm overflow-hidden">
+                  <div class="h-full rounded-sm" style="width: 24%; background-color: #EF9F27;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Next lane -->
+          <div class="rounded-md border overflow-hidden" style="border-color: #BAD4F7;">
+            <div class="flex items-center justify-between px-3 py-2.5 bg-foreground">
+              <div class="flex items-center gap-2.5">
+                <span class="w-1.5 h-1.5 rounded-full" style="background-color: #BAD4F7;"></span>
+                <span class="text-sm font-medium" style="color: #BAD4F7;">Next</span>
+                <span class="text-xs text-gray-500">starting once Now slots open</span>
+              </div>
+              <span class="text-xs text-gray-500">2</span>
+            </div>
+            <div class="p-2.5 bg-menu grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div class="bg-foreground border border-stroke rounded-md p-2.5">
+                <div class="flex justify-between items-center mb-1.5">
+                  <span class="font-mono text-[10px] text-gray-500">JAIT</span>
+                  <span class="text-[10px]" style="color: #888780;">Planned</span>
+                </div>
+                <div class="text-xs text-gray-200 mb-2">Slack notifications v2</div>
+                <div class="h-[3px] bg-stroke rounded-sm overflow-hidden">
+                  <div class="h-full rounded-sm" style="width: 4%; background-color: #888780;"></div>
+                </div>
+              </div>
+              <div class="bg-foreground border border-stroke rounded-md p-2.5">
+                <div class="flex justify-between items-center mb-1.5">
+                  <span class="font-mono text-[10px] text-gray-500">JAIT</span>
+                  <span class="text-[10px]" style="color: #888780;">Planned</span>
+                </div>
+                <div class="text-xs text-gray-200 mb-2">SAML SSO for enterprise</div>
+                <div class="h-[3px] bg-stroke rounded-sm overflow-hidden">
+                  <div class="h-full rounded-sm" style="width: 4%; background-color: #888780;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Later lane -->
+          <div class="rounded-md border overflow-hidden" style="border-color: #5F5E5A;">
+            <div class="flex items-center justify-between px-3 py-2.5 bg-foreground">
+              <div class="flex items-center gap-2.5">
+                <span class="w-1.5 h-1.5 rounded-full" style="background-color: #888780;"></span>
+                <span class="text-sm font-medium" style="color: #B4B2A9;">Later</span>
+                <span class="text-xs text-gray-500">on the radar, not committed</span>
+              </div>
+              <span class="text-xs text-gray-500">1</span>
+            </div>
+            <div class="p-2.5 bg-menu">
+              <div class="bg-foreground border border-stroke rounded-md p-2.5 sm:max-w-[50%]">
+                <div class="flex justify-between items-center mb-1.5">
+                  <span class="font-mono text-[10px] text-gray-500">JAIT</span>
+                  <span class="text-[10px]" style="color: #888780;">Planned</span>
+                </div>
+                <div class="text-xs text-gray-200">Public API rate limits</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Projects Section -->
+  <section class="px-8 py-20">
+    <div class="max-w-7xl mx-auto">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <!-- Mock: Projects list -->
+        <div class="order-2 lg:order-1 bg-foreground border border-stroke rounded-lg shadow-2xl overflow-hidden">
+          <div class="flex items-center px-4 py-2 text-xs text-gray-500 font-medium border-b border-stroke">
+            <div class="flex-1">Project</div>
+            <div class="w-24 hidden md:block">Status</div>
+            <div class="w-28 hidden md:block">Progress</div>
+            <div class="w-16 text-right">Lead</div>
+          </div>
+          <% [
+            { name: 'Auth middleware rewrite', status: 'In progress', status_color: '#5DCAA5', pct: 62, bar: '#5DCAA5', lead: 'RV', lead_bg: 'bg-purple-600' },
+            { name: 'Billing plan limits', status: 'Started', status_color: '#EF9F27', pct: 24, bar: '#EF9F27', lead: 'DM', lead_bg: 'bg-blue-600' },
+            { name: 'Mobile sync reliability', status: 'Behind', status_color: '#F09595', pct: 41, bar: '#E24B4A', lead: 'TK', lead_bg: 'bg-orange-500' },
+            { name: 'Compliance rewrite', status: 'Completed', status_color: '#5DCAA5', pct: 100, bar: '#5DCAA5', lead: 'AS', lead_bg: 'bg-teal-600' }
+          ].each_with_index do |p, i| %>
+            <div class="flex items-center px-4 py-3 text-sm <%= 'border-t border-stroke' if i > 0 %>">
+              <div class="flex-1 flex items-center gap-2 min-w-0">
+                <span class="w-2 h-2 rounded-full shrink-0" style="background-color: <%= p[:status_color] %>;"></span>
+                <span class="text-gray-200 truncate"><%= p[:name] %></span>
+              </div>
+              <div class="w-24 hidden md:block text-xs" style="color: <%= p[:status_color] %>;"><%= p[:status] %></div>
+              <div class="w-28 hidden md:flex items-center gap-2">
+                <div class="h-[3px] flex-1 bg-stroke rounded-sm overflow-hidden">
+                  <div class="h-full rounded-sm" style="width: <%= p[:pct] %>%; background-color: <%= p[:bar] %>;"></div>
+                </div>
+                <span class="text-[10px] text-gray-500 w-7 text-right"><%= p[:pct] %>%</span>
+              </div>
+              <div class="w-16 flex justify-end">
+                <span class="w-5 h-5 rounded-full <%= p[:lead_bg] %> inline-flex items-center justify-center text-[9px] font-semibold text-white"><%= p[:lead] %></span>
+              </div>
+            </div>
+          <% end %>
+        </div>
+
+        <div class="order-1 lg:order-2">
+          <p class="text-accent font-medium mb-4">Projects</p>
+          <h2 class="text-4xl font-bold mb-4">Group the work, track the progress</h2>
+          <p class="text-lg text-gray-400 mb-4">
+            Bundle related issues into a project with a lead, a target date, and a status. Velocity and progress update automatically as issues move to Done.
+          </p>
+          <p class="text-sm text-gray-500">
+            Catch projects drifting behind schedule before they surprise you — the expected progress line makes slippage obvious.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Core features with board mock -->
   <section class="px-8 py-20 bg-foreground">
     <div class="max-w-7xl mx-auto">
       <div class="mb-16">
-        <p class="text-accent font-medium mb-4">Features</p>
+        <p class="text-accent font-medium mb-4">Day to day</p>
         <h2 class="text-4xl font-bold mb-4">Everything you need to track issues</h2>
         <p class="text-xl text-gray-400">
-          Simple, powerful tools to help you manage your team's work effectively.
+          Simple, powerful tools for the work in front of you.
         </p>
       </div>
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
@@ -44,7 +279,7 @@
           <div class="border-l-4 border-accent pl-6">
             <h3 class="text-2xl font-bold mb-3">Keyboard-first workflow</h3>
             <p class="text-gray-400 mb-4">
-              Speed through your work with keyboard shortcuts. Press Cmd+K to see all available shortcuts for quick navigation and actions.
+              Speed through your work with keyboard shortcuts. Press Cmd+K to see all available shortcuts — create, label, move lanes, assign milestones.
             </p>
           </div>
           <div class="pl-6">
@@ -56,59 +291,295 @@
           <div class="pl-6">
             <h3 class="text-2xl font-bold mb-3">GitHub integration</h3>
             <p class="text-gray-400 mb-4">
-              Connect your repositories and link pull requests directly to issues. Track PR status without leaving your board.
+              Connect repositories and link pull requests directly to issues. Reference <code class="text-accent">JAIT-128</code> in a branch or PR body and the sync happens automatically.
             </p>
           </div>
         </div>
-        <div class="relative">
-          <%= image_tag "board.png", alt: "Kanban board view", class: "rounded-lg shadow-2xl border border-stroke" %>
+
+        <!-- Mock: Kanban board -->
+        <div class="bg-background border border-stroke rounded-lg p-3 shadow-2xl overflow-x-auto">
+          <div class="grid grid-cols-3 gap-3 min-w-[560px]">
+            <% [
+              { name: 'Backlog', color: '#888780', count: 3, cards: [
+                { id: 'JAIT-141', title: 'Deprecate legacy v1 API endpoints', priority: 'Med', priority_color: 'text-yellow-400', labels: [['api','#BAD4F7']], dep: nil, assignee: nil },
+                { id: 'JAIT-139', title: 'CSV import: handle UTF-8 BOM', priority: 'Low', priority_color: 'text-blue-400', labels: [['bug','#F09595']], dep: nil, assignee: 'DM', assignee_bg: 'bg-blue-600' },
+                { id: 'JAIT-137', title: 'Surface velocity on project cards', priority: nil, priority_color: nil, labels: [['polish','#92E8D4']], dep: nil, assignee: nil }
+              ]},
+              { name: 'In Progress', color: '#EF9F27', count: 2, cards: [
+                { id: 'JAIT-128', title: 'Migrate auth middleware to new session store', priority: 'High', priority_color: 'text-orange-400', labels: [['auth','#92E8D4']], dep: 'blocked', assignee: 'RV', assignee_bg: 'bg-purple-600' },
+                { id: 'JAIT-125', title: 'Project roadmap: drag between lanes', priority: 'Med', priority_color: 'text-yellow-400', labels: [['roadmap','#BAD4F7']], dep: 'blocking', assignee: 'DM', assignee_bg: 'bg-blue-600' }
+              ]},
+              { name: 'Done', color: '#5DCAA5', count: 2, cards: [
+                { id: 'JAIT-118', title: 'Issue dependencies: bulk create UI', priority: 'High', priority_color: 'text-orange-400', labels: [['deps','#92E8D4']], dep: nil, assignee: 'AS', assignee_bg: 'bg-teal-600' },
+                { id: 'JAIT-112', title: 'MCP server: create_issue tool', priority: 'Med', priority_color: 'text-yellow-400', labels: [['mcp','#BAD4F7']], dep: nil, assignee: 'RV', assignee_bg: 'bg-purple-600' }
+              ]}
+            ].each do |col| %>
+              <div>
+                <div class="flex items-center gap-2 px-1.5 py-2 text-xs font-medium">
+                  <span class="w-1.5 h-1.5 rounded-full" style="background-color: <%= col[:color] %>;"></span>
+                  <span class="text-gray-300"><%= col[:name] %></span>
+                  <span class="text-gray-500"><%= col[:count] %></span>
+                </div>
+                <div class="space-y-2">
+                  <% col[:cards].each do |c| %>
+                    <div class="bg-foreground border border-stroke rounded px-2.5 py-2">
+                      <div class="font-mono text-[10px] text-gray-500 font-medium mb-1.5 flex items-center gap-1.5">
+                        <%= c[:id] %>
+                        <% if c[:dep] %>
+                          <svg class="w-2.5 h-2.5 <%= c[:dep] == 'blocked' ? 'text-red-400' : 'text-yellow-400' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+                          </svg>
+                        <% end %>
+                      </div>
+                      <div class="text-xs text-gray-200 mb-2 leading-snug line-clamp-2"><%= c[:title] %></div>
+                      <div class="flex items-center gap-1 flex-wrap">
+                        <% if c[:priority] %>
+                          <span class="inline-flex items-center gap-0.5 px-1 py-0.5 rounded bg-foreground border border-stroke text-[10px] <%= c[:priority_color] %>"><%= c[:priority] %></span>
+                        <% end %>
+                        <% c[:labels].each do |name, color| %>
+                          <span class="inline-flex items-center gap-1 px-1 py-0.5 rounded bg-foreground border border-stroke text-[10px] text-gray-400">
+                            <span class="w-1 h-1 rounded-full" style="background-color: <%= color %>;"></span>
+                            <%= name %>
+                          </span>
+                        <% end %>
+                        <% if c[:assignee] %>
+                          <span class="w-4 h-4 rounded-full <%= c[:assignee_bg] %> inline-flex items-center justify-center text-[8px] font-semibold text-white ml-auto"><%= c[:assignee] %></span>
+                        <% end %>
+                      </div>
+                    </div>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          </div>
         </div>
       </div>
     </div>
   </section>
-  <!-- More Features Section -->
+
+  <!-- Issue Dependencies Section -->
   <section class="px-8 py-20">
     <div class="max-w-7xl mx-auto">
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <div class="bg-foreground border border-stroke rounded-lg p-6">
-          <h3 class="text-xl font-bold mb-3">Milestones</h3>
-          <p class="text-gray-400">
-            Plan releases and sprints with milestones. Track progress with visual indicators and due dates.
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <div>
+          <p class="text-accent font-medium mb-4">Dependencies</p>
+          <h2 class="text-4xl font-bold mb-4">See what's actually blocking work</h2>
+          <p class="text-lg text-gray-400 mb-4">
+            Link blocking and blocked issues with a typeahead search. Cards flag dependencies inline, so a stale blocker can't hide in the backlog.
+          </p>
+          <p class="text-sm text-gray-500">
+            Circular dependencies and cross-team links are rejected before they happen.
           </p>
         </div>
-        <div class="bg-foreground border border-stroke rounded-lg p-6">
-          <h3 class="text-xl font-bold mb-3">Labels & Projects</h3>
-          <p class="text-gray-400">
-            Organize with color-coded labels and group related work into projects for better visibility.
-          </p>
+
+        <!-- Mock: Relations panel -->
+        <div class="bg-foreground border border-stroke rounded-lg shadow-2xl overflow-hidden">
+          <div class="px-4 py-2.5 border-b border-stroke flex items-center justify-between">
+            <span class="text-sm font-medium text-gray-200">Relations</span>
+            <button type="button" class="text-xs text-gray-500 hover:text-gray-300">+ Add</button>
+          </div>
+          <div class="p-4 space-y-4 text-xs">
+            <div>
+              <div class="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-gray-500 mb-2">
+                <svg class="w-3 h-3 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
+                Blocking
+              </div>
+              <div class="space-y-1.5">
+                <div class="flex items-center gap-2 bg-background border border-stroke rounded px-2 py-1.5">
+                  <span class="font-mono text-[10px] text-gray-500 w-16">JAIT-142</span>
+                  <span class="text-gray-200 truncate flex-1">Release notes for auth rewrite</span>
+                  <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-foreground border border-stroke text-[10px] text-gray-400">
+                    <span class="w-1 h-1 rounded-full" style="background-color: #888780;"></span>
+                    Backlog
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-gray-500 mb-2">
+                <svg class="w-3 h-3 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
+                Blocked by
+              </div>
+              <div class="space-y-1.5">
+                <div class="flex items-center gap-2 bg-background border border-stroke rounded px-2 py-1.5">
+                  <span class="font-mono text-[10px] text-gray-500 w-16">JAIT-115</span>
+                  <span class="text-gray-200 truncate flex-1">New session schema migration</span>
+                  <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-foreground border border-stroke text-[10px] text-gray-400">
+                    <span class="w-1 h-1 rounded-full" style="background-color: #EF9F27;"></span>
+                    In Progress
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="bg-foreground border border-stroke rounded-lg p-6">
-          <h3 class="text-xl font-bold mb-3">Sub-issues</h3>
-          <p class="text-gray-400">
-            Break down complex work into smaller tasks with parent-child issue relationships.
-          </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- GitHub PR Automation Section -->
+  <section class="px-8 py-20 bg-foreground">
+    <div class="max-w-7xl mx-auto">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <!-- Mock: Automation rule -->
+        <div class="order-2 lg:order-1 space-y-3">
+          <div class="bg-background border border-stroke rounded-lg p-4 shadow-2xl">
+            <div class="flex items-center gap-2 mb-3">
+              <svg class="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 24 24"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.38 7.86 10.9.58.1.79-.25.79-.55v-2.1c-3.2.7-3.87-1.37-3.87-1.37-.52-1.34-1.28-1.7-1.28-1.7-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.2 1.77 1.2 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.19-3.1-.12-.3-.52-1.5.12-3.13 0 0 .97-.31 3.18 1.18a11 11 0 015.79 0c2.2-1.49 3.17-1.18 3.17-1.18.64 1.63.24 2.83.12 3.13.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.26 5.69.41.36.78 1.07.78 2.17v3.22c0 .31.21.66.79.55C20.21 21.38 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5z"/></svg>
+              <span class="text-sm font-medium text-gray-200">GitHub Automation</span>
+              <span class="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-foreground border border-stroke text-gray-400">Active</span>
+            </div>
+            <div class="space-y-2.5 text-xs">
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] uppercase tracking-wide text-gray-500 w-20">Trigger</span>
+                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-foreground border border-stroke text-gray-300">
+                  <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+                  PR merged
+                </span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] uppercase tracking-wide text-gray-500 w-20">Branch</span>
+                <code class="px-1.5 py-0.5 rounded bg-foreground border border-stroke text-accent font-mono text-[11px]">main</code>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] uppercase tracking-wide text-gray-500 w-20">Then</span>
+                <span class="text-gray-400">move linked issues →</span>
+                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-foreground border border-stroke text-gray-300">
+                  <span class="w-1.5 h-1.5 rounded-full" style="background-color: #5DCAA5;"></span>
+                  Done
+                </span>
+              </div>
+            </div>
+          </div>
+          <!-- PR event example -->
+          <div class="bg-background border border-stroke rounded-lg p-3 shadow-xl flex items-center gap-3">
+            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-foreground border border-stroke text-xs text-gray-300">
+              <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+              #1247 merged
+            </span>
+            <span class="text-gray-500 text-xs">→</span>
+            <span class="font-mono text-xs text-gray-400">JAIT-118</span>
+            <span class="text-gray-500 text-xs">moved to</span>
+            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-foreground border border-stroke text-xs text-gray-300">
+              <span class="w-1.5 h-1.5 rounded-full" style="background-color: #5DCAA5;"></span>
+              Done
+            </span>
+          </div>
         </div>
-        <div class="bg-foreground border border-stroke rounded-lg p-6">
-          <h3 class="text-xl font-bold mb-3">Team collaboration</h3>
-          <p class="text-gray-400">
-            Assign issues, add comments, and keep everyone in sync with real-time updates.
+
+        <div class="order-1 lg:order-2">
+          <p class="text-accent font-medium mb-4">GitHub automation</p>
+          <h2 class="text-4xl font-bold mb-4">Your board stays in sync with main</h2>
+          <p class="text-lg text-gray-400 mb-4">
+            Set rules that move issues automatically when PRs open, merge, or close. Branch patterns let you target a specific release flow — only merges into <code class="text-accent">main</code> close the issue, not every feature branch.
           </p>
-        </div>
-        <div class="bg-foreground border border-stroke rounded-lg p-6">
-          <h3 class="text-xl font-bold mb-3">Custom lanes</h3>
-          <p class="text-gray-400">
-            Create custom status columns with colors to match your team's workflow.
-          </p>
-        </div>
-        <div class="bg-foreground border border-stroke rounded-lg p-6">
-          <h3 class="text-xl font-bold mb-3">CSV import</h3>
-          <p class="text-gray-400">
-            Migrate from other tools easily by importing your existing issues via CSV.
+          <p class="text-sm text-gray-500">
+            Branch names and PR bodies are parsed for issue identifiers, so linking is zero-effort after the first time you reference <code class="text-accent">JAIT-128</code>.
           </p>
         </div>
       </div>
     </div>
   </section>
+
+  <!-- MCP Server Section -->
+  <section class="px-8 py-20">
+    <div class="max-w-7xl mx-auto">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <div>
+          <p class="text-accent font-medium mb-4">MCP Server</p>
+          <h2 class="text-4xl font-bold mb-4">Wire your issue tracker into your AI</h2>
+          <p class="text-lg text-gray-400 mb-4">
+            JAIT ships a Model Context Protocol server. Point Claude, Cursor, or any MCP-aware client at it and manage projects, issues, labels, and dependencies from your editor.
+          </p>
+          <p class="text-sm text-gray-500">
+            File bugs from your terminal. Let an agent triage the inbox. Build your own workflows on top.
+          </p>
+        </div>
+
+        <!-- Mock: MCP terminal -->
+        <div class="bg-menu border border-stroke rounded-lg shadow-2xl overflow-hidden">
+          <div class="h-8 bg-foreground border-b border-stroke flex items-center px-3 gap-2">
+            <span class="w-2 h-2 rounded-full bg-red-500/60"></span>
+            <span class="w-2 h-2 rounded-full bg-yellow-500/60"></span>
+            <span class="w-2 h-2 rounded-full bg-green-500/60"></span>
+            <span class="ml-3 font-mono text-[11px] text-gray-500">mcp · mtasks</span>
+          </div>
+          <div class="p-4 font-mono text-xs leading-relaxed">
+            <div class="text-gray-500"># Available tools</div>
+            <div class="text-gray-300 mt-1 space-y-0.5">
+              <div><span class="text-accent">mcp__mtasks__</span>list_teams</div>
+              <div><span class="text-accent">mcp__mtasks__</span>list_projects</div>
+              <div><span class="text-accent">mcp__mtasks__</span>list_issues</div>
+              <div><span class="text-accent">mcp__mtasks__</span>list_labels</div>
+              <div><span class="text-accent">mcp__mtasks__</span>list_lanes</div>
+              <div><span class="text-accent">mcp__mtasks__</span>create_project</div>
+              <div><span class="text-accent">mcp__mtasks__</span>create_issue</div>
+              <div><span class="text-accent">mcp__mtasks__</span>create_label</div>
+              <div><span class="text-accent">mcp__mtasks__</span>create_issue_dependency</div>
+              <div><span class="text-accent">mcp__mtasks__</span>update_issue</div>
+              <div><span class="text-accent">mcp__mtasks__</span>update_project</div>
+              <div><span class="text-accent">mcp__mtasks__</span>get_issue</div>
+            </div>
+            <div class="text-gray-500 mt-3"># Create an issue from the CLI</div>
+            <div class="mt-1">
+              <span class="text-accent">›</span>
+              <span class="text-gray-300"> create_issue title:"Investigate flaky test"</span>
+            </div>
+            <div class="text-gray-500 mt-1">  → JAIT-143 created in Backlog<span class="inline-block w-1.5 h-3 bg-accent align-middle ml-1 animate-pulse"></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- More Features Grid -->
+  <section class="px-8 py-20 bg-foreground">
+    <div class="max-w-7xl mx-auto">
+      <div class="mb-10">
+        <p class="text-accent font-medium mb-4">Also included</p>
+        <h2 class="text-3xl font-bold">All the essentials</h2>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="bg-background border border-stroke rounded-lg p-6">
+          <h3 class="text-xl font-bold mb-3">Milestones</h3>
+          <p class="text-gray-400">
+            Plan releases and sprints with milestones. Track progress with visual indicators, due dates, and behind-schedule detection.
+          </p>
+        </div>
+        <div class="bg-background border border-stroke rounded-lg p-6">
+          <h3 class="text-xl font-bold mb-3">Labels</h3>
+          <p class="text-gray-400">
+            Team-scoped color-coded labels. Filter and group by label across every view.
+          </p>
+        </div>
+        <div class="bg-background border border-stroke rounded-lg p-6">
+          <h3 class="text-xl font-bold mb-3">Sub-issues</h3>
+          <p class="text-gray-400">
+            Break complex work into parent/child issues. Closing a parent clears pending dependencies automatically.
+          </p>
+        </div>
+        <div class="bg-background border border-stroke rounded-lg p-6">
+          <h3 class="text-xl font-bold mb-3">Custom lanes</h3>
+          <p class="text-gray-400">
+            Build your workflow with custom status columns, colors, and order. The "Done" lane triggers completion timestamps automatically.
+          </p>
+        </div>
+        <div class="bg-background border border-stroke rounded-lg p-6">
+          <h3 class="text-xl font-bold mb-3">Team collaboration</h3>
+          <p class="text-gray-400">
+            Invite members, assign issues, comment with @mentions of other issues, and keep everyone in sync.
+          </p>
+        </div>
+        <div class="bg-background border border-stroke rounded-lg p-6">
+          <h3 class="text-xl font-bold mb-3">CSV import</h3>
+          <p class="text-gray-400">
+            Migrate from another tool in one upload. Errors reported per row so nothing drops silently.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- Stats Section -->
   <section class="px-8 py-20">
     <div class="max-w-7xl mx-auto">
@@ -131,6 +602,7 @@
       </div>
     </div>
   </section>
+
   <!-- CTA Section -->
   <section class="px-8 py-20 bg-foreground">
     <div class="max-w-4xl mx-auto text-center">
@@ -143,6 +615,7 @@
       </div>
     </div>
   </section>
+
   <!-- Footer -->
   <footer class="px-8 py-12 border-t border-stroke">
     <div class="max-w-7xl mx-auto">
