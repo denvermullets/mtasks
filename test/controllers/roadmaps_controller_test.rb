@@ -22,7 +22,7 @@ class RoadmapsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, 'Now project'
     assert_includes response.body, 'Next project'
     assert_includes response.body, 'Later project'
-    assert_includes response.body, 'Now / next / later'
+    assert_includes response.body, 'Now / Next / Later'
   end
 
   test 'projects without a commitment do not appear in any lane grid' do
