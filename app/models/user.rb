@@ -11,9 +11,16 @@ class User < ApplicationRecord
     ink ocean-floor ash chalk dusk-redux
   ].freeze
 
+  AVAILABLE_FONTS = %w[
+    ibm-plex-mono jetbrains-mono fira-code suse-mono
+    roboto-mono atkinson-hyperlegible-mono
+    inter ibm-plex-sans space-grotesk system
+  ].freeze
+
   SETTINGS_DEFAULTS = {
     'appearance' => {
-      'theme' => 'default'
+      'theme' => 'default',
+      'font' => 'inter'
     }
   }.freeze
 
@@ -40,5 +47,10 @@ class User < ApplicationRecord
   def theme
     value = resolved_settings.dig('appearance', 'theme')
     AVAILABLE_THEMES.include?(value) ? value : 'default'
+  end
+
+  def font
+    value = resolved_settings.dig('appearance', 'font')
+    AVAILABLE_FONTS.include?(value) ? value : 'inter'
   end
 end
