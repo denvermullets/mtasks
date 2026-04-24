@@ -1,17 +1,41 @@
 class Settings::AppearanceController < ApplicationController
+  MONO_STACK_FALLBACK = 'ui-monospace, monospace'.freeze
+  SANS_STACK_FALLBACK = 'ui-sans-serif, system-ui, sans-serif'.freeze
+
+  FONT_OPTIONS = [
+    { id: 'ibm-plex-mono', name: 'IBM Plex Mono', family: 'IBM Plex Mono', category: :mono },
+    { id: 'jetbrains-mono', name: 'JetBrains Mono', family: 'JetBrains Mono', category: :mono },
+    { id: 'fira-code', name: 'Fira Code', family: 'Fira Code', category: :mono },
+    { id: 'suse-mono', name: 'SUSE Mono', family: 'SUSE Mono', category: :mono },
+    { id: 'roboto-mono', name: 'Roboto Mono', family: 'Roboto Mono', category: :mono },
+    { id: 'atkinson-hyperlegible-mono', name: 'Atkinson Hyperlegible Mono',
+      family: 'Atkinson Hyperlegible Mono', category: :mono },
+    { id: 'inter', name: 'Inter', family: 'Inter', category: :sans },
+    { id: 'ibm-plex-sans', name: 'IBM Plex Sans', family: 'IBM Plex Sans', category: :sans },
+    { id: 'space-grotesk', name: 'Space Grotesk', family: 'Space Grotesk', category: :sans },
+    { id: 'system', name: 'System', family: nil, category: :sans }
+  ].freeze
+  private_constant :MONO_STACK_FALLBACK, :SANS_STACK_FALLBACK, :FONT_OPTIONS
+
   def show
     @themes = theme_swatches
+    @fonts = font_options
   end
 
   def update
     theme = params[:theme]
+    font = params[:font]
+
     unless User::AVAILABLE_THEMES.include?(theme)
       redirect_to settings_appearance_path, alert: 'Unknown theme.' and return
     end
 
+    redirect_to settings_appearance_path, alert: 'Unknown font.' and return unless User::AVAILABLE_FONTS.include?(font)
+
     current_settings = current_user.settings || {}
     appearance = current_settings.fetch('appearance', {})
     appearance['theme'] = theme
+    appearance['font'] = font
     current_user.update!(settings: current_settings.merge('appearance' => appearance))
 
     redirect_to settings_appearance_path, notice: 'Appearance updated.', status: :see_other
@@ -37,5 +61,13 @@ class Settings::AppearanceController < ApplicationController
       { id: 'chalk',               name: 'Chalk',               colors: %w[#0a6870 #f5f4f0 #d0cec8] },
       { id: 'dusk-redux',          name: 'Dusk Redux',          colors: %w[#f0a070 #181424 #3a3060] }
     ]
+  end
+
+  def font_options
+    FONT_OPTIONS.map do |opt|
+      fallback = opt[:category] == :mono ? MONO_STACK_FALLBACK : SANS_STACK_FALLBACK
+      stack = opt[:family] ? %("#{opt[:family]}", #{fallback}) : fallback
+      { id: opt[:id], name: opt[:name], stack: stack }
+    end
   end
 end

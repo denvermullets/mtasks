@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "./markdown.css";
 @import "./themes.css";
+@import "./fonts.css";
 
 /* Avatar color safelist — keep these classes so Tailwind won't purge them:
    bg-blue-600 bg-red-600 bg-green-600 bg-orange-500 bg-purple-600
@@ -20,8 +21,6 @@
   /* --color-accent: #FF8C42; */
   --color-hover-highlight: #1E1D1D;
 
-  /* Fonts */
-  /* --font-display: "Inter var", system-ui, sans-serif; */
 }
 
 /* Optimistic lane move animation */

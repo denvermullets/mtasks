@@ -3,7 +3,7 @@
   <div class="max-w-3xl mx-auto p-4 sm:p-8">
     <div class="mb-8">
       <h1 class="text-2xl font-semibold text-gray-100 mb-1">Appearance</h1>
-      <p class="text-sm text-gray-500">Pick a theme. The change applies instantly and saves when you submit.</p>
+      <p class="text-sm text-gray-500">Pick a theme and font. Changes apply instantly and save when you submit.</p>
     </div>
 
     <% if flash[:notice] %>
@@ -42,8 +42,33 @@
         </div>
       </div>
 
+      <div class="mb-6">
+        <div class="text-sm font-medium text-gray-300 mb-3">Font</div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <% @fonts.each do |font| %>
+            <label class="relative cursor-pointer group">
+              <input type="radio"
+                     name="font"
+                     value="<%= font[:id] %>"
+                     <%= 'checked' if font[:id] == current_user.font %>
+                     class="sr-only peer"
+                     data-action="change->theme-preview#previewFont">
+              <div class="rounded-lg border-2 p-4 transition-all duration-150
+                          border-stroke hover:border-accent/60
+                          peer-checked:border-accent peer-checked:bg-context-foreground
+                          bg-foreground">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs text-gray-400 font-medium"><%= font[:name] %></span>
+                  <span class="text-base text-gray-100" style="font-family: <%= font[:stack] %>">AaBb 123</span>
+                </div>
+              </div>
+            </label>
+          <% end %>
+        </div>
+      </div>
+
       <div class="flex items-center gap-3">
-        <%= f.submit "Save theme", class: "px-4 py-2 rounded-md bg-accent text-background hover:bg-accent-hover text-sm font-medium transition-colors cursor-pointer" %>
+        <%= f.submit "Save appearance", class: "px-4 py-2 rounded-md bg-accent text-background hover:bg-accent-hover text-sm font-medium transition-colors cursor-pointer" %>
         <%= link_to "Cancel", settings_appearance_path, class: "px-4 py-2 rounded-md text-sm text-gray-400 hover:text-gray-200" %>
       </div>
     <% end %>
