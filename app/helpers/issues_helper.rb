@@ -47,6 +47,38 @@ module IssuesHelper
     end
   end
 
+  def format_time_in_status(issue)
+    seconds = issue.time_in_current_status
+    return nil if seconds < 60
+
+    if seconds < 3600
+      "#{(seconds / 60).to_i}m"
+    elsif seconds < 86_400
+      "#{(seconds / 3600).to_i}h"
+    else
+      "#{(seconds / 86_400).to_i}d"
+    end
+  end
+
+  # Returns { count:, color_class:, label: } for the most relevant PR state on an issue,
+  # or nil when the issue has no linked PRs.
+  # Precedence: merged > open > closed.
+  def issue_pr_summary(issue)
+    prs = issue.pull_requests
+    return nil if prs.empty?
+
+    merged = prs.select(&:merged?)
+    open = prs.reject(&:merged?).select { |pr| pr.state == 'open' }
+
+    if merged.any?
+      { count: prs.size, color_class: 'text-purple-400', label: 'PR' }
+    elsif open.any?
+      { count: prs.size, color_class: 'text-green-400', label: 'PR' }
+    else
+      { count: prs.size, color_class: 'text-red-400', label: 'PR' }
+    end
+  end
+
   private
 
   def subgroups?(grouped_issues)

@@ -15,7 +15,7 @@ class UserPreference < ApplicationRecord
 
   AVAILABLE_PROPERTIES = %w[
     id status assignee priority due_date project
-    estimate labels links time_in_status created_at updated_at
+    estimate labels time_in_status created_at updated_at
     pull_requests_and_commits
   ].freeze
 
