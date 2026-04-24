@@ -64,8 +64,8 @@
         <%= render "lane", commitment: "now",
             label: "Now",
             subtitle: "Shipping in the next ~6 weeks",
-            dot_color: "#92E8D4",
-            text_color: "#92E8D4",
+            dot_color: "var(--color-accent)",
+            text_color: "var(--color-accent)",
             projects: @lanes["now"],
             projects_off_roadmap: @projects_off_roadmap,
             team: current_team %>
@@ -73,8 +73,8 @@
         <%= render "lane", commitment: "next",
             label: "Next",
             subtitle: "Starting once Now slots open",
-            dot_color: "#BAD4F7",
-            text_color: "#BAD4F7",
+            dot_color: "var(--color-highlight)",
+            text_color: "var(--color-highlight)",
             projects: @lanes["next"],
             projects_off_roadmap: @projects_off_roadmap,
             team: current_team %>
@@ -82,8 +82,8 @@
         <%= render "lane", commitment: "later",
             label: "Later",
             subtitle: "On the radar, not committed",
-            dot_color: "#888780",
-            text_color: "#B4B2A9",
+            dot_color: "var(--color-gray-500)",
+            text_color: "var(--color-gray-400)",
             projects: @lanes["later"],
             projects_off_roadmap: @projects_off_roadmap,
             team: current_team %>
