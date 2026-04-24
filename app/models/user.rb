@@ -5,18 +5,17 @@ class User < ApplicationRecord
 
   enum :role, { member: 0, admin: 1 }
 
-  AVATAR_COLORS = %w[
-    bg-blue-600
-    bg-red-600
-    bg-green-600
-    bg-orange-500
-    bg-purple-600
-    bg-pink-600
-    bg-teal-600
-    bg-indigo-600
-    bg-yellow-500
-    bg-cyan-600
+  AVAILABLE_THEMES = %w[
+    default warm-paper cool-linen phosphor-amber phosphor-green
+    dusk brutalist-newsprint muted-sage deep-navy warm-dusk
+    ink ocean-floor ash chalk dusk-redux
   ].freeze
+
+  SETTINGS_DEFAULTS = {
+    'appearance' => {
+      'theme' => 'default'
+    }
+  }.freeze
 
   # Associations
   has_many :owned_workspaces, class_name: 'Workspace', foreign_key: :owner_id, dependent: :destroy
@@ -31,7 +30,15 @@ class User < ApplicationRecord
   # Validations
   validates :email, presence: true, uniqueness: true, format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :name, presence: true
-  validates :avatar_color, inclusion: { in: AVATAR_COLORS }
 
   normalizes :email, with: ->(e) { e.strip.downcase }
+
+  def resolved_settings
+    SETTINGS_DEFAULTS.deep_merge(settings || {})
+  end
+
+  def theme
+    value = resolved_settings.dig('appearance', 'theme')
+    AVAILABLE_THEMES.include?(value) ? value : 'default'
+  end
 end

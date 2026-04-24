@@ -1,0 +1,243 @@
+/* Theme overrides — each [data-theme] block remaps the 9 semantic color tokens.
+   `default` is defined in application.css @theme and needs no override. */
+
+/* ═══════════════════════════════════════════════════════════════
+   WARM PAPER — Light cream bg, rust accent
+   ═══════════════════════════════════════════════════════════════ */
+[data-theme="warm-paper"] {
+  --color-menu: #ece8e0;
+  --color-background: #f4f0e8;
+  --color-foreground: #ece8e0;
+  --color-context-foreground: #ded7ca;
+  --color-highlight: #c9bca8;
+  --color-stroke: #c9bca8;
+  --color-accent: #da5f1c;
+  --color-accent-hover: #b84a1a;
+  --color-hover-highlight: #ded7ca;
+
+  /* Invert gray scale so text-gray-* reads dark on this light bg */
+  --color-gray-100: #1a1008;
+  --color-gray-200: #2a2018;
+  --color-gray-300: #3a2a20;
+  --color-gray-400: #54433a;
+  --color-gray-500: #6a5a4a;
+  --color-gray-600: #8a7a6a;
+  --color-gray-700: #a89988;
+  --color-gray-800: #c9bca8;
+  --color-gray-900: #ded7ca;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   COOL LINEN — Light slate bg, cyan accent
+   ═══════════════════════════════════════════════════════════════ */
+[data-theme="cool-linen"] {
+  --color-menu: #e8eaee;
+  --color-background: #f0f2f5;
+  --color-foreground: #e8eaee;
+  --color-context-foreground: #d0d4dc;
+  --color-highlight: #98a6b4;
+  --color-stroke: #b8bfc9;
+  --color-accent: #1a8aaa;
+  --color-accent-hover: #1a7a9a;
+  --color-hover-highlight: #d0d4dc;
+
+  --color-gray-100: #040915;
+  --color-gray-200: #121a27;
+  --color-gray-300: #212c38;
+  --color-gray-400: #364452;
+  --color-gray-500: #4a5866;
+  --color-gray-600: #6a7a8a;
+  --color-gray-700: #8a9aaa;
+  --color-gray-800: #b8bfc9;
+  --color-gray-900: #d0d4dc;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PHOSPHOR AMBER — Dark terminal, amber accent
+   ═══════════════════════════════════════════════════════════════ */
+[data-theme="phosphor-amber"] {
+  --color-menu: #080604;
+  --color-background: #0e0c08;
+  --color-foreground: #131008;
+  --color-context-foreground: #1a1408;
+  --color-highlight: #f5dd93;
+  --color-stroke: #3a2a10;
+  --color-accent: #e8a820;
+  --color-accent-hover: #d99319;
+  --color-hover-highlight: #221808;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PHOSPHOR GREEN — Dark terminal, green accent
+   ═══════════════════════════════════════════════════════════════ */
+[data-theme="phosphor-green"] {
+  --color-menu: #040804;
+  --color-background: #080e08;
+  --color-foreground: #0a100a;
+  --color-context-foreground: #0e160e;
+  --color-highlight: #a0f0b0;
+  --color-stroke: #1e4a22;
+  --color-accent: #7ae890;
+  --color-accent-hover: #60c870;
+  --color-hover-highlight: #103018;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DUSK — Deep purple, coral accent
+   ═══════════════════════════════════════════════════════════════ */
+[data-theme="dusk"] {
+  --color-menu: #100b18;
+  --color-background: #16121e;
+  --color-foreground: #1a1628;
+  --color-context-foreground: #211d30;
+  --color-highlight: #bcbbe6;
+  --color-stroke: #4a4060;
+  --color-accent: #f07a70;
+  --color-accent-hover: #e6594d;
+  --color-hover-highlight: #2e2840;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BRUTALIST NEWSPRINT — Near-black, violent yellow accent
+   ═══════════════════════════════════════════════════════════════ */
+[data-theme="brutalist-newsprint"] {
+  --color-menu: #0e0c08;
+  --color-background: #181610;
+  --color-foreground: #1e1c18;
+  --color-context-foreground: #242018;
+  --color-highlight: #dad3cd;
+  --color-stroke: #3a3830;
+  --color-accent: #e8d820;
+  --color-accent-hover: #d6c218;
+  --color-hover-highlight: #2a2820;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MUTED SAGE — Mid green-grey, bright sage accent
+   ═══════════════════════════════════════════════════════════════ */
+[data-theme="muted-sage"] {
+  --color-menu: #1e2824;
+  --color-background: #283430;
+  --color-foreground: #2e3c34;
+  --color-context-foreground: #344038;
+  --color-highlight: #a0c8ac;
+  --color-stroke: #4a6054;
+  --color-accent: #60d890;
+  --color-accent-hover: #2cbb66;
+  --color-hover-highlight: #3a4a40;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DEEP NAVY — Ink blue, electric orange accent
+   ═══════════════════════════════════════════════════════════════ */
+[data-theme="deep-navy"] {
+  --color-menu: #0a1020;
+  --color-background: #101828;
+  --color-foreground: #141e30;
+  --color-context-foreground: #1a2438;
+  --color-highlight: #98a8c0;
+  --color-stroke: #2a3a52;
+  --color-accent: #f08030;
+  --color-accent-hover: #da5f1c;
+  --color-hover-highlight: #1e2840;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   WARM DUSK — Aubergine-brown, electric mint accent
+   ═══════════════════════════════════════════════════════════════ */
+[data-theme="warm-dusk"] {
+  --color-menu: #180a14;
+  --color-background: #22141c;
+  --color-foreground: #281820;
+  --color-context-foreground: #301c28;
+  --color-highlight: #b8909a;
+  --color-stroke: #3a2430;
+  --color-accent: #50e8c0;
+  --color-accent-hover: #3ab088;
+  --color-hover-highlight: #382030;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INK — Near-black unified, electric lime accent
+   ═══════════════════════════════════════════════════════════════ */
+[data-theme="ink"] {
+  --color-menu: #0a0a0a;
+  --color-background: #141414;
+  --color-foreground: #181818;
+  --color-context-foreground: #1e1e1e;
+  --color-highlight: #aaaaaa;
+  --color-stroke: #444444;
+  --color-accent: #aaee44;
+  --color-accent-hover: #8ab830;
+  --color-hover-highlight: #242424;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   OCEAN FLOOR — Deep blue-green, sandy gold accent
+   ═══════════════════════════════════════════════════════════════ */
+[data-theme="ocean-floor"] {
+  --color-menu: #080f16;
+  --color-background: #0e1820;
+  --color-foreground: #121e28;
+  --color-context-foreground: #162030;
+  --color-highlight: #80a8c0;
+  --color-stroke: #2a4258;
+  --color-accent: #d4a84a;
+  --color-accent-hover: #b89038;
+  --color-hover-highlight: #1a2c3c;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ASH — True neutral grey, hot coral accent
+   ═══════════════════════════════════════════════════════════════ */
+[data-theme="ash"] {
+  --color-menu: #1e1e1e;
+  --color-background: #282828;
+  --color-foreground: #2c2c2c;
+  --color-context-foreground: #303030;
+  --color-highlight: #b0b0b0;
+  --color-stroke: #484848;
+  --color-accent: #ff5a3c;
+  --color-accent-hover: #e04830;
+  --color-hover-highlight: #333333;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CHALK — Warm near-white, deep teal accent
+   ═══════════════════════════════════════════════════════════════ */
+[data-theme="chalk"] {
+  --color-menu: #efeee8;
+  --color-background: #f5f4f0;
+  --color-foreground: #efeee8;
+  --color-context-foreground: #eae8e4;
+  --color-highlight: #7a7870;
+  --color-stroke: #d0cec8;
+  --color-accent: #0a6870;
+  --color-accent-hover: #208088;
+  --color-hover-highlight: #eae8e4;
+
+  --color-gray-100: #0a0808;
+  --color-gray-200: #141210;
+  --color-gray-300: #2a2820;
+  --color-gray-400: #3a3830;
+  --color-gray-500: #5c5850;
+  --color-gray-600: #7a7870;
+  --color-gray-700: #9a9890;
+  --color-gray-800: #c0beb8;
+  --color-gray-900: #d0cec8;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DUSK REDUX — Deep purple-blue, warm peach accent
+   ═══════════════════════════════════════════════════════════════ */
+[data-theme="dusk-redux"] {
+  --color-menu: #120f1a;
+  --color-background: #181424;
+  --color-foreground: #1c1830;
+  --color-context-foreground: #221c38;
+  --color-highlight: #a098c8;
+  --color-stroke: #3a3060;
+  --color-accent: #f0a070;
+  --color-accent-hover: #c88050;
+  --color-hover-highlight: #2a2248;
+}
