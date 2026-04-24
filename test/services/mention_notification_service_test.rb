@@ -2,12 +2,9 @@ require 'test_helper'
 
 class MentionNotificationServiceTest < ActiveSupport::TestCase
   setup do
-    @actor = User.create!(name: 'Alice', email: 'mns_alice@example.com', password: 'password',
-                          avatar_color: 'bg-blue-600')
-    @bob = User.create!(name: 'Bob', email: 'mns_bob@example.com', password: 'password',
-                        avatar_color: 'bg-red-600')
-    @carol = User.create!(name: 'Carol', email: 'mns_carol@example.com', password: 'password',
-                          avatar_color: 'bg-green-600')
+    @actor = User.create!(name: 'Alice', email: 'mns_alice@example.com', password: 'password')
+    @bob = User.create!(name: 'Bob', email: 'mns_bob@example.com', password: 'password')
+    @carol = User.create!(name: 'Carol', email: 'mns_carol@example.com', password: 'password')
     workspace = Workspace.create!(name: 'MNS Workspace', owner: @actor)
     @team = Team.create!(name: 'Team', identifier: 'MNS', workspace: workspace)
     [@actor, @bob, @carol].each { |u| TeamMembership.create!(user: u, team: @team) }

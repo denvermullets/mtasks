@@ -2,13 +2,12 @@ require 'test_helper'
 
 class UserMentionParserTest < ActiveSupport::TestCase
   setup do
-    owner = User.create!(name: 'Owner', email: 'ump_owner@example.com', password: 'password',
-                         avatar_color: 'bg-blue-600')
+    owner = User.create!(name: 'Owner', email: 'ump_owner@example.com', password: 'password')
     @workspace = Workspace.create!(name: 'UMP Workspace', owner: owner)
     @team = Team.create!(name: 'Alpha', identifier: 'ALPH', workspace: @workspace)
-    @jane = create_member('Jane Doe', 'ump_jane@example.com', 'bg-red-600')
-    @jane_single = create_member('Jane', 'ump_jane2@example.com', 'bg-green-600')
-    @bob = create_member('Bob Smith', 'ump_bob@example.com', 'bg-purple-600')
+    @jane = create_member('Jane Doe', 'ump_jane@example.com')
+    @jane_single = create_member('Jane', 'ump_jane2@example.com')
+    @bob = create_member('Bob Smith', 'ump_bob@example.com')
   end
 
   test 'returns empty for blank text' do
@@ -54,8 +53,8 @@ class UserMentionParserTest < ActiveSupport::TestCase
 
   private
 
-  def create_member(name, email, color)
-    user = User.create!(name: name, email: email, password: 'password', avatar_color: color)
+  def create_member(name, email)
+    user = User.create!(name: name, email: email, password: 'password')
     TeamMembership.create!(user: user, team: @team)
     user
   end
