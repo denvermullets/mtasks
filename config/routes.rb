@@ -2,7 +2,10 @@ Rails.application.routes.draw do
   resource :session
   resources :passwords, param: :token
   resources :users, only: %i[new create]
-  resource :profile, only: [:update]
+  namespace :settings do
+    get :appearance, to: 'appearance#show'
+    patch :appearance, to: 'appearance#update'
+  end
   resources :workspaces, only: [] do
     resource :github_installation, only: %i[show new destroy], controller: 'workspace_github_installations' do
       get :callback, on: :collection

@@ -126,7 +126,7 @@ export default class extends Controller {
               data-user-id="${user.id}"
               data-user-name="${this.escapeAttr(user.name)}"
               data-index="${i}">
-        <span class="w-5 h-5 rounded-full ${this.escapeAttr(user.avatar_color || "bg-gray-500")} text-white text-xs font-medium flex items-center justify-center shrink-0">${this.escapeHtml(user.name[0] || "?").toUpperCase()}</span>
+        <span class="w-5 h-5 rounded-full bg-accent text-background text-xs font-medium flex items-center justify-center shrink-0">${this.escapeHtml(user.name[0] || "?").toUpperCase()}</span>
         <span class="truncate">${this.escapeHtml(user.name)}</span>
       </button>
     `

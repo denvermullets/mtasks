@@ -64,6 +64,12 @@ class Issue < ApplicationRecord
     completed_at.present?
   end
 
+  def time_in_current_status
+    last_lane_change = versions.where('object_changes::text LIKE ?', '%"lane_id"%').order(:created_at).last
+    started_at = last_lane_change&.created_at || created_at
+    Time.current - started_at
+  end
+
   def apply_lane_timestamps!
     return unless lane_id_changed?
 

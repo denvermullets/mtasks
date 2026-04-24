@@ -48,7 +48,7 @@
                   data-view-mode="board">
             <div class="flex items-center justify-center gap-1">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1V5z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 4h4a1 1 0 011 1v14a1 1 0 01-1 1H5a1 1 0 01-1-1V5a1 1 0 011-1zM15 4h4a1 1 0 011 1v14a1 1 0 01-1 1h-4a1 1 0 01-1-1V5a1 1 0 011-1z"></path>
               </svg>
               Board
             </div>
@@ -72,7 +72,7 @@
         <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" data-display-options-target="groupingIcon">
             <% if @display_options[:view_mode] == 'board' %>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 4H5a2 2 0 00-2 2v4m6-6h6m-6 0v6m6-6v6m6-6a2 2 0 012 2v4M4 10v6a2 2 0 002 2h4m-6-8h6m0 8v6m0-6h6m0 6v6m0-6a2 2 0 012-2h4"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4h4v16H4zM10 4h4v16h-4zM16 4h4v16h-4z"></path>
             <% else %>
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
             <% end %>

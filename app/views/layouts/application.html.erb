@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html data-theme="<%= authenticated? ? current_user.theme : 'default' %>">
   <head>
     <title><%= content_for(:title) || "Just Another Issue Tracker" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -28,10 +28,8 @@
         <div id="mobile-drawer-panel" class="absolute inset-y-0 left-0 w-64 bg-menu border-r border-stroke flex flex-col transform -translate-x-full transition-transform duration-200 ease-in-out">
           <!-- Header with close button -->
           <div class="h-14 px-4 border-b border-stroke flex items-center justify-between shrink-0">
-            <div class="flex items-center gap-2">
-              <div id="mobile_drawer_avatar">
-                <%= user_avatar(current_user, shape: "square") %>
-              </div>
+            <div id="mobile_drawer_avatar" class="flex items-center gap-2">
+              <%= user_avatar(current_user) %>
               <span class="text-sm font-medium"><%= current_user.name %></span>
             </div>
             <div class="flex items-center gap-1">

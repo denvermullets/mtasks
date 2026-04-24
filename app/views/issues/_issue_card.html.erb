@@ -1,30 +1,35 @@
 <%
   visible_properties ||= UserPreference::AVAILABLE_PROPERTIES
+  group_by ||= @display_options&.dig(:group_by)
   labels ||= issue.team.labels
+  show_status_pill = visible_properties.include?('status') && issue.lane && group_by != 'status'
+  pr_summary = visible_properties.include?('pull_requests_and_commits') ? issue_pr_summary(issue) : nil
+  time_in_status = visible_properties.include?('time_in_status') ? format_time_in_status(issue) : nil
 %>
 <div id="issue_<%= issue.id %>" class="relative" data-controller="issue-card" data-issue-id="<%= issue.id %>">
   <%= link_to team_issue_path(issue.team, issue), class: "block", data: { turbo_frame: "_top" } do %>
     <div class="group bg-foreground border border-stroke hover:bg-hover-highlight hover:border-stroke rounded px-3 py-2.5 cursor-pointer transition-colors"
          data-action="mouseenter->issue-card#mouseEnter mouseleave->issue-card#mouseLeave">
-    <!-- Identifier (always shown at top) -->
-    <div class="font-mono text-xs text-gray-500 font-medium mb-2 flex items-center gap-1.5">
-      <%= issue.identifier %>
-      <% if issue.blocking_dependencies.any? || issue.blocked_dependencies.any? %>
-        <span class="inline-flex items-center" title="<%= [issue.blocking_dependencies.any? ? "Blocking #{issue.blocking_dependencies.size}" : nil, issue.blocked_dependencies.any? ? "Blocked by #{issue.blocked_dependencies.size}" : nil].compact.join(' · ') %>">
-          <svg class="w-3 h-3 <%= issue.blocked_dependencies.any? ? 'text-red-400' : 'text-yellow-400' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
-          </svg>
-        </span>
-      <% end %>
-      <% if issue.comments.size > 0 %>
-        <span class="inline-flex items-center gap-0.5 text-gray-500 ml-auto" title="<%= pluralize(issue.comments.size, 'comment') %>">
-          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-          </svg>
-          <%= issue.comments.size %>
-        </span>
-      <% end %>
-    </div>
+    <% if visible_properties.include?('id') %>
+      <div class="font-mono text-xs text-gray-500 font-medium mb-2 flex items-center gap-1.5">
+        <%= issue.identifier %>
+        <% if issue.blocking_dependencies.any? || issue.blocked_dependencies.any? %>
+          <span class="inline-flex items-center" title="<%= [issue.blocking_dependencies.any? ? "Blocking #{issue.blocking_dependencies.size}" : nil, issue.blocked_dependencies.any? ? "Blocked by #{issue.blocked_dependencies.size}" : nil].compact.join(' · ') %>">
+            <svg class="w-3 h-3 <%= issue.blocked_dependencies.any? ? 'text-red-400' : 'text-yellow-400' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+            </svg>
+          </span>
+        <% end %>
+        <% if issue.comments.size > 0 %>
+          <span class="inline-flex items-center gap-0.5 text-gray-500 ml-auto" title="<%= pluralize(issue.comments.size, 'comment') %>">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+            </svg>
+            <%= issue.comments.size %>
+          </span>
+        <% end %>
+      </div>
+    <% end %>
 
     <!-- Title -->
     <div class="text-sm text-gray-200 mb-3 line-clamp-2 leading-snug">
@@ -33,14 +38,17 @@
 
     <!-- Dynamic Properties Footer -->
     <%
-      # Check if any badges will be shown
       has_badges = (visible_properties.include?('priority') && !issue.no_priority?) ||
                    (visible_properties.include?('labels') && issue.labels.any?) ||
                    (visible_properties.include?('due_date') && issue.due_date) ||
                    (visible_properties.include?('estimate') && issue.estimate) ||
                    (visible_properties.include?('project') && issue.project) ||
-                   (visible_properties.include?('lane') && issue.lane) ||
-                   (visible_properties.include?('assignee') && issue.assignee)
+                   show_status_pill ||
+                   (visible_properties.include?('assignee') && issue.assignee) ||
+                   time_in_status.present? ||
+                   visible_properties.include?('created_at') ||
+                   visible_properties.include?('updated_at') ||
+                   pr_summary.present?
     %>
     <div class="flex items-start justify-between text-xs gap-1">
       <div class="flex items-center gap-1.5 flex-wrap max-h-[3.5rem] overflow-hidden">
@@ -98,9 +106,36 @@
           </span>
         <% end %>
 
-        <% if visible_properties.include?('lane') && issue.lane %>
+        <% if show_status_pill %>
           <span class="px-1.5 py-0.5 rounded bg-foreground border border-stroke text-gray-400">
             <%= issue.lane.name %>
+          </span>
+        <% end %>
+
+        <% if time_in_status %>
+          <span class="px-1.5 py-0.5 rounded bg-foreground border border-stroke text-gray-400" title="Time in current status">
+            <%= time_in_status %>
+          </span>
+        <% end %>
+
+        <% if visible_properties.include?('created_at') %>
+          <span class="px-1.5 py-0.5 rounded bg-foreground border border-stroke text-gray-400" title="Created <%= issue.created_at.strftime('%b %d, %Y %l:%M %p') %>">
+            <%= issue.created_at.strftime('%b %d') %>
+          </span>
+        <% end %>
+
+        <% if visible_properties.include?('updated_at') %>
+          <span class="px-1.5 py-0.5 rounded bg-foreground border border-stroke text-gray-400" title="Updated <%= issue.updated_at.strftime('%b %d, %Y %l:%M %p') %>">
+            <%= issue.updated_at.strftime('%b %d') %>
+          </span>
+        <% end %>
+
+        <% if pr_summary %>
+          <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-foreground border border-stroke <%= pr_summary[:color_class] %>" title="<%= pluralize(pr_summary[:count], 'pull request') %>">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h8m0 0v8m0-8l-8 8M6 20a2 2 0 100-4 2 2 0 000 4zm12 0a2 2 0 100-4 2 2 0 000 4zM6 4a2 2 0 100 4 2 2 0 000-4z"></path>
+            </svg>
+            <%= pr_summary[:count] %>
           </span>
         <% end %>
       </div>

@@ -13,9 +13,8 @@
                  end
 
   shape_class = shape == "square" ? "rounded" : "rounded-full"
-  bg_color = user&.avatar_color || "bg-blue-600"
   initial = user&.name&.first&.upcase || "?"
 %>
-<div class="<%= size_classes %> <%= shape_class %> <%= bg_color %> flex items-center justify-center font-medium shrink-0 <%= extra_classes %>">
+<div class="<%= size_classes %> <%= shape_class %> bg-accent text-background flex items-center justify-center font-medium shrink-0 <%= extra_classes %>">
   <%= initial %>
 </div>

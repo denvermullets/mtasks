@@ -2,10 +2,7 @@
   <!-- User -->
   <div class="h-14 px-4 border-b border-stroke flex items-center">
     <div class="flex items-center justify-between w-full">
-      <div class="flex items-center gap-2 relative">
-        <%= render "shared/avatar_color_picker" %>
-        <span class="text-sm font-medium"><%= current_user.name %></span>
-      </div>
+      <%= render "shared/avatar_color_picker" %>
       <button type="button"
               class="relative p-1.5 text-gray-400 hover:text-gray-200 rounded-md hover:bg-gray-800 cursor-pointer"
               data-action="click->notification-drawer#toggle"

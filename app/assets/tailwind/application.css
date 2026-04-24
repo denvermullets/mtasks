@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "./markdown.css";
+@import "./themes.css";
 
 /* Avatar color safelist — keep these classes so Tailwind won't purge them:
    bg-blue-600 bg-red-600 bg-green-600 bg-orange-500 bg-purple-600

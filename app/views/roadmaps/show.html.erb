@@ -6,10 +6,11 @@
   <div class="h-12 sm:h-14 bg-menu border-b border-stroke flex items-center justify-between px-3 sm:px-4 shrink-0">
     <div class="flex items-center gap-2 sm:gap-4 min-w-0">
       <%= render "shared/mobile_menu_button" %>
-      <%= link_to team_issues_path(current_team),
+      <% back = back_nav_link(fallback_url: team_issues_path(current_team), fallback_label: 'Issues') %>
+      <%= link_to back[:url],
           class: "text-sm text-gray-500 hover:text-gray-400 flex items-center gap-2" do %>
         <span>&#8592;</span>
-        <span class="hidden sm:inline"><%= current_team.name %></span>
+        <span class="hidden sm:inline"><%= back[:label] %></span>
         <span class="sm:hidden">Back</span>
       <% end %>
       <span class="text-gray-600 hidden sm:inline">&#8250;</span>
@@ -34,7 +35,7 @@
       <!-- Header -->
       <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
         <div class="min-w-0">
-          <h2 class="text-base font-medium text-gray-200 m-0 mb-1">Now / next / later</h2>
+          <h2 class="text-base font-medium text-gray-200 m-0 mb-1">Now / Next / Later</h2>
           <p class="text-sm text-gray-400 max-w-xl leading-relaxed">
             No specific dates — just intent. Good for sharing externally or thinking strategically without committing to weeks.
           </p>
@@ -63,8 +64,8 @@
         <%= render "lane", commitment: "now",
             label: "Now",
             subtitle: "Shipping in the next ~6 weeks",
-            dot_color: "#92E8D4",
-            text_color: "#92E8D4",
+            dot_color: "var(--color-accent)",
+            text_color: "var(--color-accent)",
             projects: @lanes["now"],
             projects_off_roadmap: @projects_off_roadmap,
             team: current_team %>
@@ -72,8 +73,8 @@
         <%= render "lane", commitment: "next",
             label: "Next",
             subtitle: "Starting once Now slots open",
-            dot_color: "#BAD4F7",
-            text_color: "#BAD4F7",
+            dot_color: "var(--color-highlight)",
+            text_color: "var(--color-highlight)",
             projects: @lanes["next"],
             projects_off_roadmap: @projects_off_roadmap,
             team: current_team %>
@@ -81,8 +82,8 @@
         <%= render "lane", commitment: "later",
             label: "Later",
             subtitle: "On the radar, not committed",
-            dot_color: "#888780",
-            text_color: "#B4B2A9",
+            dot_color: "var(--color-gray-500)",
+            text_color: "var(--color-gray-400)",
             projects: @lanes["later"],
             projects_off_roadmap: @projects_off_roadmap,
             team: current_team %>

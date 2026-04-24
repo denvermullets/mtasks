@@ -1,4 +1,11 @@
 <%# List view row - maintains table column structure %>
+<%
+  visible_properties = display_options[:visible_properties]
+  group_by = display_options[:group_by]
+  show_status_pill = visible_properties.include?('status') && issue.lane && group_by != 'status'
+  pr_summary = visible_properties.include?('pull_requests_and_commits') ? issue_pr_summary(issue) : nil
+  time_in_status = visible_properties.include?('time_in_status') ? format_time_in_status(issue) : nil
+%>
 <div id="issue_row_<%= issue.id %>"
      class="relative border-b border-stroke hover:bg-hover-highlight transition-colors"
      data-controller="issue-card"
@@ -10,17 +17,18 @@
       },
       class: "block px-4 py-3 text-sm" do %>
   <div class="flex items-center gap-4">
-    <!-- ID (fixed width) -->
-    <div class="w-24 text-gray-400 font-mono shrink-0 flex items-center gap-1.5">
-      <%= issue.identifier %>
-      <% if issue.blocking_dependencies.any? || issue.blocked_dependencies.any? %>
-        <span class="inline-flex items-center" title="<%= [issue.blocking_dependencies.any? ? "Blocking #{issue.blocking_dependencies.size}" : nil, issue.blocked_dependencies.any? ? "Blocked by #{issue.blocked_dependencies.size}" : nil].compact.join(' · ') %>">
-          <svg class="w-3 h-3 <%= issue.blocked_dependencies.any? ? 'text-red-400' : 'text-yellow-400' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
-          </svg>
-        </span>
-      <% end %>
-    </div>
+    <% if visible_properties.include?('id') %>
+      <div class="w-24 text-gray-400 font-mono shrink-0 flex items-center gap-1.5">
+        <%= issue.identifier %>
+        <% if issue.blocking_dependencies.any? || issue.blocked_dependencies.any? %>
+          <span class="inline-flex items-center" title="<%= [issue.blocking_dependencies.any? ? "Blocking #{issue.blocking_dependencies.size}" : nil, issue.blocked_dependencies.any? ? "Blocked by #{issue.blocked_dependencies.size}" : nil].compact.join(' · ') %>">
+            <svg class="w-3 h-3 <%= issue.blocked_dependencies.any? ? 'text-red-400' : 'text-yellow-400' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+            </svg>
+          </span>
+        <% end %>
+      </div>
+    <% end %>
 
     <!-- Title (flexible, takes available space) -->
     <div class="flex-1 text-gray-200 truncate flex items-center gap-2">
@@ -37,18 +45,25 @@
 
     <!-- Properties (right-aligned, flows naturally) -->
     <div class="flex items-center gap-2 shrink-0">
-      <% if display_options[:visible_properties].include?('priority') && !issue.no_priority? %>
+      <% if show_status_pill %>
+        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-foreground border border-stroke text-gray-400 text-xs">
+          <span class="w-1.5 h-1.5 rounded-full" style="background-color: <%= issue.lane.color.presence || '#666' %>;"></span>
+          <%= issue.lane.name %>
+        </span>
+      <% end %>
+
+      <% if visible_properties.include?('priority') && !issue.no_priority? %>
         <span class="text-xs text-gray-400"><%= issue.priority.titleize %></span>
       <% end %>
 
-      <% if display_options[:visible_properties].include?('assignee') && issue.assignee %>
+      <% if visible_properties.include?('assignee') && issue.assignee %>
         <div class="flex items-center gap-1.5">
           <%= user_avatar(issue.assignee, size: "sm") %>
           <span class="text-xs text-gray-300"><%= issue.assignee.name %></span>
         </div>
       <% end %>
 
-      <% if display_options[:visible_properties].include?('project') && issue.project %>
+      <% if visible_properties.include?('project') && issue.project %>
         <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-foreground border border-stroke text-gray-400 text-xs">
           <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
@@ -57,11 +72,40 @@
         </span>
       <% end %>
 
-      <% if display_options[:visible_properties].include?('due_date') && issue.due_date %>
+      <% if visible_properties.include?('estimate') && issue.estimate %>
+        <span class="text-xs text-gray-400"><%= issue.estimate %>pt</span>
+      <% end %>
+
+      <% if visible_properties.include?('due_date') && issue.due_date %>
         <span class="text-xs text-gray-400"><%= issue.due_date.strftime('%b %d') %></span>
       <% end %>
 
-      <% if display_options[:visible_properties].include?('labels') && issue.labels.any? %>
+      <% if time_in_status %>
+        <span class="text-xs text-gray-400" title="Time in current status"><%= time_in_status %></span>
+      <% end %>
+
+      <% if visible_properties.include?('created_at') %>
+        <span class="text-xs text-gray-400" title="Created <%= issue.created_at.strftime('%b %d, %Y %l:%M %p') %>">
+          <%= issue.created_at.strftime('%b %d') %>
+        </span>
+      <% end %>
+
+      <% if visible_properties.include?('updated_at') %>
+        <span class="text-xs text-gray-400" title="Updated <%= issue.updated_at.strftime('%b %d, %Y %l:%M %p') %>">
+          <%= issue.updated_at.strftime('%b %d') %>
+        </span>
+      <% end %>
+
+      <% if pr_summary %>
+        <span class="inline-flex items-center gap-1 text-xs <%= pr_summary[:color_class] %>" title="<%= pluralize(pr_summary[:count], 'pull request') %>">
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h8m0 0v8m0-8l-8 8M6 20a2 2 0 100-4 2 2 0 000 4zm12 0a2 2 0 100-4 2 2 0 000 4zM6 4a2 2 0 100 4 2 2 0 000-4z"></path>
+          </svg>
+          <%= pr_summary[:count] %>
+        </span>
+      <% end %>
+
+      <% if visible_properties.include?('labels') && issue.labels.any? %>
         <div class="flex items-center gap-1">
           <% visible_labels = issue.labels.first(2) %>
           <% remaining_count = issue.labels.count - visible_labels.count %>
