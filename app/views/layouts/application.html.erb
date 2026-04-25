@@ -59,7 +59,7 @@
               <div class="p-2">
                 <div class="text-xs font-medium text-gray-500 uppercase px-2 mb-2">Workspace</div>
                 <div class="space-y-1">
-                  <%= link_to team_issues_path(current_team, assignee_id: current_user.id), class: "flex items-center gap-2 px-2 py-1.5 text-sm rounded hover:bg-foreground text-gray-300", data: { action: "click->sidebar#close" } do %>
+                  <%= link_to team_issues_path(current_team, assignee_ids: current_user.id), class: "flex items-center gap-2 px-2 py-1.5 text-sm rounded hover:bg-foreground text-gray-300", data: { action: "click->sidebar#close" } do %>
                     <span>My issues</span>
                   <% end %>
                 </div>

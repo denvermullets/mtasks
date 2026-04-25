@@ -20,16 +20,21 @@ class IssueDisplayService
     @empty_groups ||= []
   end
 
+  ATTRIBUTE_FILTERS = {
+    lane_ids: :filter_by_lane,
+    assignee_ids: :filter_by_assignees,
+    priority: :filter_by_priority,
+    label_ids: :filter_by_labels,
+    project_ids: :filter_by_project
+  }.freeze
+
   def filter_issues
     @empty_groups = [] # Reset empty groups tracking
-    result = if options[:search_query].present?
-               filter_by_search_term(issues)
-             else
-               filter_by_completion(issues)
-             end
+    result = options[:search_query].present? ? filter_by_search_term(issues) : filter_by_completion(issues)
     result = filter_sub_issues(result) unless options[:show_sub_issues]
-    result = filter_by_assignee(result) if options[:assignee_id].present?
-    result = filter_by_project(result) if options[:project_ids].present?
+    ATTRIBUTE_FILTERS.each do |key, method|
+      result = send(method, result) if options[key].present?
+    end
     result
   end
 
@@ -111,8 +116,20 @@ class IssueDisplayService
     issue_scope.where(parent_issue_id: nil)
   end
 
-  def filter_by_assignee(issue_scope)
-    issue_scope.where(assignee_id: options[:assignee_id])
+  def filter_by_lane(issue_scope)
+    issue_scope.where(lane_id: options[:lane_ids])
+  end
+
+  def filter_by_assignees(issue_scope)
+    issue_scope.where(assignee_id: options[:assignee_ids])
+  end
+
+  def filter_by_priority(issue_scope)
+    issue_scope.where(priority: options[:priority])
+  end
+
+  def filter_by_labels(issue_scope)
+    issue_scope.joins(:labels).where(labels: { id: options[:label_ids] }).distinct
   end
 
   def filter_by_project(issue_scope)

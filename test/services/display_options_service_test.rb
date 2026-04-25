@@ -31,4 +31,29 @@ class DisplayOptionsServiceTest < ActiveSupport::TestCase
 
     assert_equal [5, 9], options[:project_ids]
   end
+
+  test 'parses lane_ids, assignee_ids, label_ids as integer arrays' do
+    options = DisplayOptionsService.call(
+      { lane_ids: '1,2', assignee_ids: '4', label_ids: '7,8' }, @user, @team
+    )
+
+    assert_equal [1, 2], options[:lane_ids]
+    assert_equal [4], options[:assignee_ids]
+    assert_equal [7, 8], options[:label_ids]
+  end
+
+  test 'parses priority as a string array' do
+    options = DisplayOptionsService.call({ priority: 'urgent,high' }, @user, @team)
+
+    assert_equal %w[urgent high], options[:priority]
+  end
+
+  test 'returns nil for absent multi-filter params' do
+    options = DisplayOptionsService.call({}, @user, @team)
+
+    assert_nil options[:lane_ids]
+    assert_nil options[:assignee_ids]
+    assert_nil options[:label_ids]
+    assert_nil options[:priority]
+  end
 end

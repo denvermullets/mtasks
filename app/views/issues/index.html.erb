@@ -9,7 +9,7 @@
       </div>
       <div class="hidden sm:flex items-center gap-2">
         <%= render "issue_search" %>
-        <%= render "project_filter" %>
+        <%= render "filter_menu" %>
         <%= turbo_frame_tag "display_options_bar" do %>
           <%= render "display_options_bar" %>
         <% end %>
@@ -19,6 +19,8 @@
     <div class="sm:hidden px-3 pb-2">
       <%= render "issue_search" %>
     </div>
+    <!-- Active filter chips (server-rendered initial state, JS-updated on change) -->
+    <%= render "active_filter_chips" %>
     <!-- Mobile group filter chips -->
     <%= render "mobile_group_chips", grouped_issues: @grouped_issues, display_options: @display_options %>
   </div>

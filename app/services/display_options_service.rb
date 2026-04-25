@@ -19,19 +19,27 @@ class DisplayOptionsService < Service
       show_empty_rows: bool_param(:show_empty_rows),
       completed_filter: param_or_pref(:completed_filter),
       visible_properties: visible_properties,
-      assignee_id: params[:assignee_id],
-      project_ids: project_ids
+      lane_ids: int_list_param(:lane_ids),
+      assignee_ids: int_list_param(:assignee_ids),
+      label_ids: int_list_param(:label_ids),
+      project_ids: int_list_param(:project_ids),
+      priority: string_list_param(:priority)
     }
   end
 
   private
 
-  def project_ids
-    raw = params[:project_ids]
+  def int_list_param(key)
+    list = string_list_param(key)
+    list&.map(&:to_i)
+  end
+
+  def string_list_param(key)
+    raw = params[key]
     return nil if raw.blank?
 
-    ids = raw.to_s.split(',').map(&:strip).reject(&:blank?).map(&:to_i)
-    ids.presence
+    values = raw.to_s.split(',').map(&:strip).reject(&:blank?)
+    values.presence
   end
 
   def param_or_pref(key, default = nil)
