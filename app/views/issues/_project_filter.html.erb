@@ -1,0 +1,52 @@
+<%
+  selected_project_ids = Array(@display_options[:project_ids]).map(&:to_i)
+  active_count = selected_project_ids.size
+%>
+<div class="relative inline-block" data-controller="project-filter">
+  <!-- Filter Button -->
+  <button type="button"
+          class="flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded bg-foreground text-gray-300 hover:bg-hover-highlight border <%= active_count.positive? ? 'border-accent text-gray-100' : 'border-stroke' %> transition-colors"
+          data-action="click->project-filter#togglePanel"
+          aria-label="Filter by project">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L14 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 018 21v-7.586L3.293 6.707A1 1 0 013 6V4z"></path>
+    </svg>
+    <span class="<%= 'hidden' unless active_count.positive? %>"
+          data-project-filter-target="badge">
+      <%= active_count.positive? ? "Focus · #{active_count}" : '' %>
+    </span>
+  </button>
+
+  <!-- Project Filter Panel -->
+  <div class="hidden absolute top-full right-0 mt-2 w-72 max-h-[calc(100vh-6rem)] bg-foreground border border-stroke rounded-lg shadow-xl z-50 overflow-hidden flex flex-col"
+       data-project-filter-target="panel">
+    <div class="px-4 py-3 border-b border-stroke flex items-center justify-between">
+      <span class="text-sm font-semibold text-gray-200">Focus on projects</span>
+      <button type="button"
+              class="text-xs text-gray-400 hover:text-accent transition-colors <%= 'hidden' unless active_count.positive? %>"
+              data-action="click->project-filter#clear"
+              data-project-filter-target="clear">
+        Clear
+      </button>
+    </div>
+
+    <div class="overflow-y-auto py-1">
+      <% if @projects.any? %>
+        <% @projects.each do |project| %>
+          <label class="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-hover-highlight cursor-pointer">
+            <input type="checkbox"
+                   value="<%= project.id %>"
+                   <%= 'checked' if selected_project_ids.include?(project.id) %>
+                   data-action="change->project-filter#toggleProject"
+                   class="w-4 h-4 accent-accent bg-background border-stroke focus:ring-accent focus:ring-2">
+            <span class="truncate"><%= project.name %></span>
+          </label>
+        <% end %>
+      <% else %>
+        <div class="px-4 py-6 text-center text-sm text-gray-500">
+          No projects yet.
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

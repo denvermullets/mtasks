@@ -92,4 +92,35 @@ class IssueDisplayServiceTest < ActiveSupport::TestCase
     assert_includes filtered, @completed_last_week
     assert_includes filtered, @completed_last_month
   end
+
+  test 'project_ids filter scopes issues to selected projects' do
+    project_a = @team.projects.create!(name: 'Project A')
+    project_b = @team.projects.create!(name: 'Project B')
+    project_c = @team.projects.create!(name: 'Project C')
+
+    in_a = @team.issues.create!(title: 'A1', lane: @backlog_lane, creator: @user, project: project_a)
+    in_b = @team.issues.create!(title: 'B1', lane: @backlog_lane, creator: @user, project: project_b)
+    in_c = @team.issues.create!(title: 'C1', lane: @backlog_lane, creator: @user, project: project_c)
+
+    service = IssueDisplayService.new(
+      @team.issues, { completed_filter: 'all_completed', project_ids: [project_a.id, project_b.id] }, @team
+    )
+    filtered = service.filter_issues
+
+    assert_includes filtered, in_a
+    assert_includes filtered, in_b
+    assert_not_includes filtered, in_c
+    assert_not_includes filtered, @open_issue
+  end
+
+  test 'project_ids filter is skipped when blank' do
+    project = @team.projects.create!(name: 'Solo')
+    in_project = @team.issues.create!(title: 'P', lane: @backlog_lane, creator: @user, project: project)
+
+    service = IssueDisplayService.new(@team.issues, { completed_filter: 'all_completed', project_ids: nil }, @team)
+    filtered = service.filter_issues
+
+    assert_includes filtered, in_project
+    assert_includes filtered, @open_issue
+  end
 end

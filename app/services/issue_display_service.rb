@@ -29,6 +29,7 @@ class IssueDisplayService
              end
     result = filter_sub_issues(result) unless options[:show_sub_issues]
     result = filter_by_assignee(result) if options[:assignee_id].present?
+    result = filter_by_project(result) if options[:project_ids].present?
     result
   end
 
@@ -112,6 +113,10 @@ class IssueDisplayService
 
   def filter_by_assignee(issue_scope)
     issue_scope.where(assignee_id: options[:assignee_id])
+  end
+
+  def filter_by_project(issue_scope)
+    issue_scope.where(project_id: options[:project_ids])
   end
 
   # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
