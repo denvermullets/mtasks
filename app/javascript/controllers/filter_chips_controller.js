@@ -66,7 +66,7 @@ export default class extends Controller {
   buildChip(key, value, labelText) {
     const chip = document.createElement("span");
     chip.className =
-      "inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-background border border-stroke text-gray-300";
+      "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-foreground border border-stroke text-gray-400";
 
     const prefix = document.createElement("span");
     prefix.className = "text-gray-500";
@@ -74,13 +74,13 @@ export default class extends Controller {
     chip.appendChild(prefix);
 
     const label = document.createElement("span");
-    label.className = "truncate max-w-[8rem]";
+    label.className = "truncate max-w-[8rem] text-gray-300";
     label.textContent = labelText || value;
     chip.appendChild(label);
 
     const button = document.createElement("button");
     button.type = "button";
-    button.className = "ml-0.5 text-gray-500 hover:text-accent transition-colors";
+    button.className = "ml-0.5 text-gray-500 hover:text-accent transition-colors cursor-pointer";
     button.setAttribute("aria-label", "Remove filter");
     button.dataset.action = "click->filter-chips#remove";
     button.dataset.filterKey = key;
@@ -95,7 +95,7 @@ export default class extends Controller {
   buildClearAll() {
     const button = document.createElement("button");
     button.type = "button";
-    button.className = "ml-1 text-xs text-gray-500 hover:text-accent transition-colors";
+    button.className = "ml-1 text-xs text-gray-500 hover:text-accent transition-colors cursor-pointer";
     button.dataset.action = "click->filter-chips#clearAll";
     button.textContent = "Clear all";
     return button;

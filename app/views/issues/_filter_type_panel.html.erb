@@ -1,17 +1,17 @@
 <div class="hidden flex-col"
      data-filter-menu-target="typeView"
      data-filter-type="<%= type_key %>">
-  <div class="px-2 py-2 border-b border-stroke flex items-center gap-2">
-    <button type="button"
-            class="p-1 text-gray-400 hover:text-gray-200 transition-colors"
-            data-action="click->filter-menu#showRoot"
-            aria-label="Back">
+  <button type="button"
+          class="w-full px-2 py-2 border-b border-stroke flex items-center gap-2 text-gray-200 hover:bg-hover-highlight transition-colors cursor-pointer text-left"
+          data-action="click->filter-menu#showRoot"
+          aria-label="Back to filter menu">
+    <span class="p-1 text-gray-400">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
       </svg>
-    </button>
-    <span class="text-sm font-semibold text-gray-200"><%= title %></span>
-  </div>
+    </span>
+    <span class="text-sm font-semibold"><%= title %></span>
+  </button>
   <div class="overflow-y-auto py-1 max-h-80">
     <% if options.any? %>
       <% options.each do |opt| %>
