@@ -105,7 +105,7 @@ Rails.application.routes.draw do
       user = session.user
       # Try session team_id first, then fall back to user's first team
       team_id = request.session[:current_team_id]
-      team_id ||= user.teams.first&.id
+      team_id ||= user.teams.not_archived.first&.id
       team_id ? "/teams/#{team_id}/issues" : '/teams/new'
     else
       '/landing'
