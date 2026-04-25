@@ -19,6 +19,8 @@ class IssuesController < ApplicationController
     @empty_groups = @display_service.empty_groups
     @lanes = current_team.lanes.order(:position)
     @labels = current_team.labels.includes(:issue_labels)
+    @projects = current_team.projects.order(:name)
+    @assignees = current_team.users.order(:name)
   end
 
   def show

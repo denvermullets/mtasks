@@ -1,0 +1,54 @@
+<%
+  type_meta = {
+    'lane_ids'     => { label: 'Status',   collection: @lanes,     name_attr: :name },
+    'assignee_ids' => { label: 'Assignee', collection: @assignees, name_attr: :name },
+    'label_ids'    => { label: 'Labels',   collection: @labels,    name_attr: :name },
+    'project_ids'  => { label: 'Project',  collection: @projects,  name_attr: :name }
+  }
+  active = type_meta.each_with_object([]) do |(key, meta), acc|
+    selected = Array(@display_options[key.to_sym]).map(&:to_i)
+    next if selected.empty?
+
+    by_id = meta[:collection].index_by(&:id)
+    names = selected.map { |id| by_id[id]&.public_send(meta[:name_attr]) || id.to_s }
+    acc << { key: key, label: meta[:label], values: selected.map.with_index { |id, i| { value: id.to_s, label: names[i] } } }
+  end
+
+  priority_values = Array(@display_options[:priority]).map(&:to_s)
+  if priority_values.any?
+    active << {
+      key: 'priority',
+      label: 'Priority',
+      values: priority_values.map { |p| { value: p, label: p == 'no_priority' ? 'No priority' : p.titleize } }
+    }
+  end
+%>
+<div class="<%= 'hidden' if active.empty? %> px-3 sm:px-4 py-2 flex flex-wrap items-center gap-2 border-t border-stroke bg-menu"
+     data-controller="filter-chips"
+     data-filter-chips-target="container">
+  <% active.each do |group| %>
+    <% group[:values].each do |val| %>
+      <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-foreground border border-stroke text-gray-400">
+        <span class="text-gray-500"><%= group[:label] %>:</span>
+        <span class="truncate max-w-[8rem] text-gray-300"><%= val[:label] %></span>
+        <button type="button"
+                class="ml-0.5 text-gray-500 hover:text-accent transition-colors cursor-pointer"
+                data-action="click->filter-chips#remove"
+                data-filter-key="<%= group[:key] %>"
+                data-filter-value="<%= val[:value] %>"
+                aria-label="Remove filter">
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </span>
+    <% end %>
+  <% end %>
+  <% if active.any? %>
+    <button type="button"
+            class="ml-1 text-xs text-gray-500 hover:text-accent transition-colors cursor-pointer"
+            data-action="click->filter-chips#clearAll">
+      Clear all
+    </button>
+  <% end %>
+</div>

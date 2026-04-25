@@ -1,0 +1,35 @@
+<div class="hidden flex-col"
+     data-filter-menu-target="typeView"
+     data-filter-type="<%= type_key %>">
+  <button type="button"
+          class="w-full px-2 py-2 border-b border-stroke flex items-center gap-2 text-gray-200 hover:bg-hover-highlight transition-colors cursor-pointer text-left"
+          data-action="click->filter-menu#showRoot"
+          aria-label="Back to filter menu">
+    <span class="p-1 text-gray-400">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+      </svg>
+    </span>
+    <span class="text-sm font-semibold"><%= title %></span>
+  </button>
+  <div class="overflow-y-auto py-1 max-h-80">
+    <% if options.any? %>
+      <% options.each do |opt| %>
+        <label class="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-hover-highlight cursor-pointer">
+          <input type="checkbox"
+                 value="<%= opt[:value] %>"
+                 <%= 'checked' if opt[:checked] %>
+                 data-filter-key="<%= type_key %>"
+                 data-filter-label="<%= opt[:label] %>"
+                 data-action="change->filter-menu#toggleFilter"
+                 class="w-4 h-4 accent-accent bg-background border-stroke focus:ring-accent focus:ring-2">
+          <span class="truncate"><%= opt[:label] %></span>
+        </label>
+      <% end %>
+    <% else %>
+      <div class="px-4 py-6 text-center text-sm text-gray-500">
+        <%= empty_label %>
+      </div>
+    <% end %>
+  </div>
+</div>

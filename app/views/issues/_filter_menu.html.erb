@@ -1,0 +1,114 @@
+<%
+  selected = {
+    'lane_ids'     => Array(@display_options[:lane_ids]).map(&:to_s),
+    'assignee_ids' => Array(@display_options[:assignee_ids]).map(&:to_s),
+    'priority'     => Array(@display_options[:priority]).map(&:to_s),
+    'label_ids'    => Array(@display_options[:label_ids]).map(&:to_s),
+    'project_ids'  => Array(@display_options[:project_ids]).map(&:to_s)
+  }
+  active_count = selected.values.sum(&:size)
+
+  filter_types = [
+    { key: 'lane_ids',     label: 'Status',   icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' },
+    { key: 'assignee_ids', label: 'Assignee', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
+    { key: 'priority',     label: 'Priority', icon: 'M3 21V3m4 18V8m4 13v-7m4 7V11m4 10V6' },
+    { key: 'label_ids',    label: 'Labels',   icon: 'M7 7h.01M7 3h5a1.99 1.99 0 011.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.99 1.99 0 013 12V7a4 4 0 014-4z' },
+    { key: 'project_ids',  label: 'Project',  icon: 'M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z' }
+  ]
+%>
+<div class="relative inline-block"
+     data-controller="filter-menu"
+     data-filter-menu-active-count-value="<%= active_count %>">
+  <!-- Filter Button -->
+  <button type="button"
+          class="flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded bg-foreground text-gray-300 hover:bg-hover-highlight border <%= active_count.positive? ? 'border-accent text-gray-100' : 'border-stroke' %> transition-colors cursor-pointer"
+          data-filter-menu-target="button"
+          data-action="click->filter-menu#togglePanel"
+          aria-label="Filter issues">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L14 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 018 21v-7.586L3.293 6.707A1 1 0 013 6V4z"></path>
+    </svg>
+    <span class="<%= 'hidden' unless active_count.positive? %>"
+          data-filter-menu-target="badge">
+      <%= active_count.positive? ? "Filter · #{active_count}" : '' %>
+    </span>
+  </button>
+
+  <!-- Panel -->
+  <div class="hidden absolute top-full right-0 mt-2 w-72 max-h-[calc(100vh-6rem)] bg-foreground border border-stroke rounded-lg shadow-xl z-50 overflow-hidden flex flex-col"
+       data-filter-menu-target="panel">
+
+    <!-- Root view: list of filter types -->
+    <div data-filter-menu-target="rootView">
+      <div class="px-4 py-2 border-b border-stroke text-xs font-semibold text-gray-400 uppercase tracking-wide">
+        Filter by
+      </div>
+      <div class="py-1">
+        <% filter_types.each do |ft| %>
+          <button type="button"
+                  class="w-full flex items-center justify-between gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors cursor-pointer"
+                  data-action="click->filter-menu#showType"
+                  data-filter-type="<%= ft[:key] %>">
+            <span class="flex items-center gap-3">
+              <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="<%= ft[:icon] %>"></path>
+              </svg>
+              <span><%= ft[:label] %></span>
+              <span class="text-xs text-accent <%= 'hidden' if selected[ft[:key]].empty? %>"
+                    data-filter-menu-target="typeCount"
+                    data-filter-type="<%= ft[:key] %>">
+                <%= selected[ft[:key]].size if selected[ft[:key]].any? %>
+              </span>
+            </span>
+            <svg class="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+          </button>
+        <% end %>
+      </div>
+      <div class="border-t border-stroke px-4 py-2 <%= 'hidden' unless active_count.positive? %>"
+           data-filter-menu-target="clearAllRow">
+        <button type="button"
+                class="text-xs text-gray-400 hover:text-accent transition-colors cursor-pointer"
+                data-action="click->filter-menu#clearAll">
+          Clear all filters
+        </button>
+      </div>
+    </div>
+
+    <!-- Status (lane) view -->
+    <%= render 'filter_type_panel',
+        type_key: 'lane_ids',
+        title: 'Status',
+        empty_label: 'No statuses available.',
+        options: @lanes.map { |l| { value: l.id, label: l.name, checked: selected['lane_ids'].include?(l.id.to_s) } } %>
+
+    <!-- Assignee view -->
+    <%= render 'filter_type_panel',
+        type_key: 'assignee_ids',
+        title: 'Assignee',
+        empty_label: 'No teammates yet.',
+        options: @assignees.map { |u| { value: u.id, label: u.name.presence || u.email, checked: selected['assignee_ids'].include?(u.id.to_s) } } %>
+
+    <!-- Priority view -->
+    <%= render 'filter_type_panel',
+        type_key: 'priority',
+        title: 'Priority',
+        empty_label: '',
+        options: Issue.priorities.keys.map { |p| { value: p, label: p == 'no_priority' ? 'No priority' : p.titleize, checked: selected['priority'].include?(p) } } %>
+
+    <!-- Labels view -->
+    <%= render 'filter_type_panel',
+        type_key: 'label_ids',
+        title: 'Labels',
+        empty_label: 'No labels yet.',
+        options: @labels.map { |l| { value: l.id, label: l.name, checked: selected['label_ids'].include?(l.id.to_s) } } %>
+
+    <!-- Project view -->
+    <%= render 'filter_type_panel',
+        type_key: 'project_ids',
+        title: 'Project',
+        empty_label: 'No projects yet.',
+        options: @projects.map { |p| { value: p.id, label: p.name, checked: selected['project_ids'].include?(p.id.to_s) } } %>
+  </div>
+</div>
