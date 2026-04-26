@@ -71,14 +71,29 @@ class Issue < ApplicationRecord
     Time.current - started_at
   end
 
+  CANCELED_LANE_NAMES = %w[cancelled canceled].freeze
+
   def apply_lane_timestamps!
     return unless lane_id_changed?
 
-    new_lane = Lane.find_by(id: lane_id)
-    if new_lane&.name&.downcase == 'done'
+    new_lane_name = Lane.find_by(id: lane_id)&.name&.downcase
+    apply_completion_timestamp(new_lane_name)
+    apply_cancellation_timestamp(new_lane_name)
+  end
+
+  def apply_completion_timestamp(new_lane_name)
+    if new_lane_name == 'done'
       self.completed_at = Time.current
     elsif completed_at.present?
       self.completed_at = nil
+    end
+  end
+
+  def apply_cancellation_timestamp(new_lane_name)
+    if CANCELED_LANE_NAMES.include?(new_lane_name)
+      self.canceled_at = Time.current
+    elsif canceled_at.present?
+      self.canceled_at = nil
     end
   end
 

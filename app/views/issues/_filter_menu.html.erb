@@ -118,6 +118,6 @@
         type_key: 'project_ids',
         title: 'Project',
         empty_label: 'No projects yet.',
-        options: @projects.map { |p| { value: p.id, label: p.name, checked: selected['project_ids'].include?(p.id.to_s) } } %>
+        options: @projects.not_completed.map { |p| { value: p.id, label: p.name, checked: selected['project_ids'].include?(p.id.to_s) } } %>
   </div>
 </div>

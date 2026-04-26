@@ -10,7 +10,7 @@ class IssuesController < ApplicationController
 
   def index
     base_issues = current_team.issues.not_archived.includes(
-      :lane, :project, :labels, :assignee, :creator,
+      :lane, :project, :labels, :assignee,
       :blocking_dependencies, :blocked_dependencies, :comments
     )
 

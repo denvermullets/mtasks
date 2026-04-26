@@ -81,4 +81,37 @@ class IssueTest < ActiveSupport::TestCase
     issue = @team.issues.create!(title: 'Completed', lane: @backlog, creator: @user, completed_at: Time.current)
     assert_not_includes @team.issues.not_completed, issue
   end
+
+  test 'apply_lane_timestamps! sets canceled_at when moving to a Cancelled lane' do
+    cancelled = @team.lanes.create!(name: 'Cancelled', position: 2)
+    issue = @team.issues.create!(title: 'A', lane: @backlog, creator: @user)
+
+    issue.lane_id = cancelled.id
+    issue.apply_lane_timestamps!
+
+    assert_not_nil issue.canceled_at
+    assert_nil issue.completed_at
+  end
+
+  test 'apply_lane_timestamps! also matches a Canceled (US spelling) lane' do
+    canceled = @team.lanes.create!(name: 'Canceled', position: 2)
+    issue = @team.issues.create!(title: 'A', lane: @backlog, creator: @user)
+
+    issue.lane_id = canceled.id
+    issue.apply_lane_timestamps!
+
+    assert_not_nil issue.canceled_at
+  end
+
+  test 'apply_lane_timestamps! clears canceled_at when moving away from a Cancelled lane' do
+    cancelled = @team.lanes.create!(name: 'Cancelled', position: 2)
+    issue = @team.issues.create!(
+      title: 'A', lane: cancelled, creator: @user, canceled_at: 1.day.ago
+    )
+
+    issue.lane_id = @backlog.id
+    issue.apply_lane_timestamps!
+
+    assert_nil issue.canceled_at
+  end
 end

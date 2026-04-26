@@ -81,6 +81,19 @@ class ProjectTest < ActiveSupport::TestCase
     assert_equal 1, ids.length
   end
 
+  test 'not_completed scope excludes completed projects but keeps nil and other statuses' do
+    completed = @team.projects.create!(name: 'Done', status: 'completed')
+    cancelled = @team.projects.create!(name: 'Stopped', status: 'cancelled')
+    started = @team.projects.create!(name: 'Going', status: 'started')
+    no_status = @team.projects.create!(name: 'New', status: nil)
+
+    ids = @team.projects.not_completed.pluck(:id)
+    assert_not_includes ids, completed.id
+    assert_includes ids, cancelled.id
+    assert_includes ids, started.id
+    assert_includes ids, no_status.id
+  end
+
   test 'in_commitment scope orders by due_date nulls last then id' do
     late = @team.projects.create!(name: 'Late', roadmap_commitment: 'now', due_date: Date.new(2030, 6, 1))
     early = @team.projects.create!(name: 'Early', roadmap_commitment: 'now', due_date: Date.new(2030, 1, 1))

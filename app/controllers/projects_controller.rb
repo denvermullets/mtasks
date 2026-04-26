@@ -8,7 +8,7 @@ class ProjectsController < ApplicationController
   def index
     @index_sort = params[:sort].presence_in(%w[created name priority due_date velocity]) || 'created'
     @sort_dir = params[:dir].presence_in(%w[asc desc]) || 'asc'
-    @hide_completed = params[:hide_completed] == '1'
+    @hide_completed = params[:hide_completed] != '0'
     @projects = sorted_projects
   end
 

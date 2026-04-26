@@ -18,6 +18,22 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, 'Test Project'
   end
 
+  test 'index hides completed projects by default' do
+    completed = @team.projects.create!(name: 'Wrapped', status: 'completed')
+
+    get team_projects_path(@team)
+    assert_response :success
+    assert_not_includes response.body, completed.name
+  end
+
+  test 'index shows completed projects when hide_completed=0' do
+    completed = @team.projects.create!(name: 'Wrapped', status: 'completed')
+
+    get team_projects_path(@team, hide_completed: '0')
+    assert_response :success
+    assert_includes response.body, completed.name
+  end
+
   test 'show displays project' do
     get team_project_path(@team, @project)
     assert_response :success
