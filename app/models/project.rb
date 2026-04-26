@@ -36,11 +36,16 @@ class Project < ApplicationRecord
     (completed_issues_count.to_f / total_issues_count * 100).round
   end
 
-  def behind_schedule?
-    return false unless start_date && due_date && due_date > start_date
+  def effective_start_date
+    start_date || issues.not_archived.where.not(started_at: nil).minimum(:started_at)&.to_date
+  end
 
-    total_days = (due_date - start_date).to_f
-    elapsed_days = ([Date.current, due_date].min - start_date).to_f
+  def behind_schedule?
+    effective_start = effective_start_date
+    return false unless effective_start && due_date && due_date > effective_start
+
+    total_days = (due_date - effective_start).to_f
+    elapsed_days = ([Date.current, due_date].min - effective_start).to_f
     return false if elapsed_days <= 0
 
     expected = (elapsed_days / total_days * total_issues_count).round
@@ -58,12 +63,15 @@ class Project < ApplicationRecord
   end
 
   def expected_progress_line
-    return nil unless start_date && due_date && total_issues_count.positive?
+    effective_start = effective_start_date
+    project_issues = issues.not_archived
+    total_days = effective_start && due_date ? (due_date - effective_start).to_f : 0
+    return nil if total_days <= 0 || total_issues_count.zero? || project_issues.none?
 
-    [
-      { date: start_date.iso8601, value: 0 },
-      { date: due_date.iso8601, value: total_issues_count }
-    ]
+    issue_dates = pluck_issue_dates(project_issues)
+    chart_date_range(project_issues).map do |day|
+      expected_progress_point(day, effective_start, total_days, issue_dates)
+    end
   end
 
   private
@@ -75,10 +83,16 @@ class Project < ApplicationRecord
   end
 
   def chart_date_range(project_issues)
-    chart_start = start_date || project_issues.minimum(:created_at)&.to_date || created_at.to_date
+    chart_start = effective_start_date || project_issues.minimum(:created_at)&.to_date || created_at.to_date
     chart_end = [Date.current, due_date].compact.max
     days = (chart_start..chart_end).to_a
     sample_days(days, [days.length, 60].min)
+  end
+
+  def expected_progress_point(day, effective_start, total_days, issue_dates)
+    scope_at_day = issue_dates.count { |d| d[:created] && d[:created] <= day }
+    fraction = (day - effective_start).to_f.clamp(0, total_days) / total_days
+    { date: day.iso8601, value: (scope_at_day * fraction).round(2) }
   end
 
   def daily_snapshot(day, issue_dates)

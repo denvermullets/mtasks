@@ -32,6 +32,7 @@ class Issue < ApplicationRecord
 
   # Callbacks
   before_validation :assign_team_number, on: :create
+  after_create_commit :enqueue_velocity_recalculation!
 
   # Scopes
   scope :archived, -> { where.not(archived_at: nil) }
