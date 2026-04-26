@@ -1,5 +1,6 @@
 require 'test_helper'
 
+# rubocop:disable Metrics/ClassLength
 class IssueDisplayServiceTest < ActiveSupport::TestCase
   setup do
     @user = User.create!(name: 'Test User', email: 'display_test@example.com', password: 'password')
@@ -93,6 +94,54 @@ class IssueDisplayServiceTest < ActiveSupport::TestCase
     assert_includes filtered, @completed_last_month
   end
 
+  test 'canceled issues are hidden by default' do
+    canceled = @team.issues.create!(
+      title: 'Canceled', lane: @backlog_lane, creator: @user, canceled_at: 1.hour.ago
+    )
+
+    service = IssueDisplayService.new(@team.issues, { completed_filter: nil }, @team)
+    assert_not_includes service.filter_issues, canceled
+  end
+
+  test 'canceled issues are visible under all_completed and all_time filters' do
+    canceled = @team.issues.create!(
+      title: 'Canceled', lane: @backlog_lane, creator: @user, canceled_at: 1.hour.ago
+    )
+
+    %w[all_completed all_time].each do |filter|
+      service = IssueDisplayService.new(@team.issues, { completed_filter: filter }, @team)
+      assert_includes service.filter_issues, canceled, "expected canceled issue visible under #{filter}"
+    end
+  end
+
+  test 'canceled issues respect the past_* time window the same way completed issues do' do
+    cancelled_lane = @team.lanes.create!(name: 'Cancelled', position: 2)
+    canceled_recently = @team.issues.create!(
+      title: 'C-recent', lane: cancelled_lane, creator: @user, canceled_at: 2.hours.ago
+    )
+    canceled_last_week = @team.issues.create!(
+      title: 'C-week', lane: cancelled_lane, creator: @user, canceled_at: 3.days.ago
+    )
+    canceled_last_month = @team.issues.create!(
+      title: 'C-month', lane: cancelled_lane, creator: @user, canceled_at: 2.weeks.ago
+    )
+
+    past_day = IssueDisplayService.new(@team.issues, { completed_filter: 'past_day' }, @team).filter_issues
+    assert_includes past_day, canceled_recently
+    assert_not_includes past_day, canceled_last_week
+    assert_not_includes past_day, canceled_last_month
+
+    past_week = IssueDisplayService.new(@team.issues, { completed_filter: 'past_week' }, @team).filter_issues
+    assert_includes past_week, canceled_recently
+    assert_includes past_week, canceled_last_week
+    assert_not_includes past_week, canceled_last_month
+
+    past_month = IssueDisplayService.new(@team.issues, { completed_filter: 'past_month' }, @team).filter_issues
+    assert_includes past_month, canceled_recently
+    assert_includes past_month, canceled_last_week
+    assert_includes past_month, canceled_last_month
+  end
+
   test 'project_ids filter scopes issues to selected projects' do
     project_a = @team.projects.create!(name: 'Project A')
     project_b = @team.projects.create!(name: 'Project B')
@@ -175,4 +224,101 @@ class IssueDisplayServiceTest < ActiveSupport::TestCase
     assert_includes filtered, @open_issue
     assert_not_includes filtered, @completed_recently
   end
+
+  test 'group_by lane returns lane-keyed buckets with correct membership' do
+    service = IssueDisplayService.new(
+      @team.issues, { completed_filter: 'all_completed', group_by: 'lane' }, @team
+    )
+    grouped = service.grouped_issues
+
+    assert_equal %w[Backlog Done], grouped.keys
+    assert_includes grouped['Backlog'][:issues], @open_issue
+    assert_equal 3, grouped['Done'][:issues].size
+    assert_equal @backlog_lane, grouped['Backlog'][:object]
+  end
+
+  test 'group_by lane skips empty lanes when show_empty_groups is false' do
+    extra = @team.lanes.create!(name: 'Empty', position: 2)
+
+    service = IssueDisplayService.new(
+      @team.issues, { completed_filter: 'all_completed', group_by: 'lane' }, @team
+    )
+    grouped = service.grouped_issues
+
+    assert_not_includes grouped.keys, 'Empty'
+    assert_includes service.empty_groups.map { |g| g[:object] }, extra
+  end
+
+  test 'group_by priority returns priority buckets' do
+    @open_issue.update!(priority: :urgent)
+    @completed_recently.update!(priority: :urgent)
+    @completed_last_week.update!(priority: :high)
+
+    service = IssueDisplayService.new(
+      @team.issues, { completed_filter: 'all_completed', group_by: 'priority' }, @team
+    )
+    grouped = service.grouped_issues
+
+    assert_equal 2, grouped['Urgent'][:issues].size
+    assert_equal 1, grouped['High'][:issues].size
+    assert_equal 'urgent', grouped['Urgent'][:object]
+  end
+
+  test 'group_by project includes a No Project bucket for unassigned issues' do
+    project = @team.projects.create!(name: 'Alpha')
+    in_project = @team.issues.create!(title: 'P1', lane: @backlog_lane, creator: @user, project: project)
+
+    service = IssueDisplayService.new(
+      @team.issues, { completed_filter: 'all_completed', group_by: 'project' }, @team
+    )
+    grouped = service.grouped_issues
+
+    assert_includes grouped['Alpha'][:issues], in_project
+    assert_includes grouped['No Project'][:issues], @open_issue
+  end
+
+  test 'group_by label buckets issues into each of their labels' do
+    bug = @team.labels.create!(name: 'bug', color: '#FF0000')
+    feature = @team.labels.create!(name: 'feature', color: '#00FF00')
+    @open_issue.labels << bug
+    @open_issue.labels << feature
+    @completed_recently.labels << feature
+
+    service = IssueDisplayService.new(
+      @team.issues, { completed_filter: 'all_completed', group_by: 'label' }, @team
+    )
+    grouped = service.grouped_issues
+
+    assert_includes grouped['bug'][:issues], @open_issue
+    assert_includes grouped['feature'][:issues], @open_issue
+    assert_includes grouped['feature'][:issues], @completed_recently
+    assert_includes grouped['No Label'][:issues], @completed_last_week
+  end
+
+  test 'group_by none returns a single All Issues bucket' do
+    service = IssueDisplayService.new(
+      @team.issues, { completed_filter: 'all_completed', group_by: 'none' }, @team
+    )
+    grouped = service.grouped_issues
+
+    assert_equal ['All Issues'], grouped.keys
+    assert_equal 4, grouped['All Issues'][:issues].size
+  end
+
+  test 'sub_group_by combines primary and secondary grouping' do
+    @open_issue.update!(priority: :urgent)
+    @completed_recently.update!(priority: :high)
+
+    service = IssueDisplayService.new(
+      @team.issues,
+      { completed_filter: 'all_completed', group_by: 'lane', sub_group_by: 'priority' },
+      @team
+    )
+    grouped = service.grouped_issues
+
+    assert grouped['Backlog'][:subgroups].present?
+    assert_includes grouped['Backlog'][:subgroups]['Urgent'][:issues], @open_issue
+    assert_includes grouped['Done'][:subgroups]['High'][:issues], @completed_recently
+  end
 end
+# rubocop:enable Metrics/ClassLength

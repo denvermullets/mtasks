@@ -55,15 +55,17 @@ class IssueDisplayService
   end
 
   def group_issues(issue_scope)
+    loaded_issues = issue_scope.to_a
+
     primary_groups = case options[:group_by]
                      when 'priority'
-                       group_by_priority(issue_scope)
+                       group_by_priority(loaded_issues)
                      when 'status'
-                       group_by_status(issue_scope)
+                       group_by_status(loaded_issues)
                      when 'none'
-                       { 'All Issues' => { object: nil, issues: issue_scope } }
+                       { 'All Issues' => { object: nil, issues: loaded_issues } }
                      when 'lane', 'label', 'parent_issue', 'project', 'assignee'
-                       group_by_association(issue_scope, options[:group_by].to_sym)
+                       group_by_association(loaded_issues, options[:group_by].to_sym)
                      end
 
     # Apply sub-grouping if specified and not 'none'
@@ -99,17 +101,22 @@ class IssueDisplayService
   end
 
   def filter_by_completion(issue_scope)
+    return issue_scope if options[:completed_filter].in?(%w[all_time all_completed])
+
     cutoff = case options[:completed_filter]
              when 'past_day' then 1.day.ago
              when 'past_week' then 1.week.ago
              when 'past_month' then 1.month.ago
-             when 'all_time', 'all_completed' then return issue_scope
              end
 
     if cutoff
-      issue_scope.where('completed_at IS NULL OR completed_at >= ?', cutoff)
+      issue_scope.where(
+        '(issues.completed_at IS NULL AND issues.canceled_at IS NULL) ' \
+        'OR issues.completed_at >= :cutoff OR issues.canceled_at >= :cutoff',
+        cutoff: cutoff
+      )
     else
-      issue_scope.not_completed
+      issue_scope.where(completed_at: nil, canceled_at: nil)
     end
   end
 
@@ -142,31 +149,34 @@ class IssueDisplayService
   end
 
   # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
-  def group_by_association(issue_scope, association_name)
+  def group_by_association(loaded_issues, association_name)
     groups = {}
-    team = @team || issue_scope.first&.team
+    team = @team || loaded_issues.first&.team
     return groups unless team
 
     all_groups = case association_name
-                 when :lane
-                   team.lanes.order(:position)
-                 when :project
-                   team.projects
-                 when :assignee
-                   team.users
-                 when :label
-                   team.labels
-                 when :parent_issue
-                   # For parent_issue grouping, we'll handle it differently
-                   nil
+                 when :lane then team.lanes.order(:position)
+                 when :project then team.projects
+                 when :assignee then team.users
+                 when :label then team.labels
+                 when :parent_issue then nil
                  end
+
+    if association_name == :label
+      issues_by_label_id = Hash.new { |h, k| h[k] = [] }
+      loaded_issues.each do |issue|
+        issue.labels.each { |label| issues_by_label_id[label.id] << issue }
+      end
+    else
+      fk = "#{association_name}_id"
+      issues_by_fk = loaded_issues.group_by { |i| i.public_send(fk) }
+    end
 
     all_groups&.each do |group|
       issues_in_group = if association_name == :label
-                          # Labels use has_many :through, so we need to join through issue_labels
-                          issue_scope.joins(:labels).where(labels: { id: group.id }).distinct
+                          issues_by_label_id[group.id]
                         else
-                          issue_scope.where(association_name => group)
+                          issues_by_fk[group.id] || []
                         end
 
       if issues_in_group.empty? && !options[:show_empty_groups]
@@ -180,10 +190,10 @@ class IssueDisplayService
     # Add "No X" group for optional associations (skip lane since it's required)
     unless association_name == :lane
       ungrouped = if association_name == :label
-                    # Issues with no labels
-                    issue_scope.left_joins(:labels).where(labels: { id: nil })
+                    loaded_issues.select { |issue| issue.labels.empty? }
                   else
-                    issue_scope.where(association_name => nil)
+                    fk ||= "#{association_name}_id"
+                    issues_by_fk[nil] || loaded_issues.select { |i| i.public_send(fk).nil? }
                   end
       if ungrouped.any? || options[:show_empty_groups]
         groups["No #{association_name.to_s.titleize}"] = { object: nil, issues: ungrouped }
@@ -194,11 +204,12 @@ class IssueDisplayService
   end
   # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
 
-  def group_by_priority(issue_scope)
+  def group_by_priority(loaded_issues)
     groups = {}
+    by_priority = loaded_issues.group_by(&:priority)
 
     Issue.priorities.each_key do |priority_key|
-      issues_in_group = issue_scope.where(priority: priority_key)
+      issues_in_group = by_priority[priority_key] || []
       label = priority_key.to_s.titleize
       label = 'No Priority' if priority_key == 'no_priority'
 
@@ -213,9 +224,9 @@ class IssueDisplayService
     groups
   end
 
-  def group_by_status(issue_scope)
+  def group_by_status(loaded_issues)
     # Status is represented by lanes, so group by lane for correct custom lane support
-    group_by_association(issue_scope, :lane)
+    group_by_association(loaded_issues, :lane)
   end
 
   def group_name_for(object)

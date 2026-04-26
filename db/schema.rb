@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_24_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_26_120100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -112,6 +112,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_24_120000) do
     t.bigint "label_id", null: false
     t.datetime "updated_at", null: false
     t.index ["issue_id"], name: "index_issue_labels_on_issue_id"
+    t.index ["label_id", "issue_id"], name: "index_issue_labels_on_label_id_and_issue_id"
     t.index ["label_id"], name: "index_issue_labels_on_label_id"
   end
 
@@ -166,6 +167,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_24_120000) do
     t.index ["project_id"], name: "index_issues_on_project_id"
     t.index ["team_id", "team_number"], name: "index_issues_on_team_id_and_team_number", unique: true
     t.index ["team_id"], name: "index_issues_on_team_id"
+    t.index ["team_id"], name: "index_issues_on_team_id_not_archived", where: "(archived_at IS NULL)"
+    t.index ["team_id"], name: "index_issues_on_team_id_open", where: "((completed_at IS NULL) AND (canceled_at IS NULL))"
   end
 
   create_table "labels", force: :cascade do |t|
