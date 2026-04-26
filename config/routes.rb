@@ -68,6 +68,7 @@ Rails.application.routes.draw do
       resources :teams, only: [:index] do
         resources :issues, only: %i[index show create update] do
           resources :issue_dependencies, only: %i[create destroy], controller: 'issue_dependencies'
+          resources :comments, only: %i[index create]
         end
         resources :lanes, only: [:index]
         resources :labels, only: %i[index create]
