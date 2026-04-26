@@ -1,9 +1,10 @@
 <%
   type_meta = {
-    'lane_ids'     => { label: 'Status',   collection: @lanes,     name_attr: :name },
-    'assignee_ids' => { label: 'Assignee', collection: @assignees, name_attr: :name },
-    'label_ids'    => { label: 'Labels',   collection: @labels,    name_attr: :name },
-    'project_ids'  => { label: 'Project',  collection: @projects,  name_attr: :name }
+    'lane_ids'     => { label: 'Status',     collection: @lanes,     name_attr: :name },
+    'assignee_ids' => { label: 'Assignee',   collection: @assignees, name_attr: :name },
+    'creator_ids'  => { label: 'Created by', collection: @creators,  name_attr: :name },
+    'label_ids'    => { label: 'Labels',     collection: @labels,    name_attr: :name },
+    'project_ids'  => { label: 'Project',    collection: @projects,  name_attr: :name }
   }
   active = type_meta.each_with_object([]) do |(key, meta), acc|
     selected = Array(@display_options[key.to_sym]).map(&:to_i)

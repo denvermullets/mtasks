@@ -6,14 +6,16 @@ module ProjectsHelper
   }.freeze
 
   def render_project_health(project)
+    health_tag(*project_health_state(project))
+  end
+
+  def project_health_state(project)
     status = project.status&.to_s
-    if HEALTH_MAP.key?(status)
-      health_tag(*HEALTH_MAP[status])
-    elsif status == 'started'
-      started_health(project)
-    else
-      health_tag('text-gray-500', 'No updates')
-    end
+    return HEALTH_MAP[status] if HEALTH_MAP.key?(status)
+    return started_project_health_state(project) if status == 'started'
+    return %w[text-red-400 Overdue] if project.due_date && project.due_date < Date.current
+
+    ['text-gray-500', 'No updates']
   end
 
   def render_progress_status(project)
@@ -28,12 +30,13 @@ module ProjectsHelper
 
   private
 
-  def started_health(project)
-    return health_tag('text-red-400', 'At risk') if project.behind_schedule?
+  def started_project_health_state(project)
+    return %w[text-green-400 Complete] if project.progress_percentage >= 100
+    return ['text-red-400', 'At risk'] if project.behind_schedule?
 
     duration = project.start_date ? distance_of_time_in_words(project.start_date, Date.current) : nil
     label = duration ? "On track · #{compact_duration(duration)}" : 'On track'
-    health_tag('text-green-400', label)
+    ['text-green-400', label]
   end
 
   def health_tag(color_class, label)

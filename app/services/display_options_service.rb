@@ -21,6 +21,7 @@ class DisplayOptionsService < Service
       visible_properties: visible_properties,
       lane_ids: int_list_param(:lane_ids),
       assignee_ids: int_list_param(:assignee_ids),
+      creator_ids: int_list_param(:creator_ids),
       label_ids: int_list_param(:label_ids),
       project_ids: int_list_param(:project_ids),
       priority: string_list_param(:priority)

@@ -3,6 +3,7 @@ import { Controller } from "@hotwired/stimulus";
 const TYPE_LABELS = {
   lane_ids: "Status",
   assignee_ids: "Assignee",
+  creator_ids: "Created by",
   priority: "Priority",
   label_ids: "Labels",
   project_ids: "Project",
@@ -44,7 +45,7 @@ export default class extends Controller {
     const container = this.containerTarget;
     container.innerHTML = "";
 
-    const order = ["lane_ids", "assignee_ids", "priority", "label_ids", "project_ids"];
+    const order = ["lane_ids", "assignee_ids", "creator_ids", "priority", "label_ids", "project_ids"];
     let total = 0;
 
     order.forEach((key) => {

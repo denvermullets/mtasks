@@ -13,7 +13,7 @@ class ProjectsController < ApplicationController
   end
 
   def show
-    @sort = params[:sort].presence_in(%w[newest status updated priority]) || 'newest'
+    @sort = params[:sort].presence_in(%w[newest id status updated priority]) || 'newest'
     @issues = sorted_project_issues
     @lanes = current_team.lanes.order(:position)
     @team_members = current_team.users.order(:name)
@@ -106,6 +106,7 @@ class ProjectsController < ApplicationController
                    .includes(:lane, :assignee, :labels, :blocking_dependencies, :blocked_dependencies)
 
     case @sort
+    when 'id'       then base.order(team_number: :asc)
     when 'status'   then base.joins(:lane).order('lanes.position ASC, issues.created_at DESC')
     when 'updated'  then base.order(updated_at: :desc)
     when 'priority' then base.order(priority: :asc, created_at: :desc)

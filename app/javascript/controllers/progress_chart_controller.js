@@ -49,20 +49,12 @@ export default class extends Controller {
     const completedArea = this.areaPath(data.map((d, i) => [xScale(i), yScale(d.completed)]), yScale(0))
     const completedLine = this.linePath(data.map((d, i) => [xScale(i), yScale(d.completed)]))
 
-    // Expected progress line
+    // Expected progress line — piecewise so it steps when scope changes
     let expectedLine = ""
-    if (this.expectedValue && this.expectedValue.length === 2) {
-      const startDate = data[0].date
-      const endDate = data[data.length - 1].date
-      const expStart = this.expectedValue[0]
-      const expEnd = this.expectedValue[1]
-
-      // Map expected dates to x positions
-      const totalDays = this.daysBetween(startDate, endDate)
-      const expStartX = padding.left + (this.daysBetween(startDate, expStart.date) / (totalDays || 1)) * chartW
-      const expEndX = padding.left + (this.daysBetween(startDate, expEnd.date) / (totalDays || 1)) * chartW
-
-      expectedLine = `<line x1="${expStartX}" y1="${yScale(expStart.value)}" x2="${expEndX}" y2="${yScale(expEnd.value)}"
+    const expected = this.expectedValue || []
+    if (expected.length >= 2 && expected.length === data.length) {
+      const expectedPoints = expected.map((p, i) => [xScale(i), yScale(p.value)])
+      expectedLine = `<path d="${this.linePath(expectedPoints)}" fill="none"
         stroke="#ef4444" stroke-width="1.5" stroke-dasharray="6,4" opacity="0.7" />`
     }
 

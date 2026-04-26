@@ -21,9 +21,11 @@ class IssuesController < ApplicationController
     @labels = current_team.labels.includes(:issue_labels)
     @projects = current_team.projects.order(:name)
     @assignees = current_team.users.order(:name)
+    @creators = @assignees
   end
 
   def show
+    Current.user.notifications.unread.where(issue_id: @issue.id).update_all(read_at: Time.current)
     load_form_collections
   end
 
@@ -132,8 +134,7 @@ class IssuesController < ApplicationController
   def load_board_data
     load_display_options
     base_issues = current_team.issues.not_archived.includes(
-      :lane, :project, :labels, :assignee, :creator,
-      :blocking_dependencies, :blocked_dependencies, :comments
+      :lane, :project, :labels, :assignee, :creator, :blocking_dependencies, :blocked_dependencies, :comments
     )
     @display_service = build_display_service(base_issues)
     @grouped_issues = @display_service.grouped_issues

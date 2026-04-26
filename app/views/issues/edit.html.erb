@@ -15,7 +15,7 @@
   <!-- Form Content -->
   <div class="flex-1 overflow-y-auto p-8">
     <div class="max-w-4xl mx-auto">
-      <%= form_with model: [@issue.team, @issue], data: { controller: "issue-form", turbo: false } do |form| %>
+      <%= form_with model: [@issue.team, @issue], data: { controller: "issue-form submit-on-cmd-enter", turbo: false } do |form| %>
         <!-- Team Display (Read-only) -->
         <div class="mb-6 flex items-center gap-2">
           <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm font-medium">
@@ -50,7 +50,7 @@
               rows: 4,
               autocomplete: "off",
               class: "w-full bg-transparent border-0 text-gray-300 placeholder-gray-600 focus:outline-none focus:ring-0 p-0 resize-none overflow-hidden",
-              data: { controller: "auto-resize submit-on-cmd-enter", action: "input->auto-resize#resize keydown->submit-on-cmd-enter#submit input->issue-mention#onInput keydown->issue-mention#onKeydown paste->issue-mention#onPaste input->user-mention#onInput keydown->user-mention#onKeydown", issue_mention_target: "textarea", user_mention_target: "textarea" } %>
+              data: { controller: "auto-resize", action: "input->auto-resize#resize keydown->submit-on-cmd-enter#submit input->issue-mention#onInput keydown->issue-mention#onKeydown paste->issue-mention#onPaste input->user-mention#onInput keydown->user-mention#onKeydown", issue_mention_target: "textarea", user_mention_target: "textarea" } %>
           <%= render "issue_mentions/dropdown" %>
           <%= render "user_mentions/dropdown" %>
         </div>
@@ -277,7 +277,7 @@
           <div class="flex items-center gap-4">
             <%= link_to "Cancel", team_issue_path(@issue.team, @issue), class: "px-4 py-2 text-gray-400 hover:text-gray-300" %>
             <%= form.submit "Update issue",
-                class: "px-4 py-2 rounded-md border-accent border hover:bg-accent hover:text-gray-800 text-white font-medium cursor-pointer transition-colors" %>
+                class: "px-4 py-2 rounded-md border-accent border hover:bg-accent hover:text-gray-800 text-accent font-medium cursor-pointer transition-colors" %>
           </div>
         </div>
       <% end %>

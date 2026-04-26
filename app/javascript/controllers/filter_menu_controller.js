@@ -54,7 +54,7 @@ export default class extends Controller {
   clearAll() {
     this.element.querySelectorAll('input[type="checkbox"]').forEach((cb) => (cb.checked = false));
     const url = new URL(window.location.href);
-    ["lane_ids", "assignee_ids", "priority", "label_ids", "project_ids"].forEach((k) =>
+    ["lane_ids", "assignee_ids", "creator_ids", "priority", "label_ids", "project_ids"].forEach((k) =>
       url.searchParams.delete(k)
     );
     this.commitUrl(url);
@@ -151,6 +151,7 @@ export default class extends Controller {
     const detail = {
       lane_ids: this.selectedLabelsFor("lane_ids"),
       assignee_ids: this.selectedLabelsFor("assignee_ids"),
+      creator_ids: this.selectedLabelsFor("creator_ids"),
       priority: this.selectedLabelsFor("priority"),
       label_ids: this.selectedLabelsFor("label_ids"),
       project_ids: this.selectedLabelsFor("project_ids"),
