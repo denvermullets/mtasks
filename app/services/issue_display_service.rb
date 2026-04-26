@@ -42,13 +42,13 @@ class IssueDisplayService
   def sort_issues(issue_scope)
     case options[:order_by]
     when 'priority'
-      issue_scope.order(priority: :asc)
+      issue_scope.order(Arel.sql('issues.priority ASC'))
     when 'due_date'
-      issue_scope.order(Arel.sql('due_date IS NULL, due_date ASC'))
+      issue_scope.order(Arel.sql('issues.due_date IS NULL, issues.due_date ASC'))
     when 'created_at'
-      issue_scope.order(created_at: :desc)
+      issue_scope.order(Arel.sql('issues.created_at DESC'))
     when 'updated_at'
-      issue_scope.order(updated_at: :desc)
+      issue_scope.order(Arel.sql('issues.updated_at DESC'))
     else
       issue_scope
     end
@@ -141,7 +141,8 @@ class IssueDisplayService
   end
 
   def filter_by_labels(issue_scope)
-    issue_scope.joins(:labels).where(labels: { id: options[:label_ids] }).distinct
+    matching_issue_ids = IssueLabel.where(label_id: options[:label_ids]).select(:issue_id)
+    issue_scope.where(id: matching_issue_ids)
   end
 
   def filter_by_project(issue_scope)
