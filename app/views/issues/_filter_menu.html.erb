@@ -2,6 +2,7 @@
   selected = {
     'lane_ids'     => Array(@display_options[:lane_ids]).map(&:to_s),
     'assignee_ids' => Array(@display_options[:assignee_ids]).map(&:to_s),
+    'creator_ids'  => Array(@display_options[:creator_ids]).map(&:to_s),
     'priority'     => Array(@display_options[:priority]).map(&:to_s),
     'label_ids'    => Array(@display_options[:label_ids]).map(&:to_s),
     'project_ids'  => Array(@display_options[:project_ids]).map(&:to_s)
@@ -9,11 +10,12 @@
   active_count = selected.values.sum(&:size)
 
   filter_types = [
-    { key: 'lane_ids',     label: 'Status',   icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' },
-    { key: 'assignee_ids', label: 'Assignee', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
-    { key: 'priority',     label: 'Priority', icon: 'M3 21V3m4 18V8m4 13v-7m4 7V11m4 10V6' },
-    { key: 'label_ids',    label: 'Labels',   icon: 'M7 7h.01M7 3h5a1.99 1.99 0 011.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.99 1.99 0 013 12V7a4 4 0 014-4z' },
-    { key: 'project_ids',  label: 'Project',  icon: 'M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z' }
+    { key: 'lane_ids',     label: 'Status',     icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' },
+    { key: 'assignee_ids', label: 'Assignee',   icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
+    { key: 'creator_ids',  label: 'Created by', icon: 'M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z' },
+    { key: 'priority',     label: 'Priority',   icon: 'M3 21V3m4 18V8m4 13v-7m4 7V11m4 10V6' },
+    { key: 'label_ids',    label: 'Labels',     icon: 'M7 7h.01M7 3h5a1.99 1.99 0 011.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.99 1.99 0 013 12V7a4 4 0 014-4z' },
+    { key: 'project_ids',  label: 'Project',    icon: 'M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z' }
   ]
 %>
 <div class="relative inline-block"
@@ -89,6 +91,13 @@
         title: 'Assignee',
         empty_label: 'No teammates yet.',
         options: @assignees.map { |u| { value: u.id, label: u.name.presence || u.email, checked: selected['assignee_ids'].include?(u.id.to_s) } } %>
+
+    <!-- Created by view -->
+    <%= render 'filter_type_panel',
+        type_key: 'creator_ids',
+        title: 'Created by',
+        empty_label: 'No teammates yet.',
+        options: @creators.map { |u| { value: u.id, label: u.name.presence || u.email, checked: selected['creator_ids'].include?(u.id.to_s) } } %>
 
     <!-- Priority view -->
     <%= render 'filter_type_panel',

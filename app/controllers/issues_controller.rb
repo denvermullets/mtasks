@@ -21,6 +21,7 @@ class IssuesController < ApplicationController
     @labels = current_team.labels.includes(:issue_labels)
     @projects = current_team.projects.order(:name)
     @assignees = current_team.users.order(:name)
+    @creators = @assignees
   end
 
   def show

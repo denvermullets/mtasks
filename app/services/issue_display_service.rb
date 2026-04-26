@@ -23,6 +23,7 @@ class IssueDisplayService
   ATTRIBUTE_FILTERS = {
     lane_ids: :filter_by_lane,
     assignee_ids: :filter_by_assignees,
+    creator_ids: :filter_by_creators,
     priority: :filter_by_priority,
     label_ids: :filter_by_labels,
     project_ids: :filter_by_project
@@ -122,6 +123,10 @@ class IssueDisplayService
 
   def filter_by_assignees(issue_scope)
     issue_scope.where(assignee_id: options[:assignee_ids])
+  end
+
+  def filter_by_creators(issue_scope)
+    issue_scope.where(creator_id: options[:creator_ids])
   end
 
   def filter_by_priority(issue_scope)
