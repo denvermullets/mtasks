@@ -26,10 +26,10 @@
     <!-- Mobile filter chips -->
     <div class="sm:hidden flex gap-1.5 pb-3 overflow-x-auto">
       <%= link_to "Active",
-          team_projects_path(current_team, sort: @index_sort, dir: @sort_dir, hide_completed: '1'),
+          team_projects_path(current_team, sort: @index_sort, dir: @sort_dir),
           class: "whitespace-nowrap rounded-full text-xs px-2.5 py-1 transition-colors #{@hide_completed ? 'bg-foreground text-gray-100 border border-stroke' : 'text-gray-500'}" %>
       <%= link_to "All",
-          team_projects_path(current_team, sort: @index_sort, dir: @sort_dir),
+          team_projects_path(current_team, sort: @index_sort, dir: @sort_dir, hide_completed: '0'),
           class: "whitespace-nowrap rounded-full text-xs px-2.5 py-1 transition-colors #{@hide_completed ? 'text-gray-500' : 'bg-foreground text-gray-100 border border-stroke'}" %>
     </div>
 
@@ -42,20 +42,20 @@
           <% label = sort_option == 'due_date' ? 'Due date' : sort_option.capitalize %>
           <% if active %>
             <% next_dir = @sort_dir == 'desc' ? 'asc' : 'desc' %>
-            <%= link_to team_projects_path(current_team, sort: sort_option, dir: next_dir, hide_completed: @hide_completed ? '1' : nil),
+            <%= link_to team_projects_path(current_team, sort: sort_option, dir: next_dir, hide_completed: @hide_completed ? nil : '0'),
                 class: "flex items-center gap-1 px-2 py-0.5 text-xs rounded bg-foreground border border-stroke text-gray-100" do %>
               <span><%= label %></span>
               <span class="text-gray-400"><%= @sort_dir == 'desc' ? '▼' : '▲' %></span>
             <% end %>
           <% else %>
             <%= link_to label,
-                team_projects_path(current_team, sort: sort_option, dir: 'asc', hide_completed: @hide_completed ? '1' : nil),
+                team_projects_path(current_team, sort: sort_option, dir: 'asc', hide_completed: @hide_completed ? nil : '0'),
                 class: "px-2 py-0.5 text-xs rounded text-gray-500 hover:text-gray-300" %>
           <% end %>
         <% end %>
       </div>
       <div class="flex items-center gap-4">
-        <%= link_to team_projects_path(current_team, sort: @index_sort, dir: @sort_dir, hide_completed: @hide_completed ? nil : '1'),
+        <%= link_to team_projects_path(current_team, sort: @index_sort, dir: @sort_dir, hide_completed: @hide_completed ? '0' : nil),
             class: "flex items-center gap-1.5 px-2 py-0.5 text-xs rounded #{@hide_completed ? 'bg-foreground border border-stroke text-gray-100' : 'text-gray-500 hover:text-gray-300'}" do %>
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <% if @hide_completed %>
