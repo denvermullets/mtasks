@@ -225,6 +225,29 @@ class IssueDisplayServiceTest < ActiveSupport::TestCase
     assert_not_includes filtered, @completed_recently
   end
 
+  test 'label filter combined with any order_by does not raise an ambiguous-column error' do
+    label = @team.labels.create!(name: 'mcp', color: '#FFFFFF')
+    @open_issue.labels << label
+
+    base_issues = @team.issues.not_archived.includes(
+      :lane, :project, :labels, :assignee,
+      :blocking_dependencies, :blocked_dependencies, :comments
+    )
+
+    %w[manual priority due_date created_at updated_at].each do |order_by|
+      service = IssueDisplayService.new(
+        base_issues,
+        { completed_filter: 'all_completed', group_by: 'lane', order_by: order_by, label_ids: [label.id] },
+        @team
+      )
+      assert_nothing_raised do
+        service.grouped_issues
+      rescue StandardError => e
+        raise "order_by=#{order_by} raised: #{e.class}: #{e.message}"
+      end
+    end
+  end
+
   test 'group_by lane returns lane-keyed buckets with correct membership' do
     service = IssueDisplayService.new(
       @team.issues, { completed_filter: 'all_completed', group_by: 'lane' }, @team

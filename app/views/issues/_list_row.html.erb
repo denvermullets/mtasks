@@ -120,7 +120,7 @@
           <% if remaining_count > 0 %>
             <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-foreground border border-stroke text-gray-400">
               <span class="flex items-center gap-0.5">
-                <% issue.labels[2...5].each do |label| %>
+                <% issue.labels.drop(2).first(3).each do |label| %>
                   <span class="w-1.5 h-1.5 rounded-full" style="background-color: <%= label.color %>;"></span>
                 <% end %>
               </span>
