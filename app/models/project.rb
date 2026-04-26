@@ -15,6 +15,7 @@ class Project < ApplicationRecord
   scope :in_commitment, lambda { |commitment|
     where(roadmap_commitment: commitment).order(Arel.sql('due_date ASC NULLS LAST'), :id)
   }
+  scope :not_completed, -> { where("status IS DISTINCT FROM 'completed'") }
 
   validates :name, presence: true
   validates :status, inclusion: { in: STATUSES }, allow_nil: true
