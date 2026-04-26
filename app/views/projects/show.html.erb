@@ -79,6 +79,15 @@
                       team_project_path(@team, @project, sort: sort_option),
                       class: "px-2 py-0.5 text-xs rounded #{@sort == sort_option ? 'bg-foreground border border-stroke text-gray-100' : 'text-gray-500 hover:text-gray-300'}" %>
                 <% end %>
+                <%= link_to new_team_issue_path(@team, project_id: @project.id),
+                    data: { turbo_frame: "_top" },
+                    class: "ml-2 p-1 rounded text-gray-500 hover:text-accent hover:bg-hover-highlight transition-colors",
+                    title: "New issue in this project",
+                    aria: { label: "New issue in this project" } do %>
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
+                  </svg>
+                <% end %>
               </div>
             </div>
 
