@@ -134,13 +134,16 @@
             </div>
           </div>
           <!-- Actions -->
-          <% if current_team.present? %>
-            <div class="p-4 border-t border-stroke">
+          <div class="p-4 border-t border-stroke space-y-2">
+            <% if current_team.present? %>
               <%= link_to new_import_path, class: "text-xs text-gray-400 hover:text-gray-300 block", data: { action: "click->sidebar#close" } do %>
                 Import CSV
               <% end %>
-            </div>
-          <% end %>
+            <% end %>
+            <%= link_to changelog_path, class: "text-xs text-gray-400 hover:text-gray-300 block", data: { action: "click->sidebar#close" } do %>
+              What's new
+            <% end %>
+          </div>
         </div>
       </div>
       <!-- Desktop sidebar -->

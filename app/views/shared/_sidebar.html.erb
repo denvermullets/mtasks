@@ -155,12 +155,18 @@
     </div>
   </div>
   <!-- Actions -->
-  <% if current_team.present? %>
-    <div class="p-4 border-t border-stroke space-y-3">
+  <div class="p-4 border-t border-stroke space-y-3">
+    <% if current_team.present? %>
       <%= link_to new_import_path, class: "text-xs text-gray-400 hover:text-gray-300 block" do %>
         Import CSV
       <% end %>
+    <% end %>
 
+    <%= link_to changelog_path, class: "text-xs text-gray-400 hover:text-gray-300 block" do %>
+      What's new
+    <% end %>
+
+    <% if current_team.present? %>
       <div class="pt-3">
         <button type="button"
                 data-action="click->keyboard-shortcuts#showModal"
@@ -171,6 +177,6 @@
           </kbd>
         </button>
       </div>
-    </div>
-  <% end %>
+    <% end %>
+  </div>
 </aside>
