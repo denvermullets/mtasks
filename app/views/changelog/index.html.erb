@@ -1,0 +1,11 @@
+<% content_for :title, "What's new — Just Another Issue Tracker" %>
+
+<div class="flex-1 overflow-y-auto">
+  <article class="markdown text-gray-300 max-w-3xl mx-auto px-6 py-12">
+    <% if @body.present? %>
+      <%= render_markdown(@body) %>
+    <% else %>
+      <p class="text-gray-500">No changelog entries yet.</p>
+    <% end %>
+  </article>
+</div>

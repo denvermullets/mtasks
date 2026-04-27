@@ -97,6 +97,9 @@ Rails.application.routes.draw do
   # Landing page
   get 'landing', to: 'landing#index'
 
+  # Changelog / What's new
+  get 'changelog', to: 'changelog#index'
+
   # Defines the root path route ("/")
   root to: redirect { |_params, request|
     # Check if user is authenticated by looking for session cookie
