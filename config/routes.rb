@@ -65,6 +65,7 @@ Rails.application.routes.draw do
   # API
   namespace :api do
     namespace :v1 do
+      get '/me', to: 'users#me'
       resources :teams, only: [:index] do
         resources :issues, only: %i[index show create update] do
           resources :issue_dependencies, only: %i[create destroy], controller: 'issue_dependencies'
