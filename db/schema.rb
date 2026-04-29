@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_26_120100) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_29_120700) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -60,13 +60,37 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_26_120100) do
   create_table "comments", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
-    t.bigint "issue_id", null: false
+    t.bigint "issue_id"
     t.bigint "parent_id"
+    t.bigint "project_id"
+    t.datetime "pushed_to_hourglass_at"
+    t.string "pushed_to_hourglass_message_id"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["issue_id"], name: "index_comments_on_issue_id"
     t.index ["parent_id"], name: "index_comments_on_parent_id"
+    t.index ["project_id"], name: "index_comments_on_project_id"
+    t.index ["pushed_to_hourglass_message_id"], name: "index_comments_on_pushed_to_hourglass_message_id"
     t.index ["user_id"], name: "index_comments_on_user_id"
+    t.check_constraint "(issue_id IS NULL) <> (project_id IS NULL)", name: "comments_owner_xor"
+  end
+
+  create_table "decisions", force: :cascade do |t|
+    t.text "body_snapshot", null: false
+    t.datetime "created_at", null: false
+    t.string "hourglass_message_id", null: false
+    t.bigint "issue_id"
+    t.datetime "pinned_at", null: false
+    t.bigint "pinned_by_user_id"
+    t.bigint "project_id"
+    t.bigint "team_id", null: false
+    t.datetime "unpinned_at"
+    t.datetime "updated_at", null: false
+    t.index ["hourglass_message_id"], name: "index_decisions_on_hourglass_message_id", unique: true
+    t.index ["issue_id"], name: "index_decisions_on_issue_id"
+    t.index ["pinned_by_user_id"], name: "index_decisions_on_pinned_by_user_id"
+    t.index ["project_id"], name: "index_decisions_on_project_id"
+    t.index ["team_id"], name: "index_decisions_on_team_id"
   end
 
   create_table "github_installations", force: :cascade do |t|
@@ -94,6 +118,95 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_26_120100) do
     t.index ["github_installation_id"], name: "idx_on_github_installation_id_f25fecf4b0"
     t.index ["team_id", "github_installation_id", "github_repo_full_name"], name: "index_gh_repo_subs_on_team_installation_repo", unique: true
     t.index ["team_id"], name: "index_github_repository_subscriptions_on_team_id"
+  end
+
+  create_table "hourglass_channel_subscriptions", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.bigint "hourglass_integration_id", null: false
+    t.string "hourglass_server_id", null: false
+    t.string "hourglass_server_name"
+    t.datetime "last_webhook_at"
+    t.bigint "team_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["hourglass_integration_id"], name: "idx_on_hourglass_integration_id_07aaa8c1f1"
+    t.index ["team_id", "hourglass_integration_id"], name: "idx_hg_subs_team_integration_unique", unique: true
+    t.index ["team_id"], name: "index_hourglass_channel_subscriptions_on_team_id"
+  end
+
+  create_table "hourglass_integrations", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.text "api_token"
+    t.string "base_url", null: false
+    t.datetime "connected_at"
+    t.bigint "connected_by_user_id"
+    t.datetime "created_at", null: false
+    t.string "hourglass_server_id", null: false
+    t.string "hourglass_server_name"
+    t.datetime "last_verified_at"
+    t.datetime "last_webhook_at"
+    t.datetime "updated_at", null: false
+    t.text "webhook_secret"
+    t.bigint "workspace_id", null: false
+    t.index ["connected_by_user_id"], name: "index_hourglass_integrations_on_connected_by_user_id"
+    t.index ["workspace_id", "hourglass_server_id"], name: "idx_on_workspace_id_hourglass_server_id_0e69960644", unique: true
+    t.index ["workspace_id"], name: "index_hourglass_integrations_on_workspace_id"
+  end
+
+  create_table "hourglass_links", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "created_by_user_id"
+    t.string "hourglass_channel_id"
+    t.string "hourglass_thread_id"
+    t.string "link_type", null: false
+    t.bigint "mtasks_issue_id"
+    t.string "mtasks_issue_identifier"
+    t.bigint "mtasks_project_id"
+    t.bigint "team_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_user_id"], name: "index_hourglass_links_on_created_by_user_id"
+    t.index ["hourglass_channel_id"], name: "idx_hg_links_channel_unique", unique: true, where: "((link_type)::text = 'project_channel'::text)"
+    t.index ["hourglass_thread_id"], name: "idx_hg_links_thread_unique", unique: true, where: "((link_type)::text = 'issue_thread'::text)"
+    t.index ["mtasks_issue_id"], name: "idx_hg_links_issue_unique", unique: true, where: "((link_type)::text = 'issue_thread'::text)"
+    t.index ["mtasks_issue_id"], name: "index_hourglass_links_on_mtasks_issue_id"
+    t.index ["mtasks_project_id"], name: "idx_hg_links_project_unique", unique: true, where: "((link_type)::text = 'project_channel'::text)"
+    t.index ["mtasks_project_id"], name: "index_hourglass_links_on_mtasks_project_id"
+    t.index ["team_id"], name: "index_hourglass_links_on_team_id"
+  end
+
+  create_table "hourglass_message_cache", force: :cascade do |t|
+    t.string "author_display_name"
+    t.string "author_email"
+    t.text "body"
+    t.datetime "created_at", null: false
+    t.datetime "deleted_at"
+    t.datetime "edited_at"
+    t.string "hourglass_channel_id", null: false
+    t.string "hourglass_message_id", null: false
+    t.string "hourglass_thread_id"
+    t.string "hourglass_user_id"
+    t.string "message_type"
+    t.jsonb "payload", default: {}, null: false
+    t.datetime "pinned_at"
+    t.string "pinned_by_email"
+    t.datetime "posted_at", null: false
+    t.string "source", null: false
+    t.datetime "updated_at", null: false
+    t.index ["hourglass_channel_id", "posted_at"], name: "idx_on_hourglass_channel_id_posted_at_a8684a31e2"
+    t.index ["hourglass_message_id"], name: "index_hourglass_message_cache_on_hourglass_message_id", unique: true
+    t.index ["hourglass_thread_id", "posted_at"], name: "idx_on_hourglass_thread_id_posted_at_6de5ba5c5b"
+  end
+
+  create_table "hourglass_user_map", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "email", null: false
+    t.string "hourglass_user_id", null: false
+    t.datetime "last_synced_at"
+    t.bigint "mtasks_user_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["email"], name: "index_hourglass_user_map_on_email", unique: true
+    t.index ["hourglass_user_id"], name: "index_hourglass_user_map_on_hourglass_user_id", unique: true
+    t.index ["mtasks_user_id"], name: "index_hourglass_user_map_on_mtasks_user_id"
   end
 
   create_table "issue_dependencies", force: :cascade do |t|
@@ -369,6 +482,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_26_120100) do
     t.index ["item_type", "item_id"], name: "index_versions_on_item_type_and_item_id"
   end
 
+  create_table "webhook_deliveries", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "delivery_id", null: false
+    t.string "event_type", null: false
+    t.jsonb "payload", default: {}, null: false
+    t.datetime "processed_at"
+    t.datetime "received_at", null: false
+    t.string "source", null: false
+    t.datetime "updated_at", null: false
+    t.index ["received_at"], name: "index_webhook_deliveries_on_received_at"
+    t.index ["source", "delivery_id"], name: "index_webhook_deliveries_on_source_and_delivery_id", unique: true
+  end
+
   create_table "workspaces", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name"
@@ -383,10 +509,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_26_120100) do
   add_foreign_key "api_tokens", "users"
   add_foreign_key "comments", "comments", column: "parent_id"
   add_foreign_key "comments", "issues"
+  add_foreign_key "comments", "projects"
   add_foreign_key "comments", "users"
+  add_foreign_key "decisions", "issues"
+  add_foreign_key "decisions", "projects"
+  add_foreign_key "decisions", "teams"
+  add_foreign_key "decisions", "users", column: "pinned_by_user_id"
   add_foreign_key "github_installations", "workspaces"
   add_foreign_key "github_repository_subscriptions", "github_installations"
   add_foreign_key "github_repository_subscriptions", "teams"
+  add_foreign_key "hourglass_channel_subscriptions", "hourglass_integrations"
+  add_foreign_key "hourglass_channel_subscriptions", "teams"
+  add_foreign_key "hourglass_integrations", "users", column: "connected_by_user_id"
+  add_foreign_key "hourglass_integrations", "workspaces"
+  add_foreign_key "hourglass_links", "issues", column: "mtasks_issue_id"
+  add_foreign_key "hourglass_links", "projects", column: "mtasks_project_id"
+  add_foreign_key "hourglass_links", "teams"
+  add_foreign_key "hourglass_links", "users", column: "created_by_user_id"
+  add_foreign_key "hourglass_user_map", "users", column: "mtasks_user_id"
   add_foreign_key "issue_dependencies", "issues", column: "blocked_issue_id"
   add_foreign_key "issue_dependencies", "issues", column: "blocking_issue_id"
   add_foreign_key "issue_labels", "issues"
