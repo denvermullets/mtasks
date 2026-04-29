@@ -1,7 +1,8 @@
 class Comment < ApplicationRecord
   MAX_NESTING_DEPTH = 4
 
-  belongs_to :issue
+  belongs_to :issue, optional: true
+  belongs_to :project, optional: true
   belongs_to :user
   belongs_to :parent, class_name: 'Comment', optional: true
   has_many :replies, class_name: 'Comment', foreign_key: :parent_id, dependent: :destroy
@@ -9,6 +10,7 @@ class Comment < ApplicationRecord
   has_many_attached :files
 
   validate :body_or_files_present
+  validate :exactly_one_owner
 
   scope :top_level, -> { where(parent_id: nil) }
 
@@ -28,5 +30,11 @@ class Comment < ApplicationRecord
     return if body.present? || files.attached?
 
     errors.add(:base, 'Comment must have text or an attachment')
+  end
+
+  def exactly_one_owner
+    return if issue_id.present? ^ project_id.present?
+
+    errors.add(:base, 'Comment must belong to exactly one of issue or project')
   end
 end
