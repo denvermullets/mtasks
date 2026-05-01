@@ -10,6 +10,11 @@ Rails.application.routes.draw do
     resource :github_installation, only: %i[show new destroy], controller: 'workspace_github_installations' do
       get :callback, on: :collection
     end
+    namespace :settings do
+      resource :hourglass_integration,
+               only: %i[show update destroy],
+               controller: 'hourglass_integrations'
+    end
   end
 
   resources :teams, only: %i[new create show edit update] do

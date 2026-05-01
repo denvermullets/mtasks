@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_29_120700) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_01_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -138,6 +138,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_29_120700) do
     t.boolean "active", default: true, null: false
     t.text "api_token"
     t.string "base_url", null: false
+    t.bigint "callback_api_token_id"
     t.datetime "connected_at"
     t.bigint "connected_by_user_id"
     t.datetime "created_at", null: false
@@ -148,6 +149,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_29_120700) do
     t.datetime "updated_at", null: false
     t.text "webhook_secret"
     t.bigint "workspace_id", null: false
+    t.index ["callback_api_token_id"], name: "index_hourglass_integrations_on_callback_api_token_id"
     t.index ["connected_by_user_id"], name: "index_hourglass_integrations_on_connected_by_user_id"
     t.index ["workspace_id", "hourglass_server_id"], name: "idx_on_workspace_id_hourglass_server_id_0e69960644", unique: true
     t.index ["workspace_id"], name: "index_hourglass_integrations_on_workspace_id"
@@ -520,6 +522,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_29_120700) do
   add_foreign_key "github_repository_subscriptions", "teams"
   add_foreign_key "hourglass_channel_subscriptions", "hourglass_integrations"
   add_foreign_key "hourglass_channel_subscriptions", "teams"
+  add_foreign_key "hourglass_integrations", "api_tokens", column: "callback_api_token_id"
   add_foreign_key "hourglass_integrations", "users", column: "connected_by_user_id"
   add_foreign_key "hourglass_integrations", "workspaces"
   add_foreign_key "hourglass_links", "issues", column: "mtasks_issue_id"
