@@ -1,13 +1,11 @@
 class HourglassWebhookProcessorJob < ApplicationJob
-  HANDLED_EVENTS = %w[
-    message.created
-    message.updated
-    message.deleted
-    channel.created
-    channel.updated
-    channel.deleted
-    ping
-  ].freeze
+  MESSAGE_HANDLERS = {
+    'message.created' => HourglassWebhookProcessor::Message::CreatedHandler,
+    'message.updated' => HourglassWebhookProcessor::Message::UpdatedHandler,
+    'message.deleted' => HourglassWebhookProcessor::Message::DeletedHandler
+  }.freeze
+
+  CHANNEL_EVENTS = %w[channel.created channel.updated channel.deleted ping].freeze
 
   queue_as :default
 
@@ -34,13 +32,25 @@ class HourglassWebhookProcessorJob < ApplicationJob
   private
 
   def dispatch(delivery, integration)
-    if HANDLED_EVENTS.include?(delivery.event_type)
+    handler_class = MESSAGE_HANDLERS[delivery.event_type]
+    if handler_class
+      run_handler(handler_class, delivery, integration)
+    elsif CHANNEL_EVENTS.include?(delivery.event_type)
       log_event(delivery.event_type, delivery, integration)
     else
       Rails.logger.info(
         "Hourglass webhook unhandled event #{delivery.event_type} (delivery=#{delivery.delivery_id})"
       )
     end
+  end
+
+  def run_handler(handler_class, delivery, integration)
+    handler_class.call(delivery, integration)
+  rescue StandardError => e
+    Rails.logger.error(
+      "HourglassWebhookProcessorJob handler #{handler_class} raised " \
+      "for delivery=#{delivery.delivery_id}: #{e.class}: #{e.message}"
+    )
   end
 
   def log_event(event_type, delivery, integration)

@@ -47,4 +47,42 @@ class HourglassWebhookProcessorJobTest < ActiveJob::TestCase
     end
     assert_nil @delivery.reload.processed_at
   end
+
+  DEFAULT_HANDLERS = {
+    'message.created' => HourglassWebhookProcessor::Message::CreatedHandler,
+    'message.updated' => HourglassWebhookProcessor::Message::UpdatedHandler,
+    'message.deleted' => HourglassWebhookProcessor::Message::DeletedHandler
+  }.freeze
+
+  def with_handlers(table)
+    Kernel.silence_warnings { HourglassWebhookProcessorJob.const_set(:MESSAGE_HANDLERS, table) }
+    yield
+  ensure
+    Kernel.silence_warnings { HourglassWebhookProcessorJob.const_set(:MESSAGE_HANDLERS, DEFAULT_HANDLERS) }
+  end
+
+  test 'message.created routes to CreatedHandler' do
+    captured = []
+    handler = Class.new do
+      define_singleton_method(:call) { |delivery, integration| captured << [delivery.id, integration.id] }
+    end
+
+    with_handlers('message.created' => handler) do
+      HourglassWebhookProcessorJob.perform_now(@integration.id, @delivery.id)
+    end
+
+    assert_equal [[@delivery.id, @integration.id]], captured
+  end
+
+  test 'still marks processed when handler raises' do
+    raising = Class.new do
+      define_singleton_method(:call) { |_delivery, _integration| raise 'kaboom' }
+    end
+
+    with_handlers('message.created' => raising) do
+      HourglassWebhookProcessorJob.perform_now(@integration.id, @delivery.id)
+    end
+
+    assert_not_nil @delivery.reload.processed_at
+  end
 end

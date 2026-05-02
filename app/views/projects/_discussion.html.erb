@@ -66,9 +66,20 @@
         Unlink
       <% end %>
     </div>
-    <div class="px-6 py-16 text-center">
-      <p class="text-sm text-gray-400 mb-1">No messages yet</p>
-      <p class="text-xs text-gray-500">Messages from #<%= channel_link.hourglass_channel_name.presence || channel_link.hourglass_channel_id %> will appear here.</p>
+    <%= turbo_stream_from "project_#{project.id}_discussion" %>
+    <div id="discussion-stream" class="divide-y divide-stroke/40">
+      <% items = DiscussionStreamService.call(project: project, channel_link: channel_link) %>
+      <% if items.empty? %>
+        <%= render "projects/discussion_empty_state", channel_link: channel_link %>
+      <% else %>
+        <% items.each do |item| %>
+          <% if item.kind == :hourglass %>
+            <%= render "projects/discussion_message", message: item.record, project: project, channel_link: channel_link %>
+          <% else %>
+            <%= render "projects/discussion_native_comment", comment: item.record, project: project %>
+          <% end %>
+        <% end %>
+      <% end %>
     </div>
   </div>
 <% end %>
