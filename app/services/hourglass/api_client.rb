@@ -76,6 +76,26 @@ class Hourglass::ApiClient
     get("/api/v1/users/lookup?email=#{CGI.escape(email.to_s)}")
   end
 
+  def notify_link_created(channel_id:, project:)
+    post('/api/v1/links', {
+           kind: 'project_channel',
+           channel_id: channel_id,
+           mtasks_project: {
+             id: project.id,
+             name: project.name,
+             team_identifier: project.team.identifier
+           }
+         })
+  end
+
+  def notify_link_destroyed(channel_id:, mtasks_project_id:)
+    post('/api/v1/links/destroyed', {
+           kind: 'project_channel',
+           channel_id: channel_id,
+           mtasks_project_id: mtasks_project_id
+         })
+  end
+
   private
 
   attr_reader :base_url, :api_token

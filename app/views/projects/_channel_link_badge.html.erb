@@ -1,0 +1,18 @@
+<%# locals: (project:) %>
+<%= turbo_frame_tag "project_channel_badge_#{project.id}", class: "inline-flex" do %>
+  <% link = project.hourglass_channel_link %>
+  <% if link&.active? %>
+    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium bg-foreground border border-stroke text-gray-300">
+      <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
+      <span class="text-gray-400">linked to</span>
+      <span class="text-accent">#<%= link.hourglass_channel_name.presence || link.hourglass_channel_id %></span>
+    </span>
+  <% elsif link&.broken? %>
+    <%= link_to new_team_project_hourglass_channel_link_path(project.team, project),
+        data: { turbo_frame: "hourglass_channel_link_modal" },
+        class: "inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium bg-red-500/10 border border-red-500/30 text-red-300 hover:bg-red-500/20" do %>
+      <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span>
+      <span>channel link broken &middot; relink</span>
+    <% end %>
+  <% end %>
+<% end %>

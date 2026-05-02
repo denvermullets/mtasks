@@ -5,12 +5,22 @@ class HourglassLink < ApplicationRecord
   belongs_to :mtasks_project, class_name: 'Project', optional: true
   belongs_to :mtasks_issue, class_name: 'Issue', optional: true
   belongs_to :created_by_user, class_name: 'User', optional: true
+  belongs_to :hourglass_integration, optional: true
+
+  enum :status, { active: 'active', broken: 'broken' }, default: 'active'
 
   validates :link_type, inclusion: { in: LINK_TYPES }
   validate :columns_match_link_type
+  validates :mtasks_project_id,
+            uniqueness: { conditions: -> { where(link_type: 'project_channel') } },
+            if: -> { link_type == 'project_channel' && mtasks_project_id.present? }
+  validates :hourglass_channel_id,
+            uniqueness: { conditions: -> { where(link_type: 'project_channel') } },
+            if: -> { link_type == 'project_channel' && hourglass_channel_id.present? }
 
   scope :project_channel, -> { where(link_type: 'project_channel') }
   scope :issue_thread,    -> { where(link_type: 'issue_thread') }
+  scope :for_project,     ->(project) { project_channel.where(mtasks_project_id: project.id) }
 
   private
 

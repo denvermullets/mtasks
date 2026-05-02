@@ -1,0 +1,11 @@
+<%= turbo_stream.replace "project_channel_badge_#{@project.id}" do %>
+  <%= render "projects/channel_link_badge", project: @project %>
+<% end %>
+
+<%= turbo_stream.replace "project_tab_discussion" do %>
+  <%= turbo_frame_tag "project_tab_discussion" do %>
+    <%= render "projects/discussion", project: @project, channel_link: @channel_link, team: @team %>
+  <% end %>
+<% end %>
+
+<%= turbo_stream.update "hourglass_channel_link_modal", "" %>

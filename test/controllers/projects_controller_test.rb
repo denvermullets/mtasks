@@ -114,4 +114,52 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_nil @project.reload.roadmap_commitment
   end
+
+  test 'show renders the four-tab nav' do
+    get team_project_path(@team, @project)
+    assert_response :success
+    assert_includes response.body, 'Overview'
+    assert_includes response.body, 'Issues'
+    assert_includes response.body, 'Discussion'
+    assert_includes response.body, 'Activity'
+  end
+
+  test 'discussion renders unlinked empty state' do
+    get discussion_team_project_path(@team, @project)
+    assert_response :success
+    assert_includes response.body, 'No channel linked yet'
+    assert_includes response.body, 'Link a Hourglass channel'
+  end
+
+  test 'discussion renders linked state when link is present' do
+    integration = @workspace.hourglass_integrations.create!(
+      hourglass_server_id: 'srv', base_url: 'https://hg.test', api_token: 'tok',
+      webhook_secret: 'wh', connected_by_user: @user
+    )
+    @project.create_hourglass_channel_link!(
+      link_type: 'project_channel',
+      team: @team,
+      hourglass_channel_id: 'C123',
+      hourglass_channel_name: 'general',
+      hourglass_integration: integration,
+      created_by_user: @user
+    )
+
+    get discussion_team_project_path(@team, @project)
+    assert_response :success
+    assert_includes response.body, 'general'
+    assert_includes response.body, 'No messages yet'
+  end
+
+  test 'activity renders placeholder' do
+    get activity_team_project_path(@team, @project)
+    assert_response :success
+    assert_includes response.body, 'Activity feed coming soon'
+  end
+
+  test 'overview renders description' do
+    get overview_team_project_path(@team, @project)
+    assert_response :success
+    assert_includes response.body, 'A project'
+  end
 end
