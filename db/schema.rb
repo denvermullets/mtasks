@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_01_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_01_130100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -46,15 +46,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_01_120000) do
     t.datetime "created_at", null: false
     t.datetime "last_used_at"
     t.string "name"
+    t.boolean "one_time_use", default: false, null: false
     t.datetime "revoked_at"
     t.string "scopes", default: ["read", "write"], null: false, array: true
     t.bigint "team_id"
     t.string "token_digest", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.bigint "workspace_id"
     t.index ["team_id"], name: "index_api_tokens_on_team_id"
     t.index ["token_digest"], name: "index_api_tokens_on_token_digest", unique: true
     t.index ["user_id"], name: "index_api_tokens_on_user_id"
+    t.index ["workspace_id"], name: "index_api_tokens_on_workspace_id"
   end
 
   create_table "comments", force: :cascade do |t|
@@ -79,6 +82,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_01_120000) do
     t.text "body_snapshot", null: false
     t.datetime "created_at", null: false
     t.string "hourglass_message_id", null: false
+    t.string "idempotency_key"
     t.bigint "issue_id"
     t.datetime "pinned_at", null: false
     t.bigint "pinned_by_user_id"
@@ -87,6 +91,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_01_120000) do
     t.datetime "unpinned_at"
     t.datetime "updated_at", null: false
     t.index ["hourglass_message_id"], name: "index_decisions_on_hourglass_message_id", unique: true
+    t.index ["idempotency_key"], name: "index_decisions_on_idempotency_key", unique: true, where: "(idempotency_key IS NOT NULL)"
     t.index ["issue_id"], name: "index_decisions_on_issue_id"
     t.index ["pinned_by_user_id"], name: "index_decisions_on_pinned_by_user_id"
     t.index ["project_id"], name: "index_decisions_on_project_id"
@@ -509,6 +514,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_01_120000) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "api_tokens", "teams"
   add_foreign_key "api_tokens", "users"
+  add_foreign_key "api_tokens", "workspaces"
   add_foreign_key "comments", "comments", column: "parent_id"
   add_foreign_key "comments", "issues"
   add_foreign_key "comments", "projects"

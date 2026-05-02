@@ -1,0 +1,10 @@
+<div id="<%= dom_id(decision) %>" class="rounded border border-stroke bg-foreground p-3 text-sm <%= 'opacity-60' if decision.unpinned_at %>">
+  <div class="flex items-center justify-between mb-1 text-xs text-gray-400">
+    <span>Decision</span>
+    <span><%= decision.pinned_at&.to_fs(:long) %></span>
+  </div>
+  <div class="text-gray-100 whitespace-pre-wrap"><%= decision.body_snapshot %></div>
+  <% if decision.pinned_by_user %>
+    <div class="text-xs text-gray-500 mt-1">Pinned by <%= decision.pinned_by_user.name %></div>
+  <% end %>
+</div>

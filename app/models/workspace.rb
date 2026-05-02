@@ -5,6 +5,7 @@ class Workspace < ApplicationRecord
   has_many :github_installations, dependent: :destroy
   has_many :github_repository_subscriptions, through: :teams
   has_many :hourglass_integrations, dependent: :destroy
+  has_many :api_tokens, dependent: :nullify
 
   # Validations
   validates :name, presence: true
