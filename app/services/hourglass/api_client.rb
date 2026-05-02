@@ -30,16 +30,6 @@ class Hourglass::ApiClient
     get('/api/v1/me')
   end
 
-  def handshake!(webhook_url:, webhook_secret:, callback_token:)
-    res = post('/api/v1/integrations/handshake', {
-                 webhook_url: webhook_url,
-                 webhook_secret: webhook_secret,
-                 callback_token: callback_token
-               })
-    @server_id = res['server_id'] if res.is_a?(Hash) && res['server_id']
-    res
-  end
-
   def discover_channels!
     raise Error, 'Hourglass server_id missing; call handshake! first' if server_id.blank?
 

@@ -39,6 +39,27 @@
       </div>
 
       <div class="mt-6 rounded-lg border border-stroke bg-foreground p-5">
+        <h2 class="text-lg font-medium text-gray-100 mb-1">Hourglass-side configuration</h2>
+        <p class="text-sm text-gray-500 mb-4">Paste these values into your Hourglass server's webhook configuration so it knows where to deliver events.</p>
+        <dl class="text-sm space-y-2">
+          <div>
+            <dt class="text-gray-400">Webhook URL</dt>
+            <dd class="text-gray-200 font-mono break-all"><%= "#{request.protocol}#{request.host_with_port}/webhooks/hourglass/#{@integration.workspace_id}" %></dd>
+          </div>
+          <div>
+            <dt class="text-gray-400">Webhook secret</dt>
+            <dd class="text-gray-200 font-mono break-all"><%= @integration.webhook_secret %></dd>
+          </div>
+          <% if flash[:callback_token].present? %>
+            <div>
+              <dt class="text-gray-400">Callback API token <span class="text-xs text-amber-300">(shown once)</span></dt>
+              <dd class="text-gray-200 font-mono break-all"><%= flash[:callback_token] %></dd>
+            </div>
+          <% end %>
+        </dl>
+      </div>
+
+      <div class="mt-6 rounded-lg border border-stroke bg-foreground p-5">
         <h2 class="text-lg font-medium text-gray-100 mb-1">Test webhook</h2>
         <p class="text-sm text-gray-500 mb-4">Send a signed sample event to <code class="text-gray-300"><%= "/webhooks/hourglass/#{@integration.workspace_id}" %></code> to verify end-to-end delivery.</p>
         <%= form_with url: test_webhook_workspace_settings_hourglass_integration_path(@workspace), method: :post, class: 'space-y-3' do |f| %>
