@@ -15,6 +15,7 @@ class Issue < ApplicationRecord
   has_many :issue_labels, dependent: :destroy
   has_many :labels, through: :issue_labels
   has_many :comments, dependent: :destroy
+  has_many :decisions, dependent: :destroy
   has_many :issue_pull_requests, dependent: :destroy
   has_many :pull_requests, through: :issue_pull_requests
   has_many :notifications, dependent: :destroy

@@ -3,6 +3,7 @@ class ApiToken < ApplicationRecord
 
   belongs_to :user
   belongs_to :team, optional: true
+  belongs_to :workspace, optional: true
 
   scope :active, -> { where(revoked_at: nil) }
 
