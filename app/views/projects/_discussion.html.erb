@@ -1,0 +1,74 @@
+<%# locals: (project:, channel_link:, team:) %>
+<% if channel_link.nil? %>
+  <div class="border border-dashed border-stroke rounded-lg py-16 px-6 text-center">
+    <div class="w-10 h-10 rounded-full bg-foreground border border-stroke mx-auto mb-4 flex items-center justify-center text-gray-500">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M7 8h10M7 12h6m-3 9l-4-4H5a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-3l-4 4z"/>
+      </svg>
+    </div>
+    <h3 class="text-sm font-medium text-gray-200 mb-1">No channel linked yet</h3>
+    <p class="text-xs text-gray-500 mb-6 max-w-sm mx-auto">
+      Link a Hourglass channel to bring discussion, decisions, and channel context into this project.
+    </p>
+    <%= link_to new_team_project_hourglass_channel_link_path(team, project),
+        data: { turbo_frame: "hourglass_channel_link_modal" },
+        class: "inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-accent/10 border border-accent/30 text-accent text-xs font-medium hover:bg-accent/20 transition-colors" do %>
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+      </svg>
+      Link a Hourglass channel
+    <% end %>
+  </div>
+<% elsif channel_link.broken? %>
+  <div class="border border-red-500/30 bg-red-500/5 rounded-lg p-6">
+    <div class="flex items-start gap-3">
+      <svg class="w-5 h-5 text-red-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <div class="flex-1">
+        <h3 class="text-sm font-medium text-red-200 mb-1">Channel link is broken</h3>
+        <p class="text-xs text-red-300/80 mb-4">
+          We couldn't reach <span class="font-mono">#<%= channel_link.hourglass_channel_name.presence || channel_link.hourglass_channel_id %></span> on Hourglass.
+          The channel may have been deleted or the integration token revoked.
+        </p>
+        <div class="flex items-center gap-2">
+          <%= link_to new_team_project_hourglass_channel_link_path(team, project),
+              data: { turbo_frame: "hourglass_channel_link_modal" },
+              class: "px-2.5 py-1 rounded bg-red-500/20 border border-red-500/40 text-red-200 text-xs font-medium hover:bg-red-500/30 transition-colors" do %>
+            Re-link channel
+          <% end %>
+          <%= button_to team_project_hourglass_channel_link_path(team, project),
+              method: :delete,
+              data: { turbo_frame: "_top" },
+              class: "px-2.5 py-1 rounded border border-stroke text-gray-400 text-xs hover:text-gray-200 hover:bg-hover-highlight transition-colors" do %>
+            Unlink
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+<% else %>
+  <div class="border border-stroke rounded-lg overflow-hidden">
+    <div class="flex items-center justify-between px-4 py-3 border-b border-stroke bg-foreground">
+      <div class="flex items-center gap-2 min-w-0">
+        <svg class="w-4 h-4 text-gray-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5.5 8.5h13M5.5 15.5h13M9 4l-2 16M17 4l-2 16"/>
+        </svg>
+        <span class="text-sm font-medium text-gray-100 truncate">
+          <%= channel_link.hourglass_channel_name.presence || channel_link.hourglass_channel_id %>
+        </span>
+        <span class="text-xs text-gray-500 truncate">&middot; project channel</span>
+      </div>
+      <%= button_to team_project_hourglass_channel_link_path(team, project),
+          method: :delete,
+          form: { data: { turbo_confirm: 'Unlink this channel from the project?' } },
+          class: "px-2 py-1 rounded text-xs text-gray-500 hover:text-gray-200 hover:bg-hover-highlight transition-colors" do %>
+        Unlink
+      <% end %>
+    </div>
+    <div class="px-6 py-16 text-center">
+      <p class="text-sm text-gray-400 mb-1">No messages yet</p>
+      <p class="text-xs text-gray-500">Messages from #<%= channel_link.hourglass_channel_name.presence || channel_link.hourglass_channel_id %> will appear here.</p>
+    </div>
+  </div>
+<% end %>

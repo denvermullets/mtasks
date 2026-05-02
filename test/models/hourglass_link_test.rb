@@ -44,13 +44,13 @@ class HourglassLinkTest < ActiveSupport::TestCase
     assert_not link.valid?
   end
 
-  test 'partial unique index blocks two project_channel rows for same project' do
+  test 'project_channel uniqueness blocks two rows for same project' do
     @team.hourglass_links.create!(
       link_type: 'project_channel',
       mtasks_project: @project,
       hourglass_channel_id: 'chan_a'
     )
-    assert_raises(ActiveRecord::RecordNotUnique) do
+    assert_raises(ActiveRecord::RecordInvalid) do
       @team.hourglass_links.create!(
         link_type: 'project_channel',
         mtasks_project: @project,
@@ -72,5 +72,38 @@ class HourglassLinkTest < ActiveSupport::TestCase
         hourglass_thread_id: 'thr_b'
       )
     end
+  end
+
+  test 'status defaults to active' do
+    link = @team.hourglass_links.create!(
+      link_type: 'project_channel',
+      mtasks_project: @project,
+      hourglass_channel_id: 'chan_x'
+    )
+    assert link.active?
+  end
+
+  test 'status enum allows broken' do
+    link = @team.hourglass_links.create!(
+      link_type: 'project_channel',
+      mtasks_project: @project,
+      hourglass_channel_id: 'chan_y'
+    )
+    link.update!(status: 'broken')
+    assert link.broken?
+  end
+
+  test 'for_project scope returns only that project channel link' do
+    other_project = @team.projects.create!(name: 'P2')
+    @team.hourglass_links.create!(
+      link_type: 'project_channel', mtasks_project: @project, hourglass_channel_id: 'a'
+    )
+    @team.hourglass_links.create!(
+      link_type: 'project_channel', mtasks_project: other_project, hourglass_channel_id: 'b'
+    )
+
+    scoped = HourglassLink.for_project(@project)
+    assert_equal 1, scoped.count
+    assert_equal @project.id, scoped.first.mtasks_project_id
   end
 end

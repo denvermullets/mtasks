@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_01_130100) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_02_150000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -164,20 +164,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_01_130100) do
     t.datetime "created_at", null: false
     t.bigint "created_by_user_id"
     t.string "hourglass_channel_id"
+    t.string "hourglass_channel_name"
+    t.bigint "hourglass_integration_id"
     t.string "hourglass_thread_id"
     t.string "link_type", null: false
     t.bigint "mtasks_issue_id"
     t.string "mtasks_issue_identifier"
     t.bigint "mtasks_project_id"
+    t.string "status", default: "active", null: false
     t.bigint "team_id", null: false
     t.datetime "updated_at", null: false
     t.index ["created_by_user_id"], name: "index_hourglass_links_on_created_by_user_id"
     t.index ["hourglass_channel_id"], name: "idx_hg_links_channel_unique", unique: true, where: "((link_type)::text = 'project_channel'::text)"
+    t.index ["hourglass_integration_id"], name: "index_hourglass_links_on_hourglass_integration_id"
     t.index ["hourglass_thread_id"], name: "idx_hg_links_thread_unique", unique: true, where: "((link_type)::text = 'issue_thread'::text)"
     t.index ["mtasks_issue_id"], name: "idx_hg_links_issue_unique", unique: true, where: "((link_type)::text = 'issue_thread'::text)"
     t.index ["mtasks_issue_id"], name: "index_hourglass_links_on_mtasks_issue_id"
     t.index ["mtasks_project_id"], name: "idx_hg_links_project_unique", unique: true, where: "((link_type)::text = 'project_channel'::text)"
     t.index ["mtasks_project_id"], name: "index_hourglass_links_on_mtasks_project_id"
+    t.index ["status"], name: "index_hourglass_links_on_status"
     t.index ["team_id"], name: "index_hourglass_links_on_team_id"
   end
 
@@ -531,6 +536,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_01_130100) do
   add_foreign_key "hourglass_integrations", "api_tokens", column: "callback_api_token_id"
   add_foreign_key "hourglass_integrations", "users", column: "connected_by_user_id"
   add_foreign_key "hourglass_integrations", "workspaces"
+  add_foreign_key "hourglass_links", "hourglass_integrations"
   add_foreign_key "hourglass_links", "issues", column: "mtasks_issue_id"
   add_foreign_key "hourglass_links", "projects", column: "mtasks_project_id"
   add_foreign_key "hourglass_links", "teams"

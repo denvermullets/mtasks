@@ -32,7 +32,17 @@ Rails.application.routes.draw do
     resources :lanes, only: %i[create update destroy]
     resources :projects do
       delete :purge_file, on: :member
+      member do
+        get :overview
+        get :discussion
+        get :activity
+      end
       resources :project_labels, only: %i[create destroy]
+      resource :hourglass_channel_link,
+               only: %i[new create destroy],
+               controller: 'hourglass_channel_links' do
+        get :channels, on: :collection
+      end
     end
     resource :roadmap, only: [:show], controller: 'roadmaps'
     resources :team_invitations, only: %i[index create destroy] do
