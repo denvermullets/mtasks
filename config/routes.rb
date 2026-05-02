@@ -10,11 +10,6 @@ Rails.application.routes.draw do
     resource :github_installation, only: %i[show new destroy], controller: 'workspace_github_installations' do
       get :callback, on: :collection
     end
-    namespace :settings do
-      resource :hourglass_integration,
-               only: %i[show update destroy],
-               controller: 'hourglass_integrations'
-    end
   end
 
   resources :teams, only: %i[new create show edit update] do
@@ -71,22 +66,14 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       get '/me', to: 'users#me'
-      get '/users/by_email', to: 'users#by_email'
-      get '/issues/by_identifier/:identifier',
-          to: 'issues#by_identifier',
-          constraints: { identifier: /[A-Z]+-\d+/ }
-      post '/integrations/handshake', to: 'integrations#handshake'
       resources :teams, only: [:index] do
         resources :issues, only: %i[index show create update] do
           resources :issue_dependencies, only: %i[create destroy], controller: 'issue_dependencies'
           resources :comments, only: %i[index create]
-          resources :decisions, only: %i[create destroy]
         end
         resources :lanes, only: [:index]
         resources :labels, only: %i[index create]
-        resources :projects, only: %i[index show create update destroy] do
-          resources :decisions, only: %i[create destroy]
-        end
+        resources :projects, only: %i[index show create update destroy]
         resources :members, only: [:index]
       end
     end

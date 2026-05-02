@@ -90,10 +90,4 @@ class ApiTokenTest < ActiveSupport::TestCase
 
     assert_equal expected_digest, token.token_digest
   end
-
-  test 'workspace and one_time_use default to nil/false' do
-    token = ApiToken.generate_for(@user)
-    assert_nil token.workspace_id
-    assert_not token.one_time_use?
-  end
 end

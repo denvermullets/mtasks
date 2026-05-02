@@ -86,26 +86,6 @@
               <% end %>
             <% end %>
           </div>
-
-          <!-- Hourglass Integration -->
-          <div class="flex items-center justify-between p-3 bg-background rounded border border-stroke">
-            <div class="flex items-center gap-3">
-              <div class="text-2xl">⏳</div>
-              <div>
-                <h3 class="text-sm font-medium text-gray-200">Hourglass</h3>
-                <p class="text-xs text-gray-400">Connect a Hourglass server to sync channels and threads</p>
-              </div>
-            </div>
-            <% hg_integration = @team.workspace.hourglass_integrations.active.first %>
-            <%= link_to workspace_settings_hourglass_integration_path(@team.workspace),
-                class: "text-sm text-accent hover:text-accent/80" do %>
-              <% if hg_integration %>
-                View
-              <% else %>
-                Connect
-              <% end %>
-            <% end %>
-          </div>
         </div>
       </div>
       <!-- Members Section (workspace owner only) -->
