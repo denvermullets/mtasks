@@ -37,8 +37,12 @@ module HourglassIntegrations
 
     def derive_server_identity(me_response)
       server = me_response.is_a?(Hash) ? me_response['server'] : nil
-      server_id = server.is_a?(Hash) && server['id'].present? ? server['id'].to_s : URI.parse(@base_url).host.to_s
-      server_name = server.is_a?(Hash) && server['name'].present? ? server['name'].to_s : server_id
+      unless server.is_a?(Hash) && server['id'].present?
+        raise Hourglass::ApiClient::Error, 'Hourglass /me did not return a server'
+      end
+
+      server_id = server['id'].to_s
+      server_name = server['name'].present? ? server['name'].to_s : server_id
       [server_id, server_name]
     end
 

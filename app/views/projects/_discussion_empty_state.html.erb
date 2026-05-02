@@ -1,0 +1,7 @@
+<%# locals: (channel_link:) %>
+<div id="discussion-empty-state" class="px-6 py-16 text-center">
+  <p class="text-sm text-gray-400 mb-1">No messages yet</p>
+  <p class="text-xs text-gray-500">
+    Messages from #<%= channel_link.hourglass_channel_name.presence || channel_link.hourglass_channel_id %> will appear here.
+  </p>
+</div>
