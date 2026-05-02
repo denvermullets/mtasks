@@ -10,9 +10,6 @@ class Team < ApplicationRecord
   has_many :team_invitations, dependent: :destroy
   has_many :github_repository_subscriptions, dependent: :destroy
   has_many :github_installations, through: :workspace
-  has_many :hourglass_channel_subscriptions, dependent: :destroy
-  has_many :hourglass_links, dependent: :destroy
-  has_many :decisions, dependent: :destroy
 
   # Scopes
   scope :archived, -> { where.not(archived_at: nil) }
