@@ -50,24 +50,6 @@ module Hourglass
       assert_match(/connection failed/, err.message)
     end
 
-    test 'handshake! POSTs JSON body and stores returned server_id' do
-      stub_request(:post, "#{BASE}/api/v1/integrations/handshake")
-        .with(
-          headers: {
-            'Authorization' => 'Bearer tk_abc',
-            'Content-Type' => 'application/json'
-          },
-          body: { webhook_url: 'http://x', webhook_secret: 's', callback_token: 'cb' }.to_json
-        )
-        .to_return(status: 200, body: { server_id: 'srv_42', server_name: 'Acme' }.to_json,
-                   headers: { 'Content-Type' => 'application/json' })
-
-      res = @client.handshake!(webhook_url: 'http://x', webhook_secret: 's', callback_token: 'cb')
-
-      assert_equal 'srv_42', res['server_id']
-      assert_equal 'srv_42', @client.server_id
-    end
-
     test 'discover_channels! requires server_id' do
       err = assert_raises(Hourglass::ApiClient::Error) { @client.discover_channels! }
       assert_match(/server_id missing/, err.message)

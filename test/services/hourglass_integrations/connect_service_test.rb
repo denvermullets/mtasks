@@ -18,20 +18,13 @@ module HourglassIntegrations
       WebMock.allow_net_connect!
     end
 
-    def stub_me(status: 200)
+    def stub_me(status: 200, body: { id: 1, email: 'a@b' })
       stub_request(:get, "#{BASE}/api/v1/me")
-        .to_return(status: status, body: { id: 1, email: 'a@b' }.to_json,
+        .to_return(status: status, body: body.to_json,
                    headers: { 'Content-Type' => 'application/json' })
     end
 
-    def stub_handshake(status: 200, server_id: 'srv_1', server_name: 'Acme')
-      stub_request(:post, "#{BASE}/api/v1/integrations/handshake")
-        .to_return(status: status,
-                   body: { server_id: server_id, server_name: server_name }.to_json,
-                   headers: { 'Content-Type' => 'application/json' })
-    end
-
-    def stub_channels(server_id: 'srv_1', count: 3)
+    def stub_channels(server_id: 'hg.test', count: 3)
       stub_request(:get, "#{BASE}/api/v1/servers/#{server_id}/channels")
         .to_return(status: 200, body: Array.new(count) { |i| { id: i + 1 } }.to_json,
                    headers: { 'Content-Type' => 'application/json' })
@@ -39,15 +32,25 @@ module HourglassIntegrations
 
     test 'happy path persists integration, mints callback token, fans out subscriptions' do
       stub_me
-      stub_handshake
       stub_channels(count: 3)
 
       result = run_connect(api_token: 'tk_good')
       integration = result.integration
 
       assert_equal 3, result.channel_count
-      assert_integration_persisted(integration, api_token: 'tk_good')
+      assert_integration_persisted(integration, api_token: 'tk_good',
+                                                server_id: 'hg.test', server_name: 'hg.test')
       assert_subscriptions_for_each_team(integration)
+    end
+
+    test 'uses server identity from /me when present' do
+      stub_me(body: { id: 1, server: { id: 'srv_1', name: 'Acme' } })
+      stub_channels(server_id: 'srv_1', count: 2)
+
+      result = run_connect(api_token: 'tk_good')
+
+      assert_equal 'srv_1', result.integration.hourglass_server_id
+      assert_equal 'Acme', result.integration.hourglass_server_name
     end
 
     def run_connect(api_token:)
@@ -57,9 +60,9 @@ module HourglassIntegrations
       ).call
     end
 
-    def assert_integration_persisted(integration, api_token:)
-      assert_equal 'srv_1', integration.hourglass_server_id
-      assert_equal 'Acme', integration.hourglass_server_name
+    def assert_integration_persisted(integration, api_token:, server_id:, server_name:)
+      assert_equal server_id, integration.hourglass_server_id
+      assert_equal server_name, integration.hourglass_server_name
       assert_equal BASE, integration.base_url
       assert_equal api_token, integration.api_token
       assert_predicate integration.webhook_secret, :present?
@@ -88,28 +91,9 @@ module HourglassIntegrations
       end
     end
 
-    test 'handshake failure rolls back: no integration, no subscriptions, callback token revoked' do
-      stub_me
-      stub_handshake(status: 500)
-
-      assert_no_difference -> { HourglassIntegration.count } do
-        assert_no_difference -> { HourglassChannelSubscription.count } do
-          assert_raises(Hourglass::ApiClient::Error) do
-            ConnectService.new(workspace: @workspace, current_user: @user,
-                               base_url: BASE, api_token: 'tk').call
-          end
-        end
-      end
-
-      token = ApiToken.where(user: @user).order(:id).last
-      assert_not_nil token, 'callback token should have been minted before failure'
-      assert token.revoked?, 'callback token should be revoked after handshake failure'
-    end
-
     test 'discover failure rolls back: no integration row persisted' do
       stub_me
-      stub_handshake
-      stub_request(:get, "#{BASE}/api/v1/servers/srv_1/channels").to_return(status: 500, body: '{}')
+      stub_request(:get, "#{BASE}/api/v1/servers/hg.test/channels").to_return(status: 500, body: '{}')
 
       assert_no_difference -> { HourglassIntegration.count } do
         assert_no_difference -> { HourglassChannelSubscription.count } do
@@ -124,9 +108,20 @@ module HourglassIntegrations
       assert token.revoked?
     end
 
+    test 'discover 404 is best-effort: integration persists with zero channels' do
+      stub_me
+      stub_request(:get, "#{BASE}/api/v1/servers/hg.test/channels").to_return(status: 404, body: '{}')
+
+      result = ConnectService.new(workspace: @workspace, current_user: @user,
+                                  base_url: BASE, api_token: 'tk').call
+
+      assert_equal 0, result.channel_count
+      assert result.integration.persisted?
+      assert_not result.integration.callback_api_token.revoked?
+    end
+
     test 'reconnect updates existing integration in place' do
       stub_me
-      stub_handshake
       stub_channels(count: 3)
 
       ConnectService.new(workspace: @workspace, current_user: @user,

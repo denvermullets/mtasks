@@ -13,7 +13,9 @@ Rails.application.routes.draw do
     namespace :settings do
       resource :hourglass_integration,
                only: %i[show update destroy],
-               controller: 'hourglass_integrations'
+               controller: 'hourglass_integrations' do
+        post :test_webhook
+      end
     end
   end
 
@@ -98,6 +100,7 @@ Rails.application.routes.draw do
   # GitHub Webhooks
   namespace :webhooks do
     resource :github, only: [:create], controller: 'github'
+    post 'hourglass/:workspace_id', to: 'hourglass#create', as: :hourglass
   end
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

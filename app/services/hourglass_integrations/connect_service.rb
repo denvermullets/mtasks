@@ -11,14 +11,14 @@ module HourglassIntegrations
 
     def call
       client = Hourglass::ApiClient.new(base_url: @base_url, api_token: @api_token)
-      client.verify_token
+      me = client.verify_token
 
       webhook_secret = SecureRandom.hex(32)
       callback_token = mint_callback_token
+      server_id, server_name = derive_server_identity(me)
 
       begin
-        handshake = perform_handshake(client, webhook_secret, callback_token)
-        persist_and_discover(client, handshake, webhook_secret, callback_token)
+        persist_and_discover(client, server_id, server_name, webhook_secret, callback_token)
       rescue StandardError
         callback_token.revoke! unless callback_token.revoked?
         raise
@@ -35,26 +35,28 @@ module HourglassIntegrations
       )
     end
 
-    def perform_handshake(client, webhook_secret, callback_token)
-      response = client.handshake!(
-        webhook_url: webhook_url_for(@workspace),
-        webhook_secret: webhook_secret,
-        callback_token: callback_token.raw_token
-      )
-      raise Hourglass::ApiClient::Error, 'Hourglass handshake missing server_id' if response['server_id'].to_s.blank?
-
-      response
+    def derive_server_identity(me_response)
+      server = me_response.is_a?(Hash) ? me_response['server'] : nil
+      server_id = server.is_a?(Hash) && server['id'].present? ? server['id'].to_s : URI.parse(@base_url).host.to_s
+      server_name = server.is_a?(Hash) && server['name'].present? ? server['name'].to_s : server_id
+      [server_id, server_name]
     end
 
-    def persist_and_discover(client, handshake, webhook_secret, callback_token)
-      server_id = handshake['server_id'].to_s
-      server_name = handshake['server_name'].to_s
+    def persist_and_discover(client, server_id, server_name, webhook_secret, callback_token)
+      client.server_id = server_id
       ActiveRecord::Base.transaction do
         integration = persist_integration(server_id:, server_name:, webhook_secret:, callback_token:)
-        channels = client.discover_channels!
+        channels = best_effort_discover_channels(client)
         fan_out_subscriptions(integration:, server_id:, server_name:)
         Result.new(integration: integration, channel_count: channels.size)
       end
+    end
+
+    def best_effort_discover_channels(client)
+      client.discover_channels!
+    rescue Hourglass::ApiClient::NotFound, Hourglass::ApiClient::Unauthorized => e
+      Rails.logger.warn("Hourglass channel discovery skipped: #{e.message}")
+      []
     end
 
     def persist_integration(server_id:, server_name:, webhook_secret:, callback_token:)
@@ -87,12 +89,6 @@ module HourglassIntegrations
         )
         sub.save!
       end
-    end
-
-    def webhook_url_for(workspace)
-      host = ENV.fetch('APP_HOST', 'localhost:3000')
-      scheme = Rails.env.production? ? 'https' : 'http'
-      "#{scheme}://#{host}/webhooks/hourglass/#{workspace.id}"
     end
   end
 end

@@ -26,10 +26,8 @@ module Settings
     end
 
     test 'update connects on valid token' do
-      stub_request(:get, "#{BASE}/api/v1/me").to_return(status: 200, body: '{}',
-                                                        headers: { 'Content-Type' => 'application/json' })
-      stub_request(:post, "#{BASE}/api/v1/integrations/handshake")
-        .to_return(status: 200, body: { server_id: 'srv_1', server_name: 'Acme' }.to_json,
+      stub_request(:get, "#{BASE}/api/v1/me")
+        .to_return(status: 200, body: { server: { id: 'srv_1', name: 'Acme' } }.to_json,
                    headers: { 'Content-Type' => 'application/json' })
       stub_request(:get, "#{BASE}/api/v1/servers/srv_1/channels")
         .to_return(status: 200, body: [{ id: 1 }, { id: 2 }].to_json,
