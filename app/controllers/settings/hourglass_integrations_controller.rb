@@ -25,6 +25,19 @@ class Settings::HourglassIntegrationsController < ApplicationController
                 alert: "Failed to connect to Hourglass: #{e.message}"
   end
 
+  def test_webhook
+    integration = @workspace.hourglass_integrations.active.first
+    return redirect_with_alert('No active Hourglass connection') unless integration
+
+    result = run_test_webhook(integration)
+    if result.success?
+      redirect_to workspace_settings_hourglass_integration_path(@workspace),
+                  notice: "Test webhook delivered (#{result.delivery_id})"
+    else
+      redirect_with_alert("Test webhook failed: #{result.error}")
+    end
+  end
+
   def destroy
     integration = @workspace.hourglass_integrations.active.first
     if integration
@@ -52,5 +65,19 @@ class Settings::HourglassIntegrationsController < ApplicationController
   def user_has_workspace_access?
     current_user == @workspace.owner ||
       @workspace.teams.joins(:users).where(users: { id: current_user.id }).exists?
+  end
+
+  def redirect_with_alert(message)
+    redirect_to workspace_settings_hourglass_integration_path(@workspace), alert: message
+  end
+
+  def run_test_webhook(integration)
+    HourglassIntegrations::TestWebhookService.new(
+      integration: integration,
+      event_type: params[:event_type].to_s.presence || 'message.created',
+      body: params[:body].to_s,
+      host: request.host_with_port,
+      protocol: request.protocol
+    ).call
   end
 end

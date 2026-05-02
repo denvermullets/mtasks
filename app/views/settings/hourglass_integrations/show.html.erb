@@ -37,6 +37,29 @@
                       data: { turbo_confirm: "Disconnect from #{@integration.hourglass_server_name || 'Hourglass'}?" },
                       class: 'px-4 py-2 rounded-md border border-red-500/40 text-red-300 hover:bg-red-500/10 text-sm font-medium transition-colors cursor-pointer' %>
       </div>
+
+      <div class="mt-6 rounded-lg border border-stroke bg-foreground p-5">
+        <h2 class="text-lg font-medium text-gray-100 mb-1">Test webhook</h2>
+        <p class="text-sm text-gray-500 mb-4">Send a signed sample event to <code class="text-gray-300"><%= "/webhooks/hourglass/#{@integration.workspace_id}" %></code> to verify end-to-end delivery.</p>
+        <%= form_with url: test_webhook_workspace_settings_hourglass_integration_path(@workspace), method: :post, class: 'space-y-3' do |f| %>
+          <div>
+            <%= f.label :event_type, 'Event type', class: 'block text-sm font-medium text-gray-300 mb-1' %>
+            <%= f.select :event_type,
+                         options_for_select(%w[message.created message.updated message.deleted channel.created channel.updated channel.deleted ping], 'message.created'),
+                         {},
+                         class: 'w-full px-3 py-2 rounded-md border border-stroke bg-background text-gray-100 text-sm focus:outline-none focus:border-accent' %>
+          </div>
+          <div>
+            <%= f.label :body, 'Payload (JSON)', class: 'block text-sm font-medium text-gray-300 mb-1' %>
+            <%= f.text_area :body, rows: 8,
+                            value: '{ "version": 1, "message_id": "test1", "channel_id": "<channel-id>", "author_email": "you@example.com", "body": "hi" }',
+                            class: 'w-full px-3 py-2 rounded-md border border-stroke bg-background text-gray-100 text-sm font-mono focus:outline-none focus:border-accent' %>
+          </div>
+          <div>
+            <%= f.submit 'Send', class: 'px-4 py-2 rounded-md bg-accent text-background hover:bg-accent-hover text-sm font-medium transition-colors cursor-pointer' %>
+          </div>
+        <% end %>
+      </div>
     <% else %>
       <%= form_with url: workspace_settings_hourglass_integration_path(@workspace), method: :patch, class: 'space-y-4' do |f| %>
         <div>
