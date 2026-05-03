@@ -67,6 +67,7 @@
       <% end %>
     </div>
     <%= render 'projects/decisions_card', project: project %>
+    <div id="discussion-flash" class="px-4 pt-3"></div>
     <%= turbo_stream_from "project_#{project.id}_discussion" %>
     <div id="discussion-stream" data-discussion-filter-target="stream" class="divide-y divide-stroke/40">
       <% items = DiscussionStreamService.call(project: project, channel_link: channel_link) %>
@@ -82,5 +83,6 @@
         <% end %>
       <% end %>
     </div>
+    <%= render "discussion/comments/composer", project: project, team: team %>
   </div>
 <% end %>

@@ -43,6 +43,11 @@ Rails.application.routes.draw do
                controller: 'hourglass_channel_links' do
         get :channels, on: :collection
       end
+      namespace :discussion do
+        resources :comments, only: [:create] do
+          member { post :push }
+        end
+      end
     end
     resource :roadmap, only: [:show], controller: 'roadmaps'
     resources :team_invitations, only: %i[index create destroy] do

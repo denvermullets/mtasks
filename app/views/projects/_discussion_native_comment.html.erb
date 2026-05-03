@@ -32,24 +32,17 @@
       </div>
     </div>
     <div class="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-      <% unless comment.pushed_to_hourglass_at.present? %>
-        <button type="button"
-                disabled
-                title="Coming soon (JAIT-166)"
-                class="p-1 rounded text-gray-600 cursor-not-allowed">
+      <% if comment.pushed_to_hourglass_at.blank? %>
+        <%= button_to push_team_project_discussion_comment_path(project.team, project, comment),
+                      method: :post,
+                      form: { data: { turbo_frame: "_top" } },
+                      title: "Send to chat",
+                      class: "p-1 rounded text-gray-500 hover:text-accent hover:bg-hover-highlight transition-colors" do %>
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 5l7 7-7 7"/>
           </svg>
-        </button>
+        <% end %>
       <% end %>
-      <button type="button"
-              disabled
-              title="Coming soon (JAIT-166)"
-              class="p-1 rounded text-gray-600 cursor-not-allowed">
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-        </svg>
-      </button>
     </div>
   </div>
 </article>
