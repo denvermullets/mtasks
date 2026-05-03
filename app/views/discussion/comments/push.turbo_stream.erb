@@ -1,0 +1,11 @@
+<% if push_result.success? %>
+  <%= turbo_stream.replace dom_id(@comment), partial: "projects/discussion_native_comment",
+                                             locals: { comment: @comment, project: @project } %>
+  <%= turbo_stream.update "discussion-flash" do %>
+    <%= render "shared/flash", message: "Posted to ##{push_result.channel_name}", type: "notice" %>
+  <% end %>
+<% else %>
+  <%= turbo_stream.update "discussion-flash" do %>
+    <%= render "shared/flash", message: "Failed to post to chat: #{push_result.error}", type: "alert" %>
+  <% end %>
+<% end %>

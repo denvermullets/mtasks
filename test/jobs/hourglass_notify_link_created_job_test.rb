@@ -59,6 +59,19 @@ class HourglassNotifyLinkCreatedJobTest < ActiveJob::TestCase
     assert_predicate @link.reload, :broken?
   end
 
+  test 'leaves link active when hourglass returns 404 (endpoint not implemented)' do
+    fake = Object.new
+    fake.define_singleton_method(:notify_link_created) do |**|
+      raise Hourglass::ApiClient::NotFound, '404 for /api/v1/links'
+    end
+
+    with_stubbed_client(fake) do
+      HourglassNotifyLinkCreatedJob.perform_now(@link.id)
+    end
+
+    assert_predicate @link.reload, :active?
+  end
+
   test 'no-ops when link missing' do
     assert_nothing_raised do
       HourglassNotifyLinkCreatedJob.perform_now(0)

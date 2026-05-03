@@ -48,12 +48,16 @@ class Hourglass::ApiClient
     get("/api/v1/channels/#{channel_id}/messages?#{URI.encode_www_form(query)}")
   end
 
-  def post_channel_message(channel_id, body:)
-    post("/api/v1/channels/#{channel_id}/messages", { body: body })
+  def post_channel_message(channel_id, body:, message_type: nil, idempotency_key: nil)
+    payload = { body: body }
+    payload[:message_type] = message_type if message_type
+    post("/api/v1/channels/#{channel_id}/messages", payload, idempotency_key: idempotency_key)
   end
 
-  def post_thread_message(message_id, body:)
-    post("/api/v1/messages/#{message_id}/replies", { body: body })
+  def post_thread_message(message_id, body:, message_type: nil, idempotency_key: nil)
+    payload = { body: body }
+    payload[:message_type] = message_type if message_type
+    post("/api/v1/messages/#{message_id}/replies", payload, idempotency_key: idempotency_key)
   end
 
   def fetch_message(id)
@@ -104,26 +108,27 @@ class Hourglass::ApiClient
     request(Net::HTTP::Get, path)
   end
 
-  def post(path, payload)
-    request(Net::HTTP::Post, path, payload)
+  def post(path, payload, idempotency_key: nil)
+    request(Net::HTTP::Post, path, payload, idempotency_key: idempotency_key)
   end
 
-  def patch(path, payload)
-    request(Net::HTTP::Patch, path, payload)
+  def patch(path, payload, idempotency_key: nil)
+    request(Net::HTTP::Patch, path, payload, idempotency_key: idempotency_key)
   end
 
-  def request(klass, path, payload = nil)
-    res = perform_request(klass, path, payload)
+  def request(klass, path, payload = nil, idempotency_key: nil)
+    res = perform_request(klass, path, payload, idempotency_key: idempotency_key)
     handle_response(res, path)
   rescue Net::OpenTimeout, Net::ReadTimeout, SocketError, Errno::ECONNREFUSED => e
     raise Error, "Hourglass connection failed: #{e.message}"
   end
 
-  def perform_request(klass, path, payload)
+  def perform_request(klass, path, payload, idempotency_key: nil)
     uri = URI.join(base_url.to_s, path)
     req = klass.new(uri)
     req['Authorization'] = "Bearer #{api_token}"
     req['Accept'] = 'application/json'
+    req['Idempotency-Key'] = idempotency_key if idempotency_key
     if payload
       req['Content-Type'] = 'application/json'
       req.body = payload.to_json
