@@ -1,5 +1,7 @@
 <%# locals: (comment:, project:) %>
-<article id="<%= dom_id(comment) %>" class="group px-4 py-3 hover:bg-hover-highlight/40 relative">
+<article id="<%= dom_id(comment) %>"
+         data-pinned="false"
+         class="group px-4 py-3 hover:bg-hover-highlight/40 relative">
   <div class="flex items-start gap-3">
     <div class="shrink-0">
       <%= user_avatar(comment.user, size: 'sm') %>

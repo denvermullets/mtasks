@@ -2,7 +2,9 @@ class HourglassWebhookProcessorJob < ApplicationJob
   MESSAGE_HANDLERS = {
     'message.created' => HourglassWebhookProcessor::Message::CreatedHandler,
     'message.updated' => HourglassWebhookProcessor::Message::UpdatedHandler,
-    'message.deleted' => HourglassWebhookProcessor::Message::DeletedHandler
+    'message.deleted' => HourglassWebhookProcessor::Message::DeletedHandler,
+    'message.pinned' => HourglassWebhookProcessor::Message::PinnedHandler,
+    'message.unpinned' => HourglassWebhookProcessor::Message::UnpinnedHandler
   }.freeze
 
   CHANNEL_EVENTS = %w[channel.created channel.updated channel.deleted ping].freeze

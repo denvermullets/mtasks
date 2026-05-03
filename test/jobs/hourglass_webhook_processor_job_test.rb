@@ -51,7 +51,9 @@ class HourglassWebhookProcessorJobTest < ActiveJob::TestCase
   DEFAULT_HANDLERS = {
     'message.created' => HourglassWebhookProcessor::Message::CreatedHandler,
     'message.updated' => HourglassWebhookProcessor::Message::UpdatedHandler,
-    'message.deleted' => HourglassWebhookProcessor::Message::DeletedHandler
+    'message.deleted' => HourglassWebhookProcessor::Message::DeletedHandler,
+    'message.pinned' => HourglassWebhookProcessor::Message::PinnedHandler,
+    'message.unpinned' => HourglassWebhookProcessor::Message::UnpinnedHandler
   }.freeze
 
   def with_handlers(table)
@@ -72,6 +74,34 @@ class HourglassWebhookProcessorJobTest < ActiveJob::TestCase
     end
 
     assert_equal [[@delivery.id, @integration.id]], captured
+  end
+
+  test 'message.pinned routes to PinnedHandler' do
+    captured = []
+    handler = Class.new do
+      define_singleton_method(:call) { |delivery, _integration| captured << delivery.event_type }
+    end
+
+    @delivery.update!(event_type: 'message.pinned')
+    with_handlers('message.pinned' => handler) do
+      HourglassWebhookProcessorJob.perform_now(@integration.id, @delivery.id)
+    end
+
+    assert_equal ['message.pinned'], captured
+  end
+
+  test 'message.unpinned routes to UnpinnedHandler' do
+    captured = []
+    handler = Class.new do
+      define_singleton_method(:call) { |delivery, _integration| captured << delivery.event_type }
+    end
+
+    @delivery.update!(event_type: 'message.unpinned')
+    with_handlers('message.unpinned' => handler) do
+      HourglassWebhookProcessorJob.perform_now(@integration.id, @delivery.id)
+    end
+
+    assert_equal ['message.unpinned'], captured
   end
 
   test 'still marks processed when handler raises' do
