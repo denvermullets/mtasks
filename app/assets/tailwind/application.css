@@ -45,3 +45,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     display: none;
   }
 }
+
+/* Discussion tab "Decisions only" filter — hide rows that aren't pinned messages */
+#discussion-stream.decisions-only > *:not([data-pinned="true"]) {
+  display: none;
+}

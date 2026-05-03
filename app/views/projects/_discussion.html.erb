@@ -48,7 +48,7 @@
     </div>
   </div>
 <% else %>
-  <div class="border border-stroke rounded-lg overflow-hidden">
+  <div class="border border-stroke rounded-lg overflow-hidden" data-controller="discussion-filter">
     <div class="flex items-center justify-between px-4 py-3 border-b border-stroke bg-foreground">
       <div class="flex items-center gap-2 min-w-0">
         <svg class="w-4 h-4 text-gray-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -66,8 +66,9 @@
         Unlink
       <% end %>
     </div>
+    <%= render 'projects/decisions_card', project: project %>
     <%= turbo_stream_from "project_#{project.id}_discussion" %>
-    <div id="discussion-stream" class="divide-y divide-stroke/40">
+    <div id="discussion-stream" data-discussion-filter-target="stream" class="divide-y divide-stroke/40">
       <% items = DiscussionStreamService.call(project: project, channel_link: channel_link) %>
       <% if items.empty? %>
         <%= render "projects/discussion_empty_state", channel_link: channel_link %>

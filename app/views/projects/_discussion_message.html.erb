@@ -1,5 +1,7 @@
 <%# locals: (message:, project:, channel_link:) %>
-<article id="<%= dom_id(message) %>" class="group px-4 py-3 hover:bg-hover-highlight/40 relative">
+<article id="<%= dom_id(message) %>"
+         data-pinned="<%= message.pinned_at.present? %>"
+         class="group px-4 py-3 hover:bg-hover-highlight/40 relative <%= 'border-l-2 border-amber-300/80 bg-amber-300/[0.03]' if message.pinned_at.present? %>">
   <% if message.message_type == 'system' %>
     <div class="flex items-center gap-2 text-xs text-gray-500 italic">
       <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -35,6 +37,14 @@
           </time>
           <% if message.edited_at.present? %>
             <span class="text-[10px] text-gray-600">(edited)</span>
+          <% end %>
+          <% if message.pinned_at.present? %>
+            <span class="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-amber-300/10 text-amber-300 border border-amber-300/30">
+              <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9.828 1.172a1 1 0 00-1.414 0L6.586 3H5a1 1 0 00-.707 1.707l2 2L4 9.586V11h1.414l2.879-2.879 2 2L8.293 12.293a1 1 0 001.414 1.414L11.586 11.83l2 2A1 1 0 0015 13.293V11.879l-2.879-2.879 2-2L16.293 4.707A1 1 0 0015.586 3H14l-1.828-1.828a1 1 0 00-1.414 0L9.828 1.172z"/>
+              </svg>
+              decision
+            </span>
           <% end %>
         </div>
         <% if message.deleted_at.present? %>
