@@ -44,11 +44,8 @@ class IssuesController < ApplicationController
     if @issue.save
       detect_issue_references
       notify_mentions_on(@issue, text: @issue.description)
-      if params[:create_more] == '1'
-        redirect_to new_team_issue_path(@issue.team), notice: 'Issue was successfully created. Create another?'
-      else
-        redirect_to team_issues_path(@issue.team), notice: 'Issue was successfully created.'
-      end
+      HourglassOutboundEmitterJob.dispatch_create(@issue, Current.user)
+      redirect_after_create
     else
       load_form_collections
       render :new, status: :unprocessable_entity
@@ -145,11 +142,18 @@ class IssuesController < ApplicationController
     IssueDisplayService.new(base_issues, @display_options.merge(search_query: params[:q]), current_team)
   end
 
+  def redirect_after_create
+    if params[:create_more] == '1'
+      redirect_to new_team_issue_path(@issue.team), notice: 'Issue was successfully created. Create another?'
+    else
+      redirect_to team_issues_path(@issue.team), notice: 'Issue was successfully created.'
+    end
+  end
+
   def enqueue_after_update_job
     IssueAfterUpdateJob.perform_later(
-      issue_id: @issue.id,
-      user_id: Current.user.id,
-      description_changed: @issue.saved_change_to_description?
+      issue_id: @issue.id, user_id: Current.user.id,
+      description_changed: @issue.saved_change_to_description?, version_id: @latest_version&.id
     )
   end
 
@@ -157,12 +161,9 @@ class IssuesController < ApplicationController
     version = @issue.versions.last
     return unless version&.event == 'update'
 
-    action = NotificationService.action_for_version(version)
     NotificationJob.perform_later(
-      issue_id: @issue.id,
-      actor_id: Current.user.id,
-      action: action,
-      version_id: version.id
+      issue_id: @issue.id, actor_id: Current.user.id,
+      action: NotificationService.action_for_version(version), version_id: version.id
     )
   end
 

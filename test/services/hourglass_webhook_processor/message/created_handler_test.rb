@@ -101,6 +101,26 @@ module HourglassWebhookProcessor
         end
       end
 
+      test 'echo loop guard skips cache + broadcast when an echo row exists for message_id' do
+        HourglassMessageCache.create!(
+          hourglass_message_id: 'M1',
+          hourglass_channel_id: 'C1',
+          body: 'echoed outbound',
+          message_type: 'system',
+          posted_at: Time.current,
+          source: 'echo'
+        )
+        delivery = build_delivery(basic_payload)
+
+        assert_no_difference -> { HourglassMessageCache.count } do
+          assert_no_enqueued_jobs(only: Turbo::Streams::ActionBroadcastJob) do
+            CreatedHandler.call(delivery, @integration)
+          end
+        end
+
+        assert_equal 'echo', HourglassMessageCache.find_by(hourglass_message_id: 'M1').source
+      end
+
       test 'missing message_id is logged and does not raise' do
         delivery = build_delivery(basic_payload.except('message_id'))
 
