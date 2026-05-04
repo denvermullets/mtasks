@@ -34,6 +34,7 @@ module Api
         issue.creator = current_user
 
         if issue.save
+          HourglassOutboundEmitterJob.dispatch_create(issue, current_user)
           render json: serialize(issue), status: :created
         else
           render_validation_errors(issue)
@@ -46,7 +47,9 @@ module Api
 
         if @issue.save
           @issue.enqueue_velocity_recalculation!
-          IssueAfterUpdateJob.perform_later(issue_id: @issue.id, user_id: current_user.id)
+          IssueAfterUpdateJob.perform_later(
+            issue_id: @issue.id, user_id: current_user.id, version_id: @issue.versions.last&.id
+          )
           render json: serialize(@issue)
         else
           render_validation_errors(@issue)

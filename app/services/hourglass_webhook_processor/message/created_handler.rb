@@ -16,6 +16,11 @@ module HourglassWebhookProcessor
       private
 
       def loop_guard_handled?
+        if HourglassMessageCache.exists?(hourglass_message_id: message_id, source: 'echo')
+          logger.info("dropping echoed outbound message #{message_id}")
+          return true
+        end
+
         comment = find_loop_guard_comment(message_id)
         return false unless comment
 
