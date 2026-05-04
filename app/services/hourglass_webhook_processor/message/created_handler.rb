@@ -40,7 +40,7 @@ module HourglassWebhookProcessor
       def cache_attributes
         {
           hourglass_channel_id: channel_id,
-          hourglass_thread_id: payload['thread_id'],
+          hourglass_thread_id: thread_id,
           hourglass_user_id: author['user_id'] || author['id'],
           author_email: author['email'],
           author_display_name: author['display_name'] || author['name'],
@@ -53,6 +53,13 @@ module HourglassWebhookProcessor
         }
       end
       # rubocop:enable Metrics/AbcSize
+
+      def thread_id
+        payload['thread_id'].presence ||
+          payload.dig('thread', 'id').presence ||
+          payload['parent_message_id'].presence ||
+          payload['parent_id'].presence
+      end
 
       def author
         @author ||= payload['author'].is_a?(Hash) ? payload['author'] : {}

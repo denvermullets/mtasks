@@ -56,7 +56,7 @@
             <% end %>
           <% when :discussion %>
             <%= turbo_frame_tag "project_tab_discussion" do %>
-              <%= render "discussion", project: @project, channel_link: @channel_link, team: @team %>
+              <%= render "discussion", project: @project, channel_link: @channel_link, team: @team, thread_id: @thread_id %>
             <% end %>
           <% when :activity %>
             <%= turbo_frame_tag "project_tab_activity" do %>

@@ -39,6 +39,11 @@ module HourglassWebhookProcessor
     end
 
     def broadcast_message(action:, cache:, link:)
+      broadcast_to_project(action, cache, link)
+      broadcast_to_issue_threads(action, cache)
+    end
+
+    def broadcast_to_project(action, cache, link)
       stream = "project_#{link.mtasks_project_id}_discussion"
       common = {
         partial: 'projects/discussion_message',
@@ -46,6 +51,35 @@ module HourglassWebhookProcessor
       }
       if action == :append
         Turbo::StreamsChannel.broadcast_append_later_to(stream, target: 'discussion-stream', **common)
+      else
+        Turbo::StreamsChannel.broadcast_replace_later_to(
+          stream, target: ActionView::RecordIdentifier.dom_id(cache), **common
+        )
+      end
+    end
+
+    def broadcast_to_issue_threads(action, cache)
+      thread_ids = [cache.hourglass_thread_id, cache.hourglass_message_id].compact.uniq
+      return if thread_ids.empty?
+
+      HourglassLink.issue_thread.active.where(hourglass_thread_id: thread_ids).each do |thread_link|
+        broadcast_to_issue_thread(action, cache, thread_link)
+      end
+    end
+
+    def broadcast_to_issue_thread(action, cache, thread_link)
+      issue = thread_link.mtasks_issue
+      return unless issue
+
+      stream = "issue_#{issue.id}_discussion"
+      common = {
+        partial: 'projects/discussion_message',
+        locals: { message: cache, team: issue.team, channel_link: thread_link }
+      }
+      if action == :append
+        Turbo::StreamsChannel.broadcast_append_later_to(
+          stream, target: "issue_discussion_stream_#{issue.id}", **common
+        )
       else
         Turbo::StreamsChannel.broadcast_replace_later_to(
           stream, target: ActionView::RecordIdentifier.dom_id(cache), **common

@@ -1,0 +1,17 @@
+<%# locals: (issue:, issue_thread_link:) %>
+<%= turbo_frame_tag "issue_thread_badge_#{issue.id}", class: "inline-flex items-center" do %>
+  <% if issue_thread_link&.active? %>
+    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium bg-foreground border border-stroke text-gray-300">
+      <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
+      <span class="text-gray-400">linked to thread</span>
+      <span class="font-mono text-accent"><%= issue_thread_link.hourglass_thread_id %></span>
+    </span>
+  <% elsif issue_thread_link&.broken? %>
+    <%= link_to new_team_issue_hourglass_thread_link_path(issue.team, issue),
+        data: { turbo_frame: "hourglass_thread_link_modal" },
+        class: "inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium bg-red-500/10 border border-red-500/30 text-red-300 hover:bg-red-500/20" do %>
+      <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span>
+      <span>thread link broken &middot; relink</span>
+    <% end %>
+  <% end %>
+<% end %>

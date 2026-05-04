@@ -21,6 +21,7 @@ class HourglassLink < ApplicationRecord
   scope :project_channel, -> { where(link_type: 'project_channel') }
   scope :issue_thread,    -> { where(link_type: 'issue_thread') }
   scope :for_project,     ->(project) { project_channel.where(mtasks_project_id: project.id) }
+  scope :for_issue,       ->(issue) { issue_thread.where(mtasks_issue_id: issue.id) }
 
   private
 

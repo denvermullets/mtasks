@@ -1,4 +1,12 @@
-<%# locals: (comment:, project:) %>
+<%# locals: (comment:, team: nil, project: nil, manual_push_url: nil) %>
+<% team ||= project&.team || comment.project&.team || comment.issue&.team %>
+<% if local_assigns.key?(:manual_push_url)
+     resolved_push_url = manual_push_url
+   elsif project && comment.pushed_to_hourglass_at.blank?
+     resolved_push_url = push_team_project_discussion_comment_path(project.team, project, comment)
+   else
+     resolved_push_url = nil
+   end %>
 <article id="<%= dom_id(comment) %>"
          data-pinned="false"
          class="group px-4 py-3 hover:bg-hover-highlight/40 relative">
@@ -28,12 +36,12 @@
         <% end %>
       </div>
       <div class="markdown text-sm text-gray-300">
-        <%= render_markdown(comment.body, team: project.team) %>
+        <%= render_markdown(comment.body, team: team) %>
       </div>
     </div>
-    <div class="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-      <% if comment.pushed_to_hourglass_at.blank? %>
-        <%= button_to push_team_project_discussion_comment_path(project.team, project, comment),
+    <% if resolved_push_url %>
+      <div class="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+        <%= button_to resolved_push_url,
                       method: :post,
                       form: { data: { turbo_frame: "_top" } },
                       title: "Send to chat",
@@ -42,7 +50,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 5l7 7-7 7"/>
           </svg>
         <% end %>
-      <% end %>
-    </div>
+      </div>
+    <% end %>
   </div>
 </article>

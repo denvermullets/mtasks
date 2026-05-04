@@ -132,23 +132,28 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test 'discussion renders linked state when link is present' do
-    integration = @workspace.hourglass_integrations.create!(
-      hourglass_server_id: 'srv', base_url: 'https://hg.test', api_token: 'tok',
-      webhook_secret: 'wh', connected_by_user: @user
-    )
-    @project.create_hourglass_channel_link!(
-      link_type: 'project_channel',
-      team: @team,
-      hourglass_channel_id: 'C123',
-      hourglass_channel_name: 'general',
-      hourglass_integration: integration,
-      created_by_user: @user
-    )
+    link_project_to_channel('C123', 'general')
 
     get discussion_team_project_path(@team, @project)
     assert_response :success
     assert_includes response.body, 'general'
     assert_includes response.body, 'No messages yet'
+  end
+
+  test 'discussion with ?thread= filters to that thread and shows back link' do
+    link_project_to_channel('C123', 'general')
+    HourglassMessageCache.create!(hourglass_message_id: 'in_thread', hourglass_channel_id: 'C123',
+                                  hourglass_thread_id: 'T_root', body: 'thread body',
+                                  posted_at: 1.minute.ago, source: 'webhook')
+    HourglassMessageCache.create!(hourglass_message_id: 'channel_only', hourglass_channel_id: 'C123',
+                                  body: 'channel body', posted_at: 30.seconds.ago, source: 'webhook')
+
+    get discussion_team_project_path(@team, @project, thread: 'T_root')
+
+    assert_response :success
+    assert_includes response.body, 'thread body'
+    assert_not_includes response.body, 'channel body'
+    assert_includes response.body, 'back to'
   end
 
   test 'activity renders placeholder' do
@@ -161,5 +166,19 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     get overview_team_project_path(@team, @project)
     assert_response :success
     assert_includes response.body, 'A project'
+  end
+
+  private
+
+  def link_project_to_channel(channel_id, channel_name)
+    integration = @workspace.hourglass_integrations.create!(
+      hourglass_server_id: 'srv', base_url: 'https://hg.test', api_token: 'tok',
+      webhook_secret: 'wh', connected_by_user: @user
+    )
+    @project.create_hourglass_channel_link!(
+      link_type: 'project_channel', team: @team,
+      hourglass_channel_id: channel_id, hourglass_channel_name: channel_name,
+      hourglass_integration: integration, created_by_user: @user
+    )
   end
 end
