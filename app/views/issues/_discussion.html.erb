@@ -56,24 +56,21 @@
       <%= turbo_stream_from "issue_#{issue.id}_discussion" %>
       <div id="issue_discussion_stream_<%= issue.id %>"
            data-discussion-filter-target="stream"
-           class="divide-y divide-stroke/40">
+           class="divide-y divide-stroke/40 [&:has(article)>#issue_discussion_empty_<%= issue.id %>]:hidden">
         <% items = DiscussionStreamService.call(issue: issue, issue_thread_link: issue_thread_link) %>
-        <% if items.empty? %>
-          <div class="px-4 py-10 text-center text-xs text-gray-500">
-            No messages yet. Post a comment below or send a message in the linked thread.
-          </div>
-        <% else %>
-          <% items.each do |item| %>
-            <% if item.kind == :hourglass %>
-              <%= render "projects/discussion_message",
-                         message: item.record,
-                         team: team,
-                         channel_link: issue_thread_link %>
-            <% else %>
-              <%= render "projects/discussion_native_comment",
-                         comment: item.record,
-                         team: team %>
-            <% end %>
+        <div id="issue_discussion_empty_<%= issue.id %>" class="px-4 py-10 text-center text-xs text-gray-500 <%= 'hidden' if items.any? %>">
+          No messages yet. Post a comment below or send a message in the linked thread.
+        </div>
+        <% items.each do |item| %>
+          <% if item.kind == :hourglass %>
+            <%= render "projects/discussion_message",
+                       message: item.record,
+                       team: team,
+                       channel_link: issue_thread_link %>
+          <% else %>
+            <%= render "projects/discussion_native_comment",
+                       comment: item.record,
+                       team: team %>
           <% end %>
         <% end %>
       </div>

@@ -2,6 +2,8 @@ require 'test_helper'
 
 module HourglassLinks
   class CreateThreadServiceTest < ActiveSupport::TestCase
+    include ActiveJob::TestHelper
+
     setup do
       @user = User.create!(name: 'CT', email: 'create_thread@example.com', password: 'password')
       @workspace = Workspace.create!(name: 'WS', owner: @user)
@@ -40,6 +42,25 @@ module HourglassLinks
       )
 
       assert_match(/required/i, result.error)
+    end
+
+    test 'enqueues HourglassNotifyThreadLinkCreatedJob by default' do
+      assert_enqueued_with(job: HourglassNotifyThreadLinkCreatedJob) do
+        HourglassLinks::CreateThreadService.call(
+          issue: @issue, hourglass_thread_id: 'T_OK',
+          integration: @integration, current_user: @user
+        )
+      end
+    end
+
+    test 'skips notify when notify_outbound: false' do
+      assert_no_enqueued_jobs(only: HourglassNotifyThreadLinkCreatedJob) do
+        HourglassLinks::CreateThreadService.call(
+          issue: @issue, hourglass_thread_id: 'T_QUIET',
+          integration: @integration, current_user: @user,
+          notify_outbound: false
+        )
+      end
     end
   end
 end

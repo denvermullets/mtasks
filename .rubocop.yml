@@ -37,6 +37,10 @@ Metrics/MethodLength:
 Metrics/AbcSize:
   Max: 22
 
+Metrics/ParameterLists:
+  Max: 6
+  CountKeywordArgs: true
+
 # Config files tend to get wordy.
 Layout/LineLength:
   Exclude:

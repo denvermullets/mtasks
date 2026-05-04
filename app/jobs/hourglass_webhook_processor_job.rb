@@ -7,6 +7,11 @@ class HourglassWebhookProcessorJob < ApplicationJob
     'message.unpinned' => HourglassWebhookProcessor::Message::UnpinnedHandler
   }.freeze
 
+  LINK_HANDLERS = {
+    'link.created' => HourglassWebhookProcessor::Link::CreatedHandler,
+    'link.removed' => HourglassWebhookProcessor::Link::RemovedHandler
+  }.freeze
+
   CHANNEL_EVENTS = %w[channel.created channel.updated channel.deleted ping].freeze
 
   queue_as :default
@@ -34,7 +39,7 @@ class HourglassWebhookProcessorJob < ApplicationJob
   private
 
   def dispatch(delivery, integration)
-    handler_class = MESSAGE_HANDLERS[delivery.event_type]
+    handler_class = MESSAGE_HANDLERS[delivery.event_type] || LINK_HANDLERS[delivery.event_type]
     if handler_class
       run_handler(handler_class, delivery, integration)
     elsif CHANNEL_EVENTS.include?(delivery.event_type)

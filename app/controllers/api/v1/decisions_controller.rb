@@ -81,26 +81,10 @@ module Api
         User.find_by('LOWER(email) = ?', email)
       end
 
-      def broadcast(action, decision)
-        stream = stream_name
-        case action
-        when :append
-          Turbo::StreamsChannel.broadcast_append_to(
-            stream, target: list_target, partial: 'decisions/decision', locals: { decision: decision }
-          )
-        when :remove
-          Turbo::StreamsChannel.broadcast_remove_to(
-            stream, target: ActionView::RecordIdentifier.dom_id(decision)
-          )
-        end
-      end
+      def broadcast(_action, _decision)
+        return unless @project
 
-      def stream_name
-        @issue ? "issue_#{@issue.id}_decisions" : "project_#{@project.id}_decisions"
-      end
-
-      def list_target
-        @issue ? "issue_#{@issue.id}_decisions_list" : "project_#{@project.id}_decisions_list"
+        Decisions::BroadcastCardService.call(project: @project)
       end
     end
   end

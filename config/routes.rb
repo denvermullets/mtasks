@@ -109,6 +109,7 @@ Rails.application.routes.draw do
         resources :labels, only: %i[index create]
         resources :projects, only: %i[index show create update destroy] do
           resources :decisions, only: %i[create destroy]
+          resources :comments, only: %i[index create], controller: 'project_comments'
         end
         resources :members, only: [:index]
       end

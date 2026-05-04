@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_02_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_04_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -147,6 +147,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_02_150000) do
     t.datetime "connected_at"
     t.bigint "connected_by_user_id"
     t.datetime "created_at", null: false
+    t.integer "hourglass_integration_id"
     t.string "hourglass_server_id", null: false
     t.string "hourglass_server_name"
     t.datetime "last_verified_at"
@@ -156,6 +157,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_02_150000) do
     t.bigint "workspace_id", null: false
     t.index ["callback_api_token_id"], name: "index_hourglass_integrations_on_callback_api_token_id"
     t.index ["connected_by_user_id"], name: "index_hourglass_integrations_on_connected_by_user_id"
+    t.index ["hourglass_integration_id"], name: "index_hourglass_integrations_on_hourglass_integration_id"
     t.index ["workspace_id", "hourglass_server_id"], name: "idx_on_workspace_id_hourglass_server_id_0e69960644", unique: true
     t.index ["workspace_id"], name: "index_hourglass_integrations_on_workspace_id"
   end

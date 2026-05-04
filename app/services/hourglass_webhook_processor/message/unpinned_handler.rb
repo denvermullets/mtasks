@@ -26,16 +26,7 @@ module HourglassWebhookProcessor
         return unless decision
 
         decision.update!(unpinned_at: parse_time(payload['unpinned_at']) || Time.current)
-        broadcast_decision_replace(decision, link) if link
-      end
-
-      def broadcast_decision_replace(decision, link)
-        Turbo::StreamsChannel.broadcast_replace_later_to(
-          "project_#{link.mtasks_project_id}_decisions",
-          target: ActionView::RecordIdentifier.dom_id(decision),
-          partial: 'decisions/decision',
-          locals: { decision: decision }
-        )
+        Decisions::BroadcastCardService.call(project: link.mtasks_project) if link
       end
     end
   end

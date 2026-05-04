@@ -24,6 +24,7 @@ module Api
           )
           NotificationService.call(issue: @issue, actor: Current.user, action: 'commented', comment: @comment)
           notify_mentions_on(@issue, text: @comment.body, comment: @comment)
+          broadcast_to_issue_discussion(@comment)
 
           render json: CommentSerializer.new(@comment).as_json, status: :created
         else
@@ -32,6 +33,15 @@ module Api
       end
 
       private
+
+      def broadcast_to_issue_discussion(comment)
+        Turbo::StreamsChannel.broadcast_append_to(
+          "issue_#{@issue.id}_discussion",
+          target: "issue_discussion_stream_#{@issue.id}",
+          partial: 'projects/discussion_native_comment',
+          locals: { comment: comment, team: @issue.team }
+        )
+      end
 
       def set_issue
         @issue = current_team.issues.find(params[:issue_id])
