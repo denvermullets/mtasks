@@ -1,4 +1,5 @@
 require 'test_helper'
+require 'webmock/minitest'
 
 module HourglassWebhookProcessor
   module Message
@@ -6,6 +7,7 @@ module HourglassWebhookProcessor
       include ActiveJob::TestHelper
 
       setup do
+        stub_request(:get, %r{https://hg\.test/api/v1/users/lookup}).to_return(status: 404, body: '{}')
         @user = User.create!(name: 'CH', email: 'created_handler@example.com', password: 'password')
         @workspace = Workspace.create!(name: 'WS', owner: @user)
         @team = @workspace.teams.create!(name: 'T', identifier: 'CRH')
