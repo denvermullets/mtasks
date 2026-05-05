@@ -1,6 +1,8 @@
 module Api
   module V1
     class ProjectCommentsController < BaseController
+      wrap_parameters :comment, include: %i[body parent_id]
+
       before_action :set_current_team
       before_action :set_project
 
@@ -10,8 +12,14 @@ module Api
       end
 
       def create
+        if (existing = find_by_hourglass_message_id)
+          render json: CommentSerializer.new(existing).as_json, status: :ok
+          return
+        end
+
         @comment = @project.comments.new(comment_params)
         @comment.user = Current.user
+        @comment.hourglass_message_id = hourglass_message_id
 
         if @comment.save
           broadcast_to_project_discussion(@comment)
@@ -40,6 +48,16 @@ module Api
 
       def comment_params
         params.require(:comment).permit(:body, :parent_id)
+      end
+
+      def hourglass_message_id
+        request.headers['Idempotency-Key'].presence
+      end
+
+      def find_by_hourglass_message_id
+        return nil unless hourglass_message_id
+
+        @project.comments.find_by(hourglass_message_id: hourglass_message_id)
       end
     end
   end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_04_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_05_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -63,6 +63,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_04_120000) do
   create_table "comments", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
+    t.string "hourglass_message_id"
     t.bigint "issue_id"
     t.bigint "parent_id"
     t.bigint "project_id"
@@ -70,6 +71,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_04_120000) do
     t.string "pushed_to_hourglass_message_id"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.index ["hourglass_message_id"], name: "index_comments_on_hourglass_message_id", unique: true, where: "(hourglass_message_id IS NOT NULL)"
     t.index ["issue_id"], name: "index_comments_on_issue_id"
     t.index ["parent_id"], name: "index_comments_on_parent_id"
     t.index ["project_id"], name: "index_comments_on_project_id"
@@ -416,6 +418,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_04_120000) do
     t.bigint "user_id", null: false
     t.index ["refresh_token"], name: "index_sessions_on_refresh_token", unique: true
     t.index ["user_id"], name: "index_sessions_on_user_id"
+  end
+
+  create_table "solid_cable_messages", force: :cascade do |t|
+    t.binary "channel", null: false
+    t.bigint "channel_hash", null: false
+    t.datetime "created_at", null: false
+    t.binary "payload", null: false
+    t.index ["channel"], name: "index_solid_cable_messages_on_channel"
+    t.index ["channel_hash"], name: "index_solid_cable_messages_on_channel_hash"
+    t.index ["created_at"], name: "index_solid_cable_messages_on_created_at"
   end
 
   create_table "team_invitations", force: :cascade do |t|
