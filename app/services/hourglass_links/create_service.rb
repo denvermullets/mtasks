@@ -25,10 +25,23 @@ module HourglassLinks
 
       if link.save
         HourglassNotifyLinkCreatedJob.perform_later(link.id) if @notify_outbound
+        broadcast_badge
         Result.new(link: link)
       else
         Result.new(link: link, error: link.errors.full_messages.to_sentence)
       end
+    end
+
+    private
+
+    def broadcast_badge
+      @project.association(:hourglass_channel_link).reset
+      Turbo::StreamsChannel.broadcast_replace_to(
+        "project_#{@project.id}",
+        target: "project_channel_badge_#{@project.id}",
+        partial: 'projects/channel_link_badge',
+        locals: { project: @project }
+      )
     end
   end
 end

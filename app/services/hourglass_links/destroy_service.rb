@@ -10,9 +10,11 @@ module HourglassLinks
     def call
       payload = build_payload
       job_class = job_for(@link)
+      project = @link.mtasks_project if @link.project_channel?
 
       @link.destroy!
       job_class&.perform_later(payload) if @notify_outbound
+      broadcast_badge(project) if project
       Result.new(error: nil)
     rescue ActiveRecord::RecordNotDestroyed => e
       Result.new(error: e.message)
@@ -37,6 +39,16 @@ module HourglassLinks
 
     def job_for(link)
       link.issue_thread? ? HourglassNotifyThreadLinkDestroyedJob : HourglassNotifyLinkDestroyedJob
+    end
+
+    def broadcast_badge(project)
+      project.association(:hourglass_channel_link).reset
+      Turbo::StreamsChannel.broadcast_replace_to(
+        "project_#{project.id}",
+        target: "project_channel_badge_#{project.id}",
+        partial: 'projects/channel_link_badge',
+        locals: { project: project }
+      )
     end
   end
 end
