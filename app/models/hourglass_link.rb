@@ -7,6 +7,8 @@ class HourglassLink < ApplicationRecord
   belongs_to :created_by_user, class_name: 'User', optional: true
   belongs_to :hourglass_integration, optional: true
 
+  has_many :read_states, class_name: 'HourglassLinkReadState', dependent: :destroy
+
   enum :status, { active: 'active', broken: 'broken' }, default: 'active'
 
   validates :link_type, inclusion: { in: LINK_TYPES }

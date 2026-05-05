@@ -82,4 +82,34 @@ class IssuesControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, 'discussion_composer'
     assert_not_includes response.body, 'id="comment_form"'
   end
+
+  test 'show upserts a HourglassLinkReadState when issue has a linked thread' do
+    link = @team.hourglass_links.create!(
+      link_type: 'issue_thread',
+      mtasks_issue: @issue,
+      mtasks_issue_identifier: @issue.identifier,
+      hourglass_thread_id: 'T_99',
+      created_by_user: @user
+    )
+
+    assert_difference 'HourglassLinkReadState.count', 1 do
+      get team_issue_path(@team, @issue)
+    end
+    state = HourglassLinkReadState.find_by!(user: @user, hourglass_link: link)
+    original = state.last_read_at
+
+    travel_to(2.minutes.from_now) do
+      assert_no_difference 'HourglassLinkReadState.count' do
+        get team_issue_path(@team, @issue)
+      end
+      state.reload
+      assert state.last_read_at > original
+    end
+  end
+
+  test 'show without a linked thread does not create a read state' do
+    assert_no_difference 'HourglassLinkReadState.count' do
+      get team_issue_path(@team, @issue)
+    end
+  end
 end

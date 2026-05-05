@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_05_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_05_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -162,6 +162,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_05_120000) do
     t.index ["hourglass_integration_id"], name: "index_hourglass_integrations_on_hourglass_integration_id"
     t.index ["workspace_id", "hourglass_server_id"], name: "idx_on_workspace_id_hourglass_server_id_0e69960644", unique: true
     t.index ["workspace_id"], name: "index_hourglass_integrations_on_workspace_id"
+  end
+
+  create_table "hourglass_link_read_states", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "hourglass_link_id", null: false
+    t.datetime "last_read_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["hourglass_link_id"], name: "index_hourglass_link_read_states_on_hourglass_link_id"
+    t.index ["user_id", "hourglass_link_id"], name: "idx_hg_link_read_states_user_link_unique", unique: true
+    t.index ["user_id"], name: "index_hourglass_link_read_states_on_user_id"
   end
 
   create_table "hourglass_links", force: :cascade do |t|
@@ -550,6 +561,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_05_120000) do
   add_foreign_key "hourglass_integrations", "api_tokens", column: "callback_api_token_id"
   add_foreign_key "hourglass_integrations", "users", column: "connected_by_user_id"
   add_foreign_key "hourglass_integrations", "workspaces"
+  add_foreign_key "hourglass_link_read_states", "hourglass_links"
+  add_foreign_key "hourglass_link_read_states", "users"
   add_foreign_key "hourglass_links", "hourglass_integrations"
   add_foreign_key "hourglass_links", "issues", column: "mtasks_issue_id"
   add_foreign_key "hourglass_links", "projects", column: "mtasks_project_id"

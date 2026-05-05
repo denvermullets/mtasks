@@ -17,17 +17,15 @@ class IssuesController < ApplicationController
     @display_service = build_display_service(base_issues)
     @grouped_issues = @display_service.grouped_issues
     @empty_groups = @display_service.empty_groups
-    @lanes = current_team.lanes.order(:position)
-    @labels = current_team.labels.includes(:issue_labels)
-    @projects = current_team.projects.order(:name)
-    @assignees = current_team.users.order(:name)
-    @creators = @assignees
+    load_index_filters
+    @thread_counts = HourglassThreadCountService.call(issues: @grouped_issues.values.flatten, user: Current.user)
   end
 
   def show
     Current.user.notifications.unread.where(issue_id: @issue.id).update_all(read_at: Time.current)
     load_form_collections
     @issue_thread_link = HourglassLink.for_issue(@issue).first
+    HourglassLinkReadState.touch_for(user: Current.user, hourglass_link: @issue_thread_link) if @issue_thread_link
   end
 
   def new
@@ -172,5 +170,13 @@ class IssuesController < ApplicationController
 
   def load_display_options
     @display_options = DisplayOptionsService.call(params, Current.user, current_team)
+  end
+
+  def load_index_filters
+    @lanes = current_team.lanes.order(:position)
+    @labels = current_team.labels.includes(:issue_labels)
+    @projects = current_team.projects.order(:name)
+    @assignees = current_team.users.order(:name)
+    @creators = @assignees
   end
 end
