@@ -41,8 +41,9 @@ module Discussion
         @calls = []
       end
 
-      def post_channel_message(channel_id, body:, message_type: nil, idempotency_key: nil)
-        @calls << { channel_id: channel_id, body: body, message_type: message_type, idempotency_key: idempotency_key }
+      def post_channel_message(channel_id, body:, data: nil, message_type: nil, idempotency_key: nil)
+        @calls << { channel_id: channel_id, body: body, data: data, message_type: message_type,
+                    idempotency_key: idempotency_key }
         raise @raise_error if @raise_error
 
         @response

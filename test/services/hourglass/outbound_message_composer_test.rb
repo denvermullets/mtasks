@@ -18,46 +18,106 @@ module Hourglass
       Struct.new(:object_changes, :event).new(changes, 'update')
     end
 
-    test 'issue.created body uses identifier title and actor' do
-      body = OutboundMessageComposer.call(event_type: 'issue.created', issue: @issue, actor: @user)
-      assert_equal "#{@issue.identifier} created by Ryan: Ship feature", body
+    test 'returns body and data hash' do
+      result = OutboundMessageComposer.call(event_type: 'issue.created', issue: @issue, actor: @user)
+      assert_kind_of Hash, result
+      assert result.key?(:body)
+      assert result.key?(:data)
     end
 
-    test 'issue.status_changed resolves lane names' do
+    test 'issue.created data carries identifier, title, and actor info' do
+      result = OutboundMessageComposer.call(event_type: 'issue.created', issue: @issue, actor: @user)
+      data = result[:data]
+      assert_equal 'mtasks', data[:source]
+      assert_equal 'issue.created', data[:event_type]
+      assert_equal 'ryan_omc@example.com', data[:actor_email]
+      assert_equal 'Ryan', data[:actor_name]
+      assert_equal 'ryan_omc', data[:actor_username]
+      assert_equal @issue.id, data[:issue_id]
+      assert_equal @issue.identifier, data[:identifier]
+      assert_equal 'Ship feature', data[:title]
+      assert_equal 'OMC', data[:team_slug]
+      assert_equal 'Proj', data[:project_name]
+      assert_equal 'Backlog', data[:status_lane_name]
+    end
+
+    test 'issue.created fallback body retains the legacy format' do
+      result = OutboundMessageComposer.call(event_type: 'issue.created', issue: @issue, actor: @user)
+      assert_equal "#{@issue.identifier} created by Ryan: Ship feature", result[:body]
+    end
+
+    test 'issue.created includes assignee data when present' do
+      @issue.update!(assignee: @other)
+      result = OutboundMessageComposer.call(event_type: 'issue.created', issue: @issue, actor: @user)
+      data = result[:data]
+      assert_equal 'sam_omc@example.com', data[:assignee_email]
+      assert_equal 'Sam', data[:assignee_name]
+      assert_equal 'sam_omc', data[:assignee_username]
+    end
+
+    test 'issue.created omits assignee fields when no assignee' do
+      result = OutboundMessageComposer.call(event_type: 'issue.created', issue: @issue, actor: @user)
+      data = result[:data]
+      assert_nil data[:assignee_email]
+      assert_nil data[:assignee_name]
+    end
+
+    test 'issue.created includes labels when present' do
+      label_a = @team.labels.create!(name: 'bug', color: '#f00')
+      label_b = @team.labels.create!(name: 'priority', color: '#fa0')
+      @issue.labels << label_a
+      @issue.labels << label_b
+      result = OutboundMessageComposer.call(event_type: 'issue.created', issue: @issue, actor: @user)
+      data = result[:data]
+      assert_equal 2, Array(data[:labels]).size
+      assert_includes data[:labels].map { |l| l[:name] }, 'bug'
+      assert_includes data[:labels].map { |l| l[:name] }, 'priority'
+    end
+
+    test 'issue.status_changed data carries from/to lane names' do
       version = fake_version('lane_id' => [@backlog.id, @in_progress.id])
-      body = OutboundMessageComposer.call(
+      result = OutboundMessageComposer.call(
         event_type: 'issue.status_changed', issue: @issue, actor: @user, version: version
       )
-      assert_equal "#{@issue.identifier} moved Backlog → In Progress by Ryan", body
+      assert_equal 'Backlog', result[:data][:from_lane_name]
+      assert_equal 'In Progress', result[:data][:to_lane_name]
+      assert_equal "#{@issue.identifier} moved Backlog → In Progress by Ryan", result[:body]
     end
 
-    test 'issue.assigned handles unassigned → user' do
+    test 'issue.assigned data carries new assignee info' do
       version = fake_version('assignee_id' => [nil, @other.id])
-      body = OutboundMessageComposer.call(
+      @issue.update_columns(assignee_id: @other.id)
+      result = OutboundMessageComposer.call(
         event_type: 'issue.assigned', issue: @issue, actor: @user, version: version
       )
-      assert_equal "#{@issue.identifier} reassigned Unassigned → Sam by Ryan", body
+      assert_equal 'sam_omc@example.com', result[:data][:assignee_email]
+      assert_equal 'Sam', result[:data][:assignee_name]
+      assert_equal "#{@issue.identifier} reassigned Unassigned → Sam by Ryan", result[:body]
     end
 
-    test 'issue.priority_changed maps integer enum values to labels' do
+    test 'issue.priority_changed maps integer enum values to lower-case labels' do
       version = fake_version('priority' => [Issue.priorities['low'], Issue.priorities['urgent']])
-      body = OutboundMessageComposer.call(
+      result = OutboundMessageComposer.call(
         event_type: 'issue.priority_changed', issue: @issue, actor: @user, version: version
       )
-      assert_equal "#{@issue.identifier} priority Low → Urgent by Ryan", body
+      assert_equal 'urgent', result[:data][:priority]
+      assert_equal "#{@issue.identifier} priority Low → Urgent by Ryan", result[:body]
     end
 
-    test 'issue.updated body falls back to generic update' do
-      body = OutboundMessageComposer.call(event_type: 'issue.updated', issue: @issue, actor: @user)
-      assert_equal "#{@issue.identifier} updated by Ryan", body
+    test 'issue.updated returns generic fallback body and base data' do
+      result = OutboundMessageComposer.call(event_type: 'issue.updated', issue: @issue, actor: @user)
+      assert_equal "#{@issue.identifier} updated by Ryan", result[:body]
+      assert_equal 'issue.updated', result[:data][:event_type]
     end
 
     test 'change body without version data falls back gracefully' do
       version = fake_version({})
-      body = OutboundMessageComposer.call(
+      result = OutboundMessageComposer.call(
         event_type: 'issue.status_changed', issue: @issue, actor: @user, version: version
       )
-      assert_equal "#{@issue.identifier} moved by Ryan", body
+      assert_equal "#{@issue.identifier} moved by Ryan", result[:body]
+      assert_nil result[:data][:from_lane_name]
+      assert_nil result[:data][:to_lane_name]
     end
   end
 end

@@ -48,15 +48,13 @@ class Hourglass::ApiClient
     get("/api/v1/channels/#{channel_id}/messages?#{URI.encode_www_form(query)}")
   end
 
-  def post_channel_message(channel_id, body:, message_type: nil, idempotency_key: nil)
-    payload = { body: body, data: { source: 'mtasks' } }
-    payload[:message_type] = message_type if message_type
+  def post_channel_message(channel_id, body:, data: nil, message_type: nil, idempotency_key: nil)
+    payload = build_message_payload(body: body, data: data, message_type: message_type)
     post("/api/v1/channels/#{channel_id}/messages", payload, idempotency_key: idempotency_key)
   end
 
-  def post_thread_message(message_id, body:, message_type: nil, idempotency_key: nil)
-    payload = { body: body, data: { source: 'mtasks' } }
-    payload[:message_type] = message_type if message_type
+  def post_thread_message(message_id, body:, data: nil, message_type: nil, idempotency_key: nil)
+    payload = build_message_payload(body: body, data: data, message_type: message_type)
     post("/api/v1/messages/#{message_id}/replies", payload, idempotency_key: idempotency_key)
   end
 
@@ -83,6 +81,13 @@ class Hourglass::ApiClient
   private
 
   attr_reader :base_url, :api_token
+
+  def build_message_payload(body:, data:, message_type:)
+    merged_data = { source: 'mtasks' }.merge(data || {})
+    payload = { body: body, data: merged_data }
+    payload[:message_type] = message_type if message_type
+    payload
+  end
 
   def get(path)
     request(Net::HTTP::Get, path)
