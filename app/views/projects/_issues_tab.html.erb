@@ -26,5 +26,5 @@
 </div>
 
 <div id="project_issues_list_<%= project.id %>">
-  <%= render "projects/issues_list", project: project, issues: issues, team: team, lanes: lanes, labels: labels %>
+  <%= render "projects/issues_list", project: project, issues: issues, team: team, lanes: lanes, labels: labels, thread_counts: @thread_counts %>
 </div>

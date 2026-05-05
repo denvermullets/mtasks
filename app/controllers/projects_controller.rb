@@ -124,6 +124,7 @@ class ProjectsController < ApplicationController
     @lanes = current_team.lanes.order(:position)
     @team_members = current_team.users.order(:name)
     @labels = current_team.labels.order(:name)
+    @thread_counts = HourglassThreadCountService.call(issues: @issues, user: Current.user)
   end
 
   def sorted_project_issues

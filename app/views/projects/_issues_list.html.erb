@@ -1,6 +1,8 @@
+<% thread_counts = local_assigns.fetch(:thread_counts, nil) %>
 <% if issues.any? %>
   <div class="space-y-1">
     <% issues.each do |issue| %>
+      <% issue_thread = thread_counts && thread_counts[issue.id] %>
       <div class="relative" data-controller="issue-card" data-issue-id="<%= issue.id %>">
         <%= link_to team_issue_path(team, issue),
             data: {
@@ -17,6 +19,19 @@
             <% end %>
           </span>
           <span class="text-sm text-gray-200 flex-1 truncate"><%= issue.title %></span>
+          <% if issue_thread && issue_thread[:link_id] %>
+            <span class="inline-flex items-center gap-0.5 text-xs text-gray-500 shrink-0" title="<%= pluralize(issue_thread[:total], 'thread message') %>">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7 8h10M7 12h6m-6 8l-3-3h13a3 3 0 003-3V7a3 3 0 00-3-3H7a3 3 0 00-3 3v13z"></path>
+              </svg>
+              <% if issue_thread[:total] > 0 %><%= issue_thread[:total] %><% end %>
+            </span>
+            <% if issue_thread[:unread] > 0 %>
+              <span class="inline-flex items-center justify-center min-w-[1rem] h-4 px-1 rounded-full text-[10px] font-medium bg-accent text-gray-900 shrink-0" title="<%= pluralize(issue_thread[:unread], 'unread message') %>">
+                <%= issue_thread[:unread] %>
+              </span>
+            <% end %>
+          <% end %>
           <% if issue.lane %>
             <span class="text-xs text-gray-500"><%= issue.lane.name %></span>
           <% end %>
