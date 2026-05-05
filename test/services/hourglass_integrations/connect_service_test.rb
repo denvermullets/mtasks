@@ -43,6 +43,33 @@ module HourglassIntegrations
       assert_subscriptions_for_each_team(integration)
     end
 
+    test 'persists hourglass_integration_id from /me integration field' do
+      stub_me(body: { id: 1, email: 'a@b', server: { id: 'srv_1', name: 'Acme' },
+                      integration: { id: 99 } })
+      stub_channels(count: 0)
+
+      result = run_connect(api_token: 'tk_good')
+      assert_equal 99, result.integration.hourglass_integration_id
+    end
+
+    test 'adopts webhook_secret from /me when Hourglass exposes one' do
+      stub_me(body: { id: 1, email: 'a@b', server: { id: 'srv_1', name: 'Acme' },
+                      integration: { id: 99, webhook_secret: 'shared-secret-xyz' } })
+      stub_channels(count: 0)
+
+      result = run_connect(api_token: 'tk_good')
+      assert_equal 'shared-secret-xyz', result.integration.webhook_secret
+    end
+
+    test 'falls back to a locally generated webhook_secret when /me lacks one' do
+      stub_me(body: { id: 1, email: 'a@b', server: { id: 'srv_1', name: 'Acme' },
+                      integration: { id: 99 } })
+      stub_channels(count: 0)
+
+      result = run_connect(api_token: 'tk_good')
+      assert_predicate result.integration.webhook_secret, :present?
+    end
+
     test 'raises Error when /me does not return a server' do
       stub_me(body: { id: 1, email: 'a@b' })
 

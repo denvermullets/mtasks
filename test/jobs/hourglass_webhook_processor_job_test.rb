@@ -63,6 +63,14 @@ class HourglassWebhookProcessorJobTest < ActiveJob::TestCase
     Kernel.silence_warnings { HourglassWebhookProcessorJob.const_set(:MESSAGE_HANDLERS, DEFAULT_HANDLERS) }
   end
 
+  def with_link_handlers(table)
+    original = HourglassWebhookProcessorJob::LINK_HANDLERS
+    Kernel.silence_warnings { HourglassWebhookProcessorJob.const_set(:LINK_HANDLERS, table) }
+    yield
+  ensure
+    Kernel.silence_warnings { HourglassWebhookProcessorJob.const_set(:LINK_HANDLERS, original) }
+  end
+
   test 'message.created routes to CreatedHandler' do
     captured = []
     handler = Class.new do
@@ -102,6 +110,34 @@ class HourglassWebhookProcessorJobTest < ActiveJob::TestCase
     end
 
     assert_equal ['message.unpinned'], captured
+  end
+
+  test 'link.created routes to Link::CreatedHandler' do
+    captured = []
+    handler = Class.new do
+      define_singleton_method(:call) { |delivery, _integration| captured << delivery.event_type }
+    end
+
+    @delivery.update!(event_type: 'link.created')
+    with_link_handlers('link.created' => handler) do
+      HourglassWebhookProcessorJob.perform_now(@integration.id, @delivery.id)
+    end
+
+    assert_equal ['link.created'], captured
+  end
+
+  test 'link.removed routes to Link::RemovedHandler' do
+    captured = []
+    handler = Class.new do
+      define_singleton_method(:call) { |delivery, _integration| captured << delivery.event_type }
+    end
+
+    @delivery.update!(event_type: 'link.removed')
+    with_link_handlers('link.removed' => handler) do
+      HourglassWebhookProcessorJob.perform_now(@integration.id, @delivery.id)
+    end
+
+    assert_equal ['link.removed'], captured
   end
 
   test 'still marks processed when handler raises' do

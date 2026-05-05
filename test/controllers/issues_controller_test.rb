@@ -53,4 +53,33 @@ class IssuesControllerTest < ActionDispatch::IntegrationTest
     @issue.reload
     assert_not_nil @issue.completed_at
   end
+
+  test 'show without a thread link offers the link affordance and keeps native comment form' do
+    get team_issue_path(@team, @issue)
+    assert_response :success
+    assert_includes response.body, 'Link Hourglass thread'
+    assert_includes response.body, 'id="comment_form"'
+  end
+
+  test 'show with a linked thread renders the Discussion section and hides the native comment form' do
+    integration = @workspace.hourglass_integrations.create!(
+      hourglass_server_id: 'srv', base_url: 'https://hg.test', api_token: 'tok',
+      webhook_secret: 'wh', connected_by_user: @user
+    )
+    @team.hourglass_links.create!(
+      link_type: 'issue_thread',
+      mtasks_issue: @issue,
+      mtasks_issue_identifier: @issue.identifier,
+      hourglass_thread_id: 'T_42',
+      hourglass_integration: integration,
+      created_by_user: @user
+    )
+
+    get team_issue_path(@team, @issue)
+    assert_response :success
+    assert_includes response.body, 'linked to thread'
+    assert_includes response.body, 'T_42'
+    assert_includes response.body, 'discussion_composer'
+    assert_not_includes response.body, 'id="comment_form"'
+  end
 end

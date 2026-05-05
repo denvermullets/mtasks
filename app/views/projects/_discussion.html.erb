@@ -1,4 +1,4 @@
-<%# locals: (project:, channel_link:, team:) %>
+<%# locals: (project:, channel_link:, team:, thread_id: nil) %>
 <% if channel_link.nil? %>
   <div class="border border-dashed border-stroke rounded-lg py-16 px-6 text-center">
     <div class="w-10 h-10 rounded-full bg-foreground border border-stroke mx-auto mb-4 flex items-center justify-center text-gray-500">
@@ -48,32 +48,60 @@
     </div>
   </div>
 <% else %>
+  <% thread_id = thread_id.presence if thread_id %>
   <div class="border border-stroke rounded-lg overflow-hidden" data-controller="discussion-filter">
     <div class="flex items-center justify-between px-4 py-3 border-b border-stroke bg-foreground">
       <div class="flex items-center gap-2 min-w-0">
-        <svg class="w-4 h-4 text-gray-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M5.5 8.5h13M5.5 15.5h13M9 4l-2 16M17 4l-2 16"/>
-        </svg>
-        <span class="text-sm font-medium text-gray-100 truncate">
-          <%= channel_link.hourglass_channel_name.presence || channel_link.hourglass_channel_id %>
-        </span>
-        <span class="text-xs text-gray-500 truncate">&middot; project channel</span>
+        <% if thread_id %>
+          <%= link_to discussion_team_project_path(team, project),
+              class: "inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-200" do %>
+            <span aria-hidden="true">&larr;</span>
+            <span>back to</span>
+            <span class="font-medium text-gray-200">#<%= channel_link.hourglass_channel_name.presence || channel_link.hourglass_channel_id %></span>
+          <% end %>
+          <span class="text-xs text-gray-500 truncate">&middot; thread <span class="font-mono"><%= thread_id %></span></span>
+        <% else %>
+          <svg class="w-4 h-4 text-gray-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5.5 8.5h13M5.5 15.5h13M9 4l-2 16M17 4l-2 16"/>
+          </svg>
+          <span class="text-sm font-medium text-gray-100 truncate">
+            <%= channel_link.hourglass_channel_name.presence || channel_link.hourglass_channel_id %>
+          </span>
+          <span class="text-xs text-gray-500 truncate">&middot; project channel</span>
+        <% end %>
       </div>
-      <%= button_to team_project_hourglass_channel_link_path(team, project),
-          method: :delete,
-          form: { data: { turbo_confirm: 'Unlink this channel from the project?' } },
-          class: "px-2 py-1 rounded text-xs text-gray-500 hover:text-gray-200 hover:bg-hover-highlight transition-colors" do %>
-        Unlink
+      <% unless thread_id %>
+        <%= button_to team_project_hourglass_channel_link_path(team, project),
+            method: :delete,
+            form: { data: { turbo_confirm: 'Unlink this channel from the project?' } },
+            class: "px-2 py-1 rounded text-xs text-gray-500 hover:text-gray-200 hover:bg-hover-highlight transition-colors" do %>
+          Unlink
+        <% end %>
       <% end %>
     </div>
-    <%= render 'projects/decisions_card', project: project %>
+    <% unless thread_id %>
+      <%= render 'projects/decisions_card', project: project %>
+    <% end %>
     <div id="discussion-flash" class="px-4 pt-3"></div>
     <%= turbo_stream_from "project_#{project.id}_discussion" %>
-    <div id="discussion-stream" data-discussion-filter-target="stream" class="divide-y divide-stroke/40">
-      <% items = DiscussionStreamService.call(project: project, channel_link: channel_link) %>
-      <% if items.empty? %>
-        <%= render "projects/discussion_empty_state", channel_link: channel_link %>
+    <div id="discussion-stream"
+         data-discussion-filter-target="stream"
+         class="divide-y divide-stroke/40 [&:has(article)>#discussion-empty-state]:hidden">
+      <% if thread_id %>
+        <% messages = HourglassMessageCache
+                        .where(hourglass_channel_id: channel_link.hourglass_channel_id)
+                        .where('hourglass_thread_id = :tid OR hourglass_message_id = :tid', tid: thread_id)
+                        .not_deleted
+                        .order(:posted_at) %>
+        <div id="discussion-empty-state" class="px-4 py-10 text-center text-xs text-gray-500 <%= 'hidden' if messages.any? %>">
+          No messages cached for this thread yet.
+        </div>
+        <% messages.each do |message| %>
+          <%= render "projects/discussion_message", message: message, team: team, channel_link: channel_link %>
+        <% end %>
       <% else %>
+        <% items = DiscussionStreamService.call(project: project, channel_link: channel_link) %>
+        <%= render "projects/discussion_empty_state", channel_link: channel_link, hidden: items.any? %>
         <% items.each do |item| %>
           <% if item.kind == :hourglass %>
             <%= render "projects/discussion_message", message: item.record, project: project, channel_link: channel_link %>
@@ -83,6 +111,10 @@
         <% end %>
       <% end %>
     </div>
-    <%= render "discussion/comments/composer", project: project, team: team %>
+    <% unless thread_id %>
+      <%= render "discussion/comments/composer",
+                 team: team,
+                 form_url: team_project_discussion_comments_path(team, project) %>
+    <% end %>
   </div>
 <% end %>

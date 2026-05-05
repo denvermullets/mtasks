@@ -14,6 +14,7 @@
       <span class="text-sm text-gray-400 font-mono truncate"><%= @issue.identifier %></span>
     </div>
     <div class="flex items-center gap-2">
+      <%= render 'issues/thread_badge', issue: @issue, issue_thread_link: @issue_thread_link %>
       <% if Current.user.admin? || @issue.creator == Current.user %>
         <%= link_to "Edit", edit_team_issue_path(@issue.team, @issue), class: "px-3 py-1.5 text-xs font-medium rounded bg-gray-800 text-gray-300 hover:bg-gray-700" %>
       <% end %>
@@ -60,10 +61,16 @@
           <%= render 'sidebar', issue: @issue, lanes: @lanes, team_members: @team_members, projects: @projects, labels: @labels, mobile: true %>
         </div>
 
+        <!-- Discussion Section (populated when an Hourglass thread is linked) -->
+        <%= render 'issues/discussion', issue: @issue, team: @issue.team, issue_thread_link: @issue_thread_link %>
+
         <!-- Activity Section -->
         <div class="border-t border-stroke pt-6 sm:pt-8">
           <div class="flex items-center justify-between mb-4 sm:mb-6">
             <h2 class="text-sm font-semibold text-gray-400">Activity</h2>
+            <%= turbo_frame_tag "issue_thread_link_action_#{@issue.id}" do %>
+              <%= render 'issues/thread_link_action', issue: @issue, issue_thread_link: @issue_thread_link %>
+            <% end %>
           </div>
           <!-- Created entry -->
           <div class="mb-1">
@@ -75,6 +82,7 @@
           <!-- Activity Timeline -->
           <div id="activity_list">
             <% VersionDescriptionService.timeline(@issue).each do |entry| %>
+              <% next if entry[:type] == :comment && @issue_thread_link.present? %>
               <% if entry[:type] == :version %>
                 <%= render 'issues/activity_entry', version: entry[:record] %>
               <% elsif entry[:type] == :reference %>
@@ -84,10 +92,9 @@
               <% end %>
             <% end %>
           </div>
-          <!-- Comment Form -->
-          <div class="mt-5"></div>
-          <%= turbo_frame_tag "comment_form" do %>
-            <%= render 'comments/form', issue: @issue, comment: Comment.new %>
+          <!-- Comment Form (visible only when no thread link; replaced via Turbo on link/unlink) -->
+          <%= turbo_frame_tag "issue_native_comment_form_#{@issue.id}" do %>
+            <%= render 'issues/native_comment_form', issue: @issue, issue_thread_link: @issue_thread_link %>
           <% end %>
         </div>
       </div>
@@ -99,6 +106,7 @@
   </div>
 
   <%= render "shared/lightbox" %>
+  <%= turbo_frame_tag "hourglass_thread_link_modal" %>
 </div>
 <% content_for :head do %>
   <style>

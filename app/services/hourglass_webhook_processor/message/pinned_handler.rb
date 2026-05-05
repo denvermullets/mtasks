@@ -24,9 +24,9 @@ module HourglassWebhookProcessor
         pinned_by_email = payload.dig('pinned_by', 'email') || payload['pinned_by_email']
         cache.update!(pinned_at: pinned_at, pinned_by_email: pinned_by_email)
 
-        decision, action = upsert_decision(cache, link, pinned_at, pinned_by_email)
+        upsert_decision(cache, link, pinned_at, pinned_by_email)
         broadcast_message(action: :replace, cache: cache, link: link)
-        broadcast_decision(action: action, decision: decision, link: link)
+        Decisions::BroadcastCardService.call(project: link.mtasks_project)
       end
 
       def upsert_decision(cache, link, pinned_at, pinned_by_email)
@@ -39,9 +39,8 @@ module HourglassWebhookProcessor
             pinned_at: pinned_at,
             pinned_by_user: resolved_user || existing.pinned_by_user
           )
-          [existing, :replace]
         else
-          [create_decision(cache, link, pinned_at, resolved_user), :append]
+          create_decision(cache, link, pinned_at, resolved_user)
         end
       end
 
@@ -65,23 +64,6 @@ module HourglassWebhookProcessor
           integration: link.hourglass_integration || integration,
           lazy_fetch: true
         ).user
-      end
-
-      def broadcast_decision(action:, decision:, link:)
-        stream = "project_#{link.mtasks_project_id}_decisions"
-        common = {
-          partial: 'decisions/decision',
-          locals: { decision: decision }
-        }
-        if action == :append
-          Turbo::StreamsChannel.broadcast_append_later_to(
-            stream, target: "project_#{link.mtasks_project_id}_decisions_list", **common
-          )
-        else
-          Turbo::StreamsChannel.broadcast_replace_later_to(
-            stream, target: ActionView::RecordIdentifier.dom_id(decision), **common
-          )
-        end
       end
     end
   end

@@ -2,21 +2,21 @@ module Discussion
   class PushCommentToChatService < Service
     Result = Struct.new(:success?, :channel_name, :error, keyword_init: true)
 
-    def initialize(comment:)
+    def initialize(comment:, link: nil)
       @comment = comment
+      @explicit_link = link
     end
 
     def call
       if @comment.pushed_to_hourglass_message_id.present?
-        return Result.new(success?: true,
-                          channel_name: link&.hourglass_channel_name)
+        return Result.new(success?: true, channel_name: link&.hourglass_channel_name)
       end
 
       if link.nil? || link.broken?
         return Result.new(success?: false,
-                          error: 'No active hourglass channel link for this project.')
+                          error: 'No active hourglass link for this comment.')
       end
-      return Result.new(success?: false, error: 'Channel link is missing its integration.') if integration.nil?
+      return Result.new(success?: false, error: 'Link is missing its integration.') if integration.nil?
 
       push!
     end
@@ -25,12 +25,7 @@ module Discussion
 
     def push!
       body = ChatMessageFormatter.call(comment: @comment)
-      response = api_client.post_channel_message(
-        link.hourglass_channel_id,
-        body: body,
-        message_type: 'system',
-        idempotency_key: "comment-#{@comment.id}-push"
-      )
+      response = post_message(body)
       message_id = response['id']&.to_s
       @comment.update!(
         pushed_to_hourglass_message_id: message_id,
@@ -42,8 +37,25 @@ module Discussion
       Result.new(success?: false, error: e.message)
     end
 
+    def post_message(body)
+      key = "comment-#{@comment.id}-push"
+      if link.link_type == 'issue_thread'
+        api_client.post_thread_message(link.hourglass_thread_id, body: body, message_type: 'system',
+                                                                 idempotency_key: key)
+      else
+        api_client.post_channel_message(link.hourglass_channel_id, body: body, message_type: 'system',
+                                                                   idempotency_key: key)
+      end
+    end
+
     def link
-      @link ||= HourglassLink.for_project(@comment.project).active.first
+      @link ||= @explicit_link || default_link
+    end
+
+    def default_link
+      return nil unless @comment.project
+
+      HourglassLink.for_project(@comment.project).active.first
     end
 
     def integration

@@ -68,4 +68,35 @@ class DiscussionStreamServiceTest < ActiveSupport::TestCase
     items = DiscussionStreamService.call(project: @project)
     assert_equal(['right channel'], items.map { |i| i.record.body })
   end
+
+  test 'with issue + issue_thread_link merges thread messages and issue comments' do
+    lane = @team.lanes.create!(name: 'L', position: 0)
+    issue = @team.issues.create!(title: 'I', lane: lane, creator: @user)
+    thread_link = @team.hourglass_links.create!(
+      link_type: 'issue_thread',
+      mtasks_issue: issue,
+      mtasks_issue_identifier: issue.identifier,
+      hourglass_thread_id: 'T_42',
+      hourglass_integration: @integration,
+      created_by_user: @user
+    )
+
+    HourglassMessageCache.create!(
+      hourglass_message_id: 'tm1', hourglass_channel_id: 'C1', hourglass_thread_id: 'T_42',
+      body: 'in-thread chat', posted_at: 2.minutes.ago, source: 'webhook'
+    )
+    HourglassMessageCache.create!(
+      hourglass_message_id: 'cm1', hourglass_channel_id: 'C1',
+      body: 'channel-only chat', posted_at: 1.minute.ago, source: 'webhook'
+    )
+    issue.comments.create!(user: @user, body: 'native on issue', created_at: 90.seconds.ago)
+
+    items = DiscussionStreamService.call(issue: issue, issue_thread_link: thread_link)
+    bodies = items.map { |i| i.record.body }
+
+    assert_equal %w[hourglass native].sort, items.map(&:kind).map(&:to_s).uniq.sort
+    assert_includes bodies, 'in-thread chat'
+    assert_includes bodies, 'native on issue'
+    assert_not_includes bodies, 'channel-only chat'
+  end
 end

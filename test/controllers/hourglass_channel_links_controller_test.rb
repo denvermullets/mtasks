@@ -44,7 +44,8 @@ class HourglassChannelLinksControllerTest < ActionDispatch::IntegrationTest
   end
 
   test 'create persists link and responds with turbo_stream' do
-    stub_request(:post, "#{BASE}/api/v1/links").to_return(status: 200, body: '{}')
+    @integration.update!(hourglass_integration_id: 7)
+    stub_request(:post, "#{BASE}/webhooks/mtasks/7").to_return(status: 200, body: '{}')
 
     perform_enqueued_jobs do
       assert_difference 'HourglassLink.count', 1 do
@@ -62,6 +63,7 @@ class HourglassChannelLinksControllerTest < ActionDispatch::IntegrationTest
   end
 
   test 'destroy removes link and responds with turbo_stream' do
+    @integration.update!(hourglass_integration_id: 7)
     @team.hourglass_links.create!(
       link_type: 'project_channel',
       mtasks_project: @project,
@@ -70,7 +72,7 @@ class HourglassChannelLinksControllerTest < ActionDispatch::IntegrationTest
       hourglass_integration: @integration,
       created_by_user: @user
     )
-    stub_request(:post, "#{BASE}/api/v1/links/destroyed").to_return(status: 200, body: '{}')
+    stub_request(:post, "#{BASE}/webhooks/mtasks/7").to_return(status: 200, body: '{}')
 
     perform_enqueued_jobs do
       assert_difference 'HourglassLink.count', -1 do

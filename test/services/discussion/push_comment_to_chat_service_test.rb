@@ -41,7 +41,16 @@ module Discussion
       end
 
       def post_channel_message(channel_id, body:, message_type: nil, idempotency_key: nil)
-        @calls << { channel_id: channel_id, body: body, message_type: message_type, idempotency_key: idempotency_key }
+        @calls << { kind: :channel, channel_id: channel_id, body: body, message_type: message_type,
+                    idempotency_key: idempotency_key }
+        raise @raise_error if @raise_error
+
+        @response
+      end
+
+      def post_thread_message(thread_id, body:, message_type: nil, idempotency_key: nil)
+        @calls << { kind: :thread, thread_id: thread_id, body: body, message_type: message_type,
+                    idempotency_key: idempotency_key }
         raise @raise_error if @raise_error
 
         @response
@@ -87,8 +96,32 @@ module Discussion
 
       result = PushCommentToChatService.call(comment: comment)
       assert_not result.success?
-      assert_match(/no active hourglass channel link/i, result.error)
+      assert_match(/no active hourglass link/i, result.error)
       assert_nil comment.reload.pushed_to_hourglass_message_id
+    end
+
+    test 'with explicit issue_thread link posts via post_thread_message' do
+      lane = @team.lanes.create!(name: 'Backlog', position: 0)
+      issue = @team.issues.create!(title: 'I', creator: @user, lane: lane)
+      thread_link = @team.hourglass_links.create!(
+        link_type: 'issue_thread',
+        mtasks_issue: issue,
+        mtasks_issue_identifier: issue.identifier,
+        hourglass_thread_id: 'T_42',
+        hourglass_integration: @integration,
+        created_by_user: @user
+      )
+      comment = issue.comments.create!(user: @user, body: 'thread reply')
+      client = StubClient.new(response: { 'id' => 'm_thread' })
+
+      result = with_stubbed_client(client) { PushCommentToChatService.call(comment: comment, link: thread_link) }
+
+      assert result.success?
+      call = client.calls.first
+      assert_equal :thread, call[:kind]
+      assert_equal 'T_42', call[:thread_id]
+      assert_equal "comment-#{comment.id}-push", call[:idempotency_key]
+      assert_equal 'm_thread', comment.reload.pushed_to_hourglass_message_id
     end
 
     test 'API failure does not stamp the comment and returns the error' do

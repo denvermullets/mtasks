@@ -26,6 +26,7 @@ class ProjectsController < ApplicationController
   def discussion
     @active_tab = :discussion
     @channel_link = @project.hourglass_channel_link
+    @thread_id = params[:thread].presence
     load_show_data!
     render :show
   end

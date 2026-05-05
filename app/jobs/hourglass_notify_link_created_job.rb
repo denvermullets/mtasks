@@ -5,17 +5,23 @@ class HourglassNotifyLinkCreatedJob < ApplicationJob
 
   def perform(link_id)
     link = HourglassLink.find_by(id: link_id)
-    return unless link
+    return unless link&.project_channel?
 
     integration = link.hourglass_integration
     return unless integration&.active?
 
-    client = Hourglass::ApiClient.for_integration(integration)
-    client.notify_link_created(channel_id: link.hourglass_channel_id, project: link.mtasks_project)
-  rescue Hourglass::ApiClient::NotFound => e
-    Rails.logger.warn(
-      "HourglassNotifyLinkCreatedJob link #{link_id}: hourglass missing /links (#{e.message}); leaving active"
+    Hourglass::WebhookDispatcher.call(
+      integration: integration,
+      event_type: 'link.created',
+      data: {
+        link_type: 'project_channel',
+        hourglass_channel_id: link.hourglass_channel_id,
+        mtasks_project_id: link.mtasks_project_id,
+        created_by_user_id: link.created_by_user_id
+      }
     )
+  rescue Hourglass::ApiClient::NotFound => e
+    Rails.logger.warn("HourglassNotifyLinkCreatedJob link #{link_id}: #{e.message}; leaving active")
   rescue Hourglass::ApiClient::Unauthorized => e
     Rails.logger.warn("HourglassNotifyLinkCreatedJob marking link #{link_id} broken: #{e.message}")
     link&.update(status: 'broken')

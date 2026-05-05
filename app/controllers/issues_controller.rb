@@ -27,6 +27,7 @@ class IssuesController < ApplicationController
   def show
     Current.user.notifications.unread.where(issue_id: @issue.id).update_all(read_at: Time.current)
     load_form_collections
+    @issue_thread_link = HourglassLink.for_issue(@issue).first
   end
 
   def new
@@ -126,16 +127,6 @@ class IssuesController < ApplicationController
     return if (Current.user.admin? || @issue.creator == Current.user) && action_name.in?(%w[edit destroy])
 
     redirect_to team_issue_path(@issue.team, @issue), alert: 'You do not have permission to modify this issue.'
-  end
-
-  def load_board_data
-    load_display_options
-    base_issues = current_team.issues.not_archived.includes(
-      :lane, :project, :labels, :assignee, :creator, :blocking_dependencies, :blocked_dependencies, :comments
-    )
-    @display_service = build_display_service(base_issues)
-    @grouped_issues = @display_service.grouped_issues
-    @empty_groups = @display_service.empty_groups
   end
 
   def build_display_service(base_issues)

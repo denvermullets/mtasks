@@ -43,7 +43,7 @@ class HourglassOutboundEmitterJob < ApplicationJob
   end
 
   def resolve_link
-    thread = HourglassLink.issue_thread.where(mtasks_issue_id: @issue.id).active.first
+    thread = HourglassLink.for_issue(@issue).active.first
     return thread if thread && @event_type != 'issue.created'
     return nil unless @issue.project
 

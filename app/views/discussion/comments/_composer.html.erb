@@ -1,7 +1,8 @@
-<%# locals: (project:, team:, comment: nil) %>
+<%# locals: (team:, form_url:, comment: nil, mention_search_url: nil, hint: nil, toggle_label: "Also send to chat") %>
 <% comment ||= Comment.new %>
+<% mention_search_url ||= search_team_members_path(team) %>
 <%= form_with model: comment,
-              url: team_project_discussion_comments_path(team, project),
+              url: form_url,
               html: { class: "bg-foreground border-t border-stroke px-4 py-3", id: "discussion_composer" },
               data: { turbo_frame: "_top", controller: "submit-on-cmd-enter discussion-composer" } do |form| %>
   <div class="flex items-start gap-3">
@@ -10,7 +11,7 @@
     </div>
     <div class="flex-1 min-w-0">
       <div data-controller="user-mention"
-           data-user-mention-search-url-value="<%= search_team_members_path(project.team) %>"
+           data-user-mention-search-url-value="<%= mention_search_url %>"
            class="rounded transition-colors relative">
         <%= form.text_area :body,
             placeholder: "Write a comment...",
@@ -37,7 +38,7 @@
           <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 5l7 7-7 7"/>
           </svg>
-          Also send to chat
+          <%= toggle_label %>
         </button>
         <%= hidden_field_tag :also_send_to_chat, "0", data: { discussion_composer_target: "hiddenInput" } %>
         <button type="submit"
@@ -45,6 +46,9 @@
           Comment
         </button>
       </div>
+      <% if hint %>
+        <p class="text-[11px] text-gray-500 mt-1.5"><%= hint %></p>
+      <% end %>
     </div>
   </div>
 <% end %>

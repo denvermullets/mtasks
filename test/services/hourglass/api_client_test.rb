@@ -65,14 +65,24 @@ module Hourglass
       assert_equal 3, channels.size
     end
 
-    test 'post_channel_message posts JSON body' do
+    test 'post_channel_message posts JSON body tagged with source: mtasks' do
       stub_request(:post, "#{BASE}/api/v1/channels/c1/messages")
-        .with(body: { body: 'hi' }.to_json)
+        .with(body: { body: 'hi', data: { source: 'mtasks' } }.to_json)
         .to_return(status: 201, body: { id: 99, body: 'hi' }.to_json,
                    headers: { 'Content-Type' => 'application/json' })
 
       res = @client.post_channel_message('c1', body: 'hi')
       assert_equal 99, res['id']
+    end
+
+    test 'post_thread_message posts JSON body tagged with source: mtasks' do
+      stub_request(:post, "#{BASE}/api/v1/messages/m1/replies")
+        .with(body: { body: 'hi', data: { source: 'mtasks' } }.to_json)
+        .to_return(status: 201, body: { id: 100, body: 'hi' }.to_json,
+                   headers: { 'Content-Type' => 'application/json' })
+
+      res = @client.post_thread_message('m1', body: 'hi')
+      assert_equal 100, res['id']
     end
 
     test 'identify_user URL-escapes the email' do

@@ -1,0 +1,21 @@
+<% composer_locals = {
+     team: @issue.team,
+     form_url: team_issue_discussion_comments_path(@issue.team, @issue),
+     toggle_label: "Also send to thread",
+     hint: "Toggle on to also post into the linked Hourglass thread."
+   }
+   composer_locals[:comment] = @comment unless @comment.persisted? %>
+<%= turbo_stream.replace "discussion_composer", partial: "discussion/comments/composer",
+                                                locals: composer_locals %>
+
+<% if @comment.persisted? && push_result %>
+  <% if push_result.success? %>
+    <%= turbo_stream.update "issue_discussion_flash_#{@issue.id}" do %>
+      <%= render "shared/flash", message: "Comment posted to thread.", type: "notice" %>
+    <% end %>
+  <% else %>
+    <%= turbo_stream.update "issue_discussion_flash_#{@issue.id}" do %>
+      <%= render "shared/flash", message: "Comment saved, but chat push failed: #{push_result.error}", type: "alert" %>
+    <% end %>
+  <% end %>
+<% end %>

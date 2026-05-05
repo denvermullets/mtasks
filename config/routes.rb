@@ -66,6 +66,12 @@ Rails.application.routes.draw do
           post :bulk_create
         end
       end
+      resource :hourglass_thread_link,
+               only: %i[new create destroy],
+               controller: 'hourglass_thread_links'
+      namespace :discussion do
+        resources :comments, only: [:create], controller: 'issue_comments'
+      end
       get :search, on: :collection
     end
   end
@@ -103,6 +109,7 @@ Rails.application.routes.draw do
         resources :labels, only: %i[index create]
         resources :projects, only: %i[index show create update destroy] do
           resources :decisions, only: %i[create destroy]
+          resources :comments, only: %i[index create], controller: 'project_comments'
         end
         resources :members, only: [:index]
       end

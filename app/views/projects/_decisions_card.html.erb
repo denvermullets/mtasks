@@ -1,31 +1,5 @@
 <%# locals: (project:) %>
 <%= turbo_stream_from "project_#{project.id}_decisions" %>
-<% decisions = Decision.where(project: project).order(pinned_at: :desc) %>
-<% active_count = decisions.active.size %>
-<div class="border-b border-stroke bg-foreground/40">
-  <div class="flex items-center justify-between px-4 py-2">
-    <div class="flex items-center gap-2">
-      <svg class="w-3.5 h-3.5 text-amber-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M5 12V7a3 3 0 016 0v5l3 3-9 0 3-3z" transform="rotate(45 12 12)"/>
-      </svg>
-      <span class="text-xs text-gray-300 font-medium">
-        <%= pluralize(active_count, 'decision') %>
-      </span>
-    </div>
-    <button type="button"
-            data-action="click->discussion-filter#toggleDecisionsOnly"
-            data-discussion-filter-target="toggle"
-            class="text-[11px] px-2 py-1 rounded border border-stroke text-gray-400 hover:text-gray-200 hover:bg-hover-highlight transition-colors">
-      Decisions only
-    </button>
-  </div>
-  <div id="project_<%= project.id %>_decisions_list" class="px-4 pb-3 space-y-2">
-    <% if decisions.empty? %>
-      <p class="text-xs text-gray-500 italic">
-        No pinned decisions yet. Pin a message in the linked channel to capture one.
-      </p>
-    <% else %>
-      <%= render partial: 'decisions/decision', collection: decisions, as: :decision %>
-    <% end %>
-  </div>
-</div>
+<%= turbo_frame_tag "project_#{project.id}_decisions_card" do %>
+  <%= render 'projects/decisions_card_body', project: project %>
+<% end %>
