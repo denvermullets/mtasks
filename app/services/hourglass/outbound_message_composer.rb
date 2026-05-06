@@ -29,6 +29,7 @@ module Hourglass
       {
         source: 'mtasks',
         event_type: @event_type,
+        source_url: source_url,
         actor_email: @actor&.email,
         actor_name: @actor&.name,
         actor_username: username_for(@actor),
@@ -36,8 +37,15 @@ module Hourglass
         identifier: @issue.identifier,
         title: @issue.title,
         team_slug: @issue.team&.identifier,
+        project_id: @issue.project&.id,
         project_name: @issue.project&.name
       }.compact
+    end
+
+    def source_url
+      return nil unless @issue.team
+
+      "#{Hourglass::PublicUrl.base}#{Rails.application.routes.url_helpers.team_issue_path(@issue.team, @issue)}"
     end
 
     def event_specific_data

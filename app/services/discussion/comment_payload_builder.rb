@@ -14,6 +14,7 @@ module Discussion
       payload = {
         source: 'mtasks',
         event_type: event_type,
+        source_url: source_url,
         actor_email: @comment.user&.email,
         actor_name: @comment.user&.name,
         actor_username: username_for(@comment.user),
@@ -26,6 +27,17 @@ module Discussion
 
     def event_type
       @comment.issue ? 'issue.commented' : 'project.commented'
+    end
+
+    def source_url
+      helpers = Rails.application.routes.url_helpers
+      base = Hourglass::PublicUrl.base
+
+      if @comment.issue&.team
+        "#{base}#{helpers.team_issue_path(@comment.issue.team, @comment.issue)}"
+      elsif @comment.project&.team
+        "#{base}#{helpers.discussion_team_project_path(@comment.project.team, @comment.project)}"
+      end
     end
 
     def issue_fields
@@ -44,7 +56,11 @@ module Discussion
       project = @comment.project || @comment.issue&.project
       return {} unless project
 
-      { project_name: project.name }
+      {
+        project_id: project.id,
+        project_name: project.name,
+        team_slug: project.team&.identifier
+      }
     end
 
     def fallback_body

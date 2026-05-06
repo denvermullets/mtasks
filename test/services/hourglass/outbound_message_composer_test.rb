@@ -25,7 +25,7 @@ module Hourglass
       assert result.key?(:data)
     end
 
-    test 'issue.created data carries identifier, title, and actor info' do
+    test 'issue.created data carries identifier, title, actor info, and source_url' do
       result = OutboundMessageComposer.call(event_type: 'issue.created', issue: @issue, actor: @user)
       data = result[:data]
       assert_equal 'mtasks', data[:source]
@@ -39,6 +39,7 @@ module Hourglass
       assert_equal 'OMC', data[:team_slug]
       assert_equal 'Proj', data[:project_name]
       assert_equal 'Backlog', data[:status_lane_name]
+      assert_match(%r{\Ahttp://[^/]+/teams/#{@team.id}/issues/#{@issue.id}\z}, data[:source_url])
     end
 
     test 'issue.created fallback body retains the legacy format' do

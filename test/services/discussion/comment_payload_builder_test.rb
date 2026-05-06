@@ -18,6 +18,7 @@ module Discussion
       data = result[:data]
       assert_equal 'mtasks', data[:source]
       assert_equal 'project.commented', data[:event_type]
+      assert_match(%r{\Ahttp://[^/]+/teams/#{@team.id}/projects/#{@project.id}\z}, data[:source_url])
       assert_equal 'casey@example.com', data[:actor_email]
       assert_equal 'Casey Smith', data[:actor_name]
       assert_equal 'casey', data[:actor_username]
@@ -40,6 +41,7 @@ module Discussion
       assert_equal 'I', data[:title]
       assert_equal 'CPB', data[:team_slug]
       assert_equal 'Proj', data[:project_name]
+      assert_match(%r{\Ahttp://[^/]+/teams/#{@team.id}/issues/#{issue.id}\z}, data[:source_url])
     end
 
     test 'rewrites @Name mention to @email when target user has a hourglass user map' do
