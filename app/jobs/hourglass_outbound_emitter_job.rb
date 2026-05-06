@@ -35,11 +35,11 @@ class HourglassOutboundEmitterJob < ApplicationJob
   end
 
   def dispatch
-    body = Hourglass::OutboundMessageComposer.call(
+    payload = Hourglass::OutboundMessageComposer.call(
       event_type: @event_type, issue: @issue, actor: @actor, version: @version
     )
-    response = post_message(body)
-    record_echo(response, body)
+    response = post_message(payload)
+    record_echo(response, payload[:body])
   end
 
   def resolve_link
@@ -50,14 +50,15 @@ class HourglassOutboundEmitterJob < ApplicationJob
     HourglassLink.for_project(@issue.project).active.first
   end
 
-  def post_message(body)
+  def post_message(payload)
     client = Hourglass::ApiClient.for_integration(@link.hourglass_integration)
     key = "issue-#{@issue.id}-#{@event_type}-#{@version_id || 'create'}"
+    args = { body: payload[:body], data: payload[:data], message_type: 'system', idempotency_key: key }
 
     if @link.link_type == 'issue_thread'
-      client.post_thread_message(@link.hourglass_thread_id, body: body, message_type: 'system', idempotency_key: key)
+      client.post_thread_message(@link.hourglass_thread_id, **args)
     else
-      client.post_channel_message(@link.hourglass_channel_id, body: body, message_type: 'system', idempotency_key: key)
+      client.post_channel_message(@link.hourglass_channel_id, **args)
     end
   end
 

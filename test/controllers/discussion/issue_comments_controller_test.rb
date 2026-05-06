@@ -41,8 +41,9 @@ module Discussion
         @calls = []
       end
 
-      def post_thread_message(thread_id, body:, message_type: nil, idempotency_key: nil)
-        @calls << { thread_id: thread_id, body: body, message_type: message_type, idempotency_key: idempotency_key }
+      def post_thread_message(thread_id, body:, data: nil, message_type: nil, idempotency_key: nil)
+        @calls << { thread_id: thread_id, body: body, data: data, message_type: message_type,
+                    idempotency_key: idempotency_key }
         @response
       end
 

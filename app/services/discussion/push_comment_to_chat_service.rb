@@ -24,8 +24,8 @@ module Discussion
     private
 
     def push!
-      body = ChatMessageFormatter.call(comment: @comment)
-      response = post_message(body)
+      payload = CommentPayloadBuilder.call(comment: @comment)
+      response = post_message(payload)
       message_id = response['id']&.to_s
       @comment.update!(
         pushed_to_hourglass_message_id: message_id,
@@ -37,14 +37,14 @@ module Discussion
       Result.new(success?: false, error: e.message)
     end
 
-    def post_message(body)
+    def post_message(payload)
       key = "comment-#{@comment.id}-push"
+      args = { body: payload[:body], data: payload[:data], message_type: 'system', idempotency_key: key }
+
       if link.link_type == 'issue_thread'
-        api_client.post_thread_message(link.hourglass_thread_id, body: body, message_type: 'system',
-                                                                 idempotency_key: key)
+        api_client.post_thread_message(link.hourglass_thread_id, **args)
       else
-        api_client.post_channel_message(link.hourglass_channel_id, body: body, message_type: 'system',
-                                                                   idempotency_key: key)
+        api_client.post_channel_message(link.hourglass_channel_id, **args)
       end
     end
 

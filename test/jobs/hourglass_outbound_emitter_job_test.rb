@@ -22,6 +22,7 @@ class HourglassOutboundEmitterJobTest < ActiveJob::TestCase
         { 'id' => message_id, 'channel_id' => channel_id }
       end
     end
+    fake.define_singleton_method(:respond_to_missing?) { |*| true }
     fake
   end
 
@@ -79,6 +80,10 @@ class HourglassOutboundEmitterJobTest < ActiveJob::TestCase
     assert_equal 'system', captured[:message_type]
     assert_match(/created by Ryan: Ship it/, captured[:body])
     assert_match(/^issue-#{@issue.id}-issue.created-create$/, captured[:idempotency_key])
+    assert_kind_of Hash, captured[:data]
+    assert_equal 'issue.created', captured[:data][:event_type]
+    assert_equal @issue.identifier, captured[:data][:identifier]
+    assert_equal 'Ship it', captured[:data][:title]
 
     echo = HourglassMessageCache.find_by(hourglass_message_id: 'M_OUT')
     assert_equal 'echo', echo.source

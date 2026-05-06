@@ -16,6 +16,7 @@ class HourglassNotifyLinkCreatedJob < ApplicationJob
       data: {
         link_type: 'project_channel',
         hourglass_channel_id: link.hourglass_channel_id,
+        mtasks_team_id: link.team_id,
         mtasks_project_id: link.mtasks_project_id,
         created_by_user_id: link.created_by_user_id
       }

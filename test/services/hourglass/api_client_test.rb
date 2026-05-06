@@ -85,6 +85,18 @@ module Hourglass
       assert_equal 100, res['id']
     end
 
+    test 'post_channel_message merges caller data with source: mtasks' do
+      stub_request(:post, "#{BASE}/api/v1/channels/c1/messages")
+        .with(body: { body: 'hi',
+                      data: { source: 'mtasks', event_type: 'issue.created', identifier: 'BZL-1' } }.to_json)
+        .to_return(status: 201, body: { id: 99 }.to_json,
+                   headers: { 'Content-Type' => 'application/json' })
+
+      res = @client.post_channel_message('c1', body: 'hi',
+                                               data: { event_type: 'issue.created', identifier: 'BZL-1' })
+      assert_equal 99, res['id']
+    end
+
     test 'identify_user URL-escapes the email' do
       stub_request(:get, "#{BASE}/api/v1/users/lookup?email=a%2Bb%40c.test")
         .to_return(status: 200, body: { id: 5 }.to_json,

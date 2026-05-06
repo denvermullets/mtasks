@@ -40,17 +40,17 @@ module Discussion
         @calls = []
       end
 
-      def post_channel_message(channel_id, body:, message_type: nil, idempotency_key: nil)
-        @calls << { kind: :channel, channel_id: channel_id, body: body, message_type: message_type,
-                    idempotency_key: idempotency_key }
+      def post_channel_message(channel_id, body:, data: nil, message_type: nil, idempotency_key: nil)
+        @calls << { kind: :channel, channel_id: channel_id, body: body, data: data,
+                    message_type: message_type, idempotency_key: idempotency_key }
         raise @raise_error if @raise_error
 
         @response
       end
 
-      def post_thread_message(thread_id, body:, message_type: nil, idempotency_key: nil)
-        @calls << { kind: :thread, thread_id: thread_id, body: body, message_type: message_type,
-                    idempotency_key: idempotency_key }
+      def post_thread_message(thread_id, body:, data: nil, message_type: nil, idempotency_key: nil)
+        @calls << { kind: :thread, thread_id: thread_id, body: body, data: data,
+                    message_type: message_type, idempotency_key: idempotency_key }
         raise @raise_error if @raise_error
 
         @response
@@ -73,7 +73,11 @@ module Discussion
       assert_equal 'C1', call[:channel_id]
       assert_equal 'system', call[:message_type]
       assert_equal "comment-#{comment.id}-push", call[:idempotency_key]
-      assert_includes call[:body], 'said in JAIT:'
+      assert_equal 'project.commented', call[:data][:event_type]
+      assert_equal comment.id, call[:data][:comment_id]
+      assert_equal 'hello world', call[:data][:comment_body]
+      assert_equal @user.email, call[:data][:actor_email]
+      assert_equal @user.name, call[:data][:actor_name]
     end
 
     test 'idempotent re-push when already pushed returns success without calling API' do
