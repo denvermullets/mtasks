@@ -23,9 +23,10 @@ module HourglassLinks
     private
 
     def build_payload
-      common = { integration_id: @link.hourglass_integration_id }
+      common = { integration_id: @link.hourglass_integration_id, team_id: @link.team_id }
       if @link.issue_thread?
         common.merge(
+          mtasks_team_id: @link.team_id,
           mtasks_issue_id: @link.mtasks_issue_id,
           hourglass_thread_id: @link.hourglass_thread_id
         )

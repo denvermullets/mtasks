@@ -18,7 +18,9 @@ class IssuesController < ApplicationController
     @grouped_issues = @display_service.grouped_issues
     @empty_groups = @display_service.empty_groups
     load_index_filters
-    @thread_counts = HourglassThreadCountService.call(issues: @grouped_issues.values.flatten, user: Current.user)
+    @thread_counts = HourglassThreadCountService.call(
+      issues: @grouped_issues.values.flat_map { |group| group[:issues] }, user: Current.user
+    )
   end
 
   def show
