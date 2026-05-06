@@ -123,8 +123,8 @@ class IssuesController < ApplicationController
     # Allow any team member to update issues for inline editing
     return if current_team.users.include?(Current.user)
 
-    # Only allow creator or admin for edit/destroy actions
-    return if (Current.user.admin? || @issue.creator == Current.user) && action_name.in?(%w[edit destroy])
+    # Only allow creator or team admin for edit/destroy actions
+    return if (@issue.creator == Current.user || team_admin?(@issue.team)) && action_name.in?(%w[edit destroy])
 
     redirect_to team_issue_path(@issue.team, @issue), alert: 'You do not have permission to modify this issue.'
   end

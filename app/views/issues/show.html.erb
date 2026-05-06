@@ -15,7 +15,7 @@
     </div>
     <div class="flex items-center gap-2">
       <%= render 'issues/thread_badge', issue: @issue, issue_thread_link: @issue_thread_link %>
-      <% if Current.user.admin? || @issue.creator == Current.user %>
+      <% if @issue.creator == Current.user || team_admin?(@issue.team) %>
         <%= link_to "Edit", edit_team_issue_path(@issue.team, @issue), class: "px-3 py-1.5 text-xs font-medium rounded bg-gray-800 text-gray-300 hover:bg-gray-700" %>
       <% end %>
     </div>

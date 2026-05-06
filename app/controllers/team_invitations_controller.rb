@@ -1,6 +1,6 @@
 class TeamInvitationsController < ApplicationController
   before_action :set_team
-  before_action :require_workspace_owner
+  before_action :require_team_admin_for_team
 
   def index
     @members = @team.users.order(:name)
@@ -36,8 +36,8 @@ class TeamInvitationsController < ApplicationController
 
   def remove_member
     member = @team.users.find(params[:member_id])
-    if member.id == @team.workspace.owner_id
-      redirect_to team_team_invitations_path(@team), alert: 'Cannot remove the workspace owner.'
+    if @team.owner?(member)
+      redirect_to team_team_invitations_path(@team), alert: 'Cannot remove the team owner. Transfer ownership first.'
       return
     end
     @team.team_memberships.find_by!(user: member).destroy
@@ -50,10 +50,8 @@ class TeamInvitationsController < ApplicationController
     @team = Team.find(params[:team_id])
   end
 
-  def require_workspace_owner
-    return if workspace_owner?(@team)
-
-    redirect_to root_path, alert: "You don't have permission to manage team members."
+  def require_team_admin_for_team
+    require_team_admin!(@team)
   end
 
   def invitation_params

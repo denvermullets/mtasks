@@ -1,6 +1,7 @@
 class Team < ApplicationRecord
   # Associations
   belongs_to :workspace
+  belongs_to :owner, class_name: 'User'
   has_many :team_memberships, dependent: :destroy
   has_many :users, through: :team_memberships
   has_many :lanes, dependent: :destroy
@@ -25,6 +26,7 @@ class Team < ApplicationRecord
 
   # Callbacks
   before_validation :upcase_identifier
+  before_validation :default_owner_to_workspace_owner
   after_create :create_default_lanes
 
   # Generate next issue number for this team
@@ -40,10 +42,25 @@ class Team < ApplicationRecord
     end
   end
 
+  def owner?(user)
+    user && owner_id == user.id
+  end
+
+  def admin?(user)
+    return false unless user
+    return true if owner?(user)
+
+    team_memberships.where(user_id: user.id, role: TeamMembership.roles[:admin]).exists?
+  end
+
   private
 
   def upcase_identifier
     self.identifier = identifier&.upcase
+  end
+
+  def default_owner_to_workspace_owner
+    self.owner ||= workspace&.owner
   end
 
   def create_default_lanes

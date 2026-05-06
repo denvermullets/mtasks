@@ -89,8 +89,8 @@
 
         </div>
       </div>
-      <!-- Members Section (workspace owner only) -->
-      <% if workspace_owner?(@team) %>
+      <!-- Members Section (team admins only) -->
+      <% if team_admin?(@team) %>
         <div class="bg-foreground border border-stroke rounded-lg p-6">
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-lg font-semibold text-gray-200">Members</h2>

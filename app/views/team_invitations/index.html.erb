@@ -41,6 +41,8 @@
         <h2 class="text-lg font-semibold text-gray-200 mb-4">Current Members (<%= @members.count %>)</h2>
         <div class="space-y-2">
           <% @members.each do |member| %>
+            <% member_is_owner = @team.owner?(member) %>
+            <% member_is_admin = @team.admin?(member) %>
             <div class="flex items-center justify-between p-3 bg-background rounded border border-stroke">
               <div class="flex items-center gap-3">
                 <%= user_avatar(member, size: "xl", shape: "square") %>
@@ -49,11 +51,26 @@
                   <p class="text-xs text-gray-400"><%= member.email %></p>
                 </div>
               </div>
-              <% if member.id == @team.workspace.owner_id %>
-                <span class="text-xs text-gray-500">Owner</span>
-              <% elsif workspace_owner?(@team) %>
-                <%= button_to "Remove", remove_member_team_team_invitations_path(@team, member_id: member.id), method: :delete, class: "text-xs text-red-400 hover:text-red-300", data: { turbo_confirm: "Remove #{member.name} from the team?" } %>
-              <% end %>
+              <div class="flex items-center gap-3">
+                <% if member_is_owner %>
+                  <span class="text-xs text-gray-500">Owner</span>
+                <% elsif member_is_admin %>
+                  <span class="text-xs text-accent">Admin</span>
+                <% end %>
+
+                <% if team_admin?(@team) && !member_is_owner && member != current_user %>
+                  <% if member_is_admin %>
+                    <%= button_to "Demote", demote_team_memberships_path(@team, user_id: member.id), method: :patch, class: "text-xs text-gray-400 hover:text-gray-200 cursor-pointer", data: { turbo_confirm: "Remove admin from #{member.name}?" } %>
+                  <% else %>
+                    <%= button_to "Make admin", promote_team_memberships_path(@team, user_id: member.id), method: :patch, class: "text-xs text-accent hover:text-accent/80 cursor-pointer" %>
+                  <% end %>
+                  <%= button_to "Remove", remove_member_team_team_invitations_path(@team, member_id: member.id), method: :delete, class: "text-xs text-red-400 hover:text-red-300 cursor-pointer", data: { turbo_confirm: "Remove #{member.name} from the team?" } %>
+                <% end %>
+
+                <% if team_owner?(@team) && !member_is_owner %>
+                  <%= button_to "Transfer ownership", transfer_ownership_team_memberships_path(@team, user_id: member.id), method: :patch, class: "text-xs text-yellow-400 hover:text-yellow-300 cursor-pointer", data: { turbo_confirm: "Transfer team ownership to #{member.name}? You'll remain an admin." } %>
+                <% end %>
+              </div>
             </div>
           <% end %>
         </div>

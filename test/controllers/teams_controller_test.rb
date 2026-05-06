@@ -11,13 +11,12 @@ class TeamsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test 'create with workspace params creates workspace and team for new user' do
+  test 'create auto-creates a personal workspace and team for a new user' do
     # Ensure user has no workspaces
     @user.owned_workspaces.destroy_all
 
     assert_difference ['Workspace.count', 'Team.count', 'TeamMembership.count'], 1 do
       post teams_path, params: {
-        workspace: { name: 'Test Workspace' },
         team: {
           name: 'Engineering',
           identifier: 'ENG',
@@ -34,7 +33,9 @@ class TeamsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 'ENG', team.identifier
     assert_equal 'Engineering team', team.description
     assert_includes team.users, @user
-    assert_equal 'Test Workspace', team.workspace.name
+    assert_equal @user, team.owner
+    assert team.team_memberships.find_by(user: @user).admin?
+    assert_equal "#{@user.name}'s workspace", team.workspace.name
   end
 
   test 'create without workspace params uses existing workspace' do

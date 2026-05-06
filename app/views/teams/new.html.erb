@@ -2,36 +2,16 @@
   <!-- Top Bar -->
   <div class="h-14 bg-menu border-b border-stroke flex items-center justify-between px-4 shrink-0">
     <div class="flex items-center gap-4">
-      <% if current_user.owned_workspaces.any? %>
-        <h1 class="text-base font-semibold">Create a New Team</h1>
-      <% else %>
-        <h1 class="text-base font-semibold">Create Your Team</h1>
-      <% end %>
+      <h1 class="text-base font-semibold">Create a New Team</h1>
     </div>
   </div>
 
   <!-- Form Content -->
   <div class="flex-1 overflow-y-auto bg-background p-8">
     <div class="max-w-4xl mx-auto w-full space-y-6">
-      <% if current_user.owned_workspaces.any? %>
-        <p class="text-sm text-gray-400">Add a team to your workspace.</p>
-      <% else %>
-        <p class="text-sm text-gray-400">First, let's set up your workspace and team.</p>
-      <% end %>
+      <p class="text-sm text-gray-400">Set up a team for your work. You'll be the owner and can invite others.</p>
 
       <%= form_with url: teams_path, class: "space-y-6" do |form| %>
-        <% unless current_user.owned_workspaces.any? %>
-          <!-- Workspace Section -->
-          <div class="bg-foreground border border-stroke rounded-lg p-6">
-            <h2 class="text-lg font-semibold text-gray-200 mb-4">Workspace Details</h2>
-            <div class="mb-4">
-              <%= form.label "workspace[name]", "Workspace Name", class: "block text-sm font-medium text-gray-400 mb-2" %>
-              <%= form.text_field "workspace[name]", required: true, placeholder: "e.g., Acme Inc", class: "w-full px-3 py-2 bg-background border border-stroke rounded text-gray-200 focus:outline-none focus:border-accent" %>
-              <p class="text-xs text-gray-500 mt-1">A workspace can contain multiple teams</p>
-            </div>
-          </div>
-        <% end %>
-
         <!-- Team Section -->
         <div class="bg-foreground border border-stroke rounded-lg p-6">
           <h2 class="text-lg font-semibold text-gray-200 mb-4">Team Details</h2>
