@@ -18,7 +18,7 @@ module Discussion
       data = result[:data]
       assert_equal 'mtasks', data[:source]
       assert_equal 'project.commented', data[:event_type]
-      assert_match(%r{\Ahttp://[^/]+/teams/#{@team.id}/projects/#{@project.id}\z}, data[:source_url])
+      assert_match(%r{\Ahttp://[^/]+/teams/#{@team.id}/projects/#{@project.id}/discussion\z}, data[:source_url])
       assert_equal 'casey@example.com', data[:actor_email]
       assert_equal 'Casey Smith', data[:actor_name]
       assert_equal 'casey', data[:actor_username]
