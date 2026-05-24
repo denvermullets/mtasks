@@ -9,7 +9,7 @@ gem "bootsnap", require: false
 gem "commonmarker"
 gem "csv"
 gem "dotenv"
-gem "image_processing", "~> 1.14.0"
+gem "image_processing", "~> 2.0.1"
 gem "importmap-rails"
 gem "jwt"
 gem "octokit"
