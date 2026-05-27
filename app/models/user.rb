@@ -3,8 +3,6 @@ class User < ApplicationRecord
   has_many :sessions, dependent: :destroy
   has_many :api_tokens, dependent: :destroy
 
-  enum :role, { member: 0, admin: 1 }
-
   AVAILABLE_THEMES = %w[
     default warm-paper cool-linen phosphor-amber phosphor-green
     dusk brutalist-newsprint muted-sage deep-navy warm-dusk
@@ -52,5 +50,9 @@ class User < ApplicationRecord
   def font
     value = resolved_settings.dig('appearance', 'font')
     AVAILABLE_FONTS.include?(value) ? value : 'inter'
+  end
+
+  def personal_workspace
+    owned_workspaces.first || owned_workspaces.create!(name: "#{name}'s workspace")
   end
 end

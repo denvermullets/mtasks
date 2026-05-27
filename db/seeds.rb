@@ -6,10 +6,9 @@ return unless Rails.env.development?
 
 # Create admin user
 admin = User.find_or_create_by!(email: "admin@example.com") do |user|
-  user.password = "password"
-  user.password_confirmation = "password"
+  user.password = "password123"
+  user.password_confirmation = "password123"
   user.name = "Admin User"
-  user.role = :admin
 end
 
 puts "Created admin user: #{admin.email}"
@@ -29,7 +28,9 @@ end
 puts "Created team: #{team.name} with #{team.lanes.count} lanes"
 
 # Add admin to team
-TeamMembership.find_or_create_by!(user: admin, team: team)
+TeamMembership.find_or_create_by!(user: admin, team: team) do |tm|
+  tm.role = :admin
+end
 
 # Create a project
 project = Project.find_or_create_by!(name: "User Authentication") do |p|

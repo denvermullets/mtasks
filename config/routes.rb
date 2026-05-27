@@ -57,6 +57,13 @@ Rails.application.routes.draw do
     resources :members, only: [], controller: 'team_members' do
       collection { get :search }
     end
+    resources :memberships, only: [], controller: 'team_memberships' do
+      collection do
+        patch :promote
+        patch :demote
+        patch :transfer_ownership
+      end
+    end
     resources :issues do
       resources :comments, only: %i[create destroy]
       resources :issue_labels, only: %i[create destroy]

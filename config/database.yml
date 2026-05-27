@@ -22,10 +22,8 @@ development:
     database: mtasks_dev_queue
   cable:
     <<: *default
-    database: mtasks_development
+    database: mtasks_dev_cable
     migrations_paths: db/cable_migrate
-    schema_dump: false
-
 test:
   <<: *default
   database: mtasks_test

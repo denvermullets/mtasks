@@ -49,7 +49,7 @@ class CommentsController < ApplicationController
   end
 
   def authorize_comment_deletion!
-    return if Current.user.admin? || @comment.user == Current.user
+    return if @comment.user == Current.user || team_admin?(@issue.team)
 
     redirect_to team_issue_path(@issue.team, @issue), alert: 'You do not have permission to delete this comment.'
   end

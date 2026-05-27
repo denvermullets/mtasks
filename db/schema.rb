@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_05_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_06_120300) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -458,9 +458,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_05_130000) do
 
   create_table "team_memberships", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.integer "role", default: 0, null: false
     t.bigint "team_id", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.index ["team_id", "role"], name: "index_team_memberships_on_team_id_and_role"
     t.index ["team_id"], name: "index_team_memberships_on_team_id"
     t.index ["user_id"], name: "index_team_memberships_on_user_id"
   end
@@ -472,9 +474,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_05_130000) do
     t.string "identifier"
     t.integer "issue_counter", default: 0
     t.string "name"
+    t.bigint "owner_id", null: false
     t.datetime "updated_at", null: false
     t.bigint "workspace_id", null: false
     t.index ["identifier"], name: "index_teams_on_identifier", unique: true
+    t.index ["owner_id"], name: "index_teams_on_owner_id"
     t.index ["workspace_id"], name: "index_teams_on_workspace_id"
   end
 
@@ -502,7 +506,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_05_130000) do
     t.string "email"
     t.string "name"
     t.string "password_digest"
-    t.integer "role", default: 0
     t.jsonb "settings", default: {}, null: false
     t.datetime "updated_at", null: false
     t.index ["email"], name: "index_users_on_email", unique: true
@@ -603,6 +606,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_05_130000) do
   add_foreign_key "team_invitations", "users", column: "invited_by_id"
   add_foreign_key "team_memberships", "teams"
   add_foreign_key "team_memberships", "users"
+  add_foreign_key "teams", "users", column: "owner_id"
   add_foreign_key "teams", "workspaces"
   add_foreign_key "user_preferences", "teams"
   add_foreign_key "user_preferences", "users"
