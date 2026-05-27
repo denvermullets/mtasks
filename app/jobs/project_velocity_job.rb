@@ -29,8 +29,8 @@ class ProjectVelocityJob < ApplicationJob
     {
       project: project,
       issues: project.issues.not_archived
-              .includes(:lane, :assignee, :labels, :blocking_dependencies, :blocked_dependencies)
-              .order(created_at: :desc),
+                     .includes(:lane, :assignee, :labels, :blocking_dependencies, :blocked_dependencies)
+                     .order(created_at: :desc),
       team: project.team,
       lanes: project.team.lanes.order(:position),
       labels: project.team.labels.order(:name)
