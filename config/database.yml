@@ -43,4 +43,3 @@ production:
     <<: *primary_production
     url: <%= ENV['DATABASE_CABLE_URL'] %>
     migrations_paths: db/cable_migrate
-    schema_dump: false
