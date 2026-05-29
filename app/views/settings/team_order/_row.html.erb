@@ -1,0 +1,8 @@
+<div class="group flex items-center gap-2 px-2 py-2 rounded border border-stroke bg-foreground cursor-pointer hover:bg-hover-highlight"
+     data-team-id="<%= team.id %>">
+  <svg class="w-4 h-4 text-gray-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+    <path d="M7 4a1 1 0 110 2 1 1 0 010-2zM7 9a1 1 0 110 2 1 1 0 010-2zM7 14a1 1 0 110 2 1 1 0 010-2zM13 4a1 1 0 110 2 1 1 0 010-2zM13 9a1 1 0 110 2 1 1 0 010-2zM13 14a1 1 0 110 2 1 1 0 010-2z"></path>
+  </svg>
+  <span class="font-mono text-xs text-gray-500"><%= team.identifier %></span>
+  <span class="text-sm text-gray-300 truncate"><%= team.name %></span>
+</div>

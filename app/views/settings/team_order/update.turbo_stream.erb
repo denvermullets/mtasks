@@ -1,0 +1,5 @@
+<%= turbo_stream.update "sidebar_#{@scope}_teams" do %>
+  <% @teams.each do |team| %>
+    <%= render "shared/sidebar_team_row", team: team %>
+  <% end %>
+<% end %>
