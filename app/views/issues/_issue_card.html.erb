@@ -1,7 +1,7 @@
 <%
   visible_properties ||= UserPreference::AVAILABLE_PROPERTIES
   group_by ||= @display_options&.dig(:group_by)
-  labels ||= issue.team.labels
+  labels ||= @labels || issue.team.labels
   show_status_pill = visible_properties.include?('status') && issue.lane && group_by != 'status'
   pr_summary = visible_properties.include?('pull_requests_and_commits') ? issue_pr_summary(issue) : nil
   time_in_status = visible_properties.include?('time_in_status') ? format_time_in_status(issue) : nil
@@ -80,8 +80,8 @@
               <%= label.name %>
             </span>
           <% end %>
-          <% if issue.labels.count > 2 %>
-            <span class="text-xs text-gray-500 shrink-0">+<%= issue.labels.count - 2 %></span>
+          <% if issue.labels.size > 2 %>
+            <span class="text-xs text-gray-500 shrink-0">+<%= issue.labels.size - 2 %></span>
           <% end %>
         <% end %>
 
@@ -154,11 +154,11 @@
 
   <!-- Lane Picker Overlay (for 'S' keyboard shortcut) -->
   <div>
-    <%= render "lanes/picker", issue: issue, lanes: issue.team.lanes, context: "card" %>
+    <%= render "lanes/picker", issue: issue, lanes: @lanes || issue.team.lanes, context: "card" %>
   </div>
 
   <!-- Project Picker Overlay (for 'P' keyboard shortcut) -->
   <div>
-    <%= render "projects/picker", issue: issue, projects: issue.team.projects, context: "card" %>
+    <%= render "projects/picker", issue: issue, projects: @projects || issue.team.projects, context: "card" %>
   </div>
 </div>

@@ -122,7 +122,7 @@
       <% if visible_properties.include?('labels') && issue.labels.any? %>
         <div class="flex items-center gap-1">
           <% visible_labels = issue.labels.first(2) %>
-          <% remaining_count = issue.labels.count - visible_labels.count %>
+          <% remaining_count = issue.labels.size - visible_labels.size %>
 
           <% visible_labels.each do |label| %>
             <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-foreground border border-stroke text-gray-400">
@@ -154,11 +154,11 @@
 
   <!-- Lane Picker (for 'S' keyboard shortcut) -->
   <div>
-    <%= render "lanes/picker", issue: issue, lanes: issue.team.lanes, context: "card" %>
+    <%= render "lanes/picker", issue: issue, lanes: @lanes || issue.team.lanes, context: "card" %>
   </div>
 
   <!-- Project Picker (for 'P' keyboard shortcut) -->
   <div>
-    <%= render "projects/picker", issue: issue, projects: issue.team.projects, context: "card" %>
+    <%= render "projects/picker", issue: issue, projects: @projects || issue.team.projects, context: "card" %>
   </div>
 </div>

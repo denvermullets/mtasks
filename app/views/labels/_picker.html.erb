@@ -6,12 +6,13 @@
 <%
   issue_id = issue.id
   team_id = issue.team_id
-  current_label_ids = issue.labels.pluck(:id)
+  current_label_ids = issue.labels.map(&:id)
   context ||= "sidebar"
 
-  # Get frequently used and all labels
-  frequently_used_labels = labels.frequently_used
-  all_labels = labels.by_usage
+  # Get frequently used and all labels. Memoized per-request: these are team-wide
+  # and identical for every row, so we avoid re-running the aggregates per issue.
+  frequently_used_labels = (@_picker_frequently_used_labels ||= labels.frequently_used.to_a)
+  all_labels = (@_picker_all_labels_by_usage ||= labels.by_usage.to_a)
 %>
 
 <div data-controller="label-picker"
