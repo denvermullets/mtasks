@@ -3,7 +3,7 @@ class ProjectsController < ApplicationController
 
   before_action :require_team!
   before_action :set_team
-  before_action :set_project, only: %i[show edit update destroy purge_file]
+  before_action :set_project, only: %i[show edit update destroy purge_file overview discussion activity]
 
   def index
     @index_sort = params[:sort].presence_in(%w[created name priority due_date velocity]) || 'created'
@@ -13,11 +13,28 @@ class ProjectsController < ApplicationController
   end
 
   def show
-    @sort = params[:sort].presence_in(%w[newest id status updated priority]) || 'newest'
-    @issues = sorted_project_issues
-    @lanes = current_team.lanes.order(:position)
-    @team_members = current_team.users.order(:name)
-    @labels = current_team.labels.order(:name)
+    @active_tab = :issues
+    load_show_data!
+  end
+
+  def overview
+    @active_tab = :overview
+    load_show_data!
+    render :show
+  end
+
+  def discussion
+    @active_tab = :discussion
+    @channel_link = @project.hourglass_channel_link
+    @thread_id = params[:thread].presence
+    load_show_data!
+    render :show
+  end
+
+  def activity
+    @active_tab = :activity
+    load_show_data!
+    render :show
   end
 
   def new
@@ -99,6 +116,15 @@ class ProjectsController < ApplicationController
       partial: 'projects/sidebar',
       locals: { project: @project, team_members: @team_members, labels: @labels }
     )
+  end
+
+  def load_show_data!
+    @sort = params[:sort].presence_in(%w[newest id status updated priority]) || 'newest'
+    @issues = sorted_project_issues
+    @lanes = current_team.lanes.order(:position)
+    @team_members = current_team.users.order(:name)
+    @labels = current_team.labels.order(:name)
+    @thread_counts = HourglassThreadCountService.call(issues: @issues, user: Current.user)
   end
 
   def sorted_project_issues

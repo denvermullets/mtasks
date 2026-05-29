@@ -1,0 +1,86 @@
+<%# locals: (message:, channel_link:, team: nil, project: nil) %>
+<% team ||= project&.team %>
+<article id="<%= dom_id(message) %>"
+         data-pinned="<%= message.pinned_at.present? %>"
+         class="group px-4 py-3 hover:bg-hover-highlight/40 relative <%= 'border-l-2 border-amber-300/80 bg-amber-300/[0.03]' if message.pinned_at.present? %>">
+  <% if message.message_type == 'system' %>
+    <div class="flex items-center gap-2 text-xs text-gray-500 italic">
+      <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <span><%= message.body.presence || message.payload['text'] %></span>
+      <span class="text-gray-600 ml-auto">
+        <%= time_ago_in_words(message.posted_at) %> ago
+      </span>
+    </div>
+  <% else %>
+    <% resolved = HourglassUserResolver.call(
+         email: message.author_email,
+         hourglass_user_id: message.hourglass_user_id,
+         display_name: message.author_display_name,
+         integration: channel_link.hourglass_integration
+       ) %>
+    <div class="flex items-start gap-3">
+      <div class="shrink-0 w-7 h-7 rounded-full bg-foreground border border-stroke flex items-center justify-center text-[10px] font-medium text-gray-300">
+        <%= resolved.avatar_initials %>
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="text-xs font-medium text-gray-200"><%= resolved.display_name %></span>
+          <span class="inline-flex items-center gap-1 text-[10px] text-gray-500">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+            </svg>
+            chat
+          </span>
+          <time class="text-[10px] text-gray-500" datetime="<%= message.posted_at.iso8601 %>" title="<%= l(message.posted_at, format: :long) rescue message.posted_at.to_s %>">
+            <%= time_ago_in_words(message.posted_at) %> ago
+          </time>
+          <% if message.edited_at.present? %>
+            <span class="text-[10px] text-gray-600">(edited)</span>
+          <% end %>
+          <% if message.pinned_at.present? %>
+            <span class="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-amber-300/10 text-amber-300 border border-amber-300/30">
+              <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9.828 1.172a1 1 0 00-1.414 0L6.586 3H5a1 1 0 00-.707 1.707l2 2L4 9.586V11h1.414l2.879-2.879 2 2L8.293 12.293a1 1 0 001.414 1.414L11.586 11.83l2 2A1 1 0 0015 13.293V11.879l-2.879-2.879 2-2L16.293 4.707A1 1 0 0015.586 3H14l-1.828-1.828a1 1 0 00-1.414 0L9.828 1.172z"/>
+              </svg>
+              decision
+            </span>
+          <% end %>
+          <% if project && message.hourglass_thread_id.present? && message.hourglass_thread_id != message.hourglass_message_id %>
+            <%= link_to discussion_team_project_path(project.team, project, thread: message.hourglass_thread_id),
+                class: "inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-blue-300/10 text-blue-300 border border-blue-300/30 hover:bg-blue-300/20" do %>
+              <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+              </svg>
+              thread
+            <% end %>
+          <% end %>
+        </div>
+        <% if message.deleted_at.present? %>
+          <p class="text-xs text-gray-500 italic line-through">
+            <%= message.body.presence || 'Message deleted' %>
+          </p>
+          <p class="text-[10px] text-gray-600 mt-0.5">Message deleted</p>
+        <% else %>
+          <div class="markdown text-sm text-gray-300">
+            <%= render_markdown(message.body, team: team) %>
+          </div>
+        <% end %>
+      </div>
+      <% url = hourglass_message_url(message, integration: channel_link.hourglass_integration) %>
+      <% if url.present? && message.deleted_at.blank? %>
+        <%= link_to url,
+            target: "_blank",
+            rel: "noopener",
+            class: "opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded text-gray-500 hover:text-accent hover:bg-hover-highlight",
+            title: "Open in Hourglass",
+            aria: { label: "Open in Hourglass" } do %>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+          </svg>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+</article>

@@ -1,0 +1,54 @@
+<%# locals: (team:, form_url:, comment: nil, mention_search_url: nil, hint: nil, toggle_label: "Also send to chat") %>
+<% comment ||= Comment.new %>
+<% mention_search_url ||= search_team_members_path(team) %>
+<%= form_with model: comment,
+              url: form_url,
+              html: { class: "bg-foreground border-t border-stroke px-4 py-3", id: "discussion_composer" },
+              data: { turbo_frame: "_top", controller: "submit-on-cmd-enter discussion-composer" } do |form| %>
+  <div class="flex items-start gap-3">
+    <div class="shrink-0">
+      <%= user_avatar(Current.user, size: 'sm') %>
+    </div>
+    <div class="flex-1 min-w-0">
+      <div data-controller="user-mention"
+           data-user-mention-search-url-value="<%= mention_search_url %>"
+           class="rounded transition-colors relative">
+        <%= form.text_area :body,
+            placeholder: "Write a comment...",
+            class: "w-full bg-transparent text-gray-300 placeholder-gray-500 focus:outline-none resize-none border-0 p-0 overflow-hidden",
+            rows: 2,
+            data: {
+              controller: "auto-resize",
+              action: "input->auto-resize#resize keydown->submit-on-cmd-enter#submit input->user-mention#onInput keydown->user-mention#onKeydown",
+              user_mention_target: "textarea"
+            } %>
+        <%= render "user_mentions/dropdown" %>
+      </div>
+      <% if comment.errors.any? %>
+        <div class="text-red-400 text-xs mt-2">
+          <%= comment.errors.full_messages.join(', ') %>
+        </div>
+      <% end %>
+      <div class="flex items-center justify-between gap-2 mt-2">
+        <button type="button"
+                data-discussion-composer-target="toggle"
+                data-action="click->discussion-composer#toggle"
+                aria-pressed="false"
+                class="inline-flex items-center gap-1.5 px-2 py-1 rounded border border-stroke text-gray-500 text-[11px] font-medium hover:text-gray-200 transition-colors">
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 5l7 7-7 7"/>
+          </svg>
+          <%= toggle_label %>
+        </button>
+        <%= hidden_field_tag :also_send_to_chat, "0", data: { discussion_composer_target: "hiddenInput" } %>
+        <button type="submit"
+                class="px-3 py-1 rounded bg-accent/10 border border-accent/30 text-accent text-xs font-medium hover:bg-accent/20 transition-colors">
+          Comment
+        </button>
+      </div>
+      <% if hint %>
+        <p class="text-[11px] text-gray-500 mt-1.5"><%= hint %></p>
+      <% end %>
+    </div>
+  </div>
+<% end %>

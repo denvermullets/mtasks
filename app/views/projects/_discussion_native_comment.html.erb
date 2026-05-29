@@ -1,0 +1,65 @@
+<%# locals: (comment:, team: nil, project: nil, manual_push_url: nil) %>
+<% team ||= project&.team || comment.project&.team || comment.issue&.team %>
+<% if local_assigns.key?(:manual_push_url)
+     resolved_push_url = manual_push_url
+   elsif project && comment.pushed_to_hourglass_at.blank?
+     resolved_push_url = push_team_project_discussion_comment_path(project.team, project, comment)
+   else
+     resolved_push_url = nil
+   end %>
+<article id="<%= dom_id(comment) %>"
+         data-pinned="false"
+         class="group px-4 py-3 hover:bg-hover-highlight/40 relative">
+  <div class="flex items-start gap-3">
+    <div class="shrink-0">
+      <%= user_avatar(comment.user, size: 'sm') %>
+    </div>
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-2 mb-1">
+        <span class="text-xs font-medium text-gray-200"><%= comment.user&.name.presence || 'Unknown' %></span>
+        <% if comment.hourglass_message_id.present? %>
+          <span class="inline-flex items-center gap-1 text-[10px] text-gray-500">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+            </svg>
+            chat
+          </span>
+        <% else %>
+          <span class="inline-flex items-center gap-1 text-[10px] text-accent">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            jait
+          </span>
+        <% end %>
+        <time class="text-[10px] text-gray-500" datetime="<%= comment.created_at.iso8601 %>" title="<%= l(comment.created_at, format: :long) rescue comment.created_at.to_s %>">
+          <%= time_ago_in_words(comment.created_at) %> ago
+        </time>
+        <% if comment.pushed_to_hourglass_at.present? %>
+          <span class="inline-flex items-center gap-1 text-[10px] text-gray-500 ml-1">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+            </svg>
+            pushed to chat <%= time_ago_in_words(comment.pushed_to_hourglass_at) %> ago
+          </span>
+        <% end %>
+      </div>
+      <div class="text-sm text-gray-300">
+        <%= sanitize comment.body %>
+      </div>
+    </div>
+    <% if resolved_push_url %>
+      <div class="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+        <%= button_to resolved_push_url,
+                      method: :post,
+                      form: { data: { turbo_frame: "_top" } },
+                      title: "Send to chat",
+                      class: "p-1 rounded text-gray-500 hover:text-accent hover:bg-hover-highlight transition-colors" do %>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 5l7 7-7 7"/>
+          </svg>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</article>

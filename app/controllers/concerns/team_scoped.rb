@@ -3,7 +3,7 @@ module TeamScoped
 
   included do
     before_action :set_current_team, if: :authenticated?
-    helper_method :current_team, :user_teams, :workspace_owner?
+    helper_method :current_team, :user_teams, :team_owner?, :team_admin?
   end
 
   private
@@ -38,11 +38,23 @@ module TeamScoped
     redirect_to new_team_path, alert: 'Please create or join a team first' unless current_team
   end
 
-  def require_admin!
-    redirect_to root_path, alert: 'You must be an admin' unless current_user&.admin?
+  def require_team_admin!(team)
+    return if team_admin?(team)
+
+    redirect_to root_path, alert: "You don't have permission to manage this team"
   end
 
-  def workspace_owner?(team)
-    team.workspace.owner_id == current_user&.id
+  def require_team_owner!(team)
+    return if team_owner?(team)
+
+    redirect_to root_path, alert: 'Only the team owner can do that'
+  end
+
+  def team_owner?(team)
+    team&.owner?(current_user)
+  end
+
+  def team_admin?(team)
+    team&.admin?(current_user)
   end
 end

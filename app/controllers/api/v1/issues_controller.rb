@@ -1,10 +1,21 @@
 module Api
   module V1
     class IssuesController < BaseController
-      before_action :set_current_team
+      before_action :set_current_team, except: [:by_identifier]
       before_action :set_issue, only: %i[show update]
 
       FILTER_PARAMS = %i[lane_id assignee_id project_id priority].freeze
+
+      def by_identifier
+        team_identifier, number_str = params[:identifier].split('-', 2)
+        team = current_user.teams.not_archived.find_by(identifier: team_identifier)
+        return render_not_found unless team && token_allows_team?(team)
+
+        issue = team.issues.find_by(team_number: number_str.to_i)
+        return render_not_found unless issue
+
+        render json: IssueSerializer.new(issue, detailed: true).as_json
+      end
 
       def index
         issues = filter_issues(
@@ -23,6 +34,7 @@ module Api
         issue.creator = current_user
 
         if issue.save
+          HourglassOutboundEmitterJob.dispatch_create(issue, current_user)
           render json: serialize(issue), status: :created
         else
           render_validation_errors(issue)
@@ -35,7 +47,9 @@ module Api
 
         if @issue.save
           @issue.enqueue_velocity_recalculation!
-          IssueAfterUpdateJob.perform_later(issue_id: @issue.id, user_id: current_user.id)
+          IssueAfterUpdateJob.perform_later(
+            issue_id: @issue.id, user_id: current_user.id, version_id: @issue.versions.last&.id
+          )
           render json: serialize(@issue)
         else
           render_validation_errors(@issue)
@@ -47,6 +61,10 @@ module Api
       def set_issue
         @issue = current_team.issues.find(params[:id])
       rescue ActiveRecord::RecordNotFound
+        render_not_found
+      end
+
+      def render_not_found
         render json: { error: 'Not Found', message: 'Issue not found' }, status: :not_found
       end
 

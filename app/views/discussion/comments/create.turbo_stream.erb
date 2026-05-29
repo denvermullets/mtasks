@@ -1,0 +1,19 @@
+<% composer_locals = {
+     team: @project.team,
+     form_url: team_project_discussion_comments_path(@project.team, @project)
+   }
+   composer_locals[:comment] = @comment unless @comment.persisted? %>
+<%= turbo_stream.replace "discussion_composer", partial: "discussion/comments/composer",
+                                                locals: composer_locals %>
+
+<% if @comment.persisted? && push_result %>
+  <% if push_result.success? %>
+    <%= turbo_stream.update "discussion-flash" do %>
+      <%= render "shared/flash", message: "Comment posted. Posted to ##{push_result.channel_name}.", type: "notice" %>
+    <% end %>
+  <% else %>
+    <%= turbo_stream.update "discussion-flash" do %>
+      <%= render "shared/flash", message: "Comment saved, but chat push failed: #{push_result.error}", type: "alert" %>
+    <% end %>
+  <% end %>
+<% end %>

@@ -12,14 +12,14 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     post session_path, params: { email: @user.email, password: 'password' }
 
     assert_redirected_to '/teams/new'
-    assert cookies[:session_id]
+    assert cookies[:mtasks_session_id]
   end
 
   test 'create with invalid credentials' do
     post session_path, params: { email: @user.email, password: 'wrong' }
 
     assert_redirected_to new_session_path
-    assert_nil cookies[:session_id]
+    assert_nil cookies[:mtasks_session_id]
   end
 
   test 'destroy' do
@@ -28,6 +28,6 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     delete session_path
 
     assert_redirected_to new_session_path
-    assert_empty cookies[:session_id]
+    assert_empty cookies[:mtasks_session_id]
   end
 end

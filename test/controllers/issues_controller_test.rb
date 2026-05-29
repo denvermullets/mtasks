@@ -53,4 +53,63 @@ class IssuesControllerTest < ActionDispatch::IntegrationTest
     @issue.reload
     assert_not_nil @issue.completed_at
   end
+
+  test 'show without a thread link offers the link affordance and keeps native comment form' do
+    get team_issue_path(@team, @issue)
+    assert_response :success
+    assert_includes response.body, 'Link Hourglass thread'
+    assert_includes response.body, 'id="comment_form"'
+  end
+
+  test 'show with a linked thread renders the Discussion section and hides the native comment form' do
+    integration = @workspace.hourglass_integrations.create!(
+      hourglass_server_id: 'srv', base_url: 'https://hg.test', api_token: 'tok',
+      webhook_secret: 'wh', connected_by_user: @user
+    )
+    @team.hourglass_links.create!(
+      link_type: 'issue_thread',
+      mtasks_issue: @issue,
+      mtasks_issue_identifier: @issue.identifier,
+      hourglass_thread_id: 'T_42',
+      hourglass_integration: integration,
+      created_by_user: @user
+    )
+
+    get team_issue_path(@team, @issue)
+    assert_response :success
+    assert_includes response.body, 'linked to thread'
+    assert_includes response.body, 'T_42'
+    assert_includes response.body, 'discussion_composer'
+    assert_not_includes response.body, 'id="comment_form"'
+  end
+
+  test 'show upserts a HourglassLinkReadState when issue has a linked thread' do
+    link = @team.hourglass_links.create!(
+      link_type: 'issue_thread',
+      mtasks_issue: @issue,
+      mtasks_issue_identifier: @issue.identifier,
+      hourglass_thread_id: 'T_99',
+      created_by_user: @user
+    )
+
+    assert_difference 'HourglassLinkReadState.count', 1 do
+      get team_issue_path(@team, @issue)
+    end
+    state = HourglassLinkReadState.find_by!(user: @user, hourglass_link: link)
+    original = state.last_read_at
+
+    travel_to(2.minutes.from_now) do
+      assert_no_difference 'HourglassLinkReadState.count' do
+        get team_issue_path(@team, @issue)
+      end
+      state.reload
+      assert state.last_read_at > original
+    end
+  end
+
+  test 'show without a linked thread does not create a read state' do
+    assert_no_difference 'HourglassLinkReadState.count' do
+      get team_issue_path(@team, @issue)
+    end
+  end
 end

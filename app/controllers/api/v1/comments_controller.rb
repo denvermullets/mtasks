@@ -12,19 +12,17 @@ module Api
       end
 
       def create
+        if (existing = find_by_hourglass_message_id)
+          render json: CommentSerializer.new(existing).as_json, status: :ok
+          return
+        end
+
         @comment = @issue.comments.new(comment_params)
         @comment.user = Current.user
+        @comment.hourglass_message_id = hourglass_message_id
 
         if @comment.save
-          IssueReferenceService.call(
-            source_issue: @issue,
-            text: @comment.body,
-            source_type: 'comment',
-            user: Current.user
-          )
-          NotificationService.call(issue: @issue, actor: Current.user, action: 'commented', comment: @comment)
-          notify_mentions_on(@issue, text: @comment.body, comment: @comment)
-
+          after_create_side_effects(@comment)
           render json: CommentSerializer.new(@comment).as_json, status: :created
         else
           render_validation_errors(@comment)
@@ -32,6 +30,23 @@ module Api
       end
 
       private
+
+      def after_create_side_effects(comment)
+        IssueReferenceService.call(source_issue: @issue, text: comment.body,
+                                   source_type: 'comment', user: Current.user)
+        NotificationService.call(issue: @issue, actor: Current.user, action: 'commented', comment: comment)
+        notify_mentions_on(@issue, text: comment.body, comment: comment)
+        broadcast_to_issue_discussion(comment)
+      end
+
+      def broadcast_to_issue_discussion(comment)
+        Turbo::StreamsChannel.broadcast_append_to(
+          "issue_#{@issue.id}_discussion",
+          target: "issue_discussion_stream_#{@issue.id}",
+          partial: 'projects/discussion_native_comment',
+          locals: { comment: comment, team: @issue.team }
+        )
+      end
 
       def set_issue
         @issue = current_team.issues.find(params[:issue_id])
@@ -41,6 +56,16 @@ module Api
 
       def comment_params
         params.require(:comment).permit(:body, :parent_id)
+      end
+
+      def hourglass_message_id
+        request.headers['Idempotency-Key'].presence
+      end
+
+      def find_by_hourglass_message_id
+        return nil unless hourglass_message_id
+
+        @issue.comments.find_by(hourglass_message_id: hourglass_message_id)
       end
     end
   end

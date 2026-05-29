@@ -12,6 +12,11 @@
     <%= link_to api_tokens_path, class: "block px-2 py-1.5 text-xs text-gray-300 hover:text-gray-100 rounded hover:bg-hover-highlight" do %>
       API Tokens
     <% end %>
+    <% if current_team&.workspace %>
+      <%= link_to workspace_settings_hourglass_integration_path(current_team.workspace), class: "block px-2 py-1.5 text-xs text-gray-300 hover:text-gray-100 rounded hover:bg-hover-highlight" do %>
+        Integrations
+      <% end %>
+    <% end %>
     <div class="border-t border-stroke my-1"></div>
     <%= button_to session_path, method: :delete, class: "block w-full text-left px-2 py-1.5 text-xs text-gray-300 hover:text-gray-100 rounded hover:bg-hover-highlight cursor-pointer" do %>
       Sign out

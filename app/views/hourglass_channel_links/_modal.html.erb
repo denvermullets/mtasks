@@ -1,0 +1,70 @@
+<%# locals: (project:, team:, integration:, channels:) %>
+<div data-controller="hourglass-channel-picker modal"
+     data-hourglass-channel-picker-channels-url-value="<%= channels_team_project_hourglass_channel_link_path(team, project) %>"
+     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+  <div class="bg-foreground border border-stroke rounded-lg shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col"
+       data-action="click->hourglass-channel-picker#stopPropagation">
+    <!-- Header -->
+    <div class="flex items-center justify-between px-4 py-3 border-b border-stroke shrink-0">
+      <h3 class="text-sm font-medium text-gray-200">Link a Hourglass channel</h3>
+      <%= link_to "#",
+          data: { action: "click->hourglass-channel-picker#close" },
+          class: "text-gray-500 hover:text-gray-300",
+          aria: { label: "Close" } do %>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      <% end %>
+    </div>
+
+    <% if integration.nil? %>
+      <div class="px-4 py-8 text-center text-xs text-gray-500">
+        No active Hourglass integration on this workspace.
+        Connect one in workspace settings to link channels to projects.
+      </div>
+    <% else %>
+      <!-- Search -->
+      <div class="px-3 py-2 border-b border-stroke shrink-0">
+        <input type="text"
+               placeholder="Search channels…"
+               autocomplete="off"
+               data-hourglass-channel-picker-target="search"
+               data-action="input->hourglass-channel-picker#filter keydown->hourglass-channel-picker#handleKeyDown"
+               class="w-full bg-background border border-stroke rounded px-2 py-1.5 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-accent">
+      </div>
+
+      <!-- Channel list -->
+      <div class="flex-1 overflow-y-auto" data-hourglass-channel-picker-target="channelList">
+        <% if channels.any? %>
+          <div class="divide-y divide-stroke/50">
+            <% channels.each do |channel| %>
+              <button type="button"
+                      class="channel-option block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-hover-highlight cursor-pointer"
+                      data-action="click->hourglass-channel-picker#select"
+                      data-channel-id="<%= channel[:id] %>"
+                      data-channel-name="<%= channel[:name] %>"
+                      data-channel-search="<%= channel[:name].to_s.downcase %>">
+                <span class="text-gray-500 mr-1">#</span><%= channel[:name] %>
+                <% if channel[:topic].present? %>
+                  <span class="block text-[11px] text-gray-500 mt-0.5 truncate"><%= channel[:topic] %></span>
+                <% end %>
+              </button>
+            <% end %>
+          </div>
+        <% end %>
+        <div class="<%= 'hidden' if channels.any? %> px-4 py-8 text-center text-xs text-gray-500"
+             data-hourglass-channel-picker-target="emptyState">
+          No channels found.
+        </div>
+      </div>
+
+      <!-- Hidden submission form -->
+      <%= form_with url: team_project_hourglass_channel_link_path(team, project),
+            method: :post,
+            data: { hourglass_channel_picker_target: "form" } do |f| %>
+        <%= hidden_field_tag :hourglass_channel_id, '', data: { hourglass_channel_picker_target: "channelIdInput" } %>
+        <%= hidden_field_tag :hourglass_channel_name, '', data: { hourglass_channel_picker_target: "channelNameInput" } %>
+      <% end %>
+    <% end %>
+  </div>
+</div>

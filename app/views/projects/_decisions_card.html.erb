@@ -1,0 +1,5 @@
+<%# locals: (project:) %>
+<%= turbo_stream_from "project_#{project.id}_decisions" %>
+<%= turbo_frame_tag "project_#{project.id}_decisions_card" do %>
+  <%= render 'projects/decisions_card_body', project: project %>
+<% end %>

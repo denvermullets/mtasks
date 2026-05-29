@@ -1,0 +1,21 @@
+<%# locals: (project:) %>
+<% if project.description.present? %>
+  <div class="mb-8">
+    <div class="markdown text-gray-300">
+      <%= render_markdown(project.description, team: project.team) %>
+    </div>
+  </div>
+<% end %>
+
+<% if project.files.attached? %>
+  <div class="mb-8">
+    <h2 class="text-sm font-semibold text-gray-400 mb-4">Attachments</h2>
+    <%= render "shared/attachments", files: project.files %>
+  </div>
+<% end %>
+
+<% if project.description.blank? && !project.files.attached? %>
+  <div class="text-center py-12 text-sm text-gray-500">
+    No description or attachments yet. <%= link_to 'Edit project', edit_team_project_path(project.team, project), class: 'text-accent hover:text-accent-hover' %> to add some.
+  </div>
+<% end %>

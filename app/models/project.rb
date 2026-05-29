@@ -9,6 +9,14 @@ class Project < ApplicationRecord
   has_many :issues, dependent: :nullify
   has_many :project_labels, dependent: :destroy
   has_many :labels, through: :project_labels
+  has_many :comments, dependent: :destroy
+  has_many :decisions, dependent: :destroy
+  has_one :hourglass_channel_link,
+          -> { project_channel },
+          class_name: 'HourglassLink',
+          foreign_key: :mtasks_project_id,
+          inverse_of: :mtasks_project,
+          dependent: :destroy
   has_many_attached :files
 
   scope :on_roadmap, -> { where.not(roadmap_commitment: nil) }

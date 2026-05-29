@@ -1,0 +1,19 @@
+<%= turbo_stream.replace "issue_discussion_#{@issue.id}" do %>
+  <%= render 'issues/discussion', issue: @issue, team: @team, issue_thread_link: nil %>
+<% end %>
+
+<%= turbo_stream.replace "issue_thread_badge_#{@issue.id}" do %>
+  <%= render 'issues/thread_badge', issue: @issue, issue_thread_link: nil %>
+<% end %>
+
+<%= turbo_stream.replace "issue_thread_link_action_#{@issue.id}" do %>
+  <%= turbo_frame_tag "issue_thread_link_action_#{@issue.id}" do %>
+    <%= render 'issues/thread_link_action', issue: @issue, issue_thread_link: nil %>
+  <% end %>
+<% end %>
+
+<%= turbo_stream.replace "issue_native_comment_form_#{@issue.id}" do %>
+  <%= turbo_frame_tag "issue_native_comment_form_#{@issue.id}" do %>
+    <%= render 'issues/native_comment_form', issue: @issue, issue_thread_link: nil %>
+  <% end %>
+<% end %>

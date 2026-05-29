@@ -1,0 +1,7 @@
+<%# locals: (issue:, issue_thread_link:) %>
+<% if issue_thread_link.nil? %>
+  <div class="mt-5"></div>
+  <%= turbo_frame_tag "comment_form" do %>
+    <%= render 'comments/form', issue: issue, comment: Comment.new %>
+  <% end %>
+<% end %>

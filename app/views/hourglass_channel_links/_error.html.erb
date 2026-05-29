@@ -1,0 +1,12 @@
+<%# locals: (error:, project:) %>
+<%= turbo_frame_tag "hourglass_channel_link_modal" do %>
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+    <div class="bg-foreground border border-red-500/30 rounded-lg shadow-2xl w-full max-w-md p-6">
+      <h3 class="text-sm font-medium text-red-200 mb-2">Could not link channel</h3>
+      <p class="text-xs text-gray-400 mb-4"><%= error %></p>
+      <%= link_to "Close", new_team_project_hourglass_channel_link_path(project.team, project),
+          data: { turbo_frame: "hourglass_channel_link_modal" },
+          class: "px-3 py-1.5 rounded border border-stroke text-xs text-gray-300 hover:bg-hover-highlight" %>
+    </div>
+  </div>
+<% end %>

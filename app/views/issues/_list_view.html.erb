@@ -27,7 +27,7 @@
       <div data-swimlane-row-target="content">
         <% group_data[:issues].each do |issue| %>
           <div class="hidden sm:block">
-            <%= render "issues/list_row", issue: issue, display_options: @display_options, labels: @labels %>
+            <%= render "issues/list_row", issue: issue, display_options: @display_options, labels: @labels, thread_count: @thread_counts && @thread_counts[issue.id] %>
           </div>
           <div class="sm:hidden">
             <%= render "issues/list_row_mobile", issue: issue, display_options: @display_options %>

@@ -1,0 +1,19 @@
+<%# locals: (project:, team:, active_tab:) %>
+<div class="border-b border-stroke mb-6">
+  <nav class="flex items-center gap-1" aria-label="Project tabs">
+    <% tabs = [
+         { id: :overview,   label: 'Overview',   path: overview_team_project_path(team, project) },
+         { id: :issues,     label: 'Issues',     path: team_project_path(team, project) },
+         { id: :discussion, label: 'Discussion', path: discussion_team_project_path(team, project) },
+         { id: :activity,   label: 'Activity',   path: activity_team_project_path(team, project) }
+       ] %>
+    <% tabs.each do |tab| %>
+      <% is_active = active_tab == tab[:id] %>
+      <%= link_to tab[:path],
+          class: "px-3 py-2 text-xs font-medium border-b-2 -mb-px transition-colors #{is_active ? 'border-accent text-gray-100' : 'border-transparent text-gray-500 hover:text-gray-300'}",
+          aria: { current: (is_active ? 'page' : nil) } do %>
+        <%= tab[:label] %>
+      <% end %>
+    <% end %>
+  </nav>
+</div>

@@ -23,7 +23,7 @@
               </svg>
             </button>
           <% end %>
-          <% if Current.user.admin? || comment.user == Current.user %>
+          <% if comment.user == Current.user || team_admin?(comment.issue.team) %>
             <%= button_to team_issue_comment_path(comment.issue.team, comment.issue, comment),
                 method: :delete,
                 class: "text-gray-500 hover:text-gray-400 cursor-pointer",

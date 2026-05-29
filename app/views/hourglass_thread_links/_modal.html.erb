@@ -1,0 +1,52 @@
+<%# locals: (issue:, team:, integration:) %>
+<div data-controller="modal"
+     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+  <div class="bg-foreground border border-stroke rounded-lg shadow-2xl w-full max-w-md flex flex-col">
+    <div class="flex items-center justify-between px-4 py-3 border-b border-stroke shrink-0">
+      <h3 class="text-sm font-medium text-gray-200">Link a Hourglass thread</h3>
+      <%= link_to "#",
+          data: { action: "click->modal#close" },
+          class: "text-gray-500 hover:text-gray-300",
+          aria: { label: "Close" } do %>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      <% end %>
+    </div>
+
+    <% if integration.nil? %>
+      <div class="px-4 py-8 text-center text-xs text-gray-500">
+        No active Hourglass integration on this workspace.
+        Connect one in workspace settings to link threads to issues.
+      </div>
+    <% else %>
+      <%= form_with url: team_issue_hourglass_thread_link_path(team, issue),
+            method: :post,
+            class: "px-4 py-4 space-y-3" do |f| %>
+        <div>
+          <label class="block text-xs text-gray-400 mb-1.5" for="hourglass_thread_id">
+            Thread ID
+          </label>
+          <%= text_field_tag :hourglass_thread_id, '',
+              id: 'hourglass_thread_id',
+              autocomplete: 'off',
+              autofocus: true,
+              placeholder: 'paste the thread message id…',
+              class: "w-full bg-background border border-stroke rounded px-2 py-1.5 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-accent" %>
+          <p class="text-[11px] text-gray-500 mt-1.5">
+            From the Hourglass client, copy the message ID of the thread root (e.g. via /link in chat).
+          </p>
+        </div>
+        <div class="flex items-center justify-end gap-2">
+          <%= link_to "Cancel", "#",
+              data: { action: "click->modal#close" },
+              class: "px-3 py-1.5 rounded border border-stroke text-xs text-gray-400 hover:text-gray-200 hover:bg-hover-highlight" %>
+          <button type="submit"
+                  class="px-3 py-1.5 rounded bg-accent/10 border border-accent/30 text-accent text-xs font-medium hover:bg-accent/20">
+            Link thread
+          </button>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+</div>

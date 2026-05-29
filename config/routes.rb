@@ -10,6 +10,13 @@ Rails.application.routes.draw do
     resource :github_installation, only: %i[show new destroy], controller: 'workspace_github_installations' do
       get :callback, on: :collection
     end
+    namespace :settings do
+      resource :hourglass_integration,
+               only: %i[show update destroy],
+               controller: 'hourglass_integrations' do
+        post :test_webhook
+      end
+    end
   end
 
   resources :teams, only: %i[new create show edit update] do
@@ -25,7 +32,22 @@ Rails.application.routes.draw do
     resources :lanes, only: %i[create update destroy]
     resources :projects do
       delete :purge_file, on: :member
+      member do
+        get :overview
+        get :discussion
+        get :activity
+      end
       resources :project_labels, only: %i[create destroy]
+      resource :hourglass_channel_link,
+               only: %i[new create destroy],
+               controller: 'hourglass_channel_links' do
+        get :channels, on: :collection
+      end
+      namespace :discussion do
+        resources :comments, only: [:create] do
+          member { post :push }
+        end
+      end
     end
     resource :roadmap, only: [:show], controller: 'roadmaps'
     resources :team_invitations, only: %i[index create destroy] do
@@ -35,6 +57,13 @@ Rails.application.routes.draw do
     resources :members, only: [], controller: 'team_members' do
       collection { get :search }
     end
+    resources :memberships, only: [], controller: 'team_memberships' do
+      collection do
+        patch :promote
+        patch :demote
+        patch :transfer_ownership
+      end
+    end
     resources :issues do
       resources :comments, only: %i[create destroy]
       resources :issue_labels, only: %i[create destroy]
@@ -43,6 +72,12 @@ Rails.application.routes.draw do
           get :search
           post :bulk_create
         end
+      end
+      resource :hourglass_thread_link,
+               only: %i[new create destroy],
+               controller: 'hourglass_thread_links'
+      namespace :discussion do
+        resources :comments, only: [:create], controller: 'issue_comments'
       end
       get :search, on: :collection
     end
@@ -66,14 +101,23 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       get '/me', to: 'users#me'
+      get '/users/by_email', to: 'users#by_email'
+      get '/issues/by_identifier/:identifier',
+          to: 'issues#by_identifier',
+          constraints: { identifier: /[A-Z]+-\d+/ }
+      post '/integrations/handshake', to: 'integrations#handshake'
       resources :teams, only: [:index] do
         resources :issues, only: %i[index show create update] do
           resources :issue_dependencies, only: %i[create destroy], controller: 'issue_dependencies'
           resources :comments, only: %i[index create]
+          resources :decisions, only: %i[create destroy]
         end
         resources :lanes, only: [:index]
         resources :labels, only: %i[index create]
-        resources :projects, only: %i[index show create update destroy]
+        resources :projects, only: %i[index show create update destroy] do
+          resources :decisions, only: %i[create destroy]
+          resources :comments, only: %i[index create], controller: 'project_comments'
+        end
         resources :members, only: [:index]
       end
     end
@@ -85,6 +129,7 @@ Rails.application.routes.draw do
   # GitHub Webhooks
   namespace :webhooks do
     resource :github, only: [:create], controller: 'github'
+    post 'hourglass/:workspace_id', to: 'hourglass#create', as: :hourglass
   end
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

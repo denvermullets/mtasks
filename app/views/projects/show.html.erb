@@ -14,6 +14,7 @@
         <% end %>
         <span class="text-gray-600">&#8250;</span>
         <span class="text-sm text-gray-400 truncate"><%= @project.name %></span>
+        <%= render "channel_link_badge", project: @project %>
       </div>
       <div class="flex items-center gap-2">
         <!-- Mobile Properties Button -->
@@ -46,55 +47,26 @@
             </div>
           </div>
 
-          <!-- Description -->
-          <% if @project.description.present? %>
-            <div class="mb-8">
-              <div class="markdown text-gray-300">
-                <%= render_markdown(@project.description, team: @project.team) %>
-              </div>
-            </div>
+          <%= render "tab_nav", project: @project, team: @team, active_tab: @active_tab || :issues %>
+
+          <% case @active_tab %>
+          <% when :overview %>
+            <%= turbo_frame_tag "project_tab_overview" do %>
+              <%= render "overview", project: @project %>
+            <% end %>
+          <% when :discussion %>
+            <%= turbo_frame_tag "project_tab_discussion" do %>
+              <%= render "discussion", project: @project, channel_link: @channel_link, team: @team, thread_id: @thread_id %>
+            <% end %>
+          <% when :activity %>
+            <%= turbo_frame_tag "project_tab_activity" do %>
+              <%= render "activity", project: @project %>
+            <% end %>
+          <% else %>
+            <%= turbo_frame_tag "project_tab_issues" do %>
+              <%= render "issues_tab", project: @project, team: @team, issues: @issues, lanes: @lanes, labels: @labels, sort: @sort %>
+            <% end %>
           <% end %>
-
-          <!-- Attachments -->
-          <% if @project.files.attached? %>
-            <div class="mb-8">
-              <h2 class="text-sm font-semibold text-gray-400 mb-4">Attachments</h2>
-              <%= render "shared/attachments", files: @project.files %>
-            </div>
-          <% end %>
-
-          <!-- Issues Section -->
-          <div class="border-t border-stroke pt-8">
-            <%= render "projects/progress_chart", project: @project %>
-
-            <div class="flex items-center justify-between mb-4">
-              <h2 class="text-sm font-semibold text-gray-400">
-                Issues
-                <span class="text-gray-500 font-normal">(<%= @issues.count %>)</span>
-              </h2>
-              <div class="flex items-center gap-1">
-                <span class="text-xs text-gray-600 mr-1">Sort:</span>
-                <% { 'newest' => 'Newest', 'id' => 'ID', 'status' => 'Status', 'updated' => 'Updated', 'priority' => 'Priority' }.each do |sort_option, label| %>
-                  <%= link_to label,
-                      team_project_path(@team, @project, sort: sort_option),
-                      class: "px-2 py-0.5 text-xs rounded #{@sort == sort_option ? 'bg-foreground border border-stroke text-gray-100' : 'text-gray-500 hover:text-gray-300'}" %>
-                <% end %>
-                <%= link_to new_team_issue_path(@team, project_id: @project.id),
-                    data: { turbo_frame: "_top" },
-                    class: "ml-2 p-1 rounded text-gray-500 hover:text-accent hover:bg-hover-highlight transition-colors",
-                    title: "New issue in this project",
-                    aria: { label: "New issue in this project" } do %>
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
-                  </svg>
-                <% end %>
-              </div>
-            </div>
-
-            <div id="project_issues_list_<%= @project.id %>">
-              <%= render "projects/issues_list", project: @project, issues: @issues, team: @team, lanes: @lanes, labels: @labels %>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -127,4 +99,5 @@
   </div>
 
   <%= render "shared/lightbox" %>
+  <%= turbo_frame_tag "hourglass_channel_link_modal" %>
 </div>
