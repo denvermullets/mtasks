@@ -19,6 +19,10 @@ class User < ApplicationRecord
     'appearance' => {
       'theme' => 'default',
       'font' => 'inter'
+    },
+    'team_order' => {
+      'owned' => [],
+      'joined' => []
     }
   }.freeze
 
@@ -50,6 +54,22 @@ class User < ApplicationRecord
   def font
     value = resolved_settings.dig('appearance', 'font')
     AVAILABLE_FONTS.include?(value) ? value : 'inter'
+  end
+
+  def team_order
+    raw = resolved_settings.fetch('team_order', {})
+    {
+      'owned' => Array(raw['owned']).map(&:to_i),
+      'joined' => Array(raw['joined']).map(&:to_i)
+    }
+  end
+
+  # Sort teams by the stored id order for a scope; teams not yet in the
+  # order list are appended (stable) at the end.
+  def order_teams(teams, scope)
+    index = team_order.fetch(scope.to_s, []).each_with_index.to_h
+    fallback = index.size
+    teams.each_with_index.sort_by { |team, i| [index.fetch(team.id, fallback), i] }.map(&:first)
   end
 
   def personal_workspace

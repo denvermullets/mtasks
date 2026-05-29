@@ -1,5 +1,10 @@
-<!-- last-sha: 937a18e6bd4ed6e372a5973a7935616fc0d3ed41 -->
+<!-- last-sha: b3b2f0eef2c97707fc5ec5743692bd1cd92a0952 -->
 # What's new
+
+## 2026-05-29
+- **Reorder your teams.** A new settings page lets you drag to reorder the teams in your sidebar, separated into teams you own and teams you've joined.
+- **Hourglass integration.** Connect projects and issues to Hourglass and keep them in sync both ways — comments, status updates, and messages flow between the two apps in real time, with links to jump straight between them.
+- **Clearer team roles.** The sidebar and permissions now do a better job of reflecting who owns, administers, or just belongs to each team.
 
 ## 2026-04-27
 - **Changelog page.** New in-app changelog so you can see what's shipped recently without leaving the app.

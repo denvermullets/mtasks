@@ -28,6 +28,8 @@
       </div>
     <% end %>
     <% owned_teams, joined_teams = user_teams.partition { |t| team_owner?(t) } %>
+    <% owned_teams = current_user.order_teams(owned_teams, :owned) %>
+    <% joined_teams = current_user.order_teams(joined_teams, :joined) %>
 
     <div class="p-2 mt-1" data-controller="teams-section">
       <!-- Header with toggle and + button -->
@@ -49,7 +51,7 @@
         <% end %>
       </div>
 
-      <div class="space-y-1" data-teams-section-target="list">
+      <div id="sidebar_owned_teams" class="space-y-1" data-teams-section-target="list">
         <% if owned_teams.any? %>
           <% owned_teams.each do |team| %>
             <%= render "shared/sidebar_team_row", team: team %>
@@ -74,7 +76,7 @@
             <span>Teams you've joined</span>
           </button>
         </div>
-        <div class="space-y-1" data-teams-section-target="list">
+        <div id="sidebar_joined_teams" class="space-y-1" data-teams-section-target="list">
           <% joined_teams.each do |team| %>
             <%= render "shared/sidebar_team_row", team: team %>
           <% end %>

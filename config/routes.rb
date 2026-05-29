@@ -5,6 +5,8 @@ Rails.application.routes.draw do
   namespace :settings do
     get :appearance, to: 'appearance#show'
     patch :appearance, to: 'appearance#update'
+    get :team_order, to: 'team_order#show'
+    patch :team_order, to: 'team_order#update'
   end
   resources :workspaces, only: [] do
     resource :github_installation, only: %i[show new destroy], controller: 'workspace_github_installations' do
