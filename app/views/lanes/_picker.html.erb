@@ -4,10 +4,13 @@
 %>
 
 <%
-  issue_id = issue.id
-  team_id = issue.team_id
-  current_lane_id = issue.lane_id || 0
   context ||= "sidebar"
+  shared = local_assigns.fetch(:shared, false)
+  issue_id = issue&.id || 0
+  team = local_assigns[:team] || issue&.team
+  team_id = team&.id
+  current_lane_id = issue&.lane_id || 0
+  lanes ||= team.lanes.order(:position)
 %>
 
 <div data-controller="lane-picker"
@@ -15,12 +18,13 @@
      data-lane-picker-team-id-value="<%= team_id %>"
      data-lane-picker-context-value="<%= context %>"
      data-lane-picker-current-lane-value="<%= current_lane_id %>"
+     <%= 'data-shared-picker="lane"'.html_safe if shared %>
      class="hidden fixed z-50 w-80 bg-context-foreground border-2 border-stroke rounded-md shadow-2xl"
      data-lane-picker-target="picker">
 
-  <!-- Header with issue identifier -->
+  <!-- Header with issue identifier (filled dynamically in shared mode) -->
   <div class="px-3 py-2 border-b border-stroke">
-    <span class="text-xs text-gray-500"><%= issue.identifier %> • <%= issue.title.truncate(30) %></span>
+    <span class="text-xs text-gray-500" data-lane-picker-target="header"><% if issue %><%= issue.identifier %> • <%= issue.title.truncate(30) %><% end %></span>
   </div>
 
   <!-- Search Input -->

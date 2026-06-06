@@ -7,6 +7,7 @@ export default class extends Controller {
     "search",
     "laneList",
     "emptyState",
+    "header",
   ];
 
   static values = {
@@ -30,6 +31,29 @@ export default class extends Controller {
 
   disconnect() {
     this.close();
+  }
+
+  // Shared-picker entry point: retarget this single picker at the hovered card,
+  // then open. Used by board-keyboard for the 'S' shortcut.
+  openForCard(card) {
+    this.referenceCard = card;
+    this.issueIdValue = parseInt(card.dataset.issueId);
+
+    const currentLaneId = parseInt(card.dataset.currentLaneId || "0") || 0;
+    this.currentLaneValue = currentLaneId;
+
+    if (this.hasHeaderTarget) {
+      const identifier = card.dataset.issueIdentifier || "";
+      const title = card.dataset.issueTitle || "";
+      this.headerTarget.textContent = title ? `${identifier} • ${title}` : identifier;
+    }
+
+    // Reflect the issue's current lane in the radio state
+    this.laneListTarget.querySelectorAll('input[type="radio"]').forEach((radio) => {
+      radio.checked = radio.value === String(currentLaneId);
+    });
+
+    this.open();
   }
 
   open() {
@@ -282,8 +306,9 @@ export default class extends Controller {
     let rect = null;
 
     if (this.contextValue === "card") {
-      // For card context, find the hovered card
-      referenceElement = this.element.closest('[data-hovered="true"]');
+      // For card context, use the card we were opened for (shared picker) and
+      // fall back to the legacy nested lookup.
+      referenceElement = this.referenceCard || this.element.closest('[data-hovered="true"]');
       if (!referenceElement) return;
       rect = referenceElement.getBoundingClientRect();
 

@@ -98,6 +98,14 @@
     </div>
   </div>
 
+  <%# Shared lane/label pickers — one instance each for the issues tab, retargeted per
+      hovered card via the S / L shortcuts. Outside the tab/list frames so they survive
+      turbo-stream reloads (e.g. ProjectVelocityJob broadcasts). %>
+  <%= render "lanes/picker", issue: nil, shared: true, context: "card",
+             team: @team, lanes: @lanes %>
+  <%= render "labels/picker", issue: nil, shared: true, context: "card",
+             team: @team, labels: @labels %>
+
   <%= render "shared/lightbox" %>
   <%= turbo_frame_tag "hourglass_channel_link_modal" %>
 </div>

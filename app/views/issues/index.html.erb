@@ -38,6 +38,15 @@
     <%= render "issues_board" %>
   <% end %>
 
+  <%# Shared pickers — one instance each for the whole board, retargeted per hovered card
+      via the P / S / L shortcuts. Live outside #issues_board so they survive turbo-stream reloads. %>
+  <%= render "projects/picker", issue: nil, shared: true, context: "card",
+             team: current_team, projects: current_team.projects %>
+  <%= render "lanes/picker", issue: nil, shared: true, context: "card",
+             team: current_team, lanes: current_team.lanes.order(:position) %>
+  <%= render "labels/picker", issue: nil, shared: true, context: "card",
+             team: current_team, labels: current_team.labels %>
+
   <!-- Mobile FAB for new issue -->
   <%= link_to new_team_issue_path(current_team),
       data: { turbo_frame: "_top" },

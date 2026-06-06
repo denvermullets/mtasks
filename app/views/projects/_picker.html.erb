@@ -4,11 +4,13 @@
 %>
 
 <%
-  issue_id = issue.id
-  team_id = issue.team_id
-  current_project_id = issue.project_id || 0
   context ||= "sidebar"
-  projects ||= issue.team.projects
+  shared = local_assigns.fetch(:shared, false)
+  issue_id = issue&.id || 0
+  team = local_assigns[:team] || issue&.team
+  team_id = team&.id
+  current_project_id = issue&.project_id || 0
+  projects ||= team.projects
 %>
 
 <div data-controller="project-picker"
@@ -16,12 +18,13 @@
      data-project-picker-team-id-value="<%= team_id %>"
      data-project-picker-context-value="<%= context %>"
      data-project-picker-current-project-value="<%= current_project_id %>"
+     <%= 'data-shared-picker="project"'.html_safe if shared %>
      class="hidden fixed z-50 w-80 bg-context-foreground border-2 border-stroke rounded-md shadow-2xl"
      data-project-picker-target="picker">
 
-  <!-- Header with issue identifier -->
+  <!-- Header with issue identifier (filled dynamically in shared mode) -->
   <div class="px-3 py-2 border-b border-stroke">
-    <span class="text-xs text-gray-500"><%= issue.identifier %> • <%= issue.title.truncate(30) %></span>
+    <span class="text-xs text-gray-500" data-project-picker-target="header"><% if issue %><%= issue.identifier %> • <%= issue.title.truncate(30) %><% end %></span>
   </div>
 
   <!-- Search Input -->
@@ -83,7 +86,7 @@
 
   <!-- New Project Link -->
   <div class="border-t border-stroke px-3 py-2">
-    <%= link_to new_team_project_path(issue.team),
+    <%= link_to new_team_project_path(team),
         class: "flex items-center gap-2 text-sm text-accent hover:text-accent-hover transition-colors",
         data: { turbo_frame: "_top" } do %>
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

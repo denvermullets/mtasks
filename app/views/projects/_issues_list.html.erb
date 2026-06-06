@@ -3,7 +3,11 @@
   <div class="space-y-1">
     <% issues.each do |issue| %>
       <% issue_thread = thread_counts && thread_counts[issue.id] %>
-      <div class="relative" data-controller="issue-card" data-issue-id="<%= issue.id %>">
+      <div class="relative" data-controller="issue-card" data-issue-id="<%= issue.id %>"
+           data-current-lane-id="<%= issue.lane_id || 0 %>"
+           data-current-label-ids="<%= issue.labels.map(&:id).to_json %>"
+           data-issue-identifier="<%= issue.identifier %>"
+           data-issue-title="<%= issue.title.truncate(30) %>">
         <%= link_to team_issue_path(team, issue),
             data: {
               turbo_frame: "_top",
@@ -40,15 +44,8 @@
           <% end %>
         <% end %>
 
-        <!-- Lane Picker (S shortcut) -->
-        <div>
-          <%= render "lanes/picker", issue: issue, lanes: lanes, context: "card" %>
-        </div>
-
-        <!-- Label Picker (L shortcut) -->
-        <div>
-          <%= render "labels/picker", issue: issue, labels: labels, context: "card" %>
-        </div>
+        <%# Lane/Label pickers are rendered once on the project show page as shared
+            overlays and retargeted at the hovered card, not per card. %>
       </div>
     <% end %>
   </div>

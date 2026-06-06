@@ -48,19 +48,18 @@ export default class extends Controller {
       return;
     }
 
-    // Find the label picker inside the hovered card
-    const labelPicker = hoveredCard.querySelector('[data-controller="label-picker"]');
+    // Open the single shared label picker, retargeted at the hovered card
+    const labelPicker = document.querySelector('[data-shared-picker="label"]');
     if (!labelPicker) {
       return;
     }
 
-    // Get the label picker controller and open it
     const controller = this.application.getControllerForElementAndIdentifier(
       labelPicker,
       "label-picker"
     );
-    if (controller && controller.open) {
-      controller.open();
+    if (controller && controller.openForCard) {
+      controller.openForCard(hoveredCard);
     }
   }
 
@@ -71,19 +70,18 @@ export default class extends Controller {
       return;
     }
 
-    // Find the lane picker inside the hovered card
-    const lanePicker = hoveredCard.querySelector('[data-controller="lane-picker"]');
+    // Open the single shared lane picker, retargeted at the hovered card
+    const lanePicker = document.querySelector('[data-shared-picker="lane"]');
     if (!lanePicker) {
       return;
     }
 
-    // Get the lane picker controller and open it
     const controller = this.application.getControllerForElementAndIdentifier(
       lanePicker,
       "lane-picker"
     );
-    if (controller && controller.open) {
-      controller.open();
+    if (controller && controller.openForCard) {
+      controller.openForCard(hoveredCard);
     }
   }
 
@@ -94,19 +92,18 @@ export default class extends Controller {
       return;
     }
 
-    // Find the project picker inside the hovered card
-    const projectPicker = hoveredCard.querySelector('[data-controller="project-picker"]');
+    // Open the single shared project picker, retargeted at the hovered card
+    const projectPicker = document.querySelector('[data-shared-picker="project"]');
     if (!projectPicker) {
       return;
     }
 
-    // Get the project picker controller and open it
     const controller = this.application.getControllerForElementAndIdentifier(
       projectPicker,
       "project-picker"
     );
-    if (controller && controller.open) {
-      controller.open();
+    if (controller && controller.openForCard) {
+      controller.openForCard(hoveredCard);
     }
   }
 

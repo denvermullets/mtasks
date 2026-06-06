@@ -4,10 +4,15 @@
 %>
 
 <%
-  issue_id = issue.id
-  team_id = issue.team_id
-  current_label_ids = issue.labels.map(&:id)
   context ||= "sidebar"
+  shared = local_assigns.fetch(:shared, false)
+  issue_id = issue&.id || 0
+  team = local_assigns[:team] || issue&.team
+  team_id = team&.id
+  labels ||= team.labels
+  # In shared mode no issue is bound, so nothing is pre-checked server-side;
+  # the controller sets checkbox state per hovered card at open time.
+  current_label_ids = issue ? issue.labels.map(&:id) : []
 
   # Get frequently used and all labels. Memoized per-request: these are team-wide
   # and identical for every row, so we avoid re-running the aggregates per issue.
@@ -20,12 +25,13 @@
      data-label-picker-team-id-value="<%= team_id %>"
      data-label-picker-context-value="<%= context %>"
      data-label-picker-current-labels-value="<%= current_label_ids.to_json %>"
+     <%= 'data-shared-picker="label"'.html_safe if shared %>
      class="hidden fixed z-50 w-80 bg-context-foreground border-2 border-stroke rounded-md shadow-2xl"
      data-label-picker-target="picker">
 
-  <!-- Header with issue identifier -->
+  <!-- Header with issue identifier (filled dynamically in shared mode) -->
   <div class="px-3 py-2 border-b border-stroke">
-    <span class="text-xs text-gray-500"><%= issue.identifier %> • <%= issue.title.truncate(30) %></span>
+    <span class="text-xs text-gray-500" data-label-picker-target="header"><% if issue %><%= issue.identifier %> • <%= issue.title.truncate(30) %><% end %></span>
   </div>
 
   <!-- Search Input -->
