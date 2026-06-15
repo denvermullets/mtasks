@@ -88,10 +88,16 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
   test 'show displays project issues' do
     lane = @team.lanes.create!(name: 'Backlog', position: 0)
     @team.issues.create!(title: 'Project Issue', lane: lane, creator: @user, project: @project)
+    @team.issues.create!(title: 'Done Issue', lane: lane, creator: @user, project: @project, completed_at: Time.current)
 
     get team_project_path(@team, @project)
     assert_response :success
     assert_includes response.body, 'Project Issue'
+    assert_includes response.body, 'Done Issue'
+
+    get team_project_path(@team, @project, filter: 'active')
+    assert_includes response.body, 'Project Issue'
+    assert_not_includes response.body, 'Done Issue'
   end
 
   test 'update sets roadmap_commitment and responds with turbo_stream' do

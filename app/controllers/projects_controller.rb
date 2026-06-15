@@ -120,6 +120,7 @@ class ProjectsController < ApplicationController
 
   def load_show_data!
     @sort = params[:sort].presence_in(%w[newest id status updated priority]) || 'newest'
+    @issue_filter = params[:filter].presence_in(%w[all active]) || 'all'
     @issues = sorted_project_issues
     @lanes = current_team.lanes.order(:position)
     @team_members = current_team.users.order(:name)
@@ -130,6 +131,7 @@ class ProjectsController < ApplicationController
   def sorted_project_issues
     base = @project.issues.not_archived
                    .includes(:lane, :assignee, :labels, :blocking_dependencies, :blocked_dependencies)
+    base = base.where(completed_at: nil, canceled_at: nil) if @issue_filter == 'active'
 
     case @sort
     when 'id'       then base.order(team_number: :asc)

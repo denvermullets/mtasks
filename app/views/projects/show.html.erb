@@ -64,7 +64,7 @@
             <% end %>
           <% else %>
             <%= turbo_frame_tag "project_tab_issues" do %>
-              <%= render "issues_tab", project: @project, team: @team, issues: @issues, lanes: @lanes, labels: @labels, sort: @sort %>
+              <%= render "issues_tab", project: @project, team: @team, issues: @issues, lanes: @lanes, labels: @labels, sort: @sort, filter: @issue_filter %>
             <% end %>
           <% end %>
         </div>
