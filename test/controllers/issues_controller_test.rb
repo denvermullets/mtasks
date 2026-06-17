@@ -112,4 +112,24 @@ class IssuesControllerTest < ActionDispatch::IntegrationTest
       get team_issue_path(@team, @issue)
     end
   end
+
+  test 'move relocates issue to another team the user belongs to' do
+    other_team = @workspace.teams.create!(name: 'Other Team', identifier: 'OTH')
+    other_team.team_memberships.create!(user: @user)
+
+    patch team_issue_move_path(@team, @issue), params: { target_team_id: other_team.id }
+
+    @issue.reload
+    assert_equal other_team, @issue.team
+    assert_redirected_to team_issue_path(other_team, @issue)
+  end
+
+  test 'move rejects a team the user does not belong to' do
+    foreign_team = @workspace.teams.create!(name: 'Foreign', identifier: 'FRN')
+
+    patch team_issue_move_path(@team, @issue), params: { target_team_id: foreign_team.id }
+
+    assert_equal @team, @issue.reload.team
+    assert_redirected_to team_issue_path(@team, @issue)
+  end
 end

@@ -11,6 +11,9 @@ class VersionDescriptionService < Service
 
   def call
     return describe_dependency if @version.item_type == 'IssueDependency'
+    # A team move renumbers the issue and remaps lane/project/etc. as side effects;
+    # describe only the move so the timeline isn't cluttered with those mechanical changes.
+    return describe_team_id(*@changes['team_id']) if @changes.key?('team_id')
 
     descriptions = TRACKED_ATTRIBUTES.filter_map { |attr| describe_attribute(attr) }
     descriptions.empty? ? 'updated the issue' : descriptions.join(', ')
@@ -101,6 +104,12 @@ class VersionDescriptionService < Service
 
   def describe_parent_issue_id(_old_val, _new_val)
     'changed parent issue'
+  end
+
+  def describe_team_id(old_val, new_val)
+    old_name = h(Team.find_by(id: old_val)&.name || 'Unknown')
+    new_name = h(Team.find_by(id: new_val)&.name || 'Unknown')
+    "moved from team <strong>#{old_name}</strong> to <strong>#{new_name}</strong>"
   end
 
   def describe_dependency

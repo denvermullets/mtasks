@@ -1,6 +1,6 @@
 class Issue < ApplicationRecord
   has_paper_trail only: %i[title description lane_id priority estimate due_date assignee_id project_id
-                           parent_issue_id]
+                           parent_issue_id team_id]
 
   enum :priority, { urgent: 0, high: 1, medium: 2, low: 3, no_priority: 4 }
 

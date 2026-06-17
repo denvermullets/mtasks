@@ -4,6 +4,11 @@
                   method: :patch,
                   data: { controller: "issue-sidebar" } do |form| %>
     <h3 class="text-xs font-semibold text-gray-500 uppercase mb-4">Properties</h3>
+    <!-- Team -->
+    <div class="mb-6">
+      <div class="text-xs font-medium text-gray-500 mb-2">Team</div>
+      <%= render "issues/team_picker", issue: issue, controller: "issue-sidebar" %>
+    </div>
     <!-- Lane -->
     <div class="mb-6">
       <div class="text-xs font-medium text-gray-500 mb-2">Status</div>

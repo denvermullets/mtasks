@@ -1,0 +1,32 @@
+<%#
+  Team selector dropdown shared by the issue sidebar and edit page.
+  Locals:
+    issue      - the issue being moved
+    controller - the host Stimulus controller identifier ("issue-sidebar" or "issue-form")
+  Moving renumbers the issue under the destination team, so each option does a
+  full PATCH to issues#move and breaks out of any Turbo frame.
+%>
+<% other_teams = user_teams.reject { |team| team == issue.team } %>
+<div class="relative">
+  <button type="button"
+          data-action="click-><%= controller %>#toggleDropdown"
+          data-dropdown="team"
+          class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors cursor-pointer">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a3 3 0 10-2.83-4"></path>
+    </svg>
+    <span><%= issue.team.name %></span>
+  </button>
+  <div data-<%= controller %>-target="teamDropdown" class="hidden absolute top-full left-0 mt-1 min-w-[200px] w-full bg-foreground border border-stroke rounded-md shadow-lg z-10">
+    <% if other_teams.any? %>
+      <% other_teams.each do |team| %>
+        <%= link_to team.name,
+            team_issue_move_path(issue.team, issue, target_team_id: team.id),
+            data: { turbo_method: :patch, turbo_frame: "_top" },
+            class: "block w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors cursor-pointer first:rounded-t-md last:rounded-b-md" %>
+      <% end %>
+    <% else %>
+      <div class="px-3 py-2 text-sm text-gray-500">No other teams available</div>
+    <% end %>
+  </div>
+</div>
