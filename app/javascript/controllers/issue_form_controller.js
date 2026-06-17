@@ -2,6 +2,7 @@ import { Controller } from "@hotwired/stimulus";
 
 export default class extends Controller {
   static targets = [
+    "teamDropdown",
     "laneDropdown",
     "laneLabel",
     "laneInput",
@@ -46,6 +47,7 @@ export default class extends Controller {
 
   closeAllDropdowns() {
     const dropdowns = [
+      "teamDropdown",
       "laneDropdown",
       "priorityDropdown",
       "assigneeDropdown",

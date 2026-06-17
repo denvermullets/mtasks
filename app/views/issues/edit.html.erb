@@ -16,7 +16,7 @@
   <div class="flex-1 overflow-y-auto p-8">
     <div class="max-w-4xl mx-auto">
       <%= form_with model: [@issue.team, @issue], data: { controller: "issue-form submit-on-cmd-enter", turbo: false } do |form| %>
-        <!-- Team Display (Read-only) -->
+        <!-- Identifier + Team selector -->
         <div class="mb-6 flex items-center gap-2">
           <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm font-medium">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -24,6 +24,7 @@
             </svg>
             <%= @issue.identifier %>
           </div>
+          <%= render "issues/team_picker", issue: @issue, controller: "issue-form" %>
         </div>
         <!-- Issue Title -->
         <div class="mb-6">
