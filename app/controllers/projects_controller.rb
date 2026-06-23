@@ -119,8 +119,8 @@ class ProjectsController < ApplicationController
   end
 
   def load_show_data!
-    @sort = params[:sort].presence_in(%w[newest id status updated priority]) || 'newest'
-    @issue_filter = params[:filter].presence_in(%w[all active]) || 'all'
+    @sort = params[:sort].presence_in(%w[newest id status updated priority]) || 'id'
+    @issue_filter = params[:filter].presence_in(%w[all active]) || 'active'
     @issues = sorted_project_issues
     @lanes = current_team.lanes.order(:position)
     @team_members = current_team.users.order(:name)
