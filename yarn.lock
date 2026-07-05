@@ -2,82 +2,82 @@
 # yarn lockfile v1
 
 
-"@herb-tools/config@0.8.9":
-  version "0.8.9"
-  resolved "https://registry.yarnpkg.com/@herb-tools/config/-/config-0.8.9.tgz#164cd192da0bc2ecde7522a36754ae14649b97ca"
-  integrity sha512-FY0gkn8ihGkcJDxpUeWHyJzFMuOSzmFCBEx9FH+egj+SfNreQgi570dvhKXXMNvSTjdPNkiGZGI4c/n9EDHoXg==
+"@herb-tools/config@0.8.10":
+  version "0.8.10"
+  resolved "https://registry.yarnpkg.com/@herb-tools/config/-/config-0.8.10.tgz#e4a15959e60da5b9ccd29b21295ab7f09c8a7bac"
+  integrity sha512-feFfAcr/n400vBxtjlLExkcDGjQwUY/SJI+/iwDv9qyLjU6JuwAfsMyG6Td5Kx23U5IFWVC+YbTF9bnd8ZtFdQ==
   dependencies:
-    "@herb-tools/core" "0.8.9"
+    "@herb-tools/core" "0.8.10"
     picomatch "^4.0.2"
     tinyglobby "^0.2.15"
     yaml "^2.8.2"
 
-"@herb-tools/core@0.8.9":
-  version "0.8.9"
-  resolved "https://registry.yarnpkg.com/@herb-tools/core/-/core-0.8.9.tgz#70d3cbc36efc2b68ddd6a3b81006177eb8ceeabc"
-  integrity sha512-yh9AZp+rqtqCvTz+prgrmYrmW5p9s0HefmEH2ugaysWNP65rjRycCcte/bhbz5QhPNdh0gYWYAlmG0FSQ/Uyrg==
+"@herb-tools/core@0.8.10":
+  version "0.8.10"
+  resolved "https://registry.yarnpkg.com/@herb-tools/core/-/core-0.8.10.tgz#6f94389dae6e01c2291473098add45007f710aca"
+  integrity sha512-KFZX6SUcB9ZSJB8XITEOogq4/hH+QabQp4c0PJqG6c9Iv+EEfEUgVQflFOmJ59NKHrT7Og78lmgJhyeBC20wxQ==
 
-"@herb-tools/formatter@^0.8.9":
-  version "0.8.9"
-  resolved "https://registry.yarnpkg.com/@herb-tools/formatter/-/formatter-0.8.9.tgz#b7d689e4cc1c040bde875ad4d93c56654d13be9b"
-  integrity sha512-ZPLrK48hmzufEwDU1Pj0lYAomDkDgeE7L0i/XFqIzhvu5boyMgNhgTeZwE0RXIZY9fHLZK2gfMvF5USWAQ3AtQ==
+"@herb-tools/formatter@^0.8.10":
+  version "0.8.10"
+  resolved "https://registry.yarnpkg.com/@herb-tools/formatter/-/formatter-0.8.10.tgz#3070be254632ca8369746a5c4cbafa99bf409276"
+  integrity sha512-XRcy5v7nuu5742WoD9tUsutmbwQDsP4YOWyeOlIpvls6bInaiBBvC8H8HL/L/1VK/yb/djTsqP+UNzgQh8TJXw==
   dependencies:
-    "@herb-tools/config" "0.8.9"
-    "@herb-tools/core" "0.8.9"
-    "@herb-tools/printer" "0.8.9"
-    "@herb-tools/rewriter" "0.8.9"
+    "@herb-tools/config" "0.8.10"
+    "@herb-tools/core" "0.8.10"
+    "@herb-tools/printer" "0.8.10"
+    "@herb-tools/rewriter" "0.8.10"
     tinyglobby "^0.2.15"
 
-"@herb-tools/highlighter@0.8.9":
-  version "0.8.9"
-  resolved "https://registry.yarnpkg.com/@herb-tools/highlighter/-/highlighter-0.8.9.tgz#e9d855b2866e7b65c14ab39b0ff5efd2368a2428"
-  integrity sha512-NJPHblI5rUeOG5I4EcC9izm6seTA0hReX3v8WcBbIBoXQAshjma4IZYS/23+rrgNK7va1K0eyrbhwhdc1CphhA==
+"@herb-tools/highlighter@0.8.10":
+  version "0.8.10"
+  resolved "https://registry.yarnpkg.com/@herb-tools/highlighter/-/highlighter-0.8.10.tgz#5758e34b12d9290a659dd15e10abb9f7f5af9d05"
+  integrity sha512-jeFLJ9ZIrcja9Ac61QWQfa/6ENHAE5Tju8/ScmjYWZGoF5awaEJM6hmdVVboGQzBcSd0Qjp8Kxq1Odsp+344pg==
   dependencies:
-    "@herb-tools/core" "0.8.9"
-    "@herb-tools/node-wasm" "0.8.9"
+    "@herb-tools/core" "0.8.10"
+    "@herb-tools/node-wasm" "0.8.10"
 
-"@herb-tools/linter@^0.8.9":
-  version "0.8.9"
-  resolved "https://registry.yarnpkg.com/@herb-tools/linter/-/linter-0.8.9.tgz#83428d754b194e52797a1030a0da2259c1af9f11"
-  integrity sha512-SeJ6trpZ+5r1atlR8Bm/rIrL2dmq2M1pILw+lQnNe21O9+UqgEHQzHavRLEMyhndk92zWVQ1q+x5LCDNGfIjXQ==
+"@herb-tools/linter@^0.8.10":
+  version "0.8.10"
+  resolved "https://registry.yarnpkg.com/@herb-tools/linter/-/linter-0.8.10.tgz#a3a1dd518d47a2a1c778307f410f0090a27ae097"
+  integrity sha512-li/JFDoHMpSkYbUMKmFDst+Glf931fobrILvGrnaIp4r7pGBDJQONcImGBdnumKPqMk2p1UkHWONRcEHx33jSw==
   dependencies:
-    "@herb-tools/config" "0.8.9"
-    "@herb-tools/core" "0.8.9"
-    "@herb-tools/highlighter" "0.8.9"
-    "@herb-tools/node-wasm" "0.8.9"
-    "@herb-tools/printer" "0.8.9"
-    "@herb-tools/rewriter" "0.8.9"
+    "@herb-tools/config" "0.8.10"
+    "@herb-tools/core" "0.8.10"
+    "@herb-tools/highlighter" "0.8.10"
+    "@herb-tools/node-wasm" "0.8.10"
+    "@herb-tools/printer" "0.8.10"
+    "@herb-tools/rewriter" "0.8.10"
     picomatch "^4.0.2"
     tinyglobby "^0.2.15"
 
-"@herb-tools/node-wasm@0.8.9":
-  version "0.8.9"
-  resolved "https://registry.yarnpkg.com/@herb-tools/node-wasm/-/node-wasm-0.8.9.tgz#cb6dd3f9ef2c351c9c942b6282e9aa17314119a0"
-  integrity sha512-DaWxwLlP6j0kFebx9y4i/k0n+oLph74qaJMkFHvHKZfpoxiYcKDT8dr5FDJwV4Nl/ZyGTTzXGfTBNxrmhuLRpA==
+"@herb-tools/node-wasm@0.8.10":
+  version "0.8.10"
+  resolved "https://registry.yarnpkg.com/@herb-tools/node-wasm/-/node-wasm-0.8.10.tgz#e233c6b1e9eb5859a4b9e3fbd63c419d9eec1ded"
+  integrity sha512-lxOL0olfFydmYG76v/br/MHsCbJE/r6vm86oqarOnsZLT+th6MCiKK6E9tE6RlYk/4OeOANePm4NLTqpqF2/5g==
   dependencies:
-    "@herb-tools/core" "0.8.9"
+    "@herb-tools/core" "0.8.10"
 
-"@herb-tools/printer@0.8.9":
-  version "0.8.9"
-  resolved "https://registry.yarnpkg.com/@herb-tools/printer/-/printer-0.8.9.tgz#e9817443644cadbf1a35526292e0cf311284b37e"
-  integrity sha512-IiwwU3zB623JCMKMUYsb/0CBORsrxP9uek7e7mndTEY9eBFWdQI9CB5isqqBjiwDpnEYjp+8HsiXFpOvGKWzvw==
+"@herb-tools/printer@0.8.10":
+  version "0.8.10"
+  resolved "https://registry.yarnpkg.com/@herb-tools/printer/-/printer-0.8.10.tgz#c972978c71c6bbed5436bf3ff85d3639b24d8afd"
+  integrity sha512-/fKbm7e4bhIyxsYkEaNTJajcvhzlfzKrZ/DftcBmeOZeblz0lTkL3Vx9nvRNQuLT1LyPBfmEzMp1qPKvWUyaCw==
   dependencies:
-    "@herb-tools/core" "0.8.9"
+    "@herb-tools/core" "0.8.10"
     tinyglobby "^0.2.15"
 
-"@herb-tools/rewriter@0.8.9":
-  version "0.8.9"
-  resolved "https://registry.yarnpkg.com/@herb-tools/rewriter/-/rewriter-0.8.9.tgz#3c4c5f41ceb0bedcb2f56a140708b13b04e13508"
-  integrity sha512-K0eHaCr9K0YY78cR82H/ZYyR0GRR+omt79psqRL/m+d/ceDQsfOkUfhVCXt309Mr5k7435+zIGZYgSqQ02c8pw==
+"@herb-tools/rewriter@0.8.10":
+  version "0.8.10"
+  resolved "https://registry.yarnpkg.com/@herb-tools/rewriter/-/rewriter-0.8.10.tgz#c391d061a7652b6c18134a8ce86a2fea8eb0e4ff"
+  integrity sha512-Fak3lheNaiYXBfhi9U7aQjgBnziJ4EOtQr4j8BbkV5luH25Wc3LET3/aKn8w910ZQdfNmQ+rmBvVpJWq5XP+7g==
   dependencies:
-    "@herb-tools/core" "0.8.9"
-    "@herb-tools/tailwind-class-sorter" "0.8.9"
+    "@herb-tools/core" "0.8.10"
+    "@herb-tools/tailwind-class-sorter" "0.8.10"
     tinyglobby "^0.2.15"
 
-"@herb-tools/tailwind-class-sorter@0.8.9":
-  version "0.8.9"
-  resolved "https://registry.yarnpkg.com/@herb-tools/tailwind-class-sorter/-/tailwind-class-sorter-0.8.9.tgz#37c82ebe3f8ded64cc3473a92f5cccc483b2d8f3"
-  integrity sha512-lmMfDKuQ3thJESJ6Ejnwy2jyHeSBFRZgl5rgNfFjeCtfTHaGjGPBivHf9KEIISoJ78tssgNV7h1KCMPL/qnCvw==
+"@herb-tools/tailwind-class-sorter@0.8.10":
+  version "0.8.10"
+  resolved "https://registry.yarnpkg.com/@herb-tools/tailwind-class-sorter/-/tailwind-class-sorter-0.8.10.tgz#356b88164d23e16a3220d42866bd3ca18f66e8ca"
+  integrity sha512-bwvvQDiwfRP0BsziM+AFCnRkFZx7aSSCoo5qO2ox5R3nJKGUEQrG+JJF4fwrtT1phyjqBytDPtctpXps77J2HA==
   dependencies:
     clear-module "^4.1.2"
     escalade "^3.2.0"
