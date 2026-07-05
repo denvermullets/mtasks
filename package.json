@@ -1,7 +1,7 @@
 {
   "devDependencies": {
-    "@herb-tools/formatter": "^0.8.10",
-    "@herb-tools/linter": "^0.8.10",
+    "@herb-tools/formatter": "^0.10.1",
+    "@herb-tools/linter": "^0.10.1",
     "husky": "^9.1.7"
   },
   "scripts": {

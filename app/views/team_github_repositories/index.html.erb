@@ -15,7 +15,7 @@
     <div class="max-w-4xl mx-auto w-full space-y-6">
       <% if @installation.nil? %>
         <!-- No Installation -->
-        <div class="bg-foreground border border-stroke rounded-lg p-6">
+        <div class="bg-foreground border border-stroke rounded-lg p-6"> <%# herb:disable erb-no-duplicate-branch-elements %>
           <h2 class="text-lg font-semibold text-gray-200 mb-4">GitHub Not Connected</h2>
           <div class="space-y-4">
             <p class="text-sm text-gray-400">
@@ -203,7 +203,7 @@
         </div>
 
         <!-- Example -->
-        <div class="bg-foreground border border-stroke rounded-lg p-6">
+        <div class="bg-foreground border border-stroke rounded-lg p-6"> <%# herb:disable erb-no-duplicate-branch-elements %>
           <h2 class="text-lg font-semibold text-gray-200 mb-4">Example</h2>
           <div class="bg-background border border-stroke rounded-lg p-4 space-y-2">
             <div class="text-xs text-gray-500 uppercase tracking-wide">Pull Request Title</div>

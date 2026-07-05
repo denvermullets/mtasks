@@ -7,9 +7,9 @@
     <!-- Header -->
     <div class="flex items-center justify-between px-4 py-3 border-b border-stroke shrink-0">
       <h3 class="text-sm font-medium text-gray-200">Link a Hourglass channel</h3>
-      <%= link_to "#",
+      <%= button_tag type: "button",
           data: { action: "click->hourglass-channel-picker#close" },
-          class: "text-gray-500 hover:text-gray-300",
+          class: "text-gray-500 hover:text-gray-300 cursor-pointer",
           aria: { label: "Close" } do %>
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />

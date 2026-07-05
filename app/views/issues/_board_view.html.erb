@@ -1,8 +1,8 @@
 <% swimlanes = organize_for_swimlanes(@grouped_issues) %>
 
-<% if swimlanes.present? %>
-  <!-- Swimlane Layout: Rows span horizontally across columns -->
-  <div class="flex h-full overflow-auto">
+<div class="flex h-full overflow-auto">
+  <% if swimlanes.present? %>
+    <!-- Swimlane Layout: Rows span horizontally across columns -->
     <div class="flex flex-col flex-1">
       <!-- Column Headers (sticky at top) -->
       <div class="flex gap-3 mb-4 sticky top-0 bg-background z-30 pb-2">
@@ -85,10 +85,8 @@
         </div>
       </div>
     <% end %>
-  </div>
-<% else %>
-  <!-- Standard Column Layout: No swimlanes -->
-  <div class="flex h-full overflow-auto">
+  <% else %>
+    <!-- Standard Column Layout: No swimlanes -->
     <div class="flex gap-3 flex-1">
       <% @grouped_issues.each do |group_name, group_data| %>
         <div id="board_column_<%= group_name.parameterize %>" class="shrink-0 w-80 flex flex-col h-full group" data-lane-id="<%= group_data[:object].id if group_data[:object].respond_to?(:id) %>">
@@ -143,5 +141,5 @@
         </div>
       </div>
     <% end %>
-  </div>
-<% end %>
+  <% end %>
+</div>

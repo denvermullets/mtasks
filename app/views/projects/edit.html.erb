@@ -14,257 +14,259 @@
 
 <%= form_with model: [@team, @project], data: { controller: "project-form" }, class: "flex-1 overflow-hidden" do |form| %>
   <div class="flex h-full">
-      <!-- Left Content -->
-      <div class="flex-1 overflow-y-auto p-8">
-        <div class="max-w-3xl">
-          <!-- Project Icon & Name -->
-          <div class="flex items-start gap-4 mb-6">
-            <div class="w-10 h-10 bg-accent/20 rounded flex items-center justify-center text-accent shrink-0">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-              </svg>
-            </div>
-            <div class="flex-1">
-              <%= form.text_field :name,
+    <!-- Left Content -->
+    <div class="flex-1 overflow-y-auto p-8">
+      <div class="max-w-3xl">
+        <!-- Project Icon & Name -->
+        <div class="flex items-start gap-4 mb-6">
+          <div class="w-10 h-10 bg-accent/20 rounded flex items-center justify-center text-accent shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <%= form.text_field :name,
                   placeholder: "Project name",
                   autofocus: true,
                   required: true,
                   autocomplete: "off",
                   class: "w-full bg-transparent border border-transparent rounded-md px-2 py-1 text-gray-200 text-2xl font-semibold placeholder-gray-600 focus:outline-none focus:border-accent focus:ring-0" %>
-            </div>
           </div>
+        </div>
 
-          <!-- Description Section -->
-          <div class="mb-8">
-            <h3 class="text-sm font-medium text-gray-400 mb-3">Description</h3>
-            <%= form.text_area :description,
+        <!-- Description Section -->
+        <div class="mb-8">
+          <h3 class="text-sm font-medium text-gray-400 mb-3">Description</h3>
+          <%= form.text_area :description,
                 placeholder: "Add description...",
                 rows: 6,
                 autocomplete: "off",
                 data: { controller: "auto-resize", action: "input->auto-resize#resize" },
                 class: "w-full bg-transparent border border-transparent rounded-md px-2 py-1 text-gray-300 placeholder-gray-600 focus:outline-none focus:border-accent focus:ring-0 resize-none overflow-hidden" %>
-          </div>
+        </div>
 
-          <!-- Existing Attachments -->
-          <% if @project.files.attached? %>
-            <div class="mb-8">
-              <h3 class="text-sm font-medium text-gray-400 mb-3">Current Attachments</h3>
-              <div class="space-y-2">
-                <% @project.files.each do |file| %>
-                  <div class="flex items-center justify-between px-3 py-2 bg-foreground border border-stroke rounded-md text-sm">
-                    <div class="flex items-center gap-2 text-gray-300 min-w-0">
+        <!-- Existing Attachments -->
+        <% if @project.files.attached? %>
+          <div class="mb-8">
+            <h3 class="text-sm font-medium text-gray-400 mb-3">Current Attachments</h3>
+            <div class="space-y-2">
+              <% @project.files.each do |file| %>
+                <div class="flex items-center justify-between px-3 py-2 bg-foreground border border-stroke rounded-md text-sm">
+                  <div class="flex items-center gap-2 text-gray-300 min-w-0">
+                    <span class="text-gray-500 shrink-0">
                       <% if file.image? %>
-                        <span class="text-gray-500 shrink-0">&#128444;</span>
+                        &#128444;
                       <% elsif file.content_type == "application/pdf" %>
-                        <span class="text-gray-500 shrink-0">&#128196;</span>
+                        &#128196;
                       <% else %>
-                        <span class="text-gray-500 shrink-0">&#128206;</span>
+                        &#128206;
                       <% end %>
-                      <%= link_to file.filename, rails_blob_path(file, disposition: "attachment"),
+                    </span>
+                    <%= link_to file.filename, rails_blob_path(file, disposition: "attachment"),
                           class: "text-accent hover:text-accent-hover truncate" %>
-                      <span class="text-gray-500 shrink-0"><%= number_to_human_size(file.byte_size) %></span>
-                    </div>
-                    <%= button_to "Remove",
+                    <span class="text-gray-500 shrink-0"><%= number_to_human_size(file.byte_size) %></span>
+                  </div>
+                  <%= button_to "Remove",
                         purge_file_team_project_path(@team, @project, file_id: file.id),
                         method: :delete,
                         class: "text-gray-500 hover:text-red-400 transition-colors text-xs shrink-0 ml-2",
                         data: { turbo_confirm: "Remove this file?" } %>
-                  </div>
-                <% end %>
-              </div>
+                </div>
+              <% end %>
             </div>
-          <% end %>
+          </div>
+        <% end %>
 
-          <!-- Add New Files -->
-          <div class="mb-8" data-controller="file-upload">
-            <h3 class="text-sm font-medium text-gray-400 mb-3">Add Files</h3>
-            <div data-action="dragover->file-upload#dragOver dragenter->file-upload#dragEnter dragleave->file-upload#dragLeave drop->file-upload#drop"
+        <!-- Add New Files -->
+        <div class="mb-8" data-controller="file-upload">
+          <h3 class="text-sm font-medium text-gray-400 mb-3">Add Files</h3>
+          <div data-action="dragover->file-upload#dragOver dragenter->file-upload#dragEnter dragleave->file-upload#dragLeave drop->file-upload#drop"
                  class="border-2 border-dashed border-stroke rounded-lg p-6 text-center hover:border-accent/50 transition-colors">
-              <svg class="w-8 h-8 mx-auto mb-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-              </svg>
-              <p class="text-sm text-gray-400 mb-2">Drag and drop files here, or</p>
-              <%= form.file_field :files, multiple: true,
+            <svg class="w-8 h-8 mx-auto mb-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+            </svg>
+            <p class="text-sm text-gray-400 mb-2">Drag and drop files here, or</p>
+            <%= form.file_field :files, multiple: true,
                   data: { file_upload_target: "input", action: "change->file-upload#handleFiles" },
                   class: "hidden" %>
-              <button type="button"
+            <button type="button"
                       data-action="click->file-upload#openFilePicker"
                       class="px-3 py-1.5 text-sm bg-foreground border border-stroke rounded-md text-gray-300 hover:bg-hover-highlight transition-colors">
-                Browse files
-              </button>
-              <p class="text-xs text-gray-500 mt-2">Images, PDFs, Markdown, and other files</p>
-            </div>
-            <div data-file-upload-target="fileList" class="mt-3 space-y-2"></div>
+              Browse files
+            </button>
+            <p class="text-xs text-gray-500 mt-2">Images, PDFs, Markdown, and other files</p>
           </div>
-
-          <% if @project.errors.any? %>
-            <div class="bg-red-900/20 border border-red-500 rounded-md p-4 mb-6">
-              <h3 class="text-sm font-medium text-red-400 mb-2">
-                <%= pluralize(@project.errors.count, "error") %> prohibited this project from being saved:
-              </h3>
-              <ul class="list-disc list-inside text-sm text-red-300">
-                <% @project.errors.full_messages.each do |message| %>
-                  <li><%= message %></li>
-                <% end %>
-              </ul>
-            </div>
-          <% end %>
+          <div data-file-upload-target="fileList" class="mt-3 space-y-2"></div>
         </div>
-      </div>
 
-      <!-- Right Sidebar -->
-      <div class="w-80 border-l border-stroke bg-menu overflow-y-auto p-6 shrink-0">
-        <div class="space-y-6">
-          <!-- Status -->
-          <div class="mb-4">
-            <div class="text-xs font-medium text-gray-500 mb-2">Status</div>
-            <div class="relative">
-              <button type="button"
+        <% if @project.errors.any? %>
+          <div class="bg-red-900/20 border border-red-500 rounded-md p-4 mb-6">
+            <h3 class="text-sm font-medium text-red-400 mb-2">
+              <%= pluralize(@project.errors.count, "error") %> prohibited this project from being saved:
+            </h3>
+            <ul class="list-disc list-inside text-sm text-red-300">
+              <% @project.errors.full_messages.each do |message| %>
+                <li><%= message %></li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Right Sidebar -->
+    <div class="w-80 border-l border-stroke bg-menu overflow-y-auto p-6 shrink-0">
+      <div class="space-y-6">
+        <!-- Status -->
+        <div class="mb-4">
+          <div class="text-xs font-medium text-gray-500 mb-2">Status</div>
+          <div class="relative">
+            <button type="button"
                       data-action="click->project-form#toggleDropdown"
                       data-dropdown="status"
                       class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-background border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors">
-                <div class="w-4 h-4 flex items-center justify-center">
-                  <%= render_project_status_icon(@project.status || "backlog") %>
-                </div>
-                <span data-project-form-target="statusLabel"><%= (@project.status || "backlog").titleize %></span>
-              </button>
-              <div data-project-form-target="statusDropdown" class="hidden absolute top-full left-0 mt-1 w-full bg-foreground border border-stroke rounded-md shadow-lg z-10">
-                <% Project::STATUSES.each do |status| %>
-                  <button type="button"
+              <div class="w-4 h-4 flex items-center justify-center">
+                <%= render_project_status_icon(@project.status || "backlog") %>
+              </div>
+              <span data-project-form-target="statusLabel"><%= (@project.status || "backlog").titleize %></span>
+            </button>
+            <div data-project-form-target="statusDropdown" class="hidden absolute top-full left-0 mt-1 w-full bg-foreground border border-stroke rounded-md shadow-lg z-10">
+              <% Project::STATUSES.each do |status| %>
+                <button type="button"
                           data-action="click->project-form#selectStatus"
                           data-status-value="<%= status %>"
                           data-status-label="<%= status.titleize %>"
                           class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors first:rounded-t-md last:rounded-b-md flex items-center gap-2">
-                    <div class="w-4 h-4 flex items-center justify-center">
-                      <%= render_project_status_icon(status) %>
-                    </div>
-                    <%= status.titleize %>
-                  </button>
-                <% end %>
-              </div>
-              <%= form.hidden_field :status, value: @project.status || "backlog", data: { project_form_target: "statusInput" } %>
+                  <div class="w-4 h-4 flex items-center justify-center">
+                    <%= render_project_status_icon(status) %>
+                  </div>
+                  <%= status.titleize %>
+                </button>
+              <% end %>
             </div>
+            <%= form.hidden_field :status, value: @project.status || "backlog", data: { project_form_target: "statusInput" } %>
           </div>
+        </div>
 
-          <!-- Priority -->
-          <div class="mb-4">
-            <div class="text-xs font-medium text-gray-500 mb-2">Priority</div>
-            <div class="relative">
-              <button type="button"
+        <!-- Priority -->
+        <div class="mb-4">
+          <div class="text-xs font-medium text-gray-500 mb-2">Priority</div>
+          <div class="relative">
+            <button type="button"
                       data-action="click->project-form#toggleDropdown"
                       data-dropdown="priority"
                       class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-background border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors">
-                <div class="w-4 h-4 flex items-center justify-center">
-                  <%= render_priority_icon(@project.priority || "no_priority") %>
-                </div>
-                <span data-project-form-target="priorityLabel" class="capitalize"><%= (@project.priority || "no_priority").humanize %></span>
-              </button>
-              <div data-project-form-target="priorityDropdown" class="hidden absolute top-full left-0 mt-1 w-full bg-foreground border border-stroke rounded-md shadow-lg z-10">
-                <% [["No priority", "no_priority"], ["Urgent", "urgent"], ["High", "high"], ["Medium", "medium"], ["Low", "low"]].each do |label, value| %>
-                  <button type="button"
+              <div class="w-4 h-4 flex items-center justify-center">
+                <%= render_priority_icon(@project.priority || "no_priority") %>
+              </div>
+              <span data-project-form-target="priorityLabel" class="capitalize"><%= (@project.priority || "no_priority").humanize %></span>
+            </button>
+            <div data-project-form-target="priorityDropdown" class="hidden absolute top-full left-0 mt-1 w-full bg-foreground border border-stroke rounded-md shadow-lg z-10">
+              <% [["No priority", "no_priority"], ["Urgent", "urgent"], ["High", "high"], ["Medium", "medium"], ["Low", "low"]].each do |label, value| %>
+                <button type="button"
                           data-action="click->project-form#selectPriority"
                           data-priority-value="<%= value %>"
                           data-priority-label="<%= label %>"
                           class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors first:rounded-t-md last:rounded-b-md">
-                    <%= label %>
-                  </button>
-                <% end %>
-              </div>
-              <%= form.hidden_field :priority, value: @project.priority || "no_priority", data: { project_form_target: "priorityInput" } %>
+                  <%= label %>
+                </button>
+              <% end %>
             </div>
+            <%= form.hidden_field :priority, value: @project.priority || "no_priority", data: { project_form_target: "priorityInput" } %>
           </div>
+        </div>
 
-          <!-- Lead -->
-          <div class="mb-4">
-            <div class="text-xs font-medium text-gray-500 mb-2">Lead</div>
-            <div class="relative">
-              <button type="button"
+        <!-- Lead -->
+        <div class="mb-4">
+          <div class="text-xs font-medium text-gray-500 mb-2">Lead</div>
+          <div class="relative">
+            <button type="button"
                       data-action="click->project-form#toggleDropdown"
                       data-dropdown="lead"
                       class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-background border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors">
-                <% if @project.lead %>
-                  <%= user_avatar(@project.lead, size: "sm") %>
-                  <span data-project-form-target="leadLabel"><%= @project.lead.name %></span>
-                <% else %>
-                  <div class="w-5 h-5 rounded-full border border-stroke"></div>
-                  <span data-project-form-target="leadLabel" class="text-gray-500">No lead</span>
-                <% end %>
-              </button>
-              <div data-project-form-target="leadDropdown" class="hidden absolute top-full left-0 mt-1 w-full bg-foreground border border-stroke rounded-md shadow-lg z-10">
-                <button type="button"
+              <% if @project.lead %>
+                <%= user_avatar(@project.lead, size: "sm") %>
+                <span data-project-form-target="leadLabel"><%= @project.lead.name %></span>
+              <% else %>
+                <div class="w-5 h-5 rounded-full border border-stroke"></div>
+                <span data-project-form-target="leadLabel" class="text-gray-500">No lead</span>
+              <% end %>
+            </button>
+            <div data-project-form-target="leadDropdown" class="hidden absolute top-full left-0 mt-1 w-full bg-foreground border border-stroke rounded-md shadow-lg z-10">
+              <button type="button"
                         data-action="click->project-form#selectLead"
                         data-lead-id="none"
                         data-lead-name="No lead"
                         class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors first:rounded-t-md">
-                  No lead
-                </button>
-                <% @team_members.each do |member| %>
-                  <button type="button"
+                No lead
+              </button>
+              <% @team_members.each do |member| %>
+                <button type="button"
                           data-action="click->project-form#selectLead"
                           data-lead-id="<%= member.id %>"
                           data-lead-name="<%= member.name %>"
                           class="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors last:rounded-b-md">
-                    <%= member.name %>
-                  </button>
-                <% end %>
-              </div>
-              <%= form.hidden_field :lead_id, value: @project.lead_id, data: { project_form_target: "leadInput" } %>
+                  <%= member.name %>
+                </button>
+              <% end %>
             </div>
+            <%= form.hidden_field :lead_id, value: @project.lead_id, data: { project_form_target: "leadInput" } %>
           </div>
+        </div>
 
-          <!-- Dates -->
-          <div class="mb-4">
-            <div class="text-xs font-medium text-gray-500 mb-2">Start Date</div>
-            <%= form.date_field :start_date,
+        <!-- Dates -->
+        <div class="mb-4">
+          <div class="text-xs font-medium text-gray-500 mb-2">Start Date</div>
+          <%= form.date_field :start_date,
                 class: "w-full px-3 py-1.5 rounded-md bg-background border border-stroke text-gray-300 text-sm focus:outline-none focus:border-accent cursor-pointer" %>
-          </div>
-          <div class="mb-4">
-            <div class="text-xs font-medium text-gray-500 mb-2">Due Date</div>
-            <%= form.date_field :due_date,
+        </div>
+        <div class="mb-4">
+          <div class="text-xs font-medium text-gray-500 mb-2">Due Date</div>
+          <%= form.date_field :due_date,
                 class: "w-full px-3 py-1.5 rounded-md bg-background border border-stroke text-gray-300 text-sm focus:outline-none focus:border-accent cursor-pointer" %>
-          </div>
+        </div>
 
-          <!-- Labels -->
-          <div class="mb-4">
-            <div class="text-xs font-medium text-gray-500 mb-2">Labels</div>
-            <div class="relative">
-              <button type="button"
+        <!-- Labels -->
+        <div class="mb-4">
+          <div class="text-xs font-medium text-gray-500 mb-2">Labels</div>
+          <div class="relative">
+            <button type="button"
                       data-action="click->project-form#toggleDropdown"
                       data-dropdown="labels"
                       class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-background border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
-                </svg>
-                <span class="text-gray-500">Labels</span>
-              </button>
-              <div data-project-form-target="labelsDropdown" class="hidden absolute top-full left-0 mt-1 w-full bg-foreground border border-stroke rounded-md shadow-lg z-10 max-h-48 overflow-y-auto">
-                <% @labels.each do |label| %>
-                  <label class="flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors cursor-pointer">
-                    <input type="checkbox"
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+              </svg>
+              <span class="text-gray-500">Labels</span>
+            </button>
+            <div data-project-form-target="labelsDropdown" class="hidden absolute top-full left-0 mt-1 w-full bg-foreground border border-stroke rounded-md shadow-lg z-10 max-h-48 overflow-y-auto">
+              <% @labels.each do |label| %>
+                <label class="flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors cursor-pointer">
+                  <input type="checkbox"
                            name="project[label_ids][]"
                            value="<%= label.id %>"
                            <%= 'checked' if @project.label_ids.include?(label.id) %>
                            class="rounded bg-background border-stroke accent-accent focus:ring-accent focus:ring-2">
-                    <span class="w-2 h-2 rounded-full shrink-0" style="background-color: <%= label.color %>;"></span>
-                    <span><%= label.name %></span>
-                  </label>
-                <% end %>
-                <% if @labels.empty? %>
-                  <div class="px-3 py-4 text-center text-sm text-gray-500">No labels available</div>
-                <% end %>
-              </div>
+                  <span class="w-2 h-2 rounded-full shrink-0" style="background-color: <%= label.color %>;"></span>
+                  <span><%= label.name %></span>
+                </label>
+              <% end %>
+              <% if @labels.empty? %>
+                <div class="px-3 py-4 text-center text-sm text-gray-500">No labels available</div>
+              <% end %>
             </div>
           </div>
+        </div>
 
-          <!-- Actions -->
-          <div class="pt-6 border-t border-stroke space-y-3">
-            <%= form.submit "Update Project",
+        <!-- Actions -->
+        <div class="pt-6 border-t border-stroke space-y-3">
+          <%= form.submit "Update Project",
                 class: "w-full px-4 py-2 border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 font-medium cursor-pointer rounded-md text-sm" %>
-            <%= link_to "Cancel",
+          <%= link_to "Cancel",
                 team_project_path(@team, @project),
                 class: "block w-full px-4 py-2 text-center text-gray-400 hover:text-gray-200 transition-colors text-sm" %>
-          </div>
         </div>
       </div>
+    </div>
   </div>
-    <% end %>
+<% end %>

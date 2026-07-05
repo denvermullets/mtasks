@@ -4,9 +4,9 @@
   <div class="bg-foreground border border-stroke rounded-lg shadow-2xl w-full max-w-md flex flex-col">
     <div class="flex items-center justify-between px-4 py-3 border-b border-stroke shrink-0">
       <h3 class="text-sm font-medium text-gray-200">Link a Hourglass thread</h3>
-      <%= link_to "#",
+      <%= button_tag type: "button",
           data: { action: "click->modal#close" },
-          class: "text-gray-500 hover:text-gray-300",
+          class: "text-gray-500 hover:text-gray-300 cursor-pointer",
           aria: { label: "Close" } do %>
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -38,9 +38,9 @@
           </p>
         </div>
         <div class="flex items-center justify-end gap-2">
-          <%= link_to "Cancel", "#",
+          <%= button_tag "Cancel", type: "button",
               data: { action: "click->modal#close" },
-              class: "px-3 py-1.5 rounded border border-stroke text-xs text-gray-400 hover:text-gray-200 hover:bg-hover-highlight" %>
+              class: "px-3 py-1.5 rounded border border-stroke text-xs text-gray-400 hover:text-gray-200 hover:bg-hover-highlight cursor-pointer" %>
           <button type="submit"
                   class="px-3 py-1.5 rounded bg-accent/10 border border-accent/30 text-accent text-xs font-medium hover:bg-accent/20">
             Link thread

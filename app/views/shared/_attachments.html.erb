@@ -31,11 +31,13 @@
     <% other_files.each do |file| %>
       <%= link_to rails_blob_path(file, disposition: "attachment"),
           class: "flex items-center gap-2 #{compact ? 'text-xs text-gray-400' : 'px-3 py-2 bg-foreground border border-stroke rounded-md text-sm text-gray-300'} hover:text-accent transition-colors" do %>
-        <% if file.content_type == "application/pdf" %>
-          <span class="text-gray-500 shrink-0">&#128196;</span>
-        <% else %>
-          <span class="text-gray-500 shrink-0">&#128206;</span>
-        <% end %>
+        <span class="text-gray-500 shrink-0">
+          <% if file.content_type == "application/pdf" %>
+            &#128196;
+          <% else %>
+            &#128206;
+          <% end %>
+        </span>
         <span class="truncate"><%= file.filename %></span>
         <span class="text-gray-500 shrink-0"><%= number_to_human_size(file.byte_size) %></span>
       <% end %>

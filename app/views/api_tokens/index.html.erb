@@ -47,11 +47,13 @@
                   <span>&middot;</span>
                   <span>Created <%= time_ago_in_words(token.created_at) %> ago</span>
                   <span>&middot;</span>
-                  <% if token.last_used_at %>
-                    <span>Last used <%= time_ago_in_words(token.last_used_at) %> ago</span>
-                  <% else %>
-                    <span>Never used</span>
-                  <% end %>
+                  <span>
+                    <% if token.last_used_at %>
+                      Last used <%= time_ago_in_words(token.last_used_at) %> ago
+                    <% else %>
+                      Never used
+                    <% end %>
+                  </span>
                 </p>
               </div>
               <%= button_to "Revoke", api_token_path(token), method: :delete,

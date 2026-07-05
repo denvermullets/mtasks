@@ -235,13 +235,15 @@
               <% @issue.files.each do |file| %>
                 <div class="flex items-center justify-between px-3 py-2 bg-foreground border border-stroke rounded-md text-sm">
                   <div class="flex items-center gap-2 text-gray-300 min-w-0">
-                    <% if file.image? %>
-                      <span class="text-gray-500 shrink-0">&#128444;</span>
-                    <% elsif file.content_type == "application/pdf" %>
-                      <span class="text-gray-500 shrink-0">&#128196;</span>
-                    <% else %>
-                      <span class="text-gray-500 shrink-0">&#128206;</span>
-                    <% end %>
+                    <span class="text-gray-500 shrink-0">
+                      <% if file.image? %>
+                        &#128444;
+                      <% elsif file.content_type == "application/pdf" %>
+                        &#128196;
+                      <% else %>
+                        &#128206;
+                      <% end %>
+                    </span>
                     <%= link_to file.filename, rails_blob_path(file, disposition: "attachment"),
                         class: "text-accent hover:text-accent-hover truncate" %>
                     <span class="text-gray-500 shrink-0"><%= number_to_human_size(file.byte_size) %></span>

@@ -59,7 +59,6 @@
             <span>back to</span>
             <span class="font-medium text-gray-200">#<%= channel_link.hourglass_channel_name.presence || channel_link.hourglass_channel_id %></span>
           <% end %>
-          <span class="text-xs text-gray-500 truncate">&middot; thread <span class="font-mono"><%= thread_id %></span></span>
         <% else %>
           <svg class="w-4 h-4 text-gray-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M5.5 8.5h13M5.5 15.5h13M9 4l-2 16M17 4l-2 16"/>
@@ -67,8 +66,8 @@
           <span class="text-sm font-medium text-gray-100 truncate">
             <%= channel_link.hourglass_channel_name.presence || channel_link.hourglass_channel_id %>
           </span>
-          <span class="text-xs text-gray-500 truncate">&middot; project channel</span>
         <% end %>
+        <span class="text-xs text-gray-500 truncate"><% if thread_id %>&middot; thread <span class="font-mono"><%= thread_id %></span><% else %>&middot; project channel<% end %></span>
       </div>
       <% unless thread_id %>
         <%= button_to team_project_hourglass_channel_link_path(team, project),
