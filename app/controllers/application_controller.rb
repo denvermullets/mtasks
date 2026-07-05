@@ -19,7 +19,7 @@ class ApplicationController < ActionController::Base
   def redirect_if_authenticated
     return unless authenticated?
 
-    team_id = current_team&.id || current_user.teams.first&.id
+    team_id = current_team&.id || current_user.teams.not_archived.first&.id
     redirect_to team_id ? team_issues_path(team_id) : new_team_path
   end
 end
