@@ -34,10 +34,36 @@ export default class extends Controller {
       this.openLanePicker();
     }
 
-    // Press 'P' to open project picker on hovered card
-    if (event.key === "p" || event.key === "P") {
+    // Press 'J' to open project picker on hovered card
+    if (event.key === "j" || event.key === "J") {
       event.preventDefault();
       this.openProjectPicker();
+    }
+
+    // Press 'P' to open priority picker on hovered card
+    if (event.key === "p" || event.key === "P") {
+      event.preventDefault();
+      this.openPriorityPicker();
+    }
+  }
+
+  openPriorityPicker() {
+    const hoveredCard = document.querySelector('[data-hovered="true"]');
+    if (!hoveredCard) {
+      return;
+    }
+
+    const priorityPicker = document.querySelector('[data-shared-picker="priority"]');
+    if (!priorityPicker) {
+      return;
+    }
+
+    const controller = this.application.getControllerForElementAndIdentifier(
+      priorityPicker,
+      "priority-picker"
+    );
+    if (controller && controller.openForCard) {
+      controller.openForCard(hoveredCard);
     }
   }
 

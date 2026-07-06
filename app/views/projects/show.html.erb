@@ -105,6 +105,8 @@
              team: @team, lanes: @lanes %>
   <%= render "labels/picker", issue: nil, shared: true, context: "card",
              team: @team, labels: @labels %>
+  <%= render "issues/priority_picker", issue: nil, shared: true, context: "card",
+             team: @team %>
 
   <%= render "shared/lightbox" %>
   <%= turbo_frame_tag "hourglass_channel_link_modal" %>

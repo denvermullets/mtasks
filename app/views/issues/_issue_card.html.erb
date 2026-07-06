@@ -7,6 +7,7 @@
 %>
 <div id="issue_<%= issue.id %>" class="relative" data-controller="issue-card" data-issue-id="<%= issue.id %>"
      data-current-project-id="<%= issue.project_id || 0 %>"
+     data-current-priority="<%= issue.priority || 'no_priority' %>"
      data-current-lane-id="<%= issue.lane_id || 0 %>"
      data-current-label-ids="<%= issue.labels.map(&:id).to_json %>"
      data-issue-identifier="<%= issue.identifier %>"

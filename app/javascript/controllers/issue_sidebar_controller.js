@@ -171,8 +171,17 @@ export default class extends Controller {
       }
     }
 
-    // Open project dropdown with 'P' key
+    // Open priority dropdown with 'P' key
     if (event.key === "p" || event.key === "P") {
+      event.preventDefault();
+      this.closeAllDropdowns();
+      if (this.hasPriorityDropdownTarget) {
+        this.priorityDropdownTarget.classList.remove("hidden");
+      }
+    }
+
+    // Open project dropdown with 'J' key
+    if (event.key === "j" || event.key === "J") {
       event.preventDefault();
       this.closeAllDropdowns();
       if (this.hasProjectDropdownTarget) {

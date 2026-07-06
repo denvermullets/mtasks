@@ -1,4 +1,11 @@
 module IssuesHelper
+  # Stable identifier for a board group's object, used by the pickers to move a
+  # card into the correct column optimistically. Association groups (lane, project,
+  # assignee) expose an id; priority groups are plain strings.
+  def group_value_for(object)
+    object.respond_to?(:id) ? object&.id : object
+  end
+
   # Reorganizes grouped issues for swimlane rendering
   # Converts column-first structure to row-first structure
   def organize_for_swimlanes(grouped_issues)

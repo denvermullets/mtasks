@@ -39,9 +39,11 @@
   <% end %>
 
   <%# Shared pickers — one instance each for the whole board, retargeted per hovered card
-      via the P / S / L shortcuts. Live outside #issues_board so they survive turbo-stream reloads. %>
+      via the P / J / S / L shortcuts. Live outside #issues_board so they survive turbo-stream reloads. %>
   <%= render "projects/picker", issue: nil, shared: true, context: "card",
              team: current_team, projects: current_team.projects %>
+  <%= render "issues/priority_picker", issue: nil, shared: true, context: "card",
+             team: current_team %>
   <%= render "lanes/picker", issue: nil, shared: true, context: "card",
              team: current_team, lanes: current_team.lanes.order(:position) %>
   <%= render "labels/picker", issue: nil, shared: true, context: "card",

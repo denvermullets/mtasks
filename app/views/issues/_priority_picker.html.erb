@@ -1,0 +1,48 @@
+<%# Priority Picker Component
+  Usage: %= render "issues/priority_picker", issue: @issue, shared: true, context: "card", team: current_team %
+  Context can be: "sidebar" or "card"
+%>
+
+<%
+  context ||= "sidebar"
+  shared = local_assigns.fetch(:shared, false)
+  issue_id = issue&.id || 0
+  team = local_assigns[:team] || issue&.team
+  team_id = team&.id
+  current_priority = issue&.priority || "no_priority"
+  priorities = [["No priority", "no_priority"], ["Urgent", "urgent"], ["High", "high"], ["Medium", "medium"], ["Low", "low"]]
+%>
+
+<div data-controller="priority-picker"
+     data-priority-picker-issue-id-value="<%= issue_id %>"
+     data-priority-picker-team-id-value="<%= team_id %>"
+     data-priority-picker-context-value="<%= context %>"
+     data-priority-picker-current-priority-value="<%= current_priority %>"
+     <%= 'data-shared-picker="priority"'.html_safe if shared %>
+     class="hidden fixed z-50 w-64 bg-context-foreground border-2 border-stroke rounded-md shadow-2xl"
+     data-priority-picker-target="picker">
+
+  <!-- Header with issue identifier (filled dynamically in shared mode) -->
+  <div class="px-3 py-2 border-b border-stroke">
+    <span class="text-xs text-gray-500" data-priority-picker-target="header"><% if issue %><%= issue.identifier %> • <%= issue.title.truncate(30) %><% end %></span>
+  </div>
+
+  <!-- Priorities List Container -->
+  <div data-priority-picker-target="priorityList" class="max-h-96 overflow-y-auto py-1">
+    <% priorities.each do |label, value| %>
+      <button type="button"
+              class="priority-option w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-hover-highlight transition-colors cursor-pointer flex items-center gap-2"
+              data-priority-value="<%= value %>"
+              data-priority-name="<%= label %>"
+              data-action="click->priority-picker#selectPriority">
+        <%= render_priority_icon(value) %>
+        <span<%= ' class=text-gray-500'.html_safe if value == 'no_priority' %>><%= label %></span>
+        <svg class="w-4 h-4 ml-auto text-accent <%= 'hidden' unless value == current_priority %>"
+             data-priority-picker-target="check" data-priority-value="<%= value %>"
+             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+      </button>
+    <% end %>
+  </div>
+</div>

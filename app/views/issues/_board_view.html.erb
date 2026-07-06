@@ -11,7 +11,7 @@
           <div class="shrink-0 w-80">
             <div class="flex items-center justify-between">
               <h3 class="text-sm font-medium text-accent"><%= column_name %></h3>
-              <span class="text-xs text-gray-500" data-lane-count="<%= col_data[:object].id if col_data[:object].respond_to?(:id) %>">
+              <span class="text-xs text-gray-500" data-lane-count="<%= col_data[:object].id if col_data[:object].respond_to?(:id) %>" data-group-count="<%= group_value_for(col_data[:object]) %>">
                 <%= swimlanes.sum { |_, cols| cols[column_name][:issues].count } %>
               </span>
             </div>
@@ -33,7 +33,7 @@
                 </svg>
                 <h4 class="text-xs font-medium text-accent"><%= row_name %></h4>
               </button>
-              <span class="text-xs text-gray-500"><%= row_issue_count %></span>
+              <span class="text-xs text-gray-500" data-swimlane-row-count="<%= row_name %>"><%= row_issue_count %></span>
             </div>
 
             <!-- Columns within this row -->
@@ -41,7 +41,7 @@
               <% columns.each do |column_name, column_data| %>
                 <div class="shrink-0 w-80 flex flex-col group/cell" data-lane-id="<%= column_data[:object].id if column_data[:object].respond_to?(:id) %>">
                   <!-- Issues in this cell -->
-                  <div class="space-y-1.5 min-h-[60px]" data-lane-issues-container="<%= column_data[:object].id if column_data[:object].respond_to?(:id) %>">
+                  <div class="space-y-1.5 min-h-[60px]" data-lane-issues-container="<%= column_data[:object].id if column_data[:object].respond_to?(:id) %>" data-group-container="<%= group_value_for(column_data[:object]) %>">
                     <% column_data[:issues].each do |issue| %>
                       <%= render "issue_card", issue: issue, visible_properties: @display_options[:visible_properties] %>
                     <% end %>
@@ -94,13 +94,13 @@
           <div class="flex items-center justify-between mb-3 shrink-0">
             <div class="flex items-center gap-2">
               <h3 class="text-sm font-medium text-accent"><%= group_name %></h3>
-              <span class="text-xs text-gray-500" data-lane-count="<%= group_data[:object].id if group_data[:object].respond_to?(:id) %>"><%= group_data[:issues].count %></span>
+              <span class="text-xs text-gray-500" data-lane-count="<%= group_data[:object].id if group_data[:object].respond_to?(:id) %>" data-group-count="<%= group_value_for(group_data[:object]) %>"><%= group_data[:issues].count %></span>
             </div>
           </div>
 
           <!-- Issues -->
           <div class="flex-1 overflow-y-auto min-h-0">
-            <div class="space-y-1.5" data-lane-issues-container="<%= group_data[:object].id if group_data[:object].respond_to?(:id) %>">
+            <div class="space-y-1.5" data-lane-issues-container="<%= group_data[:object].id if group_data[:object].respond_to?(:id) %>" data-group-container="<%= group_value_for(group_data[:object]) %>">
               <% group_data[:issues].each do |issue| %>
                 <%= render "issue_card", issue: issue, visible_properties: @display_options[:visible_properties] %>
               <% end %>
