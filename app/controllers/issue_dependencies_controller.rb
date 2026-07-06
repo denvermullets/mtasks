@@ -85,10 +85,19 @@ class IssueDependenciesController < ApplicationController
   end
 
   def render_relations
-    render turbo_stream: turbo_stream.replace(
-      'issue_relations',
-      partial: 'issue_dependencies/relations',
-      locals: { issue: @issue }
-    )
+    # The sidebar is rendered twice on the issue show page (desktop + mobile),
+    # so both relations frames must be replaced to update whichever one is visible.
+    render turbo_stream: [
+      turbo_stream.replace(
+        'issue_relations',
+        partial: 'issue_dependencies/relations',
+        locals: { issue: @issue, mobile: false }
+      ),
+      turbo_stream.replace(
+        'issue_relations_mobile',
+        partial: 'issue_dependencies/relations',
+        locals: { issue: @issue, mobile: true }
+      )
+    ]
   end
 end

@@ -223,8 +223,9 @@
         </div>
       </div>
     </div>
+    <% end %>
     <!-- Relations -->
-    <%= render "issue_dependencies/relations", issue: issue %>
+    <%= render "issue_dependencies/relations", issue: issue, mobile: local_assigns[:mobile] %>
     <!-- Referenced In -->
     <%= render "issue_references/referenced_in", issue: issue %>
     <!-- Due Date -->
@@ -275,6 +276,5 @@
       <div>Created <%= time_ago_in_words(issue.created_at) %> ago</div>
       <div>Updated <%= time_ago_in_words(issue.updated_at) %> ago</div>
     </div>
-    <% end %>
   </div>
 <% end %>
