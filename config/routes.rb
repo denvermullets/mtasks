@@ -152,7 +152,7 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   root to: redirect { |_params, request|
     # Check if user is authenticated by looking for session cookie
-    session_id = request.cookie_jar.signed[:session_id]
+    session_id = request.cookie_jar.signed[:mtasks_session_id]
     session = session_id && Session.find_by(id: session_id)
     if session
       user = session.user
