@@ -4,6 +4,14 @@ module Api
       before_action :set_current_team
       before_action :set_issue
 
+      def index
+        dependencies = (@issue.blocking_dependencies + @issue.blocked_dependencies)
+                       .sort_by(&:id)
+                       .map { |dep| serialize_dependency(dep) }
+
+        render json: dependencies
+      end
+
       def create
         target_issue = current_team.issues.find(params[:target_issue_id])
         direction = params[:direction]
@@ -28,7 +36,7 @@ module Api
 
         if dependency && (dependency.blocking_issue_id == @issue.id || dependency.blocked_issue_id == @issue.id)
           dependency.destroy
-          head :no_content
+          render json: { ok: true, id: dependency.id }
         else
           render json: { error: 'Not Found', message: 'Dependency not found' }, status: :not_found
         end
@@ -45,6 +53,9 @@ module Api
       def serialize_dependency(dep)
         {
           id: dep.id,
+          # Direction relative to the current issue: 'blocking' when this issue blocks the other,
+          # 'blocked_by' when this issue is blocked by the other.
+          direction: dep.blocking_issue_id == @issue.id ? 'blocking' : 'blocked_by',
           blocking_issue: { id: dep.blocking_issue.id, identifier: dep.blocking_issue.identifier,
                             title: dep.blocking_issue.title },
           blocked_issue: { id: dep.blocked_issue.id, identifier: dep.blocked_issue.identifier,

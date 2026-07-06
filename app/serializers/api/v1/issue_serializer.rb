@@ -34,8 +34,11 @@ module Api
         {
           description: @issue.description,
           parent_issue: serialize_record(@issue.parent_issue, :identifier),
-          blocking_issues: @issue.blocking_issues.map { |i| { id: i.id, identifier: i.identifier, title: i.title } },
-          blocked_issues: @issue.blocked_issues.map { |i| { id: i.id, identifier: i.identifier, title: i.title } },
+          # Each entry carries the IssueDependency record id (dependency_id) so it can be removed.
+          # blocking_issues = issues that block this one (via blocked_dependencies -> blocking_issue)
+          # blocked_issues  = issues this one blocks (via blocking_dependencies -> blocked_issue)
+          blocking_issues: @issue.blocked_dependencies.map { |d| serialize_dependency_issue(d, d.blocking_issue) },
+          blocked_issues: @issue.blocking_dependencies.map { |d| serialize_dependency_issue(d, d.blocked_issue) },
           started_at: @issue.started_at,
           completed_at: @issue.completed_at,
           canceled_at: @issue.canceled_at
@@ -46,6 +49,10 @@ module Api
         return nil unless record
 
         { id: record.id, attribute => record.public_send(attribute) }
+      end
+
+      def serialize_dependency_issue(dependency, issue)
+        { id: issue.id, identifier: issue.identifier, title: issue.title, dependency_id: dependency.id }
       end
     end
   end

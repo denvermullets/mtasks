@@ -111,7 +111,7 @@ Rails.application.routes.draw do
       post '/integrations/handshake', to: 'integrations#handshake'
       resources :teams, only: [:index] do
         resources :issues, only: %i[index show create update] do
-          resources :issue_dependencies, only: %i[create destroy], controller: 'issue_dependencies'
+          resources :issue_dependencies, only: %i[index create destroy], controller: 'issue_dependencies'
           resources :comments, only: %i[index create]
           resources :decisions, only: %i[create destroy]
         end
