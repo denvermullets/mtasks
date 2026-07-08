@@ -34,6 +34,13 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, completed.name
   end
 
+  test 'card renders a hover-card fragment for the project' do
+    get card_team_project_path(@team, @project)
+    assert_response :success
+    assert_includes response.body, 'Test Project'
+    assert_includes response.body, 'Progress'
+  end
+
   test 'show displays project' do
     get team_project_path(@team, @project)
     assert_response :success

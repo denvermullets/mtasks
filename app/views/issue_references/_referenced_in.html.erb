@@ -4,7 +4,7 @@
     <div class="text-xs font-medium text-gray-500 mb-2">Referenced in</div>
     <% references.each do |ref| %>
       <%= link_to team_issue_path(ref.source_issue.team, ref.source_issue),
-          data: { turbo_frame: "_top" },
+          data: { turbo_frame: "_top", controller: "hover-card", "hover-card-url-value": card_team_issue_path(ref.source_issue.team, ref.source_issue) },
           class: "flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-sm mb-1 text-gray-300 hover:text-accent transition-colors" do %>
         <span class="font-mono text-xs text-gray-500 shrink-0"><%= ref.source_issue.identifier %></span>
         <span class="truncate"><%= ref.source_issue.title %></span>

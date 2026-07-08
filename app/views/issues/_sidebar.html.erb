@@ -153,6 +153,7 @@
         <button type="button"
                 data-action="click->issue-sidebar#toggleDropdown"
           data-dropdown="project"
+          <% if issue.project %>data-controller="hover-card" data-hover-card-url-value="<%= card_team_project_path(issue.team, issue.project) %>"<% end %>
           class="w-full inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-gray-300 text-sm hover:bg-hover-highlight transition-colors cursor-pointer">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>

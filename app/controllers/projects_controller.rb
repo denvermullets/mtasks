@@ -3,7 +3,7 @@ class ProjectsController < ApplicationController
 
   before_action :require_team!
   before_action :set_team
-  before_action :set_project, only: %i[show edit update destroy purge_file overview discussion activity]
+  before_action :set_project, only: %i[show edit update destroy purge_file overview discussion activity card]
 
   def index
     @index_sort = params[:sort].presence_in(%w[created name priority due_date velocity]) || 'created'
@@ -83,6 +83,10 @@ class ProjectsController < ApplicationController
     attachment = @project.files.find(params[:file_id])
     attachment.purge
     redirect_to edit_team_project_path(current_team, @project), notice: 'File removed.'
+  end
+
+  def card
+    render partial: 'projects/hover_card', locals: { project: @project }, layout: false
   end
 
   private

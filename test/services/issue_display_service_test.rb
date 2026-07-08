@@ -1,6 +1,5 @@
 require 'test_helper'
 
-# rubocop:disable Metrics/ClassLength
 class IssueDisplayServiceTest < ActiveSupport::TestCase
   setup do
     @user = User.create!(name: 'Test User', email: 'display_test@example.com', password: 'password')
@@ -344,4 +343,3 @@ class IssueDisplayServiceTest < ActiveSupport::TestCase
     assert_includes grouped['Done'][:subgroups]['High'][:issues], @completed_recently
   end
 end
-# rubocop:enable Metrics/ClassLength

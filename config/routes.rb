@@ -38,6 +38,7 @@ Rails.application.routes.draw do
         get :overview
         get :discussion
         get :activity
+        get :card
       end
       resources :project_labels, only: %i[create destroy]
       resource :hourglass_channel_link,
@@ -83,6 +84,7 @@ Rails.application.routes.draw do
         resources :comments, only: [:create], controller: 'issue_comments'
       end
       get :search, on: :collection
+      get :card, on: :member
     end
   end
 

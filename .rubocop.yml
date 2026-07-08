@@ -30,6 +30,10 @@ Metrics/BlockLength:
 
 Metrics/ClassLength:
   Max: 150
+  # Test classes accumulate cases; size metrics aren't a useful signal there.
+  Exclude:
+    - "test/**/*"
+    - "spec/**/*.rb"
 
 Metrics/MethodLength:
   Max: 20

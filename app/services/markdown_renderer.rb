@@ -114,8 +114,11 @@ class MarkdownRenderer
       issue = issues_by_identifier[match]
       next match unless issue
 
-      path = Rails.application.routes.url_helpers.team_issue_path(@team, issue)
-      %(<a href="#{path}" class="text-accent hover:underline font-mono text-sm" data-turbo-frame="_top">#{match}</a>)
+      helpers = Rails.application.routes.url_helpers
+      path = helpers.team_issue_path(@team, issue)
+      card_path = helpers.card_team_issue_path(@team, issue)
+      %(<a href="#{path}" class="text-accent hover:underline font-mono text-sm" data-turbo-frame="_top" ) +
+        %(data-controller="hover-card" data-hover-card-url-value="#{card_path}">#{match}</a>)
     end
   end
 end

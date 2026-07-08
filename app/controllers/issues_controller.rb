@@ -3,8 +3,8 @@ class IssuesController < ApplicationController
   include MentionNotifying
 
   before_action :require_team!
-  before_action :set_issue, only: %i[show edit update destroy]
-  before_action :authorize_issue_access!, only: %i[show]
+  before_action :set_issue, only: %i[show edit update destroy card]
+  before_action :authorize_issue_access!, only: %i[show card]
   before_action :authorize_issue_modification!, only: %i[edit update destroy]
   before_action :load_display_options, only: %i[index]
 
@@ -14,7 +14,9 @@ class IssuesController < ApplicationController
       :blocking_dependencies, :blocked_dependencies, :comments
     )
 
-    @display_service = build_display_service(base_issues)
+    @display_service = IssueDisplayService.new(
+      base_issues, @display_options.merge(search_query: params[:q]), current_team
+    )
     @grouped_issues = @display_service.grouped_issues
     @empty_groups = @display_service.empty_groups
     load_index_filters
@@ -85,9 +87,12 @@ class IssuesController < ApplicationController
     redirect_to team_issues_path(@issue.team), notice: 'Issue was successfully deleted.'
   end
 
+  def card
+    render partial: 'issues/hover_card', locals: { issue: @issue }, layout: false
+  end
+
   def search
-    issues = search_issues
-    render json: issues.limit(20).map { |issue|
+    render json: search_issues.limit(20).map { |issue|
       { id: issue.id, identifier: issue.identifier, title: issue.title }
     }
   end
@@ -127,10 +132,6 @@ class IssuesController < ApplicationController
     return if (@issue.creator == Current.user || team_admin?(@issue.team)) && action_name.in?(%w[edit destroy])
 
     redirect_to team_issue_path(@issue.team, @issue), alert: 'You do not have permission to modify this issue.'
-  end
-
-  def build_display_service(base_issues)
-    IssueDisplayService.new(base_issues, @display_options.merge(search_query: params[:q]), current_team)
   end
 
   def redirect_after_create

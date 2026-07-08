@@ -1,0 +1,43 @@
+<div class="w-80 max-w-[90vw] rounded-lg border border-stroke bg-foreground shadow-xl overflow-hidden">
+  <div class="px-4 py-3">
+    <div class="flex items-center gap-2 mb-2">
+      <%= render_project_status_icon(project.status) %>
+      <span class="text-sm font-medium text-gray-100 leading-snug truncate"><%= project.name %></span>
+      <span class="text-xs text-gray-500 ml-auto shrink-0 capitalize"><%= project.status || 'no status' %></span>
+    </div>
+
+    <% if project.description.present? %>
+      <p class="text-xs text-gray-400 leading-relaxed line-clamp-3 mb-3">
+        <%= truncate(project.description.to_s.gsub(/[#*_`>\-]/, ' ').gsub(/\s+/, ' ').strip, length: 170) %>
+      </p>
+    <% end %>
+
+    <div class="mb-3">
+      <div class="flex items-center justify-between text-xs text-gray-400 mb-1">
+        <span>Progress</span>
+        <span><%= project.completed_issues_count %>/<%= project.total_issues_count %> · <%= project.progress_percentage %>%</span>
+      </div>
+      <div class="w-full h-1.5 rounded-full bg-stroke overflow-hidden">
+        <div class="h-full bg-accent" style="width: <%= project.progress_percentage %>%"></div>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3 flex-wrap text-xs text-gray-400">
+      <% if project.lead %>
+        <span class="inline-flex items-center gap-1.5">
+          <%= render "shared/user_avatar", user: project.lead, size: "xs" %>
+          <span class="truncate max-w-[8rem]"><%= project.lead.name %></span>
+        </span>
+      <% end %>
+
+      <% if project.due_date %>
+        <span class="inline-flex items-center gap-1">
+          <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+          <span>Due <%= project.due_date.strftime('%b %-d') %></span>
+        </span>
+      <% end %>
+    </div>
+  </div>
+</div>

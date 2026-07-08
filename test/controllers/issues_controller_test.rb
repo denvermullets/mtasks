@@ -54,6 +54,26 @@ class IssuesControllerTest < ActionDispatch::IntegrationTest
     assert_not_nil @issue.completed_at
   end
 
+  test 'card renders a hover-card fragment for the issue' do
+    get card_team_issue_path(@team, @issue)
+    assert_response :success
+    assert_includes response.body, @issue.identifier
+    assert_includes response.body, 'Test issue'
+  end
+
+  test 'card is not accessible to a user on another team' do
+    other = User.create!(name: 'Outsider', email: 'outsider_card@example.com', password: 'password')
+    other_workspace = Workspace.create!(name: 'Other WS', owner: other)
+    other_team = other_workspace.teams.create!(name: 'Other Team', identifier: 'OTH')
+    other_team.team_memberships.create!(user: other)
+    sign_in_as(other)
+
+    get card_team_issue_path(@team, @issue)
+    assert_response :redirect
+    follow_redirect!
+    assert_not_includes response.body, @issue.title
+  end
+
   test 'show without a thread link offers the link affordance and keeps native comment form' do
     get team_issue_path(@team, @issue)
     assert_response :success

@@ -13,7 +13,7 @@
         <% dep = issue.blocking_dependencies.find_by(blocked_issue: blocked) %>
         <div class="flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-sm group mb-1">
           <%= link_to team_issue_path(issue.team, blocked),
-              data: { turbo_frame: "_top" },
+              data: { turbo_frame: "_top", controller: "hover-card", "hover-card-url-value": card_team_issue_path(issue.team, blocked) },
               class: "flex items-center gap-2 flex-1 min-w-0 text-gray-300 hover:text-accent transition-colors" do %>
             <span class="font-mono text-xs text-gray-500 shrink-0"><%= blocked.identifier %></span>
             <span class="truncate"><%= blocked.title %></span>
@@ -47,7 +47,7 @@
         <% dep = issue.blocked_dependencies.find_by(blocking_issue: blocker) %>
         <div class="flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-sm group mb-1">
           <%= link_to team_issue_path(issue.team, blocker),
-              data: { turbo_frame: "_top" },
+              data: { turbo_frame: "_top", controller: "hover-card", "hover-card-url-value": card_team_issue_path(issue.team, blocker) },
               class: "flex items-center gap-2 flex-1 min-w-0 text-gray-300 hover:text-accent transition-colors" do %>
             <span class="font-mono text-xs text-gray-500 shrink-0"><%= blocker.identifier %></span>
             <span class="truncate"><%= blocker.title %></span>

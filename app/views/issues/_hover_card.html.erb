@@ -1,0 +1,51 @@
+<div class="w-80 max-w-[90vw] rounded-lg border border-stroke bg-foreground shadow-xl overflow-hidden">
+  <div class="px-4 py-3">
+    <div class="flex items-center gap-2 mb-2">
+      <span class="font-mono text-xs text-gray-500 shrink-0"><%= issue.identifier %></span>
+      <span class="inline-flex items-center gap-1 ml-auto shrink-0">
+        <%= render_lane_icon(issue.lane) %>
+        <span class="text-xs text-gray-400"><%= issue.lane&.name %></span>
+      </span>
+    </div>
+
+    <div class="text-sm font-medium text-gray-100 leading-snug mb-2"><%= issue.title %></div>
+
+    <% if issue.description.present? %>
+      <p class="text-xs text-gray-400 leading-relaxed line-clamp-3 mb-3">
+        <%= truncate(issue.description.to_s.gsub(/[#*_`>\-]/, ' ').gsub(/\s+/, ' ').strip, length: 170) %>
+      </p>
+    <% end %>
+
+    <div class="flex items-center gap-3 flex-wrap text-xs text-gray-400">
+      <span class="inline-flex items-center gap-1">
+        <%= render_priority_icon(issue.priority) %>
+        <span><%= issue.no_priority? ? 'No priority' : issue.priority.to_s.titleize %></span>
+      </span>
+
+      <% if issue.assignee %>
+        <span class="inline-flex items-center gap-1.5">
+          <%= render "shared/user_avatar", user: issue.assignee, size: "xs" %>
+          <span class="truncate max-w-[8rem]"><%= issue.assignee.name %></span>
+        </span>
+      <% end %>
+
+      <% if issue.project %>
+        <span class="inline-flex items-center gap-1">
+          <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+          </svg>
+          <span class="truncate max-w-[8rem]"><%= issue.project.name %></span>
+        </span>
+      <% end %>
+
+      <% if issue.due_date %>
+        <span class="inline-flex items-center gap-1">
+          <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+          <span><%= issue.due_date.strftime('%b %-d') %></span>
+        </span>
+      <% end %>
+    </div>
+  </div>
+</div>
