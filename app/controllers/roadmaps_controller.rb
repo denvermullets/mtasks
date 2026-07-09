@@ -4,7 +4,7 @@ class RoadmapsController < ApplicationController
   before_action :require_team!
 
   def show
-    scope = current_team.projects.includes(:lead, :team, :labels)
+    scope = current_team.projects.not_completed.includes(:lead, :team, :labels)
     @lanes = Project::ROADMAP_COMMITMENTS.index_with { |commitment| scope.in_commitment(commitment) }
     @projects_off_roadmap = scope.where(roadmap_commitment: nil).order(:name)
     @status_counts = status_counts(@lanes.values.flatten)

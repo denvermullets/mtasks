@@ -169,7 +169,9 @@ class ProjectsController < ApplicationController
   end
 
   def project_params
-    params.require(:project).permit(:name, :description, :priority, :status, :lead_id, :start_date,
-                                    :due_date, :roadmap_commitment, files: [], label_ids: [])
+    permitted = params.require(:project).permit(:name, :description, :priority, :status, :lead_id, :start_date,
+                                                :due_date, :roadmap_commitment, files: [], label_ids: [])
+    permitted[:roadmap_commitment] = nil if permitted[:status] == 'completed'
+    permitted
   end
 end
