@@ -1,4 +1,13 @@
 module IssuesHelper
+  # One-line prompt handed to an LLM so the jait MCP server can pull the issue
+  # (and its comments) down itself instead of the user pasting the whole thing.
+  def mcp_prompt_for(issue)
+    scope = ["team #{issue.team_id}"]
+    scope << "project #{issue.project_id}" if issue.project_id
+
+    "using jait mcp for #{scope.join(' and ')} lets execute issue #{issue.identifier}"
+  end
+
   # Stable identifier for a board group's object, used by the pickers to move a
   # card into the correct column optimistically. Association groups (lane, project,
   # assignee) expose an id; priority groups are plain strings.
