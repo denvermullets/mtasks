@@ -35,6 +35,7 @@ production:
   cache:
     <<: *primary_production
     url: <%= ENV['BLUE_DATABASE_URL'] %>
+    migrations_paths: db/cache_migrate
   queue:
     <<: *queue
     url: <%= ENV['DATABASE_QUEUE_URL'] %>
