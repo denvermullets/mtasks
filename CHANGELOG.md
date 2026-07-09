@@ -1,5 +1,12 @@
-<!-- last-sha: b3b2f0eef2c97707fc5ec5743692bd1cd92a0952 -->
+<!-- last-sha: 780ab90b9fdaf0f078492fa1969097c46c12b4ea -->
 # What's new
+
+## 2026-07-09
+- **Set priority from the board.** Priority now has its own picker, reachable by hovering a card and hitting the shortcut key, and the card updates the moment you pick.
+- **Peek at linked issues.** Hover any linked issue or project reference — in a description, a comment, or a dependency list — and a card previews it without navigating away.
+- **Move issues between teams.** An issue can now be handed off to a different team from the sidebar or edit page, and it picks up a new identifier on the way.
+- **Copy an MCP prompt.** Issue pages have a copy button that grabs a one-line prompt naming the team, project, and issue, so an AI assistant can pull the issue down over MCP instead of you pasting it in. API responses also now include dependency record IDs.
+- **Fixes.** Completed projects stay out of the roadmap modals, completed issues can be hidden from a project's issue list, project issues come pre-sorted, dependencies render on issue pages again, board pickers no longer stutter the browser, and logging in drops you on your board instead of the landing page.
 
 ## 2026-05-29
 - **Reorder your teams.** A new settings page lets you drag to reorder the teams in your sidebar, separated into teams you own and teams you've joined.
