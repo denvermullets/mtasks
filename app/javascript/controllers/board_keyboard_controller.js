@@ -16,6 +16,12 @@ export default class extends Controller {
       return;
     }
 
+    // An open picker owns the keyboard — it binds its own arrows, enter and escape.
+    // Reopening it here would retarget it at whatever card the mouse drifted over.
+    if (document.querySelector("[data-shared-picker]:not(.hidden)")) {
+      return;
+    }
+
     // Press 'C' to create new issue
     if (event.key === "c" || event.key === "C") {
       event.preventDefault();
