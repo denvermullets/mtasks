@@ -23,6 +23,23 @@
 
 }
 
+/* Tailwind v4 dropped v3's `button { cursor: pointer }` preflight rule, so
+   buttons fall back to the UA default arrow. Restore the hand cursor for
+   everything clickable. */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled),
+  summary,
+  label:has(> input[type="checkbox"], > input[type="radio"]),
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled),
+  input[type="submit"]:not(:disabled),
+  input[type="reset"]:not(:disabled),
+  input[type="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
 /* Optimistic lane move animation */
 .optimistic-moving {
   animation: optimistic-land 250ms ease-out;
