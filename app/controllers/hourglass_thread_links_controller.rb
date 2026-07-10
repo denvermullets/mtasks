@@ -52,8 +52,16 @@ class HourglassThreadLinksController < ApplicationController
     redirect_to team_issues_path(current_team), alert: 'Issue not found.'
   end
 
+  # A thread lives under the channel its project is linked to, so pull the
+  # integration from that project's channel link. Fall back to the first active
+  # integration only when the project isn't channel-linked.
   def set_integration
-    @integration = current_team.workspace.hourglass_integrations.active.first
+    @integration = issue_project_integration ||
+                   current_team.workspace.hourglass_integrations.active.first
+  end
+
+  def issue_project_integration
+    @issue.project&.hourglass_channel_link&.hourglass_integration
   end
 
   def modal_frame_id

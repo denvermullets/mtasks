@@ -8,6 +8,7 @@ export default class extends Controller {
     "form",
     "channelIdInput",
     "channelNameInput",
+    "integrationIdInput",
   ];
 
   static values = {
@@ -104,6 +105,9 @@ export default class extends Controller {
 
     this.channelIdInputTarget.value = channelId;
     this.channelNameInputTarget.value = channelName;
+    if (this.hasIntegrationIdInputTarget) {
+      this.integrationIdInputTarget.value = button.dataset.integrationId || "";
+    }
     this.formTarget.requestSubmit();
   }
 

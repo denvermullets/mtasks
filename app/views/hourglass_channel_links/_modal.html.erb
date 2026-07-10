@@ -1,4 +1,4 @@
-<%# locals: (project:, team:, integration:, channels:) %>
+<%# locals: (project:, team:, integrations:, channels:) %>
 <div data-controller="hourglass-channel-picker modal"
      data-hourglass-channel-picker-channels-url-value="<%= channels_team_project_hourglass_channel_link_path(team, project) %>"
      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
@@ -17,7 +17,7 @@
       <% end %>
     </div>
 
-    <% if integration.nil? %>
+    <% if integrations.empty? %>
       <div class="px-4 py-8 text-center text-xs text-gray-500">
         No active Hourglass integration on this workspace.
         Connect one in workspace settings to link channels to projects.
@@ -36,21 +36,30 @@
       <!-- Channel list -->
       <div class="flex-1 overflow-y-auto" data-hourglass-channel-picker-target="channelList">
         <% if channels.any? %>
-          <div class="divide-y divide-stroke/50">
-            <% channels.each do |channel| %>
-              <button type="button"
-                      class="channel-option block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-hover-highlight cursor-pointer"
-                      data-action="click->hourglass-channel-picker#select"
-                      data-channel-id="<%= channel[:id] %>"
-                      data-channel-name="<%= channel[:name] %>"
-                      data-channel-search="<%= channel[:name].to_s.downcase %>">
-                <span class="text-gray-500 mr-1">#</span><%= channel[:name] %>
-                <% if channel[:topic].present? %>
-                  <span class="block text-[11px] text-gray-500 mt-0.5 truncate"><%= channel[:topic] %></span>
-                <% end %>
-              </button>
+          <% multi_server = integrations.size > 1 %>
+          <% channels.group_by { |c| c[:server_name] }.each do |server_name, server_channels| %>
+            <% if multi_server %>
+              <div class="px-4 pt-3 pb-1 text-[11px] font-medium uppercase tracking-wide text-gray-500">
+                <%= server_name %>
+              </div>
             <% end %>
-          </div>
+            <div class="divide-y divide-stroke/50">
+              <% server_channels.each do |channel| %>
+                <button type="button"
+                        class="channel-option block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-hover-highlight cursor-pointer"
+                        data-action="click->hourglass-channel-picker#select"
+                        data-channel-id="<%= channel[:id] %>"
+                        data-channel-name="<%= channel[:name] %>"
+                        data-integration-id="<%= channel[:integration_id] %>"
+                        data-channel-search="<%= "#{channel[:name]} #{server_name}".downcase %>">
+                  <span class="text-gray-500 mr-1">#</span><%= channel[:name] %>
+                  <% if channel[:topic].present? %>
+                    <span class="block text-[11px] text-gray-500 mt-0.5 truncate"><%= channel[:topic] %></span>
+                  <% end %>
+                </button>
+              <% end %>
+            </div>
+          <% end %>
         <% end %>
         <div class="<%= 'hidden' if channels.any? %> px-4 py-8 text-center text-xs text-gray-500"
              data-hourglass-channel-picker-target="emptyState">
@@ -64,6 +73,7 @@
             data: { hourglass_channel_picker_target: "form" } do |f| %>
         <%= hidden_field_tag :hourglass_channel_id, '', data: { hourglass_channel_picker_target: "channelIdInput" } %>
         <%= hidden_field_tag :hourglass_channel_name, '', data: { hourglass_channel_picker_target: "channelNameInput" } %>
+        <%= hidden_field_tag :hourglass_integration_id, '', data: { hourglass_channel_picker_target: "integrationIdInput" } %>
       <% end %>
     <% end %>
   </div>

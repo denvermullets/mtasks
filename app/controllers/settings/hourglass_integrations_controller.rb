@@ -3,12 +3,13 @@ class Settings::HourglassIntegrationsController < ApplicationController
   before_action :authorize_workspace_access!
 
   def show
-    @integration = @workspace.hourglass_integrations.active.first
+    @integrations = @workspace.hourglass_integrations.active.order(:created_at)
   end
 
   def update
     result = run_connect_service
     flash[:callback_token] = result.integration.callback_api_token&.raw_token
+    flash[:callback_token_integration_id] = result.integration.id
     redirect_to workspace_settings_hourglass_integration_path(@workspace),
                 notice: "Connected to #{result.integration.hourglass_server_name} · #{result.channel_count} channels"
   rescue Hourglass::ApiClient::Unauthorized
@@ -19,7 +20,7 @@ class Settings::HourglassIntegrationsController < ApplicationController
   end
 
   def test_webhook
-    integration = @workspace.hourglass_integrations.active.first
+    integration = find_integration
     return redirect_with_alert('No active Hourglass connection') unless integration
 
     result = run_test_webhook(integration)
@@ -32,7 +33,7 @@ class Settings::HourglassIntegrationsController < ApplicationController
   end
 
   def destroy
-    integration = @workspace.hourglass_integrations.active.first
+    integration = find_integration
     if integration
       HourglassIntegrations::DisconnectService.new(integration).call
       flash[:notice] = 'Hourglass disconnected'
@@ -47,6 +48,13 @@ class Settings::HourglassIntegrationsController < ApplicationController
 
   def set_workspace
     @workspace = Workspace.find(params[:workspace_id])
+  end
+
+  # test_webhook/destroy act on one integration; a workspace may now have several.
+  # Fall back to the first active one when no id is supplied.
+  def find_integration
+    scope = @workspace.hourglass_integrations.active
+    params[:integration_id].present? ? scope.find_by(id: params[:integration_id]) : scope.first
   end
 
   def authorize_workspace_access!

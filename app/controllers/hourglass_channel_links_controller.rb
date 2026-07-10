@@ -4,7 +4,7 @@ class HourglassChannelLinksController < ApplicationController
   before_action :require_team!
   before_action :set_team
   before_action :set_project
-  before_action :set_integration, only: %i[new create channels]
+  before_action :set_integrations, only: %i[new create channels]
 
   def new
     @channels = fetch_channels(query: params[:q])
@@ -16,11 +16,14 @@ class HourglassChannelLinksController < ApplicationController
   end
 
   def create
+    integration = link_integration
+    return render_create_error('Select a channel from a connected Hourglass server.') unless integration
+
     result = HourglassLinks::CreateService.call(
       project: @project,
       channel_id: params.require(:hourglass_channel_id),
       channel_name: params[:hourglass_channel_name].to_s,
-      integration: @integration,
+      integration: integration,
       current_user: current_user
     )
 
@@ -58,8 +61,17 @@ class HourglassChannelLinksController < ApplicationController
     redirect_to team_projects_path(current_team), alert: 'Project not found.'
   end
 
-  def set_integration
-    @integration = current_team.workspace.hourglass_integrations.active.first
+  def set_integrations
+    @integrations = current_team.workspace.hourglass_integrations.active.order(:created_at)
+  end
+
+  # The channel picker submits the integration that owns the chosen channel.
+  # Fall back to the sole integration when only one is connected.
+  def link_integration
+    id = params[:hourglass_integration_id]
+    return @integrations.first if id.blank?
+
+    @integrations.find { |integration| integration.id.to_s == id.to_s }
   end
 
   def modal_frame_id
@@ -80,28 +92,32 @@ class HourglassChannelLinksController < ApplicationController
   end
 
   def fetch_channels(query: nil)
-    return [] unless @integration
-
-    client = Hourglass::ApiClient.for_integration(@integration)
-    raw = begin
-      client.discover_channels!
-    rescue Hourglass::ApiClient::Error => e
-      Rails.logger.warn("Hourglass channel fetch failed: #{e.message}")
-      []
-    end
-
-    channels = raw.map { |c| normalize_channel(c) }
+    channels = Array(@integrations).flat_map { |integration| channels_for(integration) }
     return channels if query.blank?
 
     q = query.to_s.downcase
-    channels.select { |c| c[:name].to_s.downcase.include?(q) }
+    channels.select { |c| c[:name].to_s.downcase.include?(q) || c[:server_name].to_s.downcase.include?(q) }
   end
 
-  def normalize_channel(raw)
+  def channels_for(integration)
+    client = Hourglass::ApiClient.for_integration(integration)
+    raw = begin
+      client.discover_channels!
+    rescue Hourglass::ApiClient::Error => e
+      Rails.logger.warn("Hourglass channel fetch failed (integration #{integration.id}): #{e.message}")
+      []
+    end
+
+    raw.map { |c| normalize_channel(c, integration) }
+  end
+
+  def normalize_channel(raw, integration)
     {
       id: raw['id'] || raw[:id],
       name: raw['name'] || raw[:name],
-      topic: raw['topic'] || raw[:topic]
+      topic: raw['topic'] || raw[:topic],
+      integration_id: integration.id,
+      server_name: integration.hourglass_server_name.presence || integration.hourglass_server_id
     }
   end
 end
