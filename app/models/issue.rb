@@ -35,12 +35,30 @@ class Issue < ApplicationRecord
   before_validation :assign_team_number, on: :create
   after_create_commit :enqueue_velocity_recalculation!
 
+  # Matches "VEK-529" or a bare "529", so an identifier search hits the
+  # team_id/team_number index instead of scanning text columns. Prefix charset
+  # tracks the team identifier format ([A-Z0-9]{3,4}).
+  IDENTIFIER_SEARCH = /\A(?:([A-Za-z0-9]{3,4})-)?(\d+)\z/
+
   # Scopes
   scope :archived, -> { where.not(archived_at: nil) }
   scope :not_archived, -> { where(archived_at: nil) }
   scope :completed, -> { where.not(completed_at: nil) }
   scope :not_completed, -> { where(completed_at: nil) }
   scope :in_progress, -> { where.not(started_at: nil).where(completed_at: nil, canceled_at: nil) }
+  scope :matching_search, lambda { |term, include_description: false|
+    term = term.to_s.strip
+    next all if term.blank?
+
+    if (prefix, number = term.match(IDENTIFIER_SEARCH)&.captures)
+      scope = where(team_number: number)
+      next prefix ? scope.joins(:team).where(teams: { identifier: prefix.upcase }) : scope
+    end
+
+    columns = include_description ? %w[issues.title issues.description] : %w[issues.title]
+    where(columns.map { |column| "#{column} ILIKE :q" }.join(' OR '),
+          q: "%#{ActiveRecord::Base.sanitize_sql_like(term)}%")
+  }
 
   def identifier
     "#{team.identifier}-#{team_number}"

@@ -93,11 +93,7 @@ class IssueDisplayService
   end
 
   def filter_by_search_term(issue_scope)
-    term = options[:search_query].to_s.strip
-    return issue_scope if term.blank?
-
-    pattern = "%#{ActiveRecord::Base.sanitize_sql_like(term)}%"
-    issue_scope.where('title ILIKE :q OR description ILIKE :q', q: pattern)
+    issue_scope.matching_search(options[:search_query], include_description: true)
   end
 
   def filter_by_completion(issue_scope)

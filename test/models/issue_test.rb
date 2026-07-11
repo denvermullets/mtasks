@@ -114,4 +114,39 @@ class IssueTest < ActiveSupport::TestCase
 
     assert_nil issue.canceled_at
   end
+
+  test 'matching_search finds an issue by its identifier, case insensitively' do
+    issue = @team.issues.create!(title: 'Searchable', lane: @backlog, creator: @user)
+
+    assert_equal [issue], @team.issues.matching_search(issue.identifier).to_a
+    assert_equal [issue], @team.issues.matching_search(issue.identifier.downcase).to_a
+  end
+
+  test 'matching_search finds an issue by a bare team number' do
+    issue = @team.issues.create!(title: 'Searchable', lane: @backlog, creator: @user)
+
+    assert_equal [issue], @team.issues.matching_search(issue.team_number.to_s).to_a
+  end
+
+  test 'matching_search ignores an identifier whose prefix belongs to another team' do
+    issue = @team.issues.create!(title: 'Searchable', lane: @backlog, creator: @user)
+
+    assert_empty @team.issues.matching_search("ZZZ-#{issue.team_number}").to_a
+  end
+
+  test 'matching_search falls back to title, and to description only when asked' do
+    issue = @team.issues.create!(
+      title: 'Unique Title', description: 'Unique Body', lane: @backlog, creator: @user
+    )
+
+    assert_equal [issue], @team.issues.matching_search('unique tit').to_a
+    assert_empty @team.issues.matching_search('unique bod').to_a
+    assert_equal [issue], @team.issues.matching_search('unique bod', include_description: true).to_a
+  end
+
+  test 'matching_search returns the full scope for a blank term' do
+    @team.issues.create!(title: 'A', lane: @backlog, creator: @user)
+
+    assert_equal @team.issues.count, @team.issues.matching_search('  ').count
+  end
 end

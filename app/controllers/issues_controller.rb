@@ -100,15 +100,9 @@ class IssuesController < ApplicationController
   private
 
   def search_issues
-    query = params[:q].to_s.strip
     issues = current_team.issues.not_archived.includes(:lane)
     issues = issues.where.not(id: params[:exclude_id]) if params[:exclude_id].present?
-    return issues unless query.present?
-
-    issues.joins(:team).where(
-      "title ILIKE :q OR CONCAT(teams.identifier, '-', issues.team_number::text) ILIKE :q",
-      q: "%#{query}%"
-    )
+    issues.matching_search(params[:q])
   end
 
   def set_issue

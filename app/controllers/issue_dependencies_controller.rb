@@ -65,18 +65,11 @@ class IssueDependenciesController < ApplicationController
 
   def search_candidates(query)
     exclude_ids = [@issue.id] + @issue.blocked_issues.pluck(:id) + @issue.blocking_issues.pluck(:id)
-    issues = current_team.issues.not_archived.not_completed
-                         .where(canceled_at: nil)
-                         .where.not(id: exclude_ids).order(:team_number)
-
-    if query.present?
-      issues = issues.joins(:team).where(
-        "issues.title ILIKE :q OR CONCAT(teams.identifier, '-', issues.team_number::text) ILIKE :q",
-        q: "%#{query}%"
-      )
-    end
-
-    issues.limit(20)
+    current_team.issues.not_archived.not_completed
+                .where(canceled_at: nil)
+                .where.not(id: exclude_ids).order(:team_number)
+                .matching_search(query)
+                .limit(20)
   end
 
   def set_issue
