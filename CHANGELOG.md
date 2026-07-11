@@ -1,5 +1,10 @@
-<!-- last-sha: 780ab90b9fdaf0f078492fa1969097c46c12b4ea -->
+<!-- last-sha: e292728260cc7332ae82fe0b79f2ec2e45f686f7 -->
 # What's new
+
+## 2026-07-11
+- **Link more than one Hourglass channel.** A project can now hold multiple Hourglass links, and you can add or remove them from the integration settings page.
+- **Hover cards in more places.** Issue references in the activity feed now show the same preview card as everywhere else, with a status icon next to the label.
+- **Board fixes.** Hovering a card and using a hotkey no longer assigns the wrong issue, and clickable elements show the hand cursor again.
 
 ## 2026-07-09
 - **Set priority from the board.** Priority now has its own picker, reachable by hovering a card and hitting the shortcut key, and the card updates the moment you pick.
