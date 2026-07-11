@@ -48,7 +48,7 @@ module Webhooks
 
       # For comments, we need to find subscriptions based on the PR data
       pr_data = issue # Issue contains PR data for PR comments
-      subscriptions = find_subscriptions_for_webhook(pr_data)
+      subscriptions = find_subscriptions_for_webhook(pr_data, extra_text: comment['body'])
 
       subscriptions.each do |subscription|
         queue_comment_processing(subscription, issue, comment)
@@ -79,11 +79,12 @@ module Webhooks
       true
     end
 
-    def find_subscriptions_for_webhook(pr_data)
+    def find_subscriptions_for_webhook(pr_data, extra_text: '')
       GhIntegration::FindFromWebhook.call(
         installation_id: webhook_payload.dig('installation', 'id'),
         repo_full_name: webhook_payload.dig('repository', 'full_name'),
-        pr_data: pr_data
+        pr_data: pr_data,
+        extra_text: extra_text
       )
     end
 

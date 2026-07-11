@@ -14,7 +14,7 @@ class GithubCommentProcessorJob < ApplicationJob
     pull_request = find_or_fetch_pull_request(subscription, pr_number)
     return unless pull_request
 
-    link_referenced_issues(subscription.team, pull_request, pr_number, comment_body)
+    GithubPrSyncService.new(subscription).link_issues_from_text(pull_request, comment_body)
   end
 
   private
@@ -33,34 +33,10 @@ class GithubCommentProcessorJob < ApplicationJob
     pr_data = client.pull_request(subscription.github_repo_full_name, pr_number)
 
     sync_service = GithubPrSyncService.new(subscription)
-    sync_service.sync_pull_request(pr_data.to_h)
+    # Octokit hands back symbol keys; the sync service reads string keys.
+    sync_service.sync_pull_request(pr_data.to_h.deep_stringify_keys)
   rescue StandardError => e
     Rails.logger.error("Failed to fetch PR ##{pr_number}: #{e.message}")
     nil
-  end
-
-  def link_referenced_issues(team, pull_request, pr_number, comment_body)
-    referenced_issues = IssueReferenceParser.find_issues(comment_body, team)
-
-    if referenced_issues.empty?
-      Rails.logger.info("No issue references found in comment for PR ##{pr_number}")
-      return
-    end
-
-    queue_comment_jobs_for_issues(referenced_issues, pull_request)
-    Rails.logger.info("Linked #{referenced_issues.count} issues from comment to PR ##{pr_number}")
-  end
-
-  def queue_comment_jobs_for_issues(referenced_issues, pull_request)
-    referenced_issues.each do |issue|
-      issue_pr = IssuePullRequest.find_or_create_by(
-        issue: issue,
-        pull_request: pull_request
-      )
-
-      next if issue_pr.comment_posted?
-
-      GithubCommentPosterJob.perform_later(issue_pr.id)
-    end
   end
 end

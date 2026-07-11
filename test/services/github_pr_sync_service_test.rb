@@ -145,6 +145,81 @@ class GithubPrSyncServiceTest < ActiveSupport::TestCase
     assert_equal target.id, second_issue.reload.lane_id
   end
 
+  test 'issue referenced for the first time by a title edit is linked and moved to the pr_opened lane' do
+    target = Lane.create!(name: 'In Progress', team: @team, position: 1)
+    create_rule(trigger: 'pr_opened', lane: target)
+
+    @service.sync_pull_request(build_pr_data(title: 'No shortcode', head_ref: 'fix/thing'), action: 'opened')
+    assert_equal @lane.id, @issue.reload.lane_id
+
+    @service.sync_pull_request(build_pr_data(title: 'HOUR-4 work', head_ref: 'fix/thing'), action: 'edited')
+
+    pull_request = @subscription.pull_requests.find_by(pr_number: 1)
+    assert_includes pull_request.issues, @issue
+    assert_equal target.id, @issue.reload.lane_id
+  end
+
+  test 'issue referenced for the first time by a new commit is linked and moved to the pr_opened lane' do
+    target = Lane.create!(name: 'In Progress', team: @team, position: 1)
+    create_rule(trigger: 'pr_opened', lane: target)
+
+    @service.sync_pull_request(build_pr_data(title: 'HOUR-4 work'), action: 'synchronize')
+
+    assert_equal target.id, @issue.reload.lane_id
+  end
+
+  test 'already linked issue is not dragged back to the pr_opened lane by a later commit' do
+    in_progress = Lane.create!(name: 'In Progress', team: @team, position: 1)
+    in_review = Lane.create!(name: 'In Review', team: @team, position: 2)
+    create_rule(trigger: 'pr_opened', lane: in_progress)
+
+    @service.sync_pull_request(build_pr_data, action: 'opened')
+    assert_equal in_progress.id, @issue.reload.lane_id
+
+    @issue.update!(lane: in_review)
+    @service.sync_pull_request(build_pr_data, action: 'synchronize')
+
+    assert_equal in_review.id, @issue.reload.lane_id
+  end
+
+  test 'issue first referenced by a merge webhook lands in the pr_merged lane, not In Progress' do
+    in_progress = Lane.create!(name: 'In Progress', team: @team, position: 1)
+    done = Lane.create!(name: 'Done', team: @team, position: 2)
+    create_rule(trigger: 'pr_opened', lane: in_progress)
+    create_rule(trigger: 'pr_merged', branch_pattern: 'main', lane: done)
+
+    @service.sync_pull_request(
+      build_pr_data(base_ref: 'main', merged: true, state: 'closed'), action: 'closed'
+    )
+
+    assert_equal done.id, @issue.reload.lane_id
+  end
+
+  test 'newly linked issue is left alone when no pr_opened rule is configured' do
+    @service.sync_pull_request(build_pr_data(title: 'HOUR-4 work'), action: 'synchronize')
+
+    assert_equal @lane.id, @issue.reload.lane_id
+  end
+
+  test 'link_issues_from_text links issues referenced in a comment body' do
+    target = Lane.create!(name: 'In Progress', team: @team, position: 1)
+    create_rule(trigger: 'pr_opened', lane: target)
+    pull_request = @service.sync_pull_request(build_pr_data(title: 'No shortcode', head_ref: 'fix/thing'))
+
+    assert_difference 'IssuePullRequest.count', 1 do
+      @service.link_issues_from_text(pull_request, 'this also covers HOUR-4')
+    end
+
+    assert_includes pull_request.reload.issues, @issue
+    assert_equal target.id, @issue.reload.lane_id
+  end
+
+  test 'link_issues_from_text returns only issues it newly attached' do
+    pull_request = @service.sync_pull_request(build_pr_data(title: 'HOUR-4 work'))
+
+    assert_equal [], @service.link_issues_from_text(pull_request, 'still HOUR-4')
+  end
+
   test 'moving out of Done clears completed_at via apply_lane_timestamps!' do
     done = Lane.create!(name: 'Done', team: @team, position: 2)
     in_progress = Lane.create!(name: 'In Progress', team: @team, position: 1)
