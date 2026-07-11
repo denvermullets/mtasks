@@ -18,6 +18,9 @@ class MarkdownRenderer
 
   SKIP_ANCESTORS = %w[pre code a].freeze
 
+  REF_LINK_CLASS = 'inline-flex items-center gap-1 align-middle text-accent hover:underline font-mono text-sm'.freeze
+  REF_ICON_CLASS = 'inline-flex shrink-0 [&>svg]:w-3.5 [&>svg]:h-3.5'.freeze
+
   def self.render(text, team: nil)
     new(text, team: team).render
   end
@@ -114,11 +117,29 @@ class MarkdownRenderer
       issue = issues_by_identifier[match]
       next match unless issue
 
-      helpers = Rails.application.routes.url_helpers
-      path = helpers.team_issue_path(@team, issue)
-      card_path = helpers.card_team_issue_path(@team, issue)
-      %(<a href="#{path}" class="text-accent hover:underline font-mono text-sm" data-turbo-frame="_top" ) +
-        %(data-controller="hover-card" data-hover-card-url-value="#{card_path}">#{match}</a>)
+      issue_ref_link(issue, match)
     end
+  end
+
+  def issue_ref_link(issue, label)
+    routes = Rails.application.routes.url_helpers
+    helpers = ApplicationController.helpers
+
+    helpers.link_to(routes.team_issue_path(@team, issue), class: REF_LINK_CLASS,
+                                                          data: ref_link_data(issue, routes)) do
+      helpers.safe_join([label, lane_icon(issue.lane)])
+    end
+  end
+
+  def ref_link_data(issue, routes)
+    { turbo_frame: '_top', controller: 'hover-card',
+      hover_card_url_value: routes.card_team_issue_path(@team, issue) }
+  end
+
+  def lane_icon(lane)
+    helpers = ApplicationController.helpers
+
+    helpers.content_tag(:span, helpers.render_lane_icon(lane),
+                        class: REF_ICON_CLASS, title: lane&.name)
   end
 end
