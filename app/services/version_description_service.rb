@@ -28,7 +28,7 @@ class VersionDescriptionService < Service
     as_entries(:version, issue.versions.where.not(event: 'create')) +
       as_entries(:version, dependency_versions(issue)) +
       as_entries(:comment, issue.comments.top_level.includes(:user)) +
-      as_entries(:reference, issue.incoming_references.includes(:source_issue, :user))
+      as_entries(:reference, issue.incoming_references.includes(:user, source_issue: %i[team lane]))
   end
   private_class_method :timeline_entries
 
