@@ -27,18 +27,20 @@ class Settings::AppearanceController < ApplicationController
     font = params[:font]
 
     unless User::AVAILABLE_THEMES.include?(theme)
-      redirect_to settings_appearance_path, alert: 'Unknown theme.' and return
+      redirect_to settings_appearance_path, alert: 'Unknown theme.', status: :see_other and return
     end
 
-    redirect_to settings_appearance_path, alert: 'Unknown font.' and return unless User::AVAILABLE_FONTS.include?(font)
+    unless User::AVAILABLE_FONTS.include?(font)
+      redirect_to settings_appearance_path, alert: 'Unknown font.', status: :see_other and return
+    end
 
-    current_settings = current_user.settings || {}
-    appearance = current_settings.fetch('appearance', {})
-    appearance['theme'] = theme
-    appearance['font'] = font
-    current_user.update!(settings: current_settings.merge('appearance' => appearance))
+    settings = current_user.settings || {}
+    appearance = settings.fetch('appearance', {}).merge('theme' => theme, 'font' => font)
+    current_user.update!(settings: settings.merge('appearance' => appearance))
 
-    redirect_to settings_appearance_path, notice: 'Appearance updated.', status: :see_other
+    # The picker saves on every selection and has already applied the theme
+    # client-side, so there is nothing to re-render.
+    head :no_content
   end
 
   private
