@@ -7,7 +7,7 @@
         data: { turbo_frame: "_top", controller: "hover-card",
                 "hover-card-url-value": card_team_issue_path(reference.source_issue.team, reference.source_issue) } do %>
       <%= reference.source_issue.identifier %>
-      <span class="inline-flex shrink-0" title="<%= reference.source_issue.lane&.name %>">
+      <span class="inline-flex shrink-0 [&>svg]:w-3.5 [&>svg]:h-3.5" title="<%= reference.source_issue.lane&.name %>">
         <%= render_lane_icon(reference.source_issue.lane) %>
       </span>
     <% end %>
