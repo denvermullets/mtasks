@@ -1,9 +1,12 @@
 module GhIntegration
   class FindFromWebhook < Service
-    def initialize(installation_id:, repo_full_name:, pr_data:)
+    # extra_text carries any text outside the PR itself that can reference an issue - currently a
+    # PR comment body, which is the only way to attach an issue to a PR that never mentioned one.
+    def initialize(installation_id:, repo_full_name:, pr_data:, extra_text: '')
       @installation_id = installation_id
       @repo_full_name = repo_full_name
       @pr_data = pr_data
+      @extra_text = extra_text
     end
 
     def call
@@ -37,7 +40,7 @@ module GhIntegration
 
     def extract_team_identifiers_from_pr
       branch_name = @pr_data.dig('head', 'ref') || ''
-      pr_text = "#{@pr_data['title']} #{@pr_data['body']} #{branch_name}"
+      pr_text = "#{@pr_data['title']} #{@pr_data['body']} #{branch_name} #{@extra_text}"
       shortcodes = IssueReferenceParser.parse(pr_text)
 
       if shortcodes.empty?

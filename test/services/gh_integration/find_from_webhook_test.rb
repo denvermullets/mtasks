@@ -71,5 +71,32 @@ module GhIntegration
 
       assert_equal [], result
     end
+
+    test 'finds subscription when the shortcode is only in the comment body' do
+      # A PR comment payload has no head ref, and the PR itself never mentioned an issue.
+      pr_data = { 'number' => 4, 'title' => 'Update readme', 'body' => 'Just docs' }
+
+      result = GhIntegration::FindFromWebhook.call(
+        installation_id: '12345',
+        repo_full_name: 'denvermullets/mtasks',
+        pr_data: pr_data,
+        extra_text: 'this actually covers HOUR-4'
+      )
+
+      assert_includes result, @subscription
+    end
+
+    test 'returns empty when neither the PR nor the comment has a shortcode' do
+      pr_data = { 'number' => 5, 'title' => 'Update readme', 'body' => 'Just docs' }
+
+      result = GhIntegration::FindFromWebhook.call(
+        installation_id: '12345',
+        repo_full_name: 'denvermullets/mtasks',
+        pr_data: pr_data,
+        extra_text: 'looks good to me'
+      )
+
+      assert_equal [], result
+    end
   end
 end
