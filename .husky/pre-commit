@@ -17,8 +17,13 @@ echo "Running yarn herb:lint:fix..."
 yarn herb:lint:fix
 LINT_EXIT=$?
 
+# Step 4: Run the test suite (system tests are excluded, they run in CI)
+echo "Running bin/rails test..."
+bin/rails test
+TEST_EXIT=$?
+
 # Check if any command failed
-if [ $RUBOCOP_EXIT -ne 0 ] || [ $FORMAT_EXIT -ne 0 ] || [ $LINT_EXIT -ne 0 ]; then
+if [ $RUBOCOP_EXIT -ne 0 ] || [ $FORMAT_EXIT -ne 0 ] || [ $LINT_EXIT -ne 0 ] || [ $TEST_EXIT -ne 0 ]; then
   echo ""
   echo "❌ Pre-commit checks failed. Commit aborted."
   exit 1
