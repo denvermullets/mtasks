@@ -1,7 +1,7 @@
 source "https://rubygems.org"
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
-gem "rails", "~> 8.1.3"
+gem "rails", "~> 8.1.3.1"
 
 gem "aws-sdk-s3", require: false
 gem "bcrypt", "~> 3.1.22"
@@ -19,6 +19,7 @@ gem "pg", "~> 1.6.3"
 gem "propshaft"
 gem "puma", ">= 8.0.2"
 gem "rouge"
+gem "ruby-vips", "~> 2.0"
 gem "solid_cable"
 gem "solid_cache"
 gem "solid_queue"
