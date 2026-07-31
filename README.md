@@ -85,12 +85,45 @@ DATABASE_URL=postgresql://localhost/mtasks_development
 # GitHub App Configuration
 GITHUB_APP_ID=your_app_id
 GITHUB_APP_SLUG=your-app-slug
-GITHUB_PRIVATE_KEY=your_base64_encoded_private_key
+GITHUB_APP_PRIVATE_KEY=your_base64_encoded_private_key
 GITHUB_WEBHOOK_SECRET=your_webhook_secret
 
 # Rails
 SECRET_KEY_BASE=your_secret_key_base
+
+# Vektis Analytics (all optional — disabled by default)
+VEKTIS_ENABLED=false
+VEKTIS_ENDPOINT=http://localhost:3333/api/v1/events
+VEKTIS_PUBLISHABLE_KEY=vk_pub_dev_local_playground
+VEKTIS_SERVER_KEY=vk_dev_local_internal
+VEKTIS_CUSTOMER_ID=mtasks-local-dev
 ```
+
+#### Vektis Analytics
+
+All Vektis settings are read through `Vektis` (`config/initializers/vektis.rb`) —
+nothing else in the app should read these vars directly. Every var is optional
+and ships with a working local default, so you can ignore this section entirely
+unless you are working on analytics.
+
+- **`VEKTIS_ENABLED`** — master kill switch, defaults to **false**. Nothing is
+  emitted from the browser or the server unless this is truthy, so test and CI
+  runs never produce traffic.
+- **`VEKTIS_ENDPOINT`** — defaults to a **locally running vanalytics** on port
+  3333, not production. The browser SDK's own built-in default *is* production,
+  so the Stimulus controller passes this value explicitly; leaving it unset
+  keeps dogfood traffic local.
+- **`VEKTIS_PUBLISHABLE_KEY`** — the `vk_pub_*` key, rate tier 1,000 req/min.
+  This is the **only** key safe to expose to the browser.
+- **`VEKTIS_SERVER_KEY`** — full-scope key, rate tier 10,000 req/min, used by
+  the server-side ingest client. Never render this into a page.
+- **`VEKTIS_CUSTOMER_ID`** — a single constant identifying mtasks as one VEKTIS
+  tenant. It is not derived from Workspace or Team; the real value is
+  provisioned by vektis-app.
+
+The two key defaults are the values seeded by vanalytics for local development
+(`vanalytics/server/src/database/seeds/01_test_org_api_keys.ts`), so a local
+vanalytics accepts them as-is.
 
 #### Encoding GitHub Private Key
 
