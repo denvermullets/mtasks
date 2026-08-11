@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus";
+import { trackFeature } from "vektis";
 
 // Filters which group (#list_group_*) is visible on mobile. The `.mobile-group-hidden`
 // class is only active below the sm breakpoint via CSS, so desktop is unaffected.
@@ -11,9 +12,17 @@ export default class extends Controller {
   }
 
   select(event) {
+    const previousGroupId = this.activeGroupId;
     this.activeGroupId = event.currentTarget.dataset.groupId;
     this.applyFilter();
     this.updateChipStates();
+
+    // connect() calls applyFilter() but never select(), so this cannot fire on page load. The
+    // chips only exist inside a sm:hidden container and toggle list-view groups, so the surface
+    // is unconditionally "list".
+    if (this.activeGroupId !== previousGroupId) {
+      trackFeature("issue-filter", "apply", { surface: "list" });
+    }
   }
 
   applyFilter() {

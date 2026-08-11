@@ -1,6 +1,9 @@
 import { Controller } from "@hotwired/stimulus";
+import { trackFeature } from "vektis";
 
 export default class extends Controller {
+  static values = { surface: String };
+
   connect() {
     this.boundHandleKeyPress = this.handleKeyPress.bind(this);
     document.addEventListener("keydown", this.boundHandleKeyPress);
@@ -70,6 +73,7 @@ export default class extends Controller {
     );
     if (controller && controller.openForCard) {
       controller.openForCard(hoveredCard);
+      trackFeature("keyboard-shortcut", "invoke", this.shortcutProperties("p"));
     }
   }
 
@@ -92,6 +96,7 @@ export default class extends Controller {
     );
     if (controller && controller.openForCard) {
       controller.openForCard(hoveredCard);
+      trackFeature("keyboard-shortcut", "invoke", this.shortcutProperties("l"));
     }
   }
 
@@ -114,6 +119,7 @@ export default class extends Controller {
     );
     if (controller && controller.openForCard) {
       controller.openForCard(hoveredCard);
+      trackFeature("keyboard-shortcut", "invoke", this.shortcutProperties("s"));
     }
   }
 
@@ -136,6 +142,7 @@ export default class extends Controller {
     );
     if (controller && controller.openForCard) {
       controller.openForCard(hoveredCard);
+      trackFeature("keyboard-shortcut", "invoke", this.shortcutProperties("j"));
     }
   }
 
@@ -153,9 +160,22 @@ export default class extends Controller {
         url += `?project_id=${pathParts[projectIndex + 1]}`;
       }
 
+      trackFeature("keyboard-shortcut", "invoke", this.shortcutProperties("c"));
+      // A full page load, not a Turbo visit — the batched event rides out on the SDK's
+      // pagehide/visibilitychange beacon flush. Do not move this below the assignment.
       window.location.href = url;
     } else {
+      // The shortcut did nothing, so it was not invoked.
       console.error("Could not determine team ID from URL");
     }
+  }
+
+  // via is always "keyboard" here by construction. surface comes from the ERB because this
+  // controller mounts on both issues/index (board or list, per the user's display preference)
+  // and projects/show — guessing "board" would be wrong on two of those three.
+  shortcutProperties(shortcut) {
+    const properties = { shortcut, via: "keyboard" };
+    if (this.surfaceValue) properties.surface = this.surfaceValue;
+    return properties;
   }
 }

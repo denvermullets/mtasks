@@ -1,5 +1,11 @@
 <%= turbo_stream_from "project_#{@project.id}" %>
-<div class="flex flex-1 min-h-0 bg-background" data-controller="properties-drawer lightbox board-keyboard">
+<div class="flex flex-1 min-h-0 bg-background"
+     data-controller="properties-drawer lightbox board-keyboard vektis-view"
+     data-lightbox-surface-value="project"
+     data-board-keyboard-surface-value="project"
+     data-vektis-view-feature-id-value="project-management"
+     data-vektis-view-surface-value="project"
+     data-vektis-view-tab-value="<%= @active_tab || :issues %>">
   <div class="flex-1 flex flex-col overflow-hidden">
     <!-- Top Bar -->
     <div class="h-14 bg-menu border-b border-stroke flex items-center justify-between px-4 shrink-0">
