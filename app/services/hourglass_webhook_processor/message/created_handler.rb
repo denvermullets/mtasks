@@ -36,7 +36,7 @@ module HourglassWebhookProcessor
         [cache, was_new]
       end
 
-      # rubocop:disable Metrics/AbcSize
+      # rubocop:disable-next Metrics/AbcSize
       def cache_attributes
         {
           hourglass_channel_id: channel_id,
@@ -52,7 +52,6 @@ module HourglassWebhookProcessor
           source: 'webhook'
         }
       end
-      # rubocop:enable Metrics/AbcSize
 
       def thread_id
         payload['thread_id'].presence ||
