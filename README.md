@@ -91,39 +91,41 @@ GITHUB_WEBHOOK_SECRET=your_webhook_secret
 # Rails
 SECRET_KEY_BASE=your_secret_key_base
 
-# Vektis Analytics (all optional — disabled by default)
-VEKTIS_ENABLED=false
-VEKTIS_ENDPOINT=http://localhost:3333/api/v1/events
-VEKTIS_PUBLISHABLE_KEY=vk_pub_dev_local_playground
-VEKTIS_SERVER_KEY=vk_dev_local_internal
-VEKTIS_CUSTOMER_ID=mtasks-local-dev
 ```
 
 #### Vektis Analytics
 
-All Vektis settings are read through `Vektis` (`config/initializers/vektis.rb`) —
-nothing else in the app should read these vars directly. Every var is optional
-and ships with a working local default, so you can ignore this section entirely
-unless you are working on analytics.
+Analytics is **per team**, and configured in the database rather than the
+environment. Each team is its own VEKTIS tenant: a team admin connects the team
+to their own VEKTIS account, and nothing at all is emitted for a team that has
+not. There is no app-wide enable flag and no ENV vars to set.
 
-- **`VEKTIS_ENABLED`** — master kill switch, defaults to **false**. Nothing is
-  emitted from the browser or the server unless this is truthy, so test and CI
-  runs never produce traffic.
-- **`VEKTIS_ENDPOINT`** — defaults to a **locally running vanalytics** on port
-  3333, not production. The browser SDK's own built-in default *is* production,
-  so the Stimulus controller passes this value explicitly; leaving it unset
-  keeps dogfood traffic local.
-- **`VEKTIS_PUBLISHABLE_KEY`** — the `vk_pub_*` key, rate tier 1,000 req/min.
-  This is the **only** key safe to expose to the browser.
-- **`VEKTIS_SERVER_KEY`** — full-scope key, rate tier 10,000 req/min, used by
-  the server-side ingest client. Never render this into a page.
-- **`VEKTIS_CUSTOMER_ID`** — a single constant identifying mtasks as one VEKTIS
-  tenant. It is not derived from Workspace or Team; the real value is
-  provisioned by vektis-app.
+To turn it on for a team, sign in as a **team admin** and visit
+**Analytics** in the account menu (`/teams/:team_id/settings/vektis_integration`),
+then supply:
 
-The two key defaults are the values seeded by vanalytics for local development
-(`vanalytics/server/src/database/seeds/01_test_org_api_keys.ts`), so a local
-vanalytics accepts them as-is.
+- **Customer ID** — how the team appears in your VEKTIS dashboard. Several
+  mtasks teams may deliberately share one ID.
+- **Publishable key** — the `vk_pub_*` key, rate tier 1,000 req/min. This is the
+  **only** key safe to expose to the browser, and the app refuses to render one
+  that does not carry the `vk_pub_` prefix.
+- **Server key** — full-scope key, rate tier 10,000 req/min, used by the
+  server-side ingest client. It is never rendered into a page, and the form
+  keeps the stored value when the field is submitted blank.
+
+Both keys are read through `Vektis.for(team)`, which returns a
+`Vektis::Config` for a connected team and a `Vektis::NullConfig` otherwise —
+nothing else in the app should read a team's credentials directly.
+
+The one setting that is *not* per tenant is the ingest URL, which is one
+deployment per environment: `config.x.vektis.endpoint`, set in
+`config/environments/*.rb`. It defaults to a **locally running vanalytics** on
+port 3333 in development and test. The browser SDK's own built-in default *is*
+production, so the Stimulus controller passes this value explicitly.
+
+For local work, run vanalytics on port 3333 and connect a team using the key
+values it seeds
+(`vanalytics/server/src/database/seeds/01_test_org_api_keys.ts`).
 
 #### Encoding GitHub Private Key
 

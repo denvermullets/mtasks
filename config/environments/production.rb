@@ -89,4 +89,7 @@ Rails.application.configure do
   #
   # Skip DNS rebinding protection for the default health check endpoint.
   # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
+
+  # VEKTIS ingest. One deployment for every tenant; per-team keys select the account.
+  config.x.vektis.endpoint = 'https://api.vektis.io/api/v1/events'
 end

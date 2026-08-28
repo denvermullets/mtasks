@@ -63,7 +63,8 @@ module HourglassWebhookProcessor
       def track_link(result, entity)
         return if result.error || result.link.nil?
 
-        track_integration('hourglass-integration', 'link', result.link.id, entity: entity)
+        track_integration('hourglass-integration', 'link', result.link.id,
+                          entity: entity, team: result.link.team)
       end
 
       def valid_project_channel?(project, channel_id)

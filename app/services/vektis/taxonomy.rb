@@ -35,8 +35,8 @@ module Vektis
       'comment' => %w[create delete],
       'decision' => %w[create delete],
       'notification' => %w[read read_all],
-      'github-integration' => %w[link unlink sync complete],
       'hourglass-integration' => %w[link unlink sync],
+      'vektis-integration' => %w[link unlink],
       'csv-import' => %w[import],
       'team-export' => %w[export]
     }.freeze

@@ -57,6 +57,14 @@ module Vektis
 
     RETRY_AFTER_CAP = 60
 
+    # The team's resolved config — its server key and the ingest endpoint. Passed in rather than
+    # read from a global, because there is no longer a global: every batch belongs to one team's
+    # VEKTIS account, and mixing two teams' events under one key would file them in the wrong
+    # tenant. VektisEventJob resolves it per event batch.
+    def initialize(config)
+      @config = config
+    end
+
     # Terminal statuses. None of these are worth a retry: the payload, the key, or this client is
     # wrong, and sending the same bytes again would only repeat the rejection.
     TERMINAL_REASONS = {
@@ -69,7 +77,7 @@ module Vektis
     # Returns a Result. Raises RetryableError for 429 / 5xx / network faults so the calling job
     # can lean on ActiveJob's retry_on.
     def post_events(events)
-      return noop(:disabled) unless Vektis.enabled?
+      return noop(:disabled) unless @config.enabled?
 
       events = Array(events)
       return noop(:empty) if events.empty?
@@ -86,7 +94,7 @@ module Vektis
     def deliver(batches, oversized)
       accepted = 0
       sent = 0
-      uri = URI.parse(Vektis.endpoint)
+      uri = URI.parse(@config.endpoint)
 
       start(uri) do |http|
         batches.each_with_index do |batch, index|
@@ -122,7 +130,7 @@ module Vektis
       req = Net::HTTP::Post.new(uri)
       req['Content-Type'] = 'application/json' # required; anything else is a 415
       req['Accept'] = 'application/json'
-      req['X-Vektis-Key'] = Vektis.server_key  # header only — never the ?key= query fallback
+      req['X-Vektis-Key'] = @config.server_key # header only — never the ?key= query fallback
       req['X-Vektis-SDK'] = SDK_HEADER
       req.body = JSON.generate(events: batch)  # the wrapper is mandatory, even for one event
       req
@@ -208,7 +216,7 @@ module Vektis
     end
 
     # The error envelope is { statusCode, message, errors } and never echoes the API key — the key
-    # travels in a header and is not reflected. Nothing here interpolates Vektis.server_key.
+    # travels in a header and is not reflected. Nothing here interpolates the server key.
     def log_terminal(reason, code, res)
       Rails.logger.error(
         "Vektis::ApiClient dropped batch (#{code} #{reason}, no retry): #{res.body.to_s[0, 1000]}"

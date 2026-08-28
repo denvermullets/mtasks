@@ -24,6 +24,13 @@ module Vektis
   class EventEmitter
     class InvalidEvent < StandardError; end
 
+    # Stands in for the tenant when development and test build an event purely to validate it.
+    # Analytics is off for most teams in most local runs, and the whole point of building anyway is
+    # to catch taxonomy drift in CI — failing on a missing customer_id would only report that the
+    # team has not connected VEKTIS, which is not a defect. Never shipped: emit returns before
+    # enqueue whenever the config is disabled.
+    DRY_RUN_CUSTOMER_ID = 'taxonomy-validation-only'.freeze
+
     class << self
       # feature.used — the user completed the thing the feature exists to do (§2). It is the only
       # event type with a server-side call site: session.active and customer.identified are the
@@ -32,8 +39,8 @@ module Vektis
       #
       # Pass `event_id:` for webhook-originated events, where it must be derived deterministically
       # from the delivery so a provider retry dedupes rather than duplicating (§8).
-      def feature(feature_id, action, properties: {}, user_id: nil, event_id: nil)
-        emit(event_type: 'feature.used', feature_id: feature_id, action: action,
+      def feature(feature_id, action, team:, properties: {}, user_id: nil, event_id: nil)
+        emit(event_type: 'feature.used', feature_id: feature_id, action: action, team: team,
              properties: properties, user_id: user_id, event_id: event_id)
       end
 
@@ -54,26 +61,37 @@ module Vektis
       # `via` is explicit rather than assumed. The server genuinely observes origin — a session
       # request, a background job and an HMAC-verified delivery are structurally different things —
       # which is not the input modality VEK-584 correctly refused to guess at.
-      def integration(feature_id, action, provider:, via:, key:, properties: {})
-        feature(feature_id, action,
-                properties: properties.merge(provider: provider, via: via),
-                event_id: integration_event_id(provider, key, feature_id, action))
+      # Each of the three signatures below sat at exactly the 6-parameter limit before the tenant
+      # became a required part of every emit. `team` is not optional and cannot be folded into
+      # properties — it selects which VEKTIS account the event is delivered to — so the limit is
+      # relaxed here rather than the argument hidden inside a context object nothing else wants.
+      def integration(feature_id, action, team:, provider:, via:, key:, properties: {}) # rubocop:disable Metrics/ParameterLists
+        feature(feature_id, action, team: team,
+                                    properties: properties.merge(provider: provider, via: via),
+                                    event_id: integration_event_id(provider, key, feature_id, action))
       end
 
-      def emit(event_type:, feature_id: nil, action: nil, properties: {}, user_id: nil, event_id: nil)
-        # Free when the kill switch is off in production. Development and test still build and
+      def emit(event_type:, team:, feature_id: nil, action: nil, properties: {}, user_id: nil, # rubocop:disable Metrics/ParameterLists
+               event_id: nil)
+        # A team is the tenant, so no team means there is nobody to emit for. Absent rather than
+        # exceptional: workspace-level actions and deliveries that matched no team-scoped record
+        # legitimately reach here with nothing to attribute.
+        return if team.blank?
+
+        config = Vektis.for(team)
+        # Free when the team has analytics off in production. Development and test still build and
         # validate so a bad call site is caught even with analytics disabled — which is the normal
         # CI configuration, and would otherwise be the one place drift could never be seen.
-        return unless Vektis.enabled? || Rails.env.local?
+        return unless config.enabled? || Rails.env.local?
 
-        event = build(event_type: event_type, feature_id: feature_id, action: action,
-                      properties: properties, user_id: user_id, event_id: event_id)
+        event = build(config: config, event_type: event_type, feature_id: feature_id,
+                      action: action, properties: properties, user_id: user_id, event_id: event_id)
         reject!(event)
         audit(event)
         # Checked here rather than in the job so nothing accumulates in the queue while off.
-        return unless Vektis.enabled?
+        return unless config.enabled?
 
-        enqueue(event)
+        enqueue(team, event)
         nil
       rescue InvalidEvent => e
         raise if Rails.env.local?
@@ -109,11 +127,11 @@ module Vektis
       # String keys throughout: ActiveJob round-trips them verbatim (a symbol-keyed hash picks up
       # an _aj_symbol_keys wrapper), so the queued payload is literally the wire shape and the
       # byte check below measures the same bytes Vektis::ApiClient will send.
-      def build(event_type:, feature_id:, action:, properties:, user_id:, event_id:)
+      def build(config:, event_type:, feature_id:, action:, properties:, user_id:, event_id:) # rubocop:disable Metrics/ParameterLists
         {
           'event_id' => event_id.presence || SecureRandom.uuid, # v4 — satisfies z.string().uuid()
           'event_type' => event_type.to_s,
-          'customer_id' => Vektis.customer_id,
+          'customer_id' => config.enabled? ? config.customer_id : DRY_RUN_CUSTOMER_ID,
           'feature_id' => feature_id.presence&.to_s,
           'user_id' => resolved_user_id(user_id),
           'action' => action.presence&.to_s,
@@ -159,7 +177,7 @@ module Vektis
         type = event['event_type']
         invalid!("unknown event_type #{type.inspect}") unless Taxonomy::EVENT_TYPES.include?(type)
         invalid!('feature_id is required for feature.* events') if missing_feature_id?(event, type)
-        invalid!('customer_id is blank — check VEKTIS_CUSTOMER_ID') if event['customer_id'].blank?
+        invalid!("customer_id is blank — check the team's TeamVektisIntegration") if event['customer_id'].blank?
         reject_field_lengths!(event)
         reject_properties!(event)
       end
@@ -255,9 +273,9 @@ module Vektis
       #
       # The block runs outside emit's rescue, so it carries its own: a queue-database failure at
       # commit time must not raise into the caller's transaction.
-      def enqueue(event)
+      def enqueue(team, event)
         ActiveRecord.after_all_transactions_commit do
-          VektisEventJob.perform_later(event)
+          VektisEventJob.perform_later(team.id, event)
         rescue StandardError => e
           Rails.logger.error("Vektis::EventEmitter failed to enqueue: #{e.class}: #{e.message}")
         end

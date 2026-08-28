@@ -30,17 +30,21 @@ class VektisEventJob < ApplicationJob
   # a job cannot age out between the check here and the request going out.
   MAX_EVENT_AGE = 6.days
 
-  def perform(*events)
+  # `team_id` rather than the team itself: the config is resolved at run time, not enqueue time,
+  # so a team that turned analytics off (or was deleted) between the two never delivers.
+  def perform(team_id, *events)
+    team = Team.find_by(id: team_id)
+    config = Vektis.for(team)
     # Re-checked because the flag can flip between enqueue and run. The emitter's check is what
     # keeps the queue empty while off; this one keeps an already-queued event from delivering.
-    return unless Vektis.enabled?
+    return unless config.enabled?
 
     fresh, stale = events.map { |event| event.to_h.stringify_keys }.partition { |event| fresh?(event) }
     log_stale(stale)
     return if fresh.empty?
 
-    result = Vektis::ApiClient.new.post_events(fresh)
-    log_result(result) unless result.ok?
+    result = Vektis::ApiClient.new(config).post_events(fresh)
+    log_result(result, team_id) unless result.ok?
   rescue Vektis::ApiClient::RetryableError => e
     requeue(e)
   end
@@ -83,10 +87,12 @@ class VektisEventJob < ApplicationJob
   end
 
   # An unauthorized key is an operational fault rather than a data fault, so it gets its own line
-  # in the log. Disabling on it is VEK-587's call, not this job's.
-  def log_result(result)
+  # in the log. Disabling the team's integration on it is a product decision, not this job's.
+  def log_result(result, team_id)
     if result.reason == :unauthorized
-      Rails.logger.error('VektisEventJob: VEKTIS rejected the server key (401) — analytics is not being recorded')
+      Rails.logger.error(
+        "VektisEventJob: VEKTIS rejected team #{team_id}'s server key (401) — analytics is not being recorded"
+      )
       return
     end
 

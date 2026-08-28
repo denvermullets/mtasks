@@ -5,18 +5,23 @@ class VektisEventJobTest < ActiveJob::TestCase
   include VektisEventTestHelper
 
   ENDPOINT = 'http://vektis.test/api/v1/events'.freeze
-  VEKTIS_VARS = %w[VEKTIS_ENABLED VEKTIS_ENDPOINT VEKTIS_SERVER_KEY].freeze
 
   setup do
     WebMock.disable_net_connect!
-    @original_env = VEKTIS_VARS.index_with { |key| ENV.fetch(key, nil) }
-    ENV['VEKTIS_ENABLED'] = 'true'
-    ENV['VEKTIS_ENDPOINT'] = ENDPOINT
-    ENV['VEKTIS_SERVER_KEY'] = 'vk_dev_secret_never_log_me'
+    # The endpoint is deployment config now rather than ENV, so point it at the stubbed host for
+    # the duration of this file.
+    @original_endpoint = Rails.application.config.x.vektis.endpoint
+    Rails.application.config.x.vektis.endpoint = ENDPOINT
+
+    @user = User.create!(name: 'Job User', email: "job_#{SecureRandom.hex(4)}@example.com",
+                         password: 'password')
+    @workspace = Workspace.create!(name: 'Job WS', owner: @user)
+    @team = @workspace.teams.create!(name: 'Job Team', identifier: 'JOB')
+    enable_vektis!(@team)
   end
 
   teardown do
-    @original_env.each { |key, value| ENV[key] = value }
+    Rails.application.config.x.vektis.endpoint = @original_endpoint
     WebMock.reset!
     WebMock.allow_net_connect!
   end
@@ -46,8 +51,13 @@ class VektisEventJobTest < ActiveJob::TestCase
     end
   end
 
+  # The retried job's arguments are (team_id, *events); drop the team to get the events back.
   def retried_events
-    ActiveJob::Arguments.deserialize(enqueued_jobs.sole[:args])
+    ActiveJob::Arguments.deserialize(enqueued_jobs.sole[:args]).drop(1)
+  end
+
+  def retried_team_id
+    ActiveJob::Arguments.deserialize(enqueued_jobs.sole[:args]).first
   end
 
   def capture_logs
@@ -83,7 +93,7 @@ class VektisEventJobTest < ActiveJob::TestCase
     stub_request(:post, ENDPOINT).to_return(status: 202, body: { accepted: 1 }.to_json)
     payload = event
 
-    VektisEventJob.perform_now(payload)
+    VektisEventJob.perform_now(@team.id, payload)
 
     assert_equal [payload['event_id']], sent_event_ids
     assert_no_enqueued_jobs
@@ -109,7 +119,7 @@ class VektisEventJobTest < ActiveJob::TestCase
     payload = event.merge('user_id' => '4217', 'properties' => { 'source' => 'server', 'count' => 99 })
 
     logs = capture_active_job_logs do
-      VektisEventJob.perform_later(payload)
+      VektisEventJob.perform_later(@team.id, payload)
       perform_enqueued_jobs
     end
 
@@ -118,10 +128,21 @@ class VektisEventJobTest < ActiveJob::TestCase
     assert_no_match(/count/, logs)
   end
 
-  test 'no-ops without touching the network when analytics is disabled' do
-    ENV['VEKTIS_ENABLED'] = 'false'
+  test 'no-ops without touching the network when the team has analytics disabled' do
+    disable_vektis!(@team)
 
-    VektisEventJob.perform_now(event)
+    VektisEventJob.perform_now(@team.id, event)
+
+    assert_not_requested :post, ENDPOINT
+  end
+
+  # The flag can flip, and the team can vanish, between enqueue and run — both are the same
+  # "resolve the config at perform time" guarantee.
+  test 'no-ops when the team has been deleted between enqueue and perform' do
+    missing_team_id = @team.id
+    @team.destroy
+
+    VektisEventJob.perform_now(missing_team_id, event)
 
     assert_not_requested :post, ENDPOINT
   end
@@ -134,7 +155,7 @@ class VektisEventJobTest < ActiveJob::TestCase
     stub_request(:post, ENDPOINT).to_return({ status: 500 }, { status: 202, body: { accepted: 1 }.to_json })
     payload = event
 
-    VektisEventJob.perform_now(payload)
+    VektisEventJob.perform_now(@team.id, payload)
     assert_equal payload['event_id'], retried_events.sole['event_id']
 
     perform_enqueued_jobs
@@ -145,7 +166,7 @@ class VektisEventJobTest < ActiveJob::TestCase
     stub_request(:post, ENDPOINT).to_return(status: 503)
     payload = event('timestamp' => 2.days.ago.utc.iso8601)
 
-    VektisEventJob.perform_now(payload)
+    VektisEventJob.perform_now(@team.id, payload)
 
     assert_equal payload['timestamp'], retried_events.sole['timestamp']
   end
@@ -156,14 +177,14 @@ class VektisEventJobTest < ActiveJob::TestCase
     stub_request(:post, ENDPOINT).to_return(status: 429, headers: { 'Retry-After' => '30' },
                                             body: { retryAfter: 30 }.to_json)
 
-    VektisEventJob.perform_now(event)
+    VektisEventJob.perform_now(@team.id, event)
 
     assert_in_delta 30, enqueued_jobs.sole[:at] - Time.current.to_f, 2
   end
 
   test 'backs off exponentially on a server error' do
     stub_request(:post, ENDPOINT).to_return(status: 500)
-    job = VektisEventJob.new(event)
+    job = VektisEventJob.new(@team.id, event)
     job.executions = 2 # third attempt: 5 * 2**2 = 20s, plus jitter
 
     job.perform_now
@@ -173,7 +194,7 @@ class VektisEventJobTest < ActiveJob::TestCase
 
   test 'stops retrying after MAX_ATTEMPTS' do
     stub_request(:post, ENDPOINT).to_return(status: 500)
-    job = VektisEventJob.new(event)
+    job = VektisEventJob.new(@team.id, event)
     job.executions = VektisEventJob::MAX_ATTEMPTS - 1
 
     logs = capture_logs { job.perform_now }
@@ -184,7 +205,7 @@ class VektisEventJobTest < ActiveJob::TestCase
 
   test 'still retries on the attempt before the ceiling' do
     stub_request(:post, ENDPOINT).to_return(status: 500)
-    job = VektisEventJob.new(event)
+    job = VektisEventJob.new(@team.id, event)
     job.executions = VektisEventJob::MAX_ATTEMPTS - 2
 
     job.perform_now
@@ -197,7 +218,7 @@ class VektisEventJobTest < ActiveJob::TestCase
   test 'does not retry a validation failure' do
     stub_request(:post, ENDPOINT).to_return(status: 400, body: { errors: [{ path: 'feature_id' }] }.to_json)
 
-    logs = capture_logs { VektisEventJob.perform_now(event) }
+    logs = capture_logs { VektisEventJob.perform_now(@team.id, event) }
 
     assert_match(/no retry/, logs)
     assert_no_enqueued_jobs
@@ -206,9 +227,9 @@ class VektisEventJobTest < ActiveJob::TestCase
   test 'reports a rejected server key as its own operational fault' do
     stub_request(:post, ENDPOINT).to_return(status: 401, body: { message: 'invalid key' }.to_json)
 
-    logs = capture_logs { VektisEventJob.perform_now(event) }
+    logs = capture_logs { VektisEventJob.perform_now(@team.id, event) }
 
-    assert_match(/rejected the server key/, logs)
+    assert_match(/rejected team #{@team.id}'s server key/, logs)
     assert_no_enqueued_jobs
     assert_no_match(/vk_dev_secret_never_log_me/, logs)
   end
@@ -226,7 +247,7 @@ class VektisEventJobTest < ActiveJob::TestCase
 
   test 'an unexpected ApiClient fault fails the job instead of retrying forever' do
     with_broken_client(ArgumentError.new('bad batch')) do
-      assert_raises(ArgumentError) { VektisEventJob.perform_now(event) }
+      assert_raises(ArgumentError) { VektisEventJob.perform_now(@team.id, event) }
     end
 
     assert_no_enqueued_jobs
@@ -234,7 +255,7 @@ class VektisEventJobTest < ActiveJob::TestCase
 
   test 'a retryable fault raised straight from the client is still retried' do
     with_broken_client(Vektis::ApiClient::RetryableError.new('ingest down')) do
-      VektisEventJob.perform_now(event)
+      VektisEventJob.perform_now(@team.id, event)
     end
 
     assert_equal 1, enqueued_jobs.size
@@ -243,7 +264,7 @@ class VektisEventJobTest < ActiveJob::TestCase
   # --- staleness -------------------------------------------------------------------------------
 
   test 'drops an event that aged past the ingest window instead of re-stamping it' do
-    logs = capture_logs { VektisEventJob.perform_now(event('timestamp' => 8.days.ago.utc.iso8601)) }
+    logs = capture_logs { VektisEventJob.perform_now(@team.id, event('timestamp' => 8.days.ago.utc.iso8601)) }
 
     assert_match(/older than/, logs)
     assert_not_requested :post, ENDPOINT
@@ -251,7 +272,7 @@ class VektisEventJobTest < ActiveJob::TestCase
   end
 
   test 'drops an unparseable timestamp' do
-    capture_logs { VektisEventJob.perform_now(event('timestamp' => 'yesterday')) }
+    capture_logs { VektisEventJob.perform_now(@team.id, event('timestamp' => 'yesterday')) }
 
     assert_not_requested :post, ENDPOINT
   end
@@ -261,7 +282,7 @@ class VektisEventJobTest < ActiveJob::TestCase
     fresh = event
     stale = event('timestamp' => 30.days.ago.utc.iso8601)
 
-    capture_logs { VektisEventJob.perform_now(stale, fresh) }
+    capture_logs { VektisEventJob.perform_now(@team.id, stale, fresh) }
 
     assert_equal [fresh['event_id']], sent_event_ids
   end

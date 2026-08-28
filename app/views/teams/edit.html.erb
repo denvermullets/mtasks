@@ -68,6 +68,25 @@
             <% end %>
           </div>
 
+          <!-- Product Analytics -->
+          <div class="flex items-center justify-between p-3 bg-background rounded border border-stroke">
+            <div class="flex items-center gap-3">
+              <div class="text-2xl">📈</div>
+              <div>
+                <h3 class="text-sm font-medium text-gray-200">Product Analytics</h3>
+                <p class="text-xs text-gray-400">Send this team's usage events to your own Vektis account</p>
+              </div>
+            </div>
+            <%= link_to team_settings_vektis_integration_path(@team),
+                class: "text-sm text-accent hover:text-accent/80" do %>
+              <% if @team.vektis_integration&.enabled? %>
+                Manage
+              <% else %>
+                Set Up
+              <% end %>
+            <% end %>
+          </div>
+
           <!-- Workspace GitHub Installation -->
           <div class="flex items-center justify-between p-3 bg-background rounded border border-stroke">
             <div class="flex items-center gap-3">

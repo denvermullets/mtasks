@@ -24,6 +24,13 @@ module VektisIssueTracking
 
   private
 
+  # The issue's own team, not the session's. They are normally identical — IssuesController scopes
+  # every @issue off current_team — but an event about an issue belongs to the tenant that owns the
+  # issue, and saying so here means a stale session cannot misfile one.
+  def tracked_team
+    @issue&.team || current_team
+  end
+
   def capture_tracked_label_ids
     @tracked_label_ids = @issue&.label_ids&.sort
   end

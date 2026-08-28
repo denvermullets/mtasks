@@ -7,9 +7,7 @@ module Webhooks
     skip_before_action :set_current_team
     before_action :verify_github_signature
 
-    # The pull_request actions mtasks acts on. Named rather than inline because
-    # GithubWebhookProcessorJob::PR_WEBHOOK_ACTIONS has to stay identical to it — that job turns the
-    # action into an analytics property and must not widen what this filter admits (VEK-587).
+    # The pull_request actions mtasks acts on.
     PROCESSABLE_ACTIONS = %w[opened edited synchronize closed reopened].freeze
 
     def create
@@ -32,13 +30,6 @@ module Webhooks
     end
 
     private
-
-    # GitHub's per-delivery guid, stable across every retry and every press of "Redeliver". Carried
-    # through to whoever finishes the work, because analytics emits on successful processing rather
-    # than on receipt — but the id has to come from the request, which is the only place it exists.
-    def delivery_id
-      request.headers['X-GitHub-Delivery']
-    end
 
     def handle_pull_request_event
       pr_data = webhook_payload['pull_request']
@@ -80,8 +71,7 @@ module Webhooks
       GhIntegration::ProcessInstallationEvent.call(
         installation_id: installation_id,
         action: action,
-        webhook_payload: webhook_payload,
-        delivery_id: delivery_id
+        webhook_payload: webhook_payload
       )
     end
 
@@ -105,8 +95,7 @@ module Webhooks
       GithubCommentProcessorJob.perform_later(
         subscription.id,
         issue['number'],
-        comment['body'],
-        delivery_id
+        comment['body']
       )
 
       repo_full_name = webhook_payload.dig('repository', 'full_name')
@@ -132,7 +121,7 @@ module Webhooks
       action = webhook_payload['action']
       subscriptions.each do |subscription|
         subscription.update(last_webhook_at: Time.current)
-        GithubWebhookProcessorJob.perform_later(subscription.id, pr_data.to_json, action, delivery_id)
+        GithubWebhookProcessorJob.perform_later(subscription.id, pr_data.to_json, action)
 
         Rails.logger.info(
           "Processing PR ##{pr_data['number']} for team #{subscription.team.identifier}"

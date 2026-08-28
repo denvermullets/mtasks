@@ -56,12 +56,15 @@ module Vektis
     CORPUS_PROPERTIES = { entity: 'issue', count: 1 }.freeze
 
     setup do
-      enable_vektis!
+      @user = User.create!(name: 'Contract', email: "contract_#{SecureRandom.hex(4)}@example.com",
+                           password: 'password')
+      @workspace = Workspace.create!(name: 'Contract WS', owner: @user)
+      @team = @workspace.teams.create!(name: 'Contract Team', identifier: 'CTR')
+      enable_vektis!(@team)
       clear_enqueued_jobs
     end
 
     teardown do
-      restore_vektis_env!
       Current.user = nil
     end
 
@@ -146,7 +149,7 @@ module Vektis
 
     test 'every catalogued (feature_id, action) pair emits a schema-conformant payload' do
       Taxonomy::CATALOG.each do |feature_id, actions|
-        actions.each { |action| EventEmitter.feature(feature_id, action, properties: CORPUS_PROPERTIES) }
+        actions.each { |action| EventEmitter.feature(feature_id, action, team: @team, properties: CORPUS_PROPERTIES) }
       end
 
       # Guards the loop itself: a new catalog entry that fails to emit would otherwise pass silently.
@@ -156,7 +159,7 @@ module Vektis
 
     test 'the corpus covers the whole catalog, pair for pair' do
       Taxonomy::CATALOG.each do |feature_id, actions|
-        actions.each { |action| EventEmitter.feature(feature_id, action, properties: CORPUS_PROPERTIES) }
+        actions.each { |action| EventEmitter.feature(feature_id, action, team: @team, properties: CORPUS_PROPERTIES) }
       end
 
       expected = Taxonomy::CATALOG.flat_map { |feature_id, actions| actions.map { |a| [feature_id, a] } }
@@ -166,14 +169,15 @@ module Vektis
     # VEK-585 keys integration events with a deterministic UUIDv5 so vanalytics dedupes redeliveries.
     # A v5 id is still a UUID as far as z.string().uuid() is concerned, but nothing else asserts it.
     test 'a deterministic integration event_id still satisfies the schema' do
-      EventEmitter.integration('github-integration', 'sync', provider: 'github', via: 'webhook',
-                                                             key: %w[delivery-1 subscription-2],
-                                                             properties: { webhook_event: 'pull_request.opened' })
+      EventEmitter.integration('hourglass-integration', 'sync', team: @team,
+                                                                provider: 'hourglass', via: 'webhook',
+                                                                key: %w[delivery-1 subscription-2],
+                                                                properties: { webhook_event: 'message.pinned' })
 
       event = emitted.sole
       assert_match UUID, event['event_id']
       assert_equal Digest::UUID.uuid_v5(Taxonomy::EVENT_ID_NAMESPACE,
-                                        'github:delivery-1:subscription-2:github-integration:sync'),
+                                        'hourglass:delivery-1:subscription-2:hourglass-integration:sync'),
                    event['event_id']
       assert_schema_conformant(event)
     end
@@ -181,7 +185,7 @@ module Vektis
     test 'user_id is a bounded string when there is an actor' do
       Current.user = users(:one)
 
-      EventEmitter.feature('issue-create', 'create')
+      EventEmitter.feature('issue-create', 'create', team: @team)
 
       event = emitted.sole
       assert_equal users(:one).id.to_s, event['user_id']
@@ -190,7 +194,8 @@ module Vektis
 
     # The webhook and job paths have no Current.user. The key must be absent, not present-and-null.
     test 'user_id is absent rather than null when there is no actor' do
-      EventEmitter.feature('github-integration', 'sync', properties: { provider: 'github', via: 'webhook' })
+      EventEmitter.feature('hourglass-integration', 'sync', team: @team,
+                                                            properties: { provider: 'hourglass', via: 'webhook' })
 
       event = emitted.sole
       assert_not event.key?('user_id')

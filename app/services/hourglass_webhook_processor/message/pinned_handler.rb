@@ -49,7 +49,7 @@ module HourglassWebhookProcessor
       # The decision's *id* — never its body_snapshot, which is the pinned message verbatim and the
       # single largest PII risk on this surface (§6).
       def track_decision_recorded(decision)
-        track_integration('decision', 'create', decision.id, entity: 'project')
+        track_integration('decision', 'create', decision.id, entity: 'project', team: decision.team)
       end
 
       def create_decision(cache, link, pinned_at, resolved_user)

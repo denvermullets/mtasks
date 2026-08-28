@@ -9,24 +9,18 @@ class VektisIntegrationTrackingTest < ActionDispatch::IntegrationTest
   include VektisEventTestHelper
 
   setup do
-    enable_vektis!
     @user = User.create!(name: 'Web Int', email: "web_int_#{SecureRandom.hex(4)}@example.com",
                          password: 'password')
     @workspace = Workspace.create!(name: 'Web WS', owner: @user)
     @team = @workspace.teams.create!(name: 'Web Team', identifier: 'WEB')
     @team.team_memberships.create!(user: @user)
+    enable_vektis!(@team)
     @lane = @team.lanes.create!(name: 'Backlog', position: 0)
     @project = @team.projects.create!(name: 'Web Project')
     @issue = @team.issues.create!(title: 'Web issue', lane: @lane, creator: @user)
 
     sign_in_as(@user)
     clear_enqueued_jobs
-  end
-
-  teardown { restore_vektis_env! }
-
-  def github_installation
-    GithubInstallation.create!(installation_id: "inst_#{SecureRandom.hex(4)}", workspace: @workspace)
   end
 
   def hourglass_integration
@@ -43,58 +37,6 @@ class VektisIntegrationTrackingTest < ActionDispatch::IntegrationTest
     assert_equal provider, event['properties']['provider']
     assert_equal @user.id.to_s, event['user_id'], 'a web action has a user; a webhook does not'
     assert_taxonomy_conformant(event)
-  end
-
-  # --- GitHub -----------------------------------------------------------------------------------
-
-  test 'subscribing a team to a repository emits github-integration/link' do
-    github_installation
-    subscribe = ->(*) { true }
-
-    with_stubbed_class_method(GhIntegration::SubscribeTeamToRepository, :call, subscribe) do
-      post team_github_repositories_path(@team), params: { repo_full_name: 'acme/secret-repo' }
-    end
-
-    assert_web_origin('github-integration', 'link', 'github')
-    assert_no_user_content 'acme/secret-repo'
-  end
-
-  test 'removing a repository subscription emits github-integration/unlink' do
-    subscription = GithubRepositorySubscription.create!(
-      team: @team, github_installation: github_installation, github_repo_full_name: 'acme/secret-repo'
-    )
-
-    delete team_github_repository_path(@team, subscription)
-
-    assert_web_origin('github-integration', 'unlink', 'github')
-  end
-
-  test 'connecting a GitHub installation emits github-integration/link' do
-    workspace = @workspace
-
-    with_stubbed_class_method(GhInstallation::ProcessCallback, :call, ->(*) { workspace }) do
-      get github_callback_path, params: { installation_id: '123', state: 'x' }
-    end
-
-    assert_web_origin('github-integration', 'link', 'github')
-  end
-
-  test 'disconnecting a GitHub installation emits github-integration/unlink' do
-    github_installation
-
-    delete workspace_github_installation_path(@workspace)
-
-    assert_web_origin('github-integration', 'unlink', 'github')
-  end
-
-  test 'a failed GitHub callback emits nothing' do
-    error = GhInstallation::ProcessCallback::InvalidStateError
-
-    with_stubbed_class_method(GhInstallation::ProcessCallback, :call, ->(*) { raise error }) do
-      get github_callback_path, params: { installation_id: '123', state: 'bad' }
-    end
-
-    assert_empty emitted
   end
 
   # --- Hourglass --------------------------------------------------------------------------------
@@ -147,11 +89,16 @@ class VektisIntegrationTrackingTest < ActionDispatch::IntegrationTest
     assert_empty emitted, 'a validation failure is not integration usage'
   end
 
-  test 'disconnecting Hourglass emits hourglass-integration/unlink' do
+  # The Hourglass settings screen is workspace-scoped: its route carries workspace_id, so
+  # current_team is only whatever the session last held, and HourglassIntegration has no team_id to
+  # fall back on. A workspace owner who belongs to no team has no current_team at all. There is no
+  # honest tenant to bill a connect or disconnect to, so nothing is emitted — see
+  # Settings::HourglassIntegrationsController#tracked_team.
+  test 'connecting or disconnecting Hourglass emits nothing, having no single team' do
     hourglass_integration
 
     delete workspace_settings_hourglass_integration_path(@workspace)
 
-    assert_web_origin('hourglass-integration', 'unlink', 'hourglass')
+    assert_empty emitted
   end
 end

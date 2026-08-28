@@ -22,18 +22,34 @@ module VektisTracking
   # not `via`, which the browser uses for input modality (web vs keyboard) and the server cannot
   # observe: the board `s` shortcut and a mouse click produce byte-identical PATCHes.
   #
+  # The team is the VEKTIS tenant, and this is the seam that supplies it — which is why almost no
+  # call site passes one. `current_team` is set for every authenticated request by TeamScoped and
+  # is the right team on every team-scoped route; a controller where it is not overrides
+  # `tracked_team`, and a single call site with a better answer passes `team:` directly.
+  #
+  # `team:` is a named parameter rather than a property so it can never be mistaken for one: the
+  # closed registry would silently strip an unregistered `team` key and the event would go out
+  # attributed to the wrong tenant.
+  #
   # Returns nil so it can never be spliced into control flow.
-  def track_feature(feature_id, action, **properties)
-    Vektis::EventEmitter.feature(feature_id, action, properties: properties.compact)
+  def track_feature(feature_id, action, team: tracked_team, **properties)
+    Vektis::EventEmitter.feature(feature_id, action, team: team, properties: properties.compact)
     nil
   end
 
+  # The tenant every event from this controller is attributed to. Nil means "emit nothing", which
+  # the emitter handles — a workspace-scoped controller has no single team and guessing one would
+  # file another tenant's activity under it.
+  def tracked_team
+    current_team
+  end
+
   # Integration features (VEK-585) are the one place a server event carries `via`. The rest of the
-  # catalog omits it because the server cannot see input modality — but `github-integration`/`link`
-  # genuinely arrives from a web form, a webhook and a job, and the server can tell those apart
-  # exactly. "Absence means web" would be a worse contract than saying so.
-  def track_integration(feature_id, action, provider:, **properties)
-    track_feature(feature_id, action, provider: provider, via: 'web', **properties)
+  # catalog omits it because the server cannot see input modality — but `hourglass-integration`/
+  # `link` genuinely arrives from a web form, a webhook and a job, and the server can tell those
+  # apart exactly. "Absence means web" would be a worse contract than saying so.
+  def track_integration(feature_id, action, provider:, team: tracked_team, **properties)
+    track_feature(feature_id, action, team: team, provider: provider, via: 'web', **properties)
   end
 
   # Shared with the job paths VEK-585 instruments, which describe the same issues with no request

@@ -6,26 +6,33 @@ module Vektis
     ENDPOINT = 'http://vektis.test/api/v1/events'.freeze
     SERVER_KEY = 'vk_dev_secret_never_log_me'.freeze
     PUBLISHABLE_KEY = 'vk_pub_browser_safe_wrong_key'.freeze
-    VEKTIS_VARS = %w[VEKTIS_ENABLED VEKTIS_ENDPOINT VEKTIS_SERVER_KEY VEKTIS_PUBLISHABLE_KEY].freeze
+    # ApiClient's whole contract is "takes a resolved config and puts events on the wire", so a
+    # config double is both sufficient and honest here — Vektis.for and the record behind it are
+    # VektisTest's subject, not this file's.
+    StubConfig = Struct.new(:enabled, :endpoint, :server_key, keyword_init: true) do
+      def enabled?
+        enabled
+      end
+    end
 
     setup do
       WebMock.disable_net_connect!
-      # Analytics is disabled by default, so every network case has to opt in explicitly.
-      @original_env = VEKTIS_VARS.index_with { |key| ENV.fetch(key, nil) }
-      ENV['VEKTIS_ENABLED'] = 'true'
-      ENV['VEKTIS_ENDPOINT'] = ENDPOINT
-      ENV['VEKTIS_SERVER_KEY'] = SERVER_KEY
-      # Set to something distinguishable so a swapped key is a failure rather than a coincidence.
-      ENV['VEKTIS_PUBLISHABLE_KEY'] = PUBLISHABLE_KEY
     end
 
     teardown do
-      @original_env.each { |key, value| ENV[key] = value }
       WebMock.reset!
       WebMock.allow_net_connect!
     end
 
     # --- helpers ---------------------------------------------------------------------------
+
+    def config(enabled: true, endpoint: ENDPOINT, server_key: SERVER_KEY)
+      StubConfig.new(enabled: enabled, endpoint: endpoint, server_key: server_key)
+    end
+
+    def client(**overrides)
+      ApiClient.new(config(**overrides))
+    end
 
     def event(overrides = {})
       {
@@ -57,9 +64,7 @@ module Vektis
     # --- gating ----------------------------------------------------------------------------
 
     test 'no-ops without touching the network when analytics is disabled' do
-      ENV['VEKTIS_ENABLED'] = 'false'
-
-      result = ApiClient.new.post_events([event])
+      result = client(enabled: false).post_events([event])
 
       assert result.ok?
       assert_equal :disabled, result.reason
@@ -68,7 +73,7 @@ module Vektis
     end
 
     test 'no-ops on an empty batch' do
-      result = ApiClient.new.post_events([])
+      result = client.post_events([])
 
       assert result.ok?
       assert_equal :empty, result.reason
@@ -80,7 +85,7 @@ module Vektis
     test 'posts the mandatory events wrapper with the documented headers' do
       stub_accepted
 
-      result = ApiClient.new.post_events([event])
+      result = client.post_events([event])
 
       assert result.ok?
       assert_equal :accepted, result.reason
@@ -103,7 +108,7 @@ module Vektis
     test 'accepted reflects the server count, not the events sent' do
       stub_request(:post, ENDPOINT).to_return(status: 202, body: '{"accepted":0}')
 
-      result = ApiClient.new.post_events([event])
+      result = client.post_events([event])
 
       assert result.ok?
       assert_equal 0, result.accepted
@@ -118,7 +123,7 @@ module Vektis
       stub_request(:post, ENDPOINT).to_return(status: 400, body: body)
 
       result = nil
-      logs = capture_logs { result = ApiClient.new.post_events([event]) }
+      logs = capture_logs { result = client.post_events([event]) }
 
       assert_not result.ok?
       assert_equal :validation_failed, result.reason
@@ -131,7 +136,7 @@ module Vektis
       stub_request(:post, ENDPOINT).to_return(status: 401, body: '{"statusCode":401}')
 
       result = nil
-      capture_logs { result = ApiClient.new.post_events(Array.new(250) { event }) }
+      capture_logs { result = client.post_events(Array.new(250) { event }) }
 
       assert_not result.ok?
       assert_equal :unauthorized, result.reason
@@ -144,7 +149,7 @@ module Vektis
       stub_request(:post, ENDPOINT).to_return(status: 413, body: '{"statusCode":413}')
 
       result = nil
-      capture_logs { result = ApiClient.new.post_events([event]) }
+      capture_logs { result = client.post_events([event]) }
 
       assert_not result.ok?
       assert_equal :payload_too_large, result.reason
@@ -154,7 +159,7 @@ module Vektis
       stub_request(:post, ENDPOINT).to_return(status: 415, body: '{"statusCode":415}')
 
       result = nil
-      capture_logs { result = ApiClient.new.post_events([event]) }
+      capture_logs { result = client.post_events([event]) }
 
       assert_not result.ok?
       assert_equal :unsupported_media_type, result.reason
@@ -164,7 +169,7 @@ module Vektis
       stub_request(:post, ENDPOINT).to_return(status: 404, body: 'not found')
 
       result = nil
-      capture_logs { result = ApiClient.new.post_events([event]) }
+      capture_logs { result = client.post_events([event]) }
 
       assert_not result.ok?
       assert_equal :unexpected, result.reason
@@ -176,7 +181,7 @@ module Vektis
       stub_request(:post, ENDPOINT)
         .to_return(status: 429, headers: { 'Retry-After' => '12' }, body: '{"retryAfter":30}')
 
-      error = assert_raises(ApiClient::RetryableError) { ApiClient.new.post_events([event]) }
+      error = assert_raises(ApiClient::RetryableError) { client.post_events([event]) }
 
       assert_equal 12, error.retry_after
     end
@@ -184,7 +189,7 @@ module Vektis
     test '429 falls back to the body retryAfter, which is all vanalytics actually sends' do
       stub_request(:post, ENDPOINT).to_return(status: 429, body: '{"retryAfter":30}')
 
-      error = assert_raises(ApiClient::RetryableError) { ApiClient.new.post_events([event]) }
+      error = assert_raises(ApiClient::RetryableError) { client.post_events([event]) }
 
       assert_equal 30, error.retry_after
     end
@@ -192,7 +197,7 @@ module Vektis
     test '429 caps retry_after at 60 seconds' do
       stub_request(:post, ENDPOINT).to_return(status: 429, body: '{"retryAfter":9999}')
 
-      error = assert_raises(ApiClient::RetryableError) { ApiClient.new.post_events([event]) }
+      error = assert_raises(ApiClient::RetryableError) { client.post_events([event]) }
 
       assert_equal 60, error.retry_after
     end
@@ -200,7 +205,7 @@ module Vektis
     test '429 with no hint at all defaults to 60 seconds' do
       stub_request(:post, ENDPOINT).to_return(status: 429, body: '')
 
-      error = assert_raises(ApiClient::RetryableError) { ApiClient.new.post_events([event]) }
+      error = assert_raises(ApiClient::RetryableError) { client.post_events([event]) }
 
       assert_equal 60, error.retry_after
     end
@@ -208,7 +213,7 @@ module Vektis
     test '5xx raises RetryableError' do
       stub_request(:post, ENDPOINT).to_return(status: 503, body: '{"statusCode":503}')
 
-      error = assert_raises(ApiClient::RetryableError) { ApiClient.new.post_events([event]) }
+      error = assert_raises(ApiClient::RetryableError) { client.post_events([event]) }
 
       assert_nil error.retry_after
     end
@@ -216,13 +221,13 @@ module Vektis
     test 'a refused connection raises RetryableError' do
       stub_request(:post, ENDPOINT).to_raise(Errno::ECONNREFUSED)
 
-      assert_raises(ApiClient::RetryableError) { ApiClient.new.post_events([event]) }
+      assert_raises(ApiClient::RetryableError) { client.post_events([event]) }
     end
 
     test 'a read timeout raises RetryableError' do
       stub_request(:post, ENDPOINT).to_timeout
 
-      assert_raises(ApiClient::RetryableError) { ApiClient.new.post_events([event]) }
+      assert_raises(ApiClient::RetryableError) { client.post_events([event]) }
     end
 
     # --- batching --------------------------------------------------------------------------
@@ -230,7 +235,7 @@ module Vektis
     test 'splits past the 100-event schema cap and aggregates the accepted counts' do
       stub_accepted
 
-      result = ApiClient.new.post_events(Array.new(250) { event })
+      result = client.post_events(Array.new(250) { event })
 
       assert result.ok?
       assert_equal 250, result.accepted
@@ -243,7 +248,7 @@ module Vektis
       stub_accepted
       fat = event(properties: { source: 'server', blob: 'x' * 100_000 })
 
-      result = ApiClient.new.post_events(Array.new(10) { fat })
+      result = client.post_events(Array.new(10) { fat })
 
       assert result.ok?
       assert_equal 10, result.sent
@@ -256,7 +261,7 @@ module Vektis
       oversized = event(properties: { source: 'server', blob: 'x' * 500_000 })
 
       result = nil
-      logs = capture_logs { result = ApiClient.new.post_events([oversized, event]) }
+      logs = capture_logs { result = client.post_events([oversized, event]) }
 
       assert_not result.ok?
       assert_equal :event_too_large, result.reason
@@ -276,7 +281,7 @@ module Vektis
     test 'authenticates with the server key and never leaks the publishable one' do
       stub_accepted
 
-      ApiClient.new.post_events([event])
+      client.post_events([event])
 
       assert_requested(:post, ENDPOINT) do |req|
         req.headers['X-Vektis-Key'] == SERVER_KEY &&
@@ -289,7 +294,7 @@ module Vektis
     test 'sends the key in the header only, never in the body or the query string' do
       stub_accepted
 
-      ApiClient.new.post_events([event])
+      client.post_events([event])
 
       assert_requested(:post, ENDPOINT) do |req|
         !JSON.parse(req.body).key?('key') && req.uri.query.nil?
@@ -301,7 +306,7 @@ module Vektis
     test 'sends application/json on every request in a split batch' do
       stub_accepted
 
-      ApiClient.new.post_events(Array.new(250) { event })
+      client.post_events(Array.new(250) { event })
 
       assert_requested(:post, ENDPOINT, times: 3) do |req|
         req.headers['Content-Type'] == 'application/json' && req.headers['X-Vektis-Key'] == SERVER_KEY
@@ -312,7 +317,7 @@ module Vektis
       stub_request(:post, ENDPOINT)
         .to_return(status: 400, body: { statusCode: 400, message: 'Validation failed' }.to_json)
 
-      logs = capture_logs { ApiClient.new.post_events([event]) }
+      logs = capture_logs { client.post_events([event]) }
 
       assert_not_equal '', logs
       assert_not_includes logs, SERVER_KEY

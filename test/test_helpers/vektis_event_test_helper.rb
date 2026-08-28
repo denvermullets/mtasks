@@ -4,18 +4,30 @@
 # builds and validates the event, then hands VektisEventJob the finished hash, so what is queued
 # is literally what would be sent. Nothing here starts an HTTP request.
 module VektisEventTestHelper
-  VEKTIS_ENV_VARS = %w[VEKTIS_ENABLED VEKTIS_CUSTOMER_ID].freeze
+  VEKTIS_TEST_CUSTOMER_ID = 'mtasks-test'.freeze
 
-  # Analytics is off by default and a developer's .env may switch it on, so tests that care set
-  # the flag explicitly rather than inheriting whichever way the machine is configured.
-  def enable_vektis!
-    @original_vektis_env = VEKTIS_ENV_VARS.index_with { |key| ENV.fetch(key, nil) }
-    ENV['VEKTIS_ENABLED'] = 'true'
-    ENV['VEKTIS_CUSTOMER_ID'] = 'mtasks-test'
+  # Analytics is per-team now, so "enabled" means a connected TeamVektisIntegration rather than an
+  # ENV flag. Tests that assert on emission call this for the team they act as.
+  def enable_vektis!(team, customer_id: VEKTIS_TEST_CUSTOMER_ID)
+    TeamVektisIntegration.find_or_initialize_by(team: team).tap do |integration|
+      integration.update!(
+        enabled: true,
+        publishable_key: 'vk_pub_test',
+        server_key: 'vk_test_server',
+        customer_id: customer_id
+      )
+    end
   end
 
-  def restore_vektis_env!
-    @original_vektis_env&.each { |key, value| ENV[key] = value }
+  def disable_vektis!(team)
+    TeamVektisIntegration.find_by(team: team)&.update!(enabled: false)
+  end
+
+  # The team_id VektisEventJob was enqueued with, which is the tenant the batch would be delivered
+  # under. Separate from the event body, where the tenant appears as customer_id.
+  def emitted_team_ids
+    enqueued_jobs.select { |job| job[:job] == VektisEventJob }
+                 .map { |job| ActiveJob::Arguments.deserialize(job[:args]).first }
   end
 
   # minitest 6 dropped minitest/mock and this app carries no mocking gem, so fault injection is
@@ -28,9 +40,10 @@ module VektisEventTestHelper
     klass.singleton_class.send(:remove_method, name)
   end
 
+  # VektisEventJob takes (team_id, *events), so the event bodies start at index 1.
   def emitted
     enqueued_jobs.select { |job| job[:job] == VektisEventJob }
-                 .map { |job| ActiveJob::Arguments.deserialize(job[:args]).first }
+                 .flat_map { |job| ActiveJob::Arguments.deserialize(job[:args]).drop(1) }
   end
 
   def pairs

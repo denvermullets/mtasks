@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_06_120300) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_28_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -467,6 +467,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_06_120300) do
     t.index ["user_id"], name: "index_team_memberships_on_user_id"
   end
 
+  create_table "team_vektis_integrations", force: :cascade do |t|
+    t.datetime "connected_at"
+    t.bigint "connected_by_user_id"
+    t.datetime "created_at", null: false
+    t.string "customer_id"
+    t.boolean "enabled", default: false, null: false
+    t.string "publishable_key"
+    t.string "server_key"
+    t.bigint "team_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["connected_by_user_id"], name: "index_team_vektis_integrations_on_connected_by_user_id"
+    t.index ["team_id"], name: "index_team_vektis_integrations_on_team_id", unique: true
+  end
+
   create_table "teams", force: :cascade do |t|
     t.datetime "archived_at"
     t.datetime "created_at", null: false
@@ -606,6 +620,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_06_120300) do
   add_foreign_key "team_invitations", "users", column: "invited_by_id"
   add_foreign_key "team_memberships", "teams"
   add_foreign_key "team_memberships", "users"
+  add_foreign_key "team_vektis_integrations", "teams"
+  add_foreign_key "team_vektis_integrations", "users", column: "connected_by_user_id"
   add_foreign_key "teams", "users", column: "owner_id"
   add_foreign_key "teams", "workspaces"
   add_foreign_key "user_preferences", "teams"

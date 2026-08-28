@@ -18,8 +18,9 @@ class NotificationsController < ApplicationController
     @notification = Current.user.notifications.find(params[:id])
     @notification.mark_as_read!
     # mark_as_read! no-ops when the notification was already read, so this counts gestures that
-    # actually changed something.
-    track_feature('notification', 'read') if @notification.saved_change_to_read_at?
+    # actually changed something. Attributed to the notification's own issue team rather than
+    # current_team: the drawer is reachable from any page, including one for another team.
+    track_feature('notification', 'read', team: @notification.issue.team) if @notification.saved_change_to_read_at?
 
     respond_to do |format|
       format.turbo_stream do
@@ -41,6 +42,9 @@ class NotificationsController < ApplicationController
 
   def mark_all_as_read
     marked = Current.user.notifications.unread.update_all(read_at: Time.current)
+    # Deliberately one event with a count, and deliberately attributed to current_team: this
+    # clears notifications across every team the user belongs to, so no single team owns it. The
+    # honest reading is "the team the user was looking at when they cleared the lot".
     track_feature('notification', 'read_all', count: marked) if marked.positive?
 
     respond_to do |format|

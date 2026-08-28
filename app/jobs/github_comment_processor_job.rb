@@ -3,8 +3,7 @@ class GithubCommentProcessorJob < ApplicationJob
 
   retry_on StandardError, wait: :exponentially_longer, attempts: 3
 
-  def perform(subscription_id, pr_number, comment_body, delivery_id = nil)
-    @delivery_id = delivery_id
+  def perform(subscription_id, pr_number, comment_body)
     subscription = GithubRepositorySubscription.find_by(id: subscription_id)
 
     unless subscription
@@ -15,27 +14,10 @@ class GithubCommentProcessorJob < ApplicationJob
     pull_request = find_or_fetch_pull_request(subscription, pr_number)
     return unless pull_request
 
-    sync_service(subscription).link_issues_from_text(pull_request, comment_body)
-    track_sync(subscription)
+    GithubPrSyncService.new(subscription).link_issues_from_text(pull_request, comment_body)
   end
 
   private
-
-  # A comment that references an issue is how most links actually get made, so a processed
-  # issue_comment delivery is integration usage in its own right — separately from the
-  # github-integration/link the sync service emits when the comment attaches something new.
-  def track_sync(subscription)
-    Vektis::EventEmitter.integration(
-      'github-integration', 'sync',
-      provider: 'github', via: 'webhook',
-      key: [@delivery_id, subscription.id],
-      properties: { webhook_event: 'issue_comment.created' }
-    )
-  end
-
-  def sync_service(subscription)
-    GithubPrSyncService.new(subscription, delivery_id: @delivery_id)
-  end
 
   def find_or_fetch_pull_request(subscription, pr_number)
     pull_request = subscription.pull_requests.find_by(pr_number: pr_number)
@@ -50,8 +32,9 @@ class GithubCommentProcessorJob < ApplicationJob
     client = Octokit::Client.new(access_token: subscription.access_token)
     pr_data = client.pull_request(subscription.github_repo_full_name, pr_number)
 
+    sync_service = GithubPrSyncService.new(subscription)
     # Octokit hands back symbol keys; the sync service reads string keys.
-    sync_service(subscription).sync_pull_request(pr_data.to_h.deep_stringify_keys)
+    sync_service.sync_pull_request(pr_data.to_h.deep_stringify_keys)
   rescue StandardError => e
     Rails.logger.error("Failed to fetch PR ##{pr_number}: #{e.message}")
     nil

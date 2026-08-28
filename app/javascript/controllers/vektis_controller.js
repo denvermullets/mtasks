@@ -1,5 +1,5 @@
 import { Controller } from "@hotwired/stimulus";
-import { getStatus, identify, init, track } from "@vektis-io/tracker";
+import { getStatus, identify, init, reset, track } from "@vektis-io/tracker";
 
 // Bootstraps the VEKTIS browser SDK. init() then identify(), in that order, before any
 // track() call site can emit — a track() with no identity is silently dropped by the SDK
@@ -18,29 +18,42 @@ import { getStatus, identify, init, track } from "@vektis-io/tracker";
 // against getStatus() on every connect is what keeps user B's events off user A, and it also
 // self-heals after session expiry and full page loads (VEK-580).
 //
+// Switching TEAMS is the one case that does need a reset(). Each team is its own VEKTIS tenant
+// with its own API key, and the key is fixed at init() — getStatus() reports the identity but not
+// the key, so the SDK cannot be asked which one it holds. We remember it here and, when the page
+// renders a different one, tear the SDK down and init() it again. Without that, every event after
+// a team switch would be delivered under the previous team's key and land in the wrong account.
+//
 // Ordering caveat for future call sites: pre-init() track() calls are buffered and replayed by
 // init(), but replay happens before the identify() below, so a sibling controller tracking from
 // its own connect() would have that first event dropped. Track from interaction handlers.
 
 // session.active is billable and controllers reconnect constantly here, so it fires once per
-// user per tab. Keyed by user id so a second user signing in to the same tab still gets one.
+// identity per tab. Keyed by customer id AND user id: a second user signing in to the same tab
+// still gets one, and so does the same user after switching to a team that is a different VEKTIS
+// tenant — that tenant has seen no session at all yet.
 const SESSION_ACTIVE_KEY = "vektis:session-active";
+
+// The API key the SDK singleton was last init()ed with, so a team switch can be detected. Module
+// scope, not instance state: Turbo replaces <body> on every visit, so the controller instance is
+// new each time while the SDK module singleton survives.
+let initializedKey = null;
 
 // Fallback for privacy modes where sessionStorage throws on access.
 let sessionActiveFallback = null;
 
-function sessionActiveSent(userId) {
+function sessionActiveSent(identity) {
   try {
-    return window.sessionStorage.getItem(`${SESSION_ACTIVE_KEY}:${userId}`) === "1";
+    return window.sessionStorage.getItem(`${SESSION_ACTIVE_KEY}:${identity}`) === "1";
   } catch {
-    return sessionActiveFallback === userId;
+    return sessionActiveFallback === identity;
   }
 }
 
-function markSessionActiveSent(userId) {
-  sessionActiveFallback = userId;
+function markSessionActiveSent(identity) {
+  sessionActiveFallback = identity;
   try {
-    window.sessionStorage.setItem(`${SESSION_ACTIVE_KEY}:${userId}`, "1");
+    window.sessionStorage.setItem(`${SESSION_ACTIVE_KEY}:${identity}`, "1");
   } catch {
     // Nothing to do: sessionActiveFallback already covers this tab's lifetime.
   }
@@ -56,13 +69,27 @@ export default class extends Controller {
   };
 
   connect() {
-    if (!this.keyValue) return;
-
     try {
       // The SDK is an ES module with no global, so expose a console seam in development.
       if (this.debugValue) window.vektisDebug = { getStatus, identify, track };
 
-      // One snapshot, taken before init(), drives both decisions below.
+      // No key means this team has not connected VEKTIS. That is not simply "do nothing": the SDK
+      // singleton survives Turbo navigation, so an identity left over from a team that IS
+      // connected would still be READY here, and every sibling controller's track() would file
+      // this team's activity under the previous team's account. Tear it down.
+      if (!this.keyValue) {
+        this.teardown();
+        return;
+      }
+
+      // A different team's key means the SDK is pointed at the wrong tenant. reset() returns it
+      // to UNINITIALIZED so the init() below re-runs; identityChanged() is then true against the
+      // cleared status, so identify() re-runs too.
+      if (initializedKey !== null && initializedKey !== this.keyValue) {
+        this.teardown();
+      }
+
+      // One snapshot, taken after any reset above, drives both decisions below.
       const status = getStatus();
 
       if (status.state === "DISABLED") {
@@ -78,6 +105,7 @@ export default class extends Controller {
           endpoint: this.endpointValue || undefined,
           debug: this.debugValue,
         });
+        initializedKey = this.keyValue;
       }
 
       if (this.identityChanged(status)) {
@@ -93,6 +121,15 @@ export default class extends Controller {
     }
   }
 
+  // reset() is the only way back to UNINITIALIZED, which is what makes ready() false in
+  // vektis.js and stops sibling call sites emitting. Safe to call when already uninitialized.
+  teardown() {
+    if (initializedKey === null && getStatus().state === "UNINITIALIZED") return;
+
+    reset();
+    initializedKey = null;
+  }
+
   identityChanged(status) {
     return (
       status.identityCustomerId !== this.customerIdValue ||
@@ -101,11 +138,12 @@ export default class extends Controller {
   }
 
   trackSessionActive() {
-    if (sessionActiveSent(this.userIdValue)) return;
+    const identity = `${this.customerIdValue}:${this.userIdValue}`;
+    if (sessionActiveSent(identity)) return;
 
     // This type takes neither a feature_id nor an action.
     track("session.active", { properties: { source: "browser" } });
-    markSessionActiveSent(this.userIdValue);
+    markSessionActiveSent(identity);
   }
 
   // Terminal state, entered on a 401 from the ingest endpoint: identify() and track() are
@@ -116,7 +154,7 @@ export default class extends Controller {
 
     console.error(
       "[Vektis] SDK is DISABLED — the ingest endpoint rejected the API key. " +
-        "Check VEKTIS_PUBLISHABLE_KEY and VEKTIS_ENDPOINT, then reload."
+        "Check the team's publishable key in team settings > Analytics, then reload."
     );
   }
 

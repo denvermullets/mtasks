@@ -69,6 +69,15 @@ class Settings::HourglassIntegrationsController < ApplicationController
     redirect_to root_path, alert: 'Access denied'
   end
 
+  # This controller is workspace-scoped: the route carries workspace_id, so TeamScoped's
+  # current_team is whatever the session last held — possibly a team in a different workspace, and
+  # nil for a workspace owner who belongs to no team. HourglassIntegration has no team_id either,
+  # so there is no honest tenant to bill these events to. Emit nothing rather than attribute one
+  # team's connect to another team's VEKTIS account.
+  def tracked_team
+    nil
+  end
+
   def user_has_workspace_access?
     current_user == @workspace.owner ||
       @workspace.teams.joins(:users).where(users: { id: current_user.id }).exists?

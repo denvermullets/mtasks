@@ -11,12 +11,11 @@ class VektisTrackingTest < ActionDispatch::IntegrationTest
   include VektisEventTestHelper
 
   setup do
-    enable_vektis!
-
     @user = User.create!(name: 'Tracking User', email: 'vektis_tracking@example.com', password: 'password')
     @workspace = Workspace.create!(name: 'Tracking Workspace', owner: @user)
     @team = @workspace.teams.create!(name: 'Tracking Team', identifier: 'TRK')
     @team.team_memberships.create!(user: @user)
+    enable_vektis!(@team)
 
     @backlog = @team.lanes.create!(name: 'Backlog', position: 0)
     @done = @team.lanes.create!(name: 'Done', position: 1)
@@ -26,10 +25,6 @@ class VektisTrackingTest < ActionDispatch::IntegrationTest
 
     sign_in_as(@user)
     clear_enqueued_jobs
-  end
-
-  teardown do
-    restore_vektis_env!
   end
 
   # --- issue lifecycle -------------------------------------------------------------------------
