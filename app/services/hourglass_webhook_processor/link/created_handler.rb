@@ -26,11 +26,12 @@ module HourglassWebhookProcessor
         return unless valid_issue_thread?(issue, thread_id)
         return if HourglassLink.for_issue(issue).where(hourglass_thread_id: thread_id).exists?
 
-        HourglassLinks::CreateThreadService.call(
+        result = HourglassLinks::CreateThreadService.call(
           issue: issue, hourglass_thread_id: thread_id,
           integration: integration, current_user: actor_user(issue.team),
           notify_outbound: false
         )
+        track_link(result, 'issue')
       end
 
       def valid_issue_thread?(issue, thread_id)
@@ -46,12 +47,23 @@ module HourglassWebhookProcessor
         return unless valid_project_channel?(project, channel_id)
         return if HourglassLink.for_project(project).where(hourglass_channel_id: channel_id).exists?
 
-        HourglassLinks::CreateService.call(
+        result = HourglassLinks::CreateService.call(
           project: project, channel_id: channel_id,
           channel_name: data['hourglass_channel_name'].to_s,
           integration: integration, current_user: actor_user(project.team),
           notify_outbound: false
         )
+        track_link(result, 'project')
+      end
+
+      # Emitted here rather than inside the link services, which the web controllers share: the
+      # controllers emit the same pair with via: "web", and only the caller knows which it is. The
+      # existing `return if ...exists?` guards above are what stop a link mtasks created itself
+      # from being counted twice when Hourglass echoes it back.
+      def track_link(result, entity)
+        return if result.error || result.link.nil?
+
+        track_integration('hourglass-integration', 'link', result.link.id, entity: entity)
       end
 
       def valid_project_channel?(project, channel_id)

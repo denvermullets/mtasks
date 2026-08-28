@@ -21,6 +21,21 @@ import { getStatus, track } from "@vektis-io/tracker";
 // the function name rather than a string argument means it cannot be defaulted or misspelled into
 // an event type the schema does not have.
 
+// The §5.2 closed property registry, transcribed from Vektis::Taxonomy::PROPERTY_KEYS. The two
+// copies are asserted identical by test/services/vektis/property_registry_parity_test.rb, which is
+// what keeps this list from drifting — there is no build step that could share the constant.
+//
+// Enforced here and not only reviewed, for the same reason Vektis::EventEmitter#audit strips rather
+// than warns (VEK-587): properties is stored verbatim in impact_events.properties with no delete
+// path, so an unreviewed key is unrecoverable once shipped. A call site reaching for a label name or
+// a search query silently loses it here instead.
+const PROPERTY_KEYS = new Set([
+  "source", "via", "surface", "entity", "provider", "webhook_event", "from_position",
+  "to_position", "direction", "priority", "count", "depth", "filter_type", "option", "tab",
+  "shortcut", "query_length", "result_count", "has_project", "has_assignee", "has_estimate",
+  "has_due_date", "is_sub_issue",
+]);
+
 // properties must be Record<string, string | number | boolean>. A single undefined value makes the
 // server 400 the batch, and a 400 is a drop with no retry (§1) — one mistyped lookup would take
 // every other event batched alongside it down with it. Drop bad values rather than ship them.
@@ -28,6 +43,8 @@ function scalarProperties(properties) {
   const cleaned = { source: "browser" };
 
   for (const [key, value] of Object.entries(properties)) {
+    if (!PROPERTY_KEYS.has(key)) continue;
+
     const type = typeof value;
     if (type === "string" || type === "number" || type === "boolean") cleaned[key] = value;
   }

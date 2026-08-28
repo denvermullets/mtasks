@@ -17,12 +17,18 @@ class NotificationsController < ApplicationController
   def mark_as_read
     @notification = Current.user.notifications.find(params[:id])
     @notification.mark_as_read!
+    # mark_as_read! no-ops when the notification was already read, so this counts gestures that
+    # actually changed something.
+    track_feature('notification', 'read') if @notification.saved_change_to_read_at?
 
     respond_to do |format|
       format.turbo_stream do
         render turbo_stream: [
           turbo_stream.replace(
-            dom_id(@notification),
+            # dom_id is a view helper, not a controller method — this path raised NoMethodError
+            # for every turbo_stream "mark as read" click. ProjectsController already qualifies
+            # it the same way.
+            ActionView::RecordIdentifier.dom_id(@notification),
             partial: 'notifications/notification',
             locals: { notification: @notification }
           ),
@@ -34,7 +40,8 @@ class NotificationsController < ApplicationController
   end
 
   def mark_all_as_read
-    Current.user.notifications.unread.update_all(read_at: Time.current)
+    marked = Current.user.notifications.unread.update_all(read_at: Time.current)
+    track_feature('notification', 'read_all', count: marked) if marked.positive?
 
     respond_to do |format|
       format.turbo_stream do

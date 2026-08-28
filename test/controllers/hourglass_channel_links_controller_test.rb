@@ -47,7 +47,9 @@ class HourglassChannelLinksControllerTest < ActionDispatch::IntegrationTest
     @integration.update!(hourglass_integration_id: 7)
     stub_request(:post, "#{BASE}/webhooks/mtasks/7").to_return(status: 200, body: '{}')
 
-    perform_enqueued_jobs do
+    # Scoped to the outbound notify job on purpose: VektisEventJob also lands in the queue here
+    # (VEK-585), and running it would make a live analytics request from a controller test.
+    perform_enqueued_jobs(only: HourglassNotifyLinkCreatedJob) do
       assert_difference 'HourglassLink.count', 1 do
         post team_project_hourglass_channel_link_path(@team, @project),
              params: { hourglass_channel_id: 'C1', hourglass_channel_name: 'general' },
@@ -74,7 +76,7 @@ class HourglassChannelLinksControllerTest < ActionDispatch::IntegrationTest
     )
     stub_request(:post, "#{BASE}/webhooks/mtasks/7").to_return(status: 200, body: '{}')
 
-    perform_enqueued_jobs do
+    perform_enqueued_jobs(only: HourglassNotifyLinkDestroyedJob) do
       assert_difference 'HourglassLink.count', -1 do
         delete team_project_hourglass_channel_link_path(@team, @project),
                headers: { 'Accept' => 'text/vnd.turbo-stream.html' }

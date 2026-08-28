@@ -1,5 +1,6 @@
 class ProjectsController < ApplicationController
   include TeamScoped
+  include ProjectSorting
 
   before_action :require_team!
   before_action :set_team
@@ -46,6 +47,7 @@ class ProjectsController < ApplicationController
     @project = current_team.projects.new(project_params)
 
     if @project.save
+      track_feature('project-management', 'create', **project_shape)
       redirect_to team_project_path(current_team, @project), notice: 'Project was successfully created.'
     else
       load_form_data
@@ -59,6 +61,7 @@ class ProjectsController < ApplicationController
 
   def update
     if @project.update(project_params)
+      track_project_updated
       if turbo_stream_only_request?
         render_roadmap_card_stream
       elsif turbo_frame_request?
@@ -76,12 +79,16 @@ class ProjectsController < ApplicationController
 
   def destroy
     @project.destroy
+    track_feature('project-management', 'delete') if @project.destroyed?
     redirect_to team_projects_path(current_team), notice: 'Project was successfully deleted.'
   end
 
   def purge_file
     attachment = @project.files.find(params[:file_id])
     attachment.purge
+    # issue-attachment is the one permanent slug for files anywhere in the app; `entity` is what
+    # separates a project file from an issue or comment file (taxonomy §5.2, amended by VEK-584).
+    track_feature('issue-attachment', 'remove', entity: 'project', count: 1)
     redirect_to edit_team_project_path(current_team, @project), notice: 'File removed.'
   end
 
@@ -99,6 +106,26 @@ class ProjectsController < ApplicationController
     @project = current_team.projects.find(params[:id])
   rescue ActiveRecord::RecordNotFound
     redirect_to team_projects_path(current_team), alert: 'Project not found.'
+  end
+
+  def project_shape
+    { priority: @project.priority, has_due_date: @project.due_date.present? }
+  end
+
+  # roadmap_add_controller.js and commitment_picker_controller.js both PATCH roadmap_commitment
+  # on its own. Only nil -> present is the `create` the catalog names; a lane-to-lane reshuffle
+  # or a removal falls through to project-management/update, which is what it genuinely is.
+  def track_project_updated
+    return track_feature('roadmap', 'create') if roadmap_add?
+
+    track_feature('project-management', 'update', **project_shape)
+  end
+
+  def roadmap_add?
+    before, after = @project.saved_change_to_roadmap_commitment
+    return false unless before.nil? && after.present?
+
+    (@project.saved_changes.keys - %w[roadmap_commitment updated_at]).empty?
   end
 
   def turbo_stream_only_request?
@@ -132,40 +159,9 @@ class ProjectsController < ApplicationController
     @thread_counts = HourglassThreadCountService.call(issues: @issues, user: Current.user)
   end
 
-  def sorted_project_issues
-    base = @project.issues.not_archived
-                   .includes(:lane, :assignee, :labels, :blocking_dependencies, :blocked_dependencies)
-    base = base.where(completed_at: nil, canceled_at: nil) if @issue_filter == 'active'
-
-    case @sort
-    when 'id'       then base.order(team_number: :asc)
-    when 'status'   then base.joins(:lane).order('lanes.position ASC, issues.created_at DESC')
-    when 'updated'  then base.order(updated_at: :desc)
-    when 'priority' then base.order(priority: :asc, created_at: :desc)
-    else base.order(created_at: :desc)
-    end
-  end
-
   def load_form_data
     @team_members = current_team.users.order(:name)
     @labels = current_team.labels.order(:name)
-  end
-
-  def sorted_projects
-    scope = current_team.projects.includes(:lead)
-    scope = scope.where.not(status: 'completed') if @hide_completed
-    direction = @sort_dir.to_sym
-    case @index_sort
-    when 'name'     then scope.order(name: direction)
-    when 'priority' then scope.order(priority: direction, created_at: :asc)
-    when 'due_date' then scope.order(due_date_order(direction))
-    when 'velocity' then scope.order(velocity_score: direction, created_at: direction)
-    else scope.order(created_at: direction)
-    end
-  end
-
-  def due_date_order(direction)
-    Arel.sql("due_date IS NULL, due_date #{direction == :asc ? 'ASC' : 'DESC'}")
   end
 
   def project_params

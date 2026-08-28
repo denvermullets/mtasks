@@ -33,9 +33,23 @@ class GithubCommentPosterJob < ApplicationJob
     )
 
     Rails.logger.info("Posted comment to PR ##{pr.pr_number} for issue #{issue.identifier}")
+    track_comment_posted(issue_pr)
   end
 
   private
+
+  # The outbound half of the GitHub integration — no delivery guid, so the key is the record the
+  # job already treats as its unit of work. Together with the `comment_posted?` guard above that
+  # makes a retry a no-op end to end, including the window where the API call succeeded and the
+  # stamp did not.
+  def track_comment_posted(issue_pr)
+    Vektis::EventEmitter.integration(
+      'github-integration', 'sync',
+      provider: 'github', via: 'job',
+      key: ['issue_pull_request', issue_pr.id],
+      properties: { entity: 'issue' }
+    )
+  end
 
   def build_comment_body(issue)
     app_url = Rails.application.routes.url_helpers.team_issue_url(

@@ -26,6 +26,7 @@ module HourglassWebhookProcessor
         return unless decision
 
         decision.update!(unpinned_at: parse_time(payload['unpinned_at']) || Time.current)
+        track_integration('decision', 'delete', decision.id, entity: 'project')
         Decisions::BroadcastCardService.call(project: link.mtasks_project) if link
       end
     end

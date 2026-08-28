@@ -1,7 +1,13 @@
 class GithubPrSyncService
-  def initialize(github_repository_subscription)
+  include Vektis::GithubTracking
+
+  # `delivery_id` is the X-GitHub-Delivery guid of the webhook that set this sync in motion. It is
+  # carried only so analytics can dedupe a redelivery (§8) — nothing in the sync itself reads it,
+  # and a nil is harmless.
+  def initialize(github_repository_subscription, delivery_id: nil)
     @subscription = github_repository_subscription
     @team = @subscription.team
+    @delivery_id = delivery_id
   end
 
   def sync_pull_request(pr_data, action: nil)
@@ -65,6 +71,7 @@ class GithubPrSyncService
       "Linked #{referenced_issues.count} issues to PR ##{pull_request.pr_number} " \
       "(#{newly_linked.count} newly attached)"
     )
+    track_issues_linked(pull_request, newly_linked)
     newly_linked
   end
 
@@ -125,6 +132,7 @@ class GithubPrSyncService
       issue.lane = lane
       issue.apply_lane_timestamps!
       issue.save!
+      track_lane_automation(issue)
       issue.enqueue_velocity_recalculation!
       IssueAfterUpdateJob.perform_later(issue_id: issue.id, user_id: nil)
       Rails.logger.info("Moved issue #{issue.identifier} to lane '#{lane.name}' via PR automation")

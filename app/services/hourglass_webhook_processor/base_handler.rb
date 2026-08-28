@@ -17,6 +17,19 @@ module HourglassWebhookProcessor
       Rails.logger
     end
 
+    # The VEK-585 emit seam for the handlers. Every handler runs inside a signature-verified
+    # delivery with no Current.user, so `user_id` is absent by construction and the delivery guid
+    # is what makes a redelivery dedupe at vanalytics rather than double count (§8). `subject`
+    # joins the key because one delivery can act on more than one record.
+    def track_integration(feature_id, action, subject, **properties)
+      Vektis::EventEmitter.integration(
+        feature_id, action,
+        provider: 'hourglass', via: 'webhook',
+        key: [delivery.delivery_id, subject],
+        properties: properties.compact
+      )
+    end
+
     def find_link(channel_id)
       HourglassLink.project_channel.active.find_by(
         hourglass_channel_id: channel_id,

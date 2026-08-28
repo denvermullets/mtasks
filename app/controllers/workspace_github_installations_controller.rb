@@ -24,6 +24,7 @@ class WorkspaceGithubInstallationsController < ApplicationController
       installation_id: params[:installation_id],
       state_data: decode_state(params[:state])
     )
+    track_integration('github-integration', 'link', provider: 'github')
 
     redirect_to workspace_github_installation_path(@workspace),
                 notice: 'GitHub installation connected! Repositories will sync via webhook.'
@@ -38,7 +39,7 @@ class WorkspaceGithubInstallationsController < ApplicationController
 
   def destroy
     installation = @workspace.github_installation
-    installation&.destroy
+    track_integration('github-integration', 'unlink', provider: 'github') if installation&.destroy
 
     redirect_to workspace_github_installation_path(@workspace),
                 notice: 'GitHub installation disconnected'

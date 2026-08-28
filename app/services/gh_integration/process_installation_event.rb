@@ -1,9 +1,10 @@
 module GhIntegration
   class ProcessInstallationEvent < Service
-    def initialize(installation_id:, action:, webhook_payload:)
+    def initialize(installation_id:, action:, webhook_payload:, delivery_id: nil)
       @installation_id = installation_id
       @action = action
       @webhook_payload = webhook_payload
+      @delivery_id = delivery_id
     end
 
     def call
@@ -25,7 +26,8 @@ module GhIntegration
       repositories = @webhook_payload['repositories_added'] || []
       GhIntegration::ProcessAddedRepositories.call(
         installation_id: @installation_id,
-        repositories: repositories
+        repositories: repositories,
+        delivery_id: @delivery_id
       )
     end
 
@@ -33,14 +35,23 @@ module GhIntegration
       repositories = @webhook_payload['repositories_removed'] || []
       GhIntegration::ProcessRemovedRepositories.call(
         installation_id: @installation_id,
-        repositories: repositories
+        repositories: repositories,
+        delivery_id: @delivery_id
       )
     end
 
     def handle_installation_deleted
       installation = GithubInstallation.find_by(installation_id: @installation_id)
-      installation&.destroy
+      destroyed = installation&.destroy
       Rails.logger.info("Deleted installation #{@installation_id} and all subscriptions")
+      return unless destroyed
+
+      Vektis::EventEmitter.integration(
+        'github-integration', 'unlink',
+        provider: 'github', via: 'webhook',
+        key: [@delivery_id, @installation_id],
+        properties: { webhook_event: 'installation.deleted' }
+      )
     end
 
     def update_installation_timestamp

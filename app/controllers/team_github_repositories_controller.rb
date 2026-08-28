@@ -14,6 +14,7 @@ class TeamGithubRepositoriesController < ApplicationController
       team: @team,
       repo_full_name: params[:repo_full_name]
     )
+    track_integration('github-integration', 'link', provider: 'github')
 
     redirect_to team_github_repositories_path(@team),
                 notice: 'Repository added!'
@@ -35,7 +36,7 @@ class TeamGithubRepositoriesController < ApplicationController
 
   def destroy
     subscription = @team.github_repository_subscriptions.find(params[:id])
-    subscription.destroy
+    track_integration('github-integration', 'unlink', provider: 'github') if subscription.destroy
 
     redirect_to team_github_repositories_path(@team),
                 notice: 'Repository removed'
