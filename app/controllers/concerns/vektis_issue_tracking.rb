@@ -17,10 +17,8 @@ module VektisIssueTracking
     before_action :capture_tracked_label_ids, only: :update
   end
 
-  # Attributes whose change means "the user edited this issue". Deliberately excludes lane_id /
-  # completed_at / canceled_at (issue-workflow owns those), parent_issue_id (sub-issue) and
-  # labels (issue-label) — that exclusion is what makes a lane-picker PATCH exactly one event.
-  EDIT_FIELDS = %w[title description priority estimate due_date assignee_id project_id].freeze
+  # Shared with Api::V1's tracking concern, which saves the same issues from a different surface.
+  EDIT_FIELDS = Vektis::IssueProperties::EDIT_FIELDS
 
   private
 

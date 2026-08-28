@@ -4,7 +4,9 @@ module Api
       before_action :set_current_team
 
       def index
-        members = current_team.users.order(:name)
+        members = current_team.users.order(:name).to_a
+
+        @tracked_result_count = members.size
         render json: members.map { |u|
           { id: u.id, name: u.name, email: u.email }
         }

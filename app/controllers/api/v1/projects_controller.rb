@@ -5,7 +5,9 @@ module Api
       before_action :set_project, only: %i[show update destroy]
 
       def index
-        projects = current_team.projects.includes(:lead).order(:name)
+        projects = current_team.projects.includes(:lead).order(:name).to_a
+
+        @tracked_result_count = projects.size
         render json: projects.map { |p| serialize(p) }
       end
 
@@ -17,6 +19,7 @@ module Api
         project = current_team.projects.new(project_params)
 
         if project.save
+          track_api_feature('project-management', 'create')
           render json: serialize(project), status: :created
         else
           render_validation_errors(project)
@@ -25,6 +28,7 @@ module Api
 
       def update
         if @project.update(project_params)
+          track_api_feature('project-management', 'update')
           render json: serialize(@project)
         else
           render_validation_errors(@project)
@@ -33,6 +37,7 @@ module Api
 
       def destroy
         @project.destroy
+        track_api_feature('project-management', 'delete')
         head :no_content
       end
 

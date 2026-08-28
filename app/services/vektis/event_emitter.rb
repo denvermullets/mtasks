@@ -8,9 +8,11 @@ require 'securerandom'
 # directly. It is the exact mirror of app/javascript/vektis.js — read that file alongside this
 # one, because the same three jobs apply and neither belongs in a call site:
 #
-# 1. properties.source = "server" is mandatory on every event (taxonomy §5.1) and is the only
-#    field that makes server and browser events separable in analysis today (VEK-590). Stamping
-#    it here — last, so a call site cannot override it — is what makes "no exceptions" true.
+# 1. properties.source is mandatory on every event (taxonomy §5.1) and is the only field that
+#    separates web, browser and agent traffic in analysis (VEK-590). It is stamped here, last, so
+#    a call site can never override it from `properties` — that is what makes §5.1 mechanical.
+#    A surface declares itself through the `source:` NAMED parameter instead, exactly as it names
+#    its tenant through `team:`; the value must be one of Taxonomy::SOURCES.
 # 2. Nothing analytics does may surface to a user or roll back a transaction. Every path returns
 #    nil and swallows, with one deliberate exception: in development and test a bad call site
 #    raises, so taxonomy drift fails in CI instead of becoming a silent 400 months later.
@@ -39,9 +41,15 @@ module Vektis
       #
       # Pass `event_id:` for webhook-originated events, where it must be derived deterministically
       # from the delivery so a provider retry dedupes rather than duplicating (§8).
-      def feature(feature_id, action, team:, properties: {}, user_id: nil, event_id: nil)
+      #
+      # `source` is a named parameter and never a property, for the same reason `team` is: the
+      # stamp below is deliberately unoverridable from `properties`, and that guarantee is what
+      # makes §5.1 mechanical. A surface declares itself here or not at all. Defaults to `server`,
+      # so every existing call site keeps emitting exactly what it emitted before.
+      def feature(feature_id, action, team:, properties: {}, user_id: nil, event_id: nil, # rubocop:disable Metrics/ParameterLists
+                  source: 'server')
         emit(event_type: 'feature.used', feature_id: feature_id, action: action, team: team,
-             properties: properties, user_id: user_id, event_id: event_id)
+             properties: properties, user_id: user_id, event_id: event_id, source: source)
       end
 
       # Integration-originated events (VEK-585) — inbound webhook deliveries, and the outbound API
@@ -72,7 +80,7 @@ module Vektis
       end
 
       def emit(event_type:, team:, feature_id: nil, action: nil, properties: {}, user_id: nil, # rubocop:disable Metrics/ParameterLists
-               event_id: nil)
+               event_id: nil, source: 'server')
         # A team is the tenant, so no team means there is nobody to emit for. Absent rather than
         # exceptional: workspace-level actions and deliveries that matched no team-scoped record
         # legitimately reach here with nothing to attribute.
@@ -85,7 +93,8 @@ module Vektis
         return unless config.enabled? || Rails.env.local?
 
         event = build(config: config, event_type: event_type, feature_id: feature_id,
-                      action: action, properties: properties, user_id: user_id, event_id: event_id)
+                      action: action, properties: properties, user_id: user_id, event_id: event_id,
+                      source: source)
         reject!(event)
         audit(event)
         # Checked here rather than in the job so nothing accumulates in the queue while off.
@@ -127,7 +136,7 @@ module Vektis
       # String keys throughout: ActiveJob round-trips them verbatim (a symbol-keyed hash picks up
       # an _aj_symbol_keys wrapper), so the queued payload is literally the wire shape and the
       # byte check below measures the same bytes Vektis::ApiClient will send.
-      def build(config:, event_type:, feature_id:, action:, properties:, user_id:, event_id:) # rubocop:disable Metrics/ParameterLists
+      def build(config:, event_type:, feature_id:, action:, properties:, user_id:, event_id:, source:) # rubocop:disable Metrics/ParameterLists
         {
           'event_id' => event_id.presence || SecureRandom.uuid, # v4 — satisfies z.string().uuid()
           'event_type' => event_type.to_s,
@@ -135,7 +144,7 @@ module Vektis
           'feature_id' => feature_id.presence&.to_s,
           'user_id' => resolved_user_id(user_id),
           'action' => action.presence&.to_s,
-          'properties' => scalar_properties(properties),
+          'properties' => scalar_properties(properties, source),
           'timestamp' => Time.current.utc.iso8601
         }.compact # load-bearing: the schema's optional fields reject an explicit null
       end
@@ -147,7 +156,7 @@ module Vektis
         (user_id.presence || Current.user&.id)&.to_s
       end
 
-      def scalar_properties(properties)
+      def scalar_properties(properties, source)
         cleaned = {}
 
         (properties || {}).each do |key, value|
@@ -155,7 +164,7 @@ module Vektis
           cleaned[key.to_s] = scalar unless scalar.nil?
         end
 
-        cleaned['source'] = 'server' # stamped last: §5.1 has no exceptions
+        cleaned['source'] = source # stamped last: a call site's own `source` key never survives
         cleaned
       end
 
@@ -200,6 +209,10 @@ module Vektis
         properties = event['properties']
         keys = Taxonomy::MAX_PROPERTY_KEYS
         invalid!("properties has #{properties.size} keys, over #{keys}") if properties.size > keys
+        # A surface outside §5.1 is a typo or an uncatalogued caller, and either way it would split
+        # the one dimension separating web, browser and agent traffic in analysis.
+        invalid!("unknown source #{properties['source'].inspect}") unless
+          Taxonomy::SOURCES.include?(properties['source'])
 
         properties.each { |key, value| reject_property!(key, value) }
 

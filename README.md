@@ -127,6 +127,27 @@ For local work, run vanalytics on port 3333 and connect a team using the key
 values it seeds
 (`vanalytics/server/src/database/seeds/01_test_org_api_keys.ts`).
 
+##### Which surface an event came from
+
+Every event carries a `source` property, and it is the only field that separates
+the three surfaces. The value is stamped by the emitter and cannot be set by a
+call site:
+
+- `browser` — the Stimulus controllers, via `app/javascript/vektis.js`.
+- `server` — the web app's controllers, jobs and webhook handlers
+  (`VektisTracking`).
+- `api` — the v1 REST API (`VektisApiTracking`), which covers **both** direct API
+  clients and the MCP server. mtasks-mcp is a pure client of this API — every one
+  of its tools goes through the same routes with the same `ApiToken` bearer and
+  sends no client identifier — so the two are indistinguishable server-side by
+  construction. Telling them apart later means adding one header there and a
+  `surface` property here.
+
+A gesture is named the same on every surface: creating an issue through the web
+form and through the `create_issue` MCP tool both emit `issue-create`/`create`,
+and differ only in `source`. Reads have no web counterpart and emit
+`api-read`/`query` with an `entity` and, for collections, a `result_count`.
+
 #### Encoding GitHub Private Key
 
 GitHub App private keys need to be base64 encoded for the environment variable:

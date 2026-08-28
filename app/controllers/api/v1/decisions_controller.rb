@@ -12,6 +12,9 @@ module Api
         decision = build_decision
         if decision.save
           broadcast(:append, decision)
+          # Only this branch. Both short-circuits above (idempotency_key, hourglass_message_id) and
+          # the RecordNotUnique rescue below return an existing decision — a redelivery, not a pin.
+          track_api_feature('decision', 'create', entity: @issue ? 'issue' : 'project')
           render json: DecisionSerializer.new(decision).as_json, status: :created
         else
           render_validation_errors(decision)
@@ -25,6 +28,7 @@ module Api
         decision = decisions_scope.find(params[:id])
         decision.update!(unpinned_at: Time.current) unless decision.unpinned_at
         broadcast(:remove, decision)
+        track_api_feature('decision', 'delete', entity: @issue ? 'issue' : 'project')
         head :no_content
       rescue ActiveRecord::RecordNotFound
         render json: { error: 'Not Found' }, status: :not_found

@@ -7,6 +7,15 @@
 # and the drift would be invisible: both copies would keep emitting, just disagreeing.
 module Vektis
   module IssueProperties
+    # Attributes whose change means "the user edited this issue" (§4.1). Deliberately excludes
+    # lane_id / completed_at / canceled_at (issue-workflow owns those), parent_issue_id (sub-issue)
+    # and labels (issue-label) — that exclusion is what keeps a lane-only PATCH exactly one event.
+    #
+    # Lives here rather than in a controller concern because the web form and the v1 API both save
+    # issues and must agree on what an edit is. Two copies would drift the moment a field is added,
+    # and the drift would be invisible: both would keep emitting, just disagreeing about when.
+    EDIT_FIELDS = %w[title description priority estimate due_date assignee_id project_id].freeze
+
     module_function
 
     # §4.1, most specific wins. Done -> Cancelled clears completed_at *and* sets canceled_at;

@@ -1,10 +1,15 @@
-# The controller-side seam for VEKTIS analytics (VEK-584).
+# The web seam for VEKTIS analytics (VEK-584).
 #
 # Taxonomy §9 puts server emission here rather than in model callbacks on purpose: Issue's
-# lifecycle methods are also driven by Api::V1::IssuesController, which is not a catalogued
-# surface, and a model callback could not tell the two apart. ApplicationController's concerns
-# never reach ActionController::API, so including this here scopes emission to the web by
-# construction.
+# lifecycle methods are also driven by Api::V1::IssuesController, and a model callback could not
+# tell the two apart — it would emit one indistinguishable event for a click and for an agent.
+# ApplicationController's concerns never reach ActionController::API, so including this here
+# scopes emission to the web by construction, which is what makes `source: "server"` truthful.
+#
+# The API is a catalogued surface too now; VektisApiTracking is its seam and stamps `source:
+# "api"`. The two files share the feature_id/action vocabulary and Vektis::IssueProperties, and
+# nothing else — a gesture must be named identically on both, or analysis splits one feature in
+# two. Anything that belongs to both belongs in app/services/vektis, not copied between them.
 #
 # Emission is an explicit line in each success branch rather than an after_action. Three call
 # sites need state that only exists before the write (issue label_ids before assign_attributes,

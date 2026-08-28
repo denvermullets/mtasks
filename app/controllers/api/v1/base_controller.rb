@@ -1,6 +1,10 @@
 module Api
   module V1
     class BaseController < ActionController::API
+      # Every API and MCP call passes through here, which is what makes this the one place that
+      # can see agent traffic at all. See the concern for why the API is a catalogued surface now.
+      include VektisApiTracking
+
       SAFE_METHODS = %w[GET HEAD].freeze
 
       before_action :authenticate_api_token!

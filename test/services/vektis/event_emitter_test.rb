@@ -104,6 +104,35 @@ module Vektis
       assert_equal 'server', enqueued_event['properties']['source']
     end
 
+    # The v1 API is a catalogued surface (source `api`), so `source` gained a legitimate override —
+    # but only as a NAMED parameter, exactly like `team`. The test above is the other half of that
+    # contract and must keep passing: a `source` key inside `properties` is still ignored.
+    test 'honours a source declared as a named parameter' do
+      EventEmitter.feature('comment', 'create', team: @team, source: 'api', properties: { entity: 'issue' })
+
+      assert_equal 'api', enqueued_event['properties']['source']
+    end
+
+    test 'a named source still cannot be overridden from properties' do
+      EventEmitter.feature('comment', 'create', team: @team, source: 'api',
+                                                properties: { source: 'server', entity: 'issue' })
+
+      assert_equal 'api', enqueued_event['properties']['source']
+    end
+
+    test 'rejects a source that is not in the taxonomy' do
+      assert_raises(EventEmitter::InvalidEvent) do
+        EventEmitter.feature('comment', 'create', team: @team, source: 'carrier-pigeon')
+      end
+    end
+
+    test 'integration events stay server-sourced' do
+      EventEmitter.integration('hourglass-integration', 'sync', team: @team, provider: 'hourglass',
+                                                                via: 'webhook', key: 'delivery-1')
+
+      assert_equal 'server', enqueued_event['properties']['source']
+    end
+
     test 'preserves a caller-supplied event_id for deterministic webhook ids' do
       event_id = Digest::UUID.uuid_v5(Digest::UUID::OID_NAMESPACE, 'github:42:sync')
 

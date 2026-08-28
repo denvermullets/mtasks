@@ -12,6 +12,13 @@ module Vektis
                      session.active customer.identified].freeze
     FEATURE_TYPES = %w[feature.used feature.engagement feature.first_use].freeze
 
+    # §5.1 — the closed set of surfaces an event can originate from. `api` covers the v1 REST API
+    # and the MCP server together: mtasks-mcp is a pure client of that API (every tool funnels
+    # through one `apiRequest` in src/api-client.ts) and sends no client identifier, so the two are
+    # indistinguishable server-side by construction rather than by omission. Splitting them later
+    # means one header there and a `surface` property here, which is already a registered key.
+    SOURCES = %w[server browser api].freeze
+
     # Server-owned (feature_id => actions) pairs, from §4 and §9. The ownership rule is per-pair,
     # not per-feature: exactly one side emits any given (feature_id, action). Browser-owned slugs
     # (issue-search, issue-filter, keyboard-shortcut, notification-drawer) are absent by design —
@@ -38,7 +45,13 @@ module Vektis
       'hourglass-integration' => %w[link unlink sync],
       'vektis-integration' => %w[link unlink],
       'csv-import' => %w[import],
-      'team-export' => %w[export]
+      'team-export' => %w[export],
+
+      # The one feature no browser can own: a successful GET on the v1 API. Reads are most of what
+      # an agent does — 12 of the MCP server's 19 tools are list/get — so a writes-only catalog
+      # would miss the majority of API activity. `entity` names the resource and `result_count`
+      # sizes a collection; neither carries a record id (§6).
+      'api-read' => %w[query]
     }.freeze
 
     # §5.2 — the closed property registry. Adding a key is an edit to the taxonomy document, not a

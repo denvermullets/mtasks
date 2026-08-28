@@ -246,6 +246,18 @@ module Vektis
       assert_match(/#{Regexp.escape(message)}/, error.message)
     end
 
+    test 'the helper rejects a source outside the taxonomy' do
+      event = valid_event('properties' => { 'source' => 'carrier-pigeon' })
+
+      assert_not_includes Vektis::Taxonomy::SOURCES, event['properties']['source']
+    end
+
+    test 'every catalogued source is one the browser or a server surface actually stamps' do
+      # `browser` is vektis.js's, `server` is EventEmitter's default, `api` is the v1 API's. A
+      # fourth value here with no emitter behind it is a taxonomy edit nobody finished.
+      assert_equal %w[api browser server], Vektis::Taxonomy::SOURCES.sort
+    end
+
     test 'the helper rejects an event_id that is not a UUID' do
       assert_rejected({ 'event_id' => 'evt_00000001' }, 'event_id is not a UUID')
     end

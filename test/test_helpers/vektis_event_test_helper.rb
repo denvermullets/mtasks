@@ -73,13 +73,17 @@ module VektisEventTestHelper
   # The taxonomy contract every server event must satisfy, regardless of where it was emitted:
   # a catalogued (feature_id, action) pair, property keys from the closed registry, and scalar
   # values only — a nil would 400 the whole batch it travels in.
-  def assert_taxonomy_conformant(event)
+  #
+  # `source` is a parameter because the v1 API is a catalogued surface too and stamps `api`; it is
+  # still asserted rather than skipped, because it is the one field that separates the surfaces.
+  def assert_taxonomy_conformant(event, source: 'server')
     actions = Vektis::Taxonomy::CATALOG[event['feature_id']]
     assert_not_nil actions, "#{event['feature_id']} is not a server-owned feature_id"
     assert_includes actions, event['action']
     assert_empty event['properties'].keys - Vektis::Taxonomy::PROPERTY_KEYS
     event['properties'].each_value { |value| assert scalar?(value), "#{value.inspect} is not a scalar" }
-    assert_equal 'server', event['properties']['source']
+    assert_includes Vektis::Taxonomy::SOURCES, event['properties']['source']
+    assert_equal source, event['properties']['source']
   end
 
   # properties is Record<string, string | number | boolean> — a single nil 400s the whole batch it
