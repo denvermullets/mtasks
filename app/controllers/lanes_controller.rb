@@ -10,12 +10,23 @@ class LanesController < ApplicationController
   def create
     @lane = current_team.lanes.build(lane_params)
     @lane.position = current_team.lanes.maximum(:position).to_i + 1 if @lane.position.blank?
-    @lane.save ? render_lane_created : render_lane_create_error
+    if @lane.save
+      track_feature('lane-management', 'create', to_position: @lane.position)
+      render_lane_created
+    else
+      render_lane_create_error
+    end
   end
 
   # PATCH /teams/:team_id/lanes/:id
   def update
-    position_changed? ? update_lane_positions : @lane.update(lane_params)
+    if position_changed?
+      from_position = @lane.position
+      update_lane_positions
+      track_lane_reorder(from_position)
+    elsif @lane.update(lane_params)
+      track_feature('lane-management', 'update')
+    end
 
     respond_to do |format|
       format.turbo_stream { render_lane_update }
@@ -29,7 +40,9 @@ class LanesController < ApplicationController
     return render_reassignment_required if requires_reassignment?
 
     reassign_issues_if_needed
+    from_position = @lane.position
     @lane.destroy
+    track_feature('lane-management', 'delete', from_position: from_position) if @lane.destroyed?
 
     respond_to do |format|
       format.turbo_stream do
@@ -40,6 +53,14 @@ class LanesController < ApplicationController
   end
 
   private
+
+  # Reordering is a lane-management update. Lane *names* are user-authored free text and may
+  # never ship (taxonomy §6); position is the registered stand-in.
+  def track_lane_reorder(from_position)
+    to_position = @lane.position
+    track_feature('lane-management', 'update', from_position: from_position, to_position: to_position,
+                                               direction: to_position > from_position ? 'forward' : 'backward')
+  end
 
   def set_lane
     @lane = current_team.lanes.find(params[:id])

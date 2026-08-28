@@ -62,7 +62,7 @@ class HourglassUserResolver < Service
     Result.new(user: user, user_map: user_map, display_name: name, avatar_initials: initials_for(name))
   end
 
-  # rubocop:disable Metrics/CyclomaticComplexity
+  # rubocop:disable-next Metrics/CyclomaticComplexity
   def display_name_for(user, user_map, override)
     candidates = [
       override,
@@ -73,7 +73,6 @@ class HourglassUserResolver < Service
     ]
     candidates.find(&:present?) || 'Unknown'
   end
-  # rubocop:enable Metrics/CyclomaticComplexity
 
   def initials_for(name)
     parts = name.to_s.split(/\s+/).reject(&:blank?)

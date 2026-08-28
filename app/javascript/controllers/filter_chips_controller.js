@@ -23,6 +23,9 @@ export default class extends Controller {
 
   remove(event) {
     event.preventDefault();
+    // No track() here. This dispatches filters:remove, which filter_menu#handleExternalRemove
+    // routes into applyKeyChange — the single emitter for issue-filter/remove (§4.4). Adding a
+    // call here would double-count every chip dismissal.
     const { filterKey, filterValue } = event.currentTarget.dataset;
     document.dispatchEvent(
       new CustomEvent("filters:remove", { detail: { key: filterKey, value: filterValue } })
@@ -31,6 +34,7 @@ export default class extends Controller {
 
   clearAll(event) {
     event.preventDefault();
+    // No track() here either — this calls filter_menu#clearAll directly, which emits the clear.
     const menuEl = document.querySelector('[data-controller~="filter-menu"]');
     if (!menuEl) return;
     const menu = this.application.getControllerForElementAndIdentifier(menuEl, "filter-menu");

@@ -5,6 +5,11 @@ module HourglassWebhookProcessor
       @integration = integration
     end
 
+    # The team this handler actually acted on, or nil if it did nothing. HourglassIntegration is
+    # workspace-scoped and fans out to many teams, so the delivery-level `sync` event the job emits
+    # has no tenant of its own — it borrows the one from whichever team-scoped record was touched.
+    attr_reader :tracked_team
+
     private
 
     attr_reader :delivery, :integration
@@ -15,6 +20,25 @@ module HourglassWebhookProcessor
 
     def logger
       Rails.logger
+    end
+
+    # The VEK-585 emit seam for the handlers. Every handler runs inside a signature-verified
+    # delivery with no Current.user, so `user_id` is absent by construction and the delivery guid
+    # is what makes a redelivery dedupe at vanalytics rather than double count (§8). `subject`
+    # joins the key because one delivery can act on more than one record.
+    #
+    # `team` is required rather than derived: neither @delivery nor @integration carries one — the
+    # integration belongs to a workspace and serves every team in it — so only the caller, holding
+    # the link or decision it just touched, knows the tenant. Recorded as well as emitted, so the
+    # job can attribute its delivery-level `sync` to the same team.
+    def track_integration(feature_id, action, subject, team:, **properties)
+      @tracked_team = team
+      Vektis::EventEmitter.integration(
+        feature_id, action, team: team,
+                            provider: 'hourglass', via: 'webhook',
+                            key: [delivery.delivery_id, subject],
+                            properties: properties.compact
+      )
     end
 
     def find_link(channel_id)

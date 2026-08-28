@@ -33,15 +33,23 @@ module HourglassWebhookProcessor
         existing = Decision.find_by(hourglass_message_id: cache.hourglass_message_id)
         resolved_user = resolve_pinned_by_user(pinned_by_email, link)
 
-        if existing
-          existing.update!(
-            unpinned_at: nil,
-            pinned_at: pinned_at,
-            pinned_by_user: resolved_user || existing.pinned_by_user
-          )
-        else
-          create_decision(cache, link, pinned_at, resolved_user)
-        end
+        return track_decision_recorded(create_decision(cache, link, pinned_at, resolved_user)) unless existing
+
+        # A re-pin of a previously unpinned message is a decision being recorded again, so it
+        # emits. Re-pinning one that is already active is a no-op restatement and must not.
+        reactivated = existing.unpinned_at.present?
+        existing.update!(
+          unpinned_at: nil,
+          pinned_at: pinned_at,
+          pinned_by_user: resolved_user || existing.pinned_by_user
+        )
+        track_decision_recorded(existing) if reactivated
+      end
+
+      # The decision's *id* — never its body_snapshot, which is the pinned message verbatim and the
+      # single largest PII risk on this surface (§6).
+      def track_decision_recorded(decision)
+        track_integration('decision', 'create', decision.id, entity: 'project', team: decision.team)
       end
 
       def create_decision(cache, link, pinned_at, resolved_user)

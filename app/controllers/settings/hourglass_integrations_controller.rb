@@ -8,8 +8,8 @@ class Settings::HourglassIntegrationsController < ApplicationController
 
   def update
     result = run_connect_service
-    flash[:callback_token] = result.integration.callback_api_token&.raw_token
-    flash[:callback_token_integration_id] = result.integration.id
+    track_integration('hourglass-integration', 'link', provider: 'hourglass')
+    stash_callback_token(result.integration)
     redirect_to workspace_settings_hourglass_integration_path(@workspace),
                 notice: "Connected to #{result.integration.hourglass_server_name} · #{result.channel_count} channels"
   rescue Hourglass::ApiClient::Unauthorized
@@ -36,6 +36,7 @@ class Settings::HourglassIntegrationsController < ApplicationController
     integration = find_integration
     if integration
       HourglassIntegrations::DisconnectService.new(integration).call
+      track_integration('hourglass-integration', 'unlink', provider: 'hourglass')
       flash[:notice] = 'Hourglass disconnected'
     else
       flash[:alert] = 'No active Hourglass connection'
@@ -45,6 +46,11 @@ class Settings::HourglassIntegrationsController < ApplicationController
   end
 
   private
+
+  def stash_callback_token(integration)
+    flash[:callback_token] = integration.callback_api_token&.raw_token
+    flash[:callback_token_integration_id] = integration.id
+  end
 
   def set_workspace
     @workspace = Workspace.find(params[:workspace_id])
@@ -61,6 +67,15 @@ class Settings::HourglassIntegrationsController < ApplicationController
     return if user_has_workspace_access?
 
     redirect_to root_path, alert: 'Access denied'
+  end
+
+  # This controller is workspace-scoped: the route carries workspace_id, so TeamScoped's
+  # current_team is whatever the session last held — possibly a team in a different workspace, and
+  # nil for a workspace owner who belongs to no team. HourglassIntegration has no team_id either,
+  # so there is no honest tenant to bill these events to. Emit nothing rather than attribute one
+  # team's connect to another team's VEKTIS account.
+  def tracked_team
+    nil
   end
 
   def user_has_workspace_access?

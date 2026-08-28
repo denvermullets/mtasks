@@ -2,6 +2,13 @@
 
 echo "🔍 Running pre-commit checks..."
 
+# Ensure the lockfile still supports CI/deploy (linux amd64)
+if ! grep -q "^  x86_64-linux$" Gemfile.lock; then
+  echo "⚠️  Gemfile.lock lost the x86_64-linux platform — re-adding..."
+  bundle lock --add-platform x86_64-linux
+  git add Gemfile.lock
+fi
+
 # Step 1: Run rubocop with auto-correct
 echo "Running bin/rubocop -A..."
 bin/rubocop -A

@@ -4,12 +4,20 @@ module Api
       before_action :set_current_team, except: [:by_identifier]
       before_action :set_issue, only: %i[show update]
 
+      # Below the before_action block on purpose: capture_tracked_label_ids has to run after
+      # set_issue, because it reads label_ids before update rewrites them.
+      include VektisApiIssueTracking
+
       FILTER_PARAMS = %i[lane_id assignee_id project_id priority].freeze
 
       def by_identifier
         team_identifier, number_str = params[:identifier].split('-', 2)
         team = current_user.teams.not_archived.find_by(identifier: team_identifier)
         return render_not_found unless team && token_allows_team?(team)
+
+        # This route resolves its own tenant rather than going through set_current_team; assigning
+        # it here is what lets the read event be attributed instead of silently dropped.
+        @current_team = team
 
         issue = team.issues.find_by(team_number: number_str.to_i)
         return render_not_found unless issue
@@ -20,9 +28,10 @@ module Api
       def index
         issues = filter_issues(
           current_team.issues.not_archived.includes(:lane, :project, :labels, :assignee, :creator)
-        )
+        ).order(created_at: :desc).to_a
 
-        render json: issues.order(created_at: :desc).map { |i| serialize(i) }
+        @tracked_result_count = issues.size
+        render json: issues.map { |i| serialize(i) }
       end
 
       def show
@@ -35,6 +44,7 @@ module Api
 
         if issue.save
           HourglassOutboundEmitterJob.dispatch_create(issue, current_user)
+          track_api_issue_created(issue)
           render json: serialize(issue), status: :created
         else
           render_validation_errors(issue)
@@ -50,6 +60,7 @@ module Api
           IssueAfterUpdateJob.perform_later(
             issue_id: @issue.id, user_id: current_user.id, version_id: @issue.versions.last&.id
           )
+          track_api_issue_updated
           render json: serialize(@issue)
         else
           render_validation_errors(@issue)

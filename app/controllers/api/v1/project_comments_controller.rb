@@ -7,7 +7,9 @@ module Api
       before_action :set_project
 
       def index
-        comments = @project.comments.top_level.includes(:user, replies: :user).order(:created_at)
+        comments = @project.comments.top_level.includes(:user, replies: :user).order(:created_at).to_a
+
+        @tracked_result_count = comments.size
         render json: comments.map { |c| CommentSerializer.new(c).as_json }
       end
 
@@ -23,6 +25,8 @@ module Api
 
         if @comment.save
           broadcast_to_project_discussion(@comment)
+          # Only this branch — the hourglass_message_id short-circuit above is a redelivery.
+          track_api_feature('comment', 'create', entity: 'project', depth: @comment.depth)
           render json: CommentSerializer.new(@comment).as_json, status: :created
         else
           render_validation_errors(@comment)

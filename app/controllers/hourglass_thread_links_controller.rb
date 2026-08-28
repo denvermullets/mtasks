@@ -22,6 +22,7 @@ class HourglassThreadLinksController < ApplicationController
       render_create_error(result.error)
     else
       @issue_thread_link = result.link
+      track_integration('hourglass-integration', 'link', provider: 'hourglass', entity: 'issue')
       respond_to do |format|
         format.turbo_stream { render :create }
         format.html { redirect_to team_issue_path(@team, @issue), notice: 'Thread linked.' }
@@ -31,7 +32,7 @@ class HourglassThreadLinksController < ApplicationController
 
   def destroy
     link = HourglassLink.for_issue(@issue).first
-    HourglassLinks::DestroyService.call(link: link) if link
+    track_thread_unlinked(link) if link
 
     @issue_thread_link = nil
     respond_to do |format|
@@ -41,6 +42,13 @@ class HourglassThreadLinksController < ApplicationController
   end
 
   private
+
+  def track_thread_unlinked(link)
+    result = HourglassLinks::DestroyService.call(link: link)
+    return if result.error
+
+    track_integration('hourglass-integration', 'unlink', provider: 'hourglass', entity: 'issue')
+  end
 
   def set_team
     @team = current_team

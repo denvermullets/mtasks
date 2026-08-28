@@ -1,7 +1,9 @@
 import { Controller } from "@hotwired/stimulus";
+import { trackEngagement } from "vektis";
 
 export default class extends Controller {
   static targets = ["overlay", "image"];
+  static values = { surface: String };
 
   connect() {
     this.boundHandleKeyDown = this.handleKeyDown.bind(this);
@@ -17,6 +19,12 @@ export default class extends Controller {
     this.overlayTarget.classList.remove("hidden");
     document.body.classList.add("overflow-hidden");
     document.addEventListener("keydown", this.boundHandleKeyDown);
+
+    // Neither the URL nor the filename ships — attachment filenames are banned (taxonomy §6.1).
+    // The browser owns only the `view` half of issue-attachment; create/remove are the server's (§9).
+    const properties = {};
+    if (this.surfaceValue) properties.surface = this.surfaceValue;
+    trackEngagement("issue-attachment", "view", properties);
   }
 
   close() {

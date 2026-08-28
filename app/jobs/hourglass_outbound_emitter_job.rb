@@ -39,7 +39,21 @@ class HourglassOutboundEmitterJob < ApplicationJob
       event_type: @event_type, issue: @issue, actor: @actor, version: @version
     )
     response = post_message(payload)
+    track_outbound
     record_echo(response, payload[:body])
+  end
+
+  # The outbound half of the Hourglass integration, and the half no browser can see: mtasks
+  # pushing issue activity into a channel or thread with nobody on a page. The idempotency key the
+  # job already sends to Hourglass doubles as the analytics dedupe key (§8) — a retry that
+  # Hourglass discards as a duplicate message must not count as a second use here either.
+  def track_outbound
+    Vektis::EventEmitter.integration(
+      'hourglass-integration', 'sync', team: @link.team,
+                                       provider: 'hourglass', via: 'job',
+                                       key: idempotency_key,
+                                       properties: { entity: @link.link_type == 'issue_thread' ? 'issue' : 'project' }
+    )
   end
 
   def resolve_link
@@ -50,10 +64,14 @@ class HourglassOutboundEmitterJob < ApplicationJob
     HourglassLink.for_project(@issue.project).active.first
   end
 
+  def idempotency_key
+    "issue-#{@issue.id}-#{@event_type}-#{@version_id || 'create'}"
+  end
+
   def post_message(payload)
     client = Hourglass::ApiClient.for_integration(@link.hourglass_integration)
-    key = "issue-#{@issue.id}-#{@event_type}-#{@version_id || 'create'}"
-    args = { body: payload[:body], data: payload[:data], message_type: 'system', idempotency_key: key }
+    args = { body: payload[:body], data: payload[:data], message_type: 'system',
+             idempotency_key: idempotency_key }
 
     if @link.link_type == 'issue_thread'
       client.post_thread_message(@link.hourglass_thread_id, **args)

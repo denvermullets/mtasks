@@ -1,12 +1,15 @@
 class IssuesController < ApplicationController
   include FormCollections
   include MentionNotifying
+  include IssueIndexFilters
 
   before_action :require_team!
   before_action :set_issue, only: %i[show edit update destroy card]
   before_action :authorize_issue_access!, only: %i[show card]
   before_action :authorize_issue_modification!, only: %i[edit update destroy]
   before_action :load_display_options, only: %i[index]
+  # Included below the filters above: its before_action must run after set_issue.
+  include VektisIssueTracking
 
   def index
     base_issues = current_team.issues.not_archived.includes(
@@ -45,6 +48,7 @@ class IssuesController < ApplicationController
     @issue.creator = Current.user
 
     if @issue.save
+      track_issue_created
       detect_issue_references
       notify_mentions_on(@issue, text: @issue.description)
       HourglassOutboundEmitterJob.dispatch_create(@issue, Current.user)
@@ -65,11 +69,7 @@ class IssuesController < ApplicationController
     @issue.apply_lane_timestamps!
 
     if @issue.save
-      @issue.enqueue_velocity_recalculation!
-      @latest_version = @issue.versions.last
-      notify_issue_update
-      notify_mentions_on(@issue, text: @issue.description, previous_text: @issue.description_previously_was)
-      enqueue_after_update_job
+      after_successful_update
 
       respond_to do |format|
         format.turbo_stream { render(:update) }
@@ -83,6 +83,7 @@ class IssuesController < ApplicationController
   def destroy
     project_id = @issue.project_id
     @issue.destroy
+    track_issue_deleted(@issue) if @issue.destroyed?
     ProjectVelocityJob.perform_later(project_id) if project_id.present?
     redirect_to team_issues_path(@issue.team), notice: 'Issue was successfully deleted.'
   end
@@ -136,6 +137,15 @@ class IssuesController < ApplicationController
     end
   end
 
+  def after_successful_update
+    track_issue_updated
+    @issue.enqueue_velocity_recalculation!
+    @latest_version = @issue.versions.last
+    notify_issue_update
+    notify_mentions_on(@issue, text: @issue.description, previous_text: @issue.description_previously_was)
+    enqueue_after_update_job
+  end
+
   def enqueue_after_update_job
     IssueAfterUpdateJob.perform_later(
       issue_id: @issue.id, user_id: Current.user.id,
@@ -163,17 +173,5 @@ class IssuesController < ApplicationController
       :title, :description, :lane_id, :priority, :estimate, :due_date, :assignee_id, :project_id,
       :parent_issue_id, label_ids: [], files: []
     )
-  end
-
-  def load_display_options
-    @display_options = DisplayOptionsService.call(params, Current.user, current_team)
-  end
-
-  def load_index_filters
-    @lanes = current_team.lanes.order(:position)
-    @labels = current_team.labels.includes(:issue_labels)
-    @projects = current_team.projects.order(:name)
-    @assignees = current_team.users.order(:name)
-    @creators = @assignees
   end
 end
