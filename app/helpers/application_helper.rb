@@ -1,4 +1,14 @@
 module ApplicationHelper
+  # The tenant whose VEKTIS credentials the current page should carry, answering Vektis::Helper.
+  #
+  # Nil means "render nothing": unauthenticated views have no call sites and a sign-out lands on a
+  # page with no team to reconcile against. Note this gates the *attributes* only — the gem attaches
+  # its Stimulus controller on every page where this is non-nil, including teams with no analytics,
+  # so the SDK can reset() an identity left over from a team the user just switched away from.
+  def vektis_tenant
+    authenticated? ? current_team : nil
+  end
+
   def user_avatar(user, size: 'md', shape: 'circle', extra_classes: '')
     render partial: 'shared/user_avatar', locals: { user: user, size: size, shape: shape, extra_classes: extra_classes }
   end

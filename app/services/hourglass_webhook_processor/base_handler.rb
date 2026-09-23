@@ -34,7 +34,7 @@ module HourglassWebhookProcessor
     def track_integration(feature_id, action, subject, team:, **properties)
       @tracked_team = team
       Vektis::EventEmitter.integration(
-        feature_id, action, team: team,
+        feature_id, action, tenant: team,
                             provider: 'hourglass', via: 'webhook',
                             key: [delivery.delivery_id, subject],
                             properties: properties.compact

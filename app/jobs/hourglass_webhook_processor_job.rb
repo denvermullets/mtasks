@@ -53,7 +53,7 @@ class HourglassWebhookProcessorJob < ApplicationJob
   # team-scoped record has nobody to bill and emits nothing.
   def track_sync(delivery, integration, team)
     Vektis::EventEmitter.integration(
-      'hourglass-integration', 'sync', team: team,
+      'hourglass-integration', 'sync', tenant: team,
                                        provider: 'hourglass', via: 'webhook',
                                        key: [delivery.delivery_id, integration.id],
                                        properties: { webhook_event: delivery.event_type }

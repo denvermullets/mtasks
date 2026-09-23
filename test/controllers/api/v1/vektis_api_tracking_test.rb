@@ -57,7 +57,7 @@ module Api
       test 'a call site cannot smuggle a different source through properties' do
         # The guarantee VektisTracking relies on, re-asserted from the surface that gained the
         # legitimate override: `source` is a named parameter, never a property.
-        Vektis::EventEmitter.feature('issue-create', 'create', team: @team,
+        Vektis::EventEmitter.feature('issue-create', 'create', tenant: @team,
                                                                properties: { source: 'browser' }, source: 'api')
 
         assert_equal 'api', event_for('issue-create')['properties']['source']

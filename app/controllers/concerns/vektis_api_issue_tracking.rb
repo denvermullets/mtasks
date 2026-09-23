@@ -49,8 +49,8 @@ module VektisApiIssueTracking
   def track_api_issue_workflow
     return unless @issue.saved_change_to_lane_id?
 
-    track_api_feature('issue-workflow', Vektis::IssueProperties.workflow_action(@issue),
-                      **Vektis::IssueProperties.lane_move(@issue),
+    track_api_feature('issue-workflow', IssueTrackingProperties.workflow_action(@issue),
+                      **IssueTrackingProperties.lane_move(@issue),
                       **issue_shape(@issue))
   end
 
@@ -79,7 +79,7 @@ module VektisApiIssueTracking
   end
 
   def track_api_issue_edit
-    return unless @issue.saved_changes.keys.intersect?(Vektis::IssueProperties::EDIT_FIELDS)
+    return unless @issue.saved_changes.keys.intersect?(IssueTrackingProperties::EDIT_FIELDS)
 
     track_api_feature('issue-edit', 'update', **issue_shape(@issue))
   end

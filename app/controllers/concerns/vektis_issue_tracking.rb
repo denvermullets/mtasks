@@ -18,7 +18,7 @@ module VektisIssueTracking
   end
 
   # Shared with Api::V1's tracking concern, which saves the same issues from a different surface.
-  EDIT_FIELDS = Vektis::IssueProperties::EDIT_FIELDS
+  EDIT_FIELDS = IssueTrackingProperties::EDIT_FIELDS
 
   private
 
@@ -57,11 +57,11 @@ module VektisIssueTracking
   def track_issue_workflow
     return unless @issue.saved_change_to_lane_id?
 
-    action = Vektis::IssueProperties.workflow_action(@issue)
+    action = IssueTrackingProperties.workflow_action(@issue)
     # @lanes is the relation load_form_collections already built and update.turbo_stream.erb
     # already renders, so the position lookup costs no extra query.
     track_feature('issue-workflow', action,
-                  **Vektis::IssueProperties.lane_move(@issue, lanes: @lanes),
+                  **IssueTrackingProperties.lane_move(@issue, lanes: @lanes),
                   **issue_shape(@issue))
   end
 

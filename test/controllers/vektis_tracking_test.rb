@@ -323,9 +323,9 @@ class VektisTrackingTest < ActionDispatch::IntegrationTest
 
     assert_operator emitted.size, :>=, 4
     emitted.each do |event|
-      unknown = event['properties'].keys - Vektis::Taxonomy::PROPERTY_KEYS
+      unknown = event['properties'].keys - EventTaxonomy::PROPERTY_KEYS
       assert_empty unknown, "#{event['feature_id']} carried #{unknown.inspect}"
-      assert_includes Vektis::Taxonomy::CATALOG.fetch(event['feature_id']), event['action']
+      assert_includes EventTaxonomy::CATALOG.fetch(event['feature_id']), event['action']
       event['properties'].each_value do |value|
         assert value.is_a?(String) || value.is_a?(Numeric) || [true, false].include?(value)
       end

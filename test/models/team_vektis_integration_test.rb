@@ -48,7 +48,7 @@ class TeamVektisIntegrationTest < ActiveSupport::TestCase
   end
 
   test 'customer_id is capped at the wire field length' do
-    record = integration(customer_id: 'a' * (Vektis::Taxonomy::MAX_FIELD_LENGTH + 1))
+    record = integration(customer_id: 'a' * (Vektis::Schema::MAX_FIELD_LENGTH + 1))
 
     assert_not record.valid?
     assert_includes record.errors.attribute_names, :customer_id

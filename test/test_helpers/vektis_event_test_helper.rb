@@ -1,9 +1,13 @@
+require 'vektis/testing'
+
 # Shared assertions for the VEKTIS server call sites (VEK-584, VEK-585).
 #
-# Events are read back off the ActiveJob queue rather than off the wire: Vektis::EventEmitter
-# builds and validates the event, then hands VektisEventJob the finished hash, so what is queued
-# is literally what would be sent. Nothing here starts an HTTP request.
+# Reading events off the ActiveJob queue is Vektis::Testing's job. What stays here is mtasks' half:
+# connecting a team, the short names the call-site tests were written against, and the taxonomy and
+# user-content checks, which are stricter than the gem's.
 module VektisEventTestHelper
+  include Vektis::Testing
+
   VEKTIS_TEST_CUSTOMER_ID = 'mtasks-test'.freeze
 
   # Analytics is per-team now, so "enabled" means a connected TeamVektisIntegration rather than an
@@ -23,45 +27,22 @@ module VektisEventTestHelper
     TeamVektisIntegration.find_by(team: team)&.update!(enabled: false)
   end
 
-  # The team_id VektisEventJob was enqueued with, which is the tenant the batch would be delivered
-  # under. Separate from the event body, where the tenant appears as customer_id.
-  def emitted_team_ids
-    enqueued_jobs.select { |job| job[:job] == VektisEventJob }
-                 .map { |job| ActiveJob::Arguments.deserialize(job[:args]).first }
-  end
+  # The tenant ids the batches would be delivered under, which for mtasks are team ids.
+  def emitted_team_ids = vektis_tenant_ids
 
-  # minitest 6 dropped minitest/mock and this app carries no mocking gem, so fault injection is
-  # done by hand: define the class method, run the block, remove the override to reveal the real
-  # one again.
-  def with_stubbed_class_method(klass, name, replacement)
-    klass.define_singleton_method(name) { |*args, **kwargs| replacement.call(*args, **kwargs) }
-    yield
-  ensure
-    klass.singleton_class.send(:remove_method, name)
-  end
+  def emitted = vektis_events
 
-  # VektisEventJob takes (team_id, *events), so the event bodies start at index 1.
-  def emitted
-    enqueued_jobs.select { |job| job[:job] == VektisEventJob }
-                 .flat_map { |job| ActiveJob::Arguments.deserialize(job[:args]).drop(1) }
-  end
+  def pairs = vektis_pairs
 
-  def pairs
-    emitted.map { |event| [event['feature_id'], event['action']] }
-  end
+  def event_for(feature_id, action = nil) = vektis_event_for(feature_id, action)
 
+  # The gem's assertion takes no default message; this one names what was emitted instead.
   def assert_emitted(feature_id, action, message = nil)
-    assert_includes pairs, [feature_id, action], message || "expected #{feature_id}/#{action} in #{pairs.inspect}"
+    assert_vektis_emitted(feature_id, action, message || "expected #{feature_id}/#{action} in #{pairs.inspect}")
   end
 
   def refute_emitted(feature_id, action)
     assert_not_includes pairs, [feature_id, action]
-  end
-
-  def event_for(feature_id, action = nil)
-    emitted.detect do |event|
-      event['feature_id'] == feature_id && (action.nil? || event['action'] == action)
-    end
   end
 
   def events_for(feature_id, action = nil)
@@ -77,12 +58,12 @@ module VektisEventTestHelper
   # `source` is a parameter because the v1 API is a catalogued surface too and stamps `api`; it is
   # still asserted rather than skipped, because it is the one field that separates the surfaces.
   def assert_taxonomy_conformant(event, source: 'server')
-    actions = Vektis::Taxonomy::CATALOG[event['feature_id']]
+    actions = EventTaxonomy::CATALOG[event['feature_id']]
     assert_not_nil actions, "#{event['feature_id']} is not a server-owned feature_id"
     assert_includes actions, event['action']
-    assert_empty event['properties'].keys - Vektis::Taxonomy::PROPERTY_KEYS
+    assert_empty event['properties'].keys - EventTaxonomy::PROPERTY_KEYS
     event['properties'].each_value { |value| assert scalar?(value), "#{value.inspect} is not a scalar" }
-    assert_includes Vektis::Taxonomy::SOURCES, event['properties']['source']
+    assert_includes Vektis::Schema::SOURCES, event['properties']['source']
     assert_equal source, event['properties']['source']
   end
 

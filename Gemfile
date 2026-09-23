@@ -11,8 +11,9 @@ gem "commonmarker"
 gem "csv"
 gem "dotenv"
 gem "faraday-retry"
-gem "image_processing", "~> 2.0.3"
+gem "image_processing", "~> 2.1.0"
 gem "importmap-rails"
+gem "json", "< 3"
 gem "jwt"
 gem "octokit"
 gem "paper_trail"
@@ -29,6 +30,7 @@ gem "tailwindcss-rails"
 gem "thruster", require: false
 gem "turbo-rails"
 gem "tzinfo-data", platforms: %i[windows jruby]
+gem "vektis-rails"
 
 group :development, :test do
   gem "brakeman", require: false

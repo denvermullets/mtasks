@@ -49,7 +49,7 @@ class HourglassOutboundEmitterJob < ApplicationJob
   # Hourglass discards as a duplicate message must not count as a second use here either.
   def track_outbound
     Vektis::EventEmitter.integration(
-      'hourglass-integration', 'sync', team: @link.team,
+      'hourglass-integration', 'sync', tenant: @link.team,
                                        provider: 'hourglass', via: 'job',
                                        key: idempotency_key,
                                        properties: { entity: @link.link_type == 'issue_thread' ? 'issue' : 'project' }
