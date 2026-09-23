@@ -32,6 +32,9 @@ Rails.application.routes.draw do
     resources :github_repositories, only: %i[index create update destroy], controller: 'team_github_repositories'
     resources :labels, only: %i[index create update destroy]
     resources :lanes, only: %i[create update destroy]
+    namespace :settings do
+      resource :vektis_integration, only: %i[show update destroy], controller: 'vektis_integrations'
+    end
     resources :projects do
       delete :purge_file, on: :member
       member do

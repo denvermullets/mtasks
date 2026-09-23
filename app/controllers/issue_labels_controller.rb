@@ -10,6 +10,7 @@ class IssueLabelsController < ApplicationController
     issue_label = @issue.issue_labels.build(label: label)
 
     if issue_label.save
+      track_feature('issue-label', 'apply', entity: 'issue', count: 1)
       @issue.reload
     else
       render turbo_stream: turbo_stream.append('errors', 'Error adding label'), status: :unprocessable_entity
@@ -21,6 +22,7 @@ class IssueLabelsController < ApplicationController
 
     if issue_label
       issue_label.destroy
+      track_feature('issue-label', 'remove', entity: 'issue', count: 1)
       @issue.reload
     else
       render turbo_stream: turbo_stream.append('errors', 'Label not found'), status: :not_found

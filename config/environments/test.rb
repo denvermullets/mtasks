@@ -50,4 +50,8 @@ Rails.application.configure do
 
   # Raise error when a before_action's only/except options reference missing actions.
   config.action_controller.raise_on_missing_callback_actions = true
+
+  # VEKTIS ingest. Nothing should actually reach it in tests: analytics is off unless a test
+  # creates an enabled TeamVektisIntegration, and WebMock blocks net connections regardless.
+  config.x.vektis.endpoint = 'http://localhost:3333/api/v1/events'
 end

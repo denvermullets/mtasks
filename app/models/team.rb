@@ -14,6 +14,10 @@ class Team < ApplicationRecord
   has_many :hourglass_channel_subscriptions, dependent: :destroy
   has_many :hourglass_links, dependent: :destroy
   has_many :decisions, dependent: :destroy
+  # Vektis.for reads this table directly rather than through the association: a settings save must
+  # be visible to the very next emit, and a memoized has_one on a long-lived team object would not
+  # be. Declared here so destroying a team takes its analytics credentials with it.
+  has_one :vektis_integration, class_name: 'TeamVektisIntegration', dependent: :destroy
 
   # Scopes
   scope :archived, -> { where.not(archived_at: nil) }

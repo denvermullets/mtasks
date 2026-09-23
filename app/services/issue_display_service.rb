@@ -1,4 +1,4 @@
-# rubocop:disable Metrics/ClassLength
+# rubocop:disable-next Metrics/ClassLength
 class IssueDisplayService
   attr_reader :issues, :options, :team
 
@@ -145,7 +145,7 @@ class IssueDisplayService
     issue_scope.where(project_id: options[:project_ids])
   end
 
-  # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
+  # rubocop:disable-next Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
   def group_by_association(loaded_issues, association_name)
     groups = {}
     team = @team || loaded_issues.first&.team
@@ -199,7 +199,6 @@ class IssueDisplayService
 
     groups
   end
-  # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
 
   def group_by_priority(loaded_issues)
     groups = {}
@@ -253,4 +252,3 @@ class IssueDisplayService
     end
   end
 end
-# rubocop:enable Metrics/ClassLength

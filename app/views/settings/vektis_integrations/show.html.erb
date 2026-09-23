@@ -1,0 +1,105 @@
+<% content_for :title, "Analytics · #{@team.name}" %>
+<div class="flex-1 overflow-y-auto">
+  <div class="max-w-3xl mx-auto p-4 sm:p-8">
+    <div class="mb-8">
+      <%= link_to edit_team_path(@team), class: "text-xs text-gray-500 hover:text-gray-300" do %>
+        &larr; <%= @team.name %> settings
+      <% end %>
+      <h1 class="text-2xl font-semibold text-gray-100 mb-1 mt-2">
+        Product analytics for <%= @team.name %>
+      </h1>
+      <p class="text-sm text-gray-500">
+        Sends <span class="text-gray-300"><%= @team.identifier %></span>'s usage events to the Vektis
+        account you connect below. These credentials apply to this team only &mdash; every other team
+        you belong to is configured separately and tracks nothing until it is.
+      </p>
+    </div>
+
+    <% if flash[:notice] %>
+      <div class="mb-4 px-3 py-2 rounded border border-accent/40 bg-accent/10 text-accent text-sm">
+        <%= flash[:notice] %>
+      </div>
+    <% end %>
+    <% if flash[:alert] %>
+      <div class="mb-4 px-3 py-2 rounded border border-red-500/40 bg-red-500/10 text-red-300 text-sm">
+        <%= flash[:alert] %>
+      </div>
+    <% end %>
+
+    <% if @integration.errors.any? %>
+      <div class="mb-4 px-3 py-2 rounded border border-red-500/40 bg-red-500/10 text-red-300 text-sm">
+        <ul class="list-disc list-inside">
+          <% @integration.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div class="rounded-lg border border-stroke bg-foreground p-5">
+      <%= form_with model: @integration,
+                    url: team_settings_vektis_integration_path(@team),
+                    method: :patch,
+                    class: 'space-y-4' do |f| %>
+        <label class="flex items-start gap-3 cursor-pointer">
+          <%= f.check_box :enabled, class: 'mt-1 rounded border-stroke bg-background text-accent focus:ring-accent' %>
+          <span>
+            <span class="block text-sm font-medium text-gray-300">Enable tracking for this team</span>
+            <span class="block text-xs text-gray-500">
+              When off, no events are sent from the browser or the server for anything in this team.
+            </span>
+          </span>
+        </label>
+
+        <div>
+          <%= f.label :customer_id, 'Customer ID', class: 'block text-sm font-medium text-gray-300 mb-1' %>
+          <%= f.text_field :customer_id, autocomplete: 'off', placeholder: 'acme-engineering',
+                           class: 'w-full px-3 py-2 rounded-md border border-stroke bg-background text-gray-100 text-sm focus:outline-none focus:border-accent' %>
+          <p class="text-xs text-gray-500 mt-1">
+            How this team appears in your Vektis dashboard. Several teams may share one ID.
+          </p>
+        </div>
+
+        <div>
+          <%= f.label :publishable_key, 'Publishable key', class: 'block text-sm font-medium text-gray-300 mb-1' %>
+          <%= f.text_field :publishable_key, autocomplete: 'off', placeholder: 'vk_pub_…',
+                           class: 'w-full px-3 py-2 rounded-md border border-stroke bg-background text-gray-100 text-sm focus:outline-none focus:border-accent' %>
+          <p class="text-xs text-gray-500 mt-1">
+            Browser-safe, and rendered into the page. Must start with <code>vk_pub_</code>.
+          </p>
+        </div>
+
+        <div>
+          <%= f.label :server_key, 'Server key', class: 'block text-sm font-medium text-gray-300 mb-1' %>
+          <%= f.password_field :server_key, value: nil, autocomplete: 'off',
+                               placeholder: @integration.server_key.present? ? '•••••••• (unchanged)' : 'vk_…',
+                               class: 'w-full px-3 py-2 rounded-md border border-stroke bg-background text-gray-100 text-sm focus:outline-none focus:border-accent' %>
+          <p class="text-xs text-gray-500 mt-1">
+            Full-scope key, used only server-side and never sent to the browser.
+            <%= 'Leave blank to keep the current key.' if @integration.server_key.present? %>
+          </p>
+        </div>
+
+        <div>
+          <%= f.submit 'Save', class: 'px-4 py-2 rounded-md bg-accent text-background hover:bg-accent-hover text-sm font-medium transition-colors cursor-pointer' %>
+        </div>
+      <% end %>
+    </div>
+
+    <% if @integration.persisted? %>
+      <div class="mt-6 rounded-lg border border-stroke bg-foreground p-5">
+        <h2 class="text-lg font-medium text-gray-100 mb-1">Disconnect</h2>
+        <p class="text-sm text-gray-500 mb-4">
+          Removes the keys and stops all tracking for this team.
+          <% if @integration.connected_at %>
+            Connected <%= @integration.connected_at.to_fs(:long) %><%= " by #{@integration.connected_by_user.name}" if @integration.connected_by_user %>.
+          <% end %>
+        </p>
+        <%= button_to 'Disconnect', team_settings_vektis_integration_path(@team),
+                      method: :delete,
+                      form: { data: { turbo_confirm: 'Remove this team\'s Vektis keys?' } },
+                      class: 'px-4 py-2 rounded-md border border-red-500/40 text-red-300 hover:bg-red-500/10 text-sm font-medium transition-colors cursor-pointer' %>
+      </div>
+    <% end %>
+  </div>
+</div>

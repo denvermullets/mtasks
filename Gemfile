@@ -1,5 +1,6 @@
 source "https://rubygems.org"
 
+ruby '4.0.6'
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 gem "rails", "~> 8.1.3.1"
 
@@ -10,8 +11,9 @@ gem "commonmarker"
 gem "csv"
 gem "dotenv"
 gem "faraday-retry"
-gem "image_processing", "~> 2.0.2"
+gem "image_processing", "~> 2.1.0"
 gem "importmap-rails"
+gem "json", "< 3"
 gem "jwt"
 gem "octokit"
 gem "paper_trail"
@@ -19,7 +21,7 @@ gem "pg", "~> 1.6.3"
 gem "propshaft"
 gem "puma", ">= 8.0.2"
 gem "rouge"
-gem "ruby-vips", "~> 2.0"
+gem "ruby-vips", "~> 2.3.0"
 gem "solid_cable"
 gem "solid_cache"
 gem "solid_queue"
@@ -28,6 +30,7 @@ gem "tailwindcss-rails"
 gem "thruster", require: false
 gem "turbo-rails"
 gem "tzinfo-data", platforms: %i[windows jruby]
+gem "vektis-rails"
 
 group :development, :test do
   gem "brakeman", require: false

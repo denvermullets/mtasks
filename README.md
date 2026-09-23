@@ -85,12 +85,68 @@ DATABASE_URL=postgresql://localhost/mtasks_development
 # GitHub App Configuration
 GITHUB_APP_ID=your_app_id
 GITHUB_APP_SLUG=your-app-slug
-GITHUB_PRIVATE_KEY=your_base64_encoded_private_key
+GITHUB_APP_PRIVATE_KEY=your_base64_encoded_private_key
 GITHUB_WEBHOOK_SECRET=your_webhook_secret
 
 # Rails
 SECRET_KEY_BASE=your_secret_key_base
+
 ```
+
+#### Vektis Analytics
+
+Analytics is **per team**, and configured in the database rather than the
+environment. Each team is its own VEKTIS tenant: a team admin connects the team
+to their own VEKTIS account, and nothing at all is emitted for a team that has
+not. There is no app-wide enable flag and no ENV vars to set.
+
+To turn it on for a team, sign in as a **team admin** and visit
+**Analytics** in the account menu (`/teams/:team_id/settings/vektis_integration`),
+then supply:
+
+- **Customer ID** — how the team appears in your VEKTIS dashboard. Several
+  mtasks teams may deliberately share one ID.
+- **Publishable key** — the `vk_pub_*` key, rate tier 1,000 req/min. This is the
+  **only** key safe to expose to the browser, and the app refuses to render one
+  that does not carry the `vk_pub_` prefix.
+- **Server key** — full-scope key, rate tier 10,000 req/min, used by the
+  server-side ingest client. It is never rendered into a page, and the form
+  keeps the stored value when the field is submitted blank.
+
+Both keys are read through `Vektis.for(team)`, which returns a
+`Vektis::Config` for a connected team and a `Vektis::NullConfig` otherwise —
+nothing else in the app should read a team's credentials directly.
+
+The one setting that is *not* per tenant is the ingest URL, which is one
+deployment per environment: `config.x.vektis.endpoint`, set in
+`config/environments/*.rb`. It defaults to a **locally running vanalytics** on
+port 3333 in development and test. The browser SDK's own built-in default *is*
+production, so the Stimulus controller passes this value explicitly.
+
+For local work, run vanalytics on port 3333 and connect a team using the key
+values it seeds
+(`vanalytics/server/src/database/seeds/01_test_org_api_keys.ts`).
+
+##### Which surface an event came from
+
+Every event carries a `source` property, and it is the only field that separates
+the three surfaces. The value is stamped by the emitter and cannot be set by a
+call site:
+
+- `browser` — the Stimulus controllers, via `app/javascript/vektis.js`.
+- `server` — the web app's controllers, jobs and webhook handlers
+  (`VektisTracking`).
+- `api` — the v1 REST API (`VektisApiTracking`), which covers **both** direct API
+  clients and the MCP server. mtasks-mcp is a pure client of this API — every one
+  of its tools goes through the same routes with the same `ApiToken` bearer and
+  sends no client identifier — so the two are indistinguishable server-side by
+  construction. Telling them apart later means adding one header there and a
+  `surface` property here.
+
+A gesture is named the same on every surface: creating an issue through the web
+form and through the `create_issue` MCP tool both emit `issue-create`/`create`,
+and differ only in `source`. Reads have no web counterpart and emit
+`api-read`/`query` with an `entity` and, for collections, a `result_count`.
 
 #### Encoding GitHub Private Key
 

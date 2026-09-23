@@ -25,7 +25,7 @@ module HourglassWebhookProcessor
         link = HourglassLink.issue_thread.where(hourglass_thread_id: thread_id).first
         return logger.info("link.removed issue_thread idempotent (thread=#{thread_id})") unless link
 
-        HourglassLinks::DestroyService.call(link: link, notify_outbound: false)
+        destroy_link(link, 'issue')
       end
 
       def handle_project_channel
@@ -33,7 +33,18 @@ module HourglassWebhookProcessor
         link = HourglassLink.project_channel.where(hourglass_channel_id: channel_id).first
         return logger.info("link.removed project_channel idempotent (channel=#{channel_id})") unless link
 
-        HourglassLinks::DestroyService.call(link: link, notify_outbound: false)
+        destroy_link(link, 'project')
+      end
+
+      # The id and team are read before the destroy so the event still has a subject to key on and
+      # a tenant to bill afterwards.
+      def destroy_link(link, entity)
+        link_id = link.id
+        team = link.team
+        result = HourglassLinks::DestroyService.call(link: link, notify_outbound: false)
+        return if result.error
+
+        track_integration('hourglass-integration', 'unlink', link_id, entity: entity, team: team)
       end
     end
   end

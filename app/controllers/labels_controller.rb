@@ -8,7 +8,7 @@ class LabelsController < ApplicationController
     @current_label_ids = [] # New labels aren't assigned to any issue yet
 
     if @label.save
-      # Turbo Stream will append the new label to all label pickers
+      track_feature('label-management', 'create')
     else
       render turbo_stream: turbo_stream.append('errors', 'Error creating label'), status: :unprocessable_entity
     end
@@ -16,7 +16,7 @@ class LabelsController < ApplicationController
 
   def update
     if @label.update(label_params)
-      # Turbo Stream will update all instances of this label
+      track_feature('label-management', 'update')
     else
       render turbo_stream: turbo_stream.append('errors', 'Error updating label'), status: :unprocessable_entity
     end
@@ -24,6 +24,7 @@ class LabelsController < ApplicationController
 
   def destroy
     @label.destroy
+    track_feature('label-management', 'delete') if @label.destroyed?
     # Turbo Stream will remove all instances of this label
   end
 

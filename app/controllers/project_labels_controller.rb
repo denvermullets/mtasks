@@ -8,6 +8,7 @@ class ProjectLabelsController < ApplicationController
     project_label = @project.project_labels.build(label: label)
 
     if project_label.save
+      track_feature('project-label', 'apply', entity: 'project', count: 1)
       @project.reload
       load_sidebar_data
     else
@@ -20,6 +21,7 @@ class ProjectLabelsController < ApplicationController
 
     if project_label
       project_label.destroy
+      track_feature('project-label', 'remove', entity: 'project', count: 1)
       @project.reload
       load_sidebar_data
     else

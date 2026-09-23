@@ -71,11 +71,23 @@ class HourglassWebhookProcessorJobTest < ActiveJob::TestCase
     Kernel.silence_warnings { HourglassWebhookProcessorJob.const_set(:LINK_HANDLERS, original) }
   end
 
+  # Handlers are instantiated by the job — it needs the instance to read #tracked_team off it, so
+  # a class-level .call double would never be reached. This mirrors BaseHandler's real protocol:
+  # new(delivery, integration), then #call, then #tracked_team.
+  def capturing_handler(captured, &capture)
+    Class.new do
+      define_method(:initialize) do |delivery, integration|
+        @delivery = delivery
+        @integration = integration
+      end
+      define_method(:call) { captured << capture.call(@delivery, @integration) }
+      define_method(:tracked_team) { nil }
+    end
+  end
+
   test 'message.created routes to CreatedHandler' do
     captured = []
-    handler = Class.new do
-      define_singleton_method(:call) { |delivery, integration| captured << [delivery.id, integration.id] }
-    end
+    handler = capturing_handler(captured) { |delivery, integration| [delivery.id, integration.id] }
 
     with_handlers('message.created' => handler) do
       HourglassWebhookProcessorJob.perform_now(@integration.id, @delivery.id)
@@ -86,9 +98,7 @@ class HourglassWebhookProcessorJobTest < ActiveJob::TestCase
 
   test 'message.pinned routes to PinnedHandler' do
     captured = []
-    handler = Class.new do
-      define_singleton_method(:call) { |delivery, _integration| captured << delivery.event_type }
-    end
+    handler = capturing_handler(captured) { |delivery, _integration| delivery.event_type }
 
     @delivery.update!(event_type: 'message.pinned')
     with_handlers('message.pinned' => handler) do
@@ -100,9 +110,7 @@ class HourglassWebhookProcessorJobTest < ActiveJob::TestCase
 
   test 'message.unpinned routes to UnpinnedHandler' do
     captured = []
-    handler = Class.new do
-      define_singleton_method(:call) { |delivery, _integration| captured << delivery.event_type }
-    end
+    handler = capturing_handler(captured) { |delivery, _integration| delivery.event_type }
 
     @delivery.update!(event_type: 'message.unpinned')
     with_handlers('message.unpinned' => handler) do
@@ -114,9 +122,7 @@ class HourglassWebhookProcessorJobTest < ActiveJob::TestCase
 
   test 'link.created routes to Link::CreatedHandler' do
     captured = []
-    handler = Class.new do
-      define_singleton_method(:call) { |delivery, _integration| captured << delivery.event_type }
-    end
+    handler = capturing_handler(captured) { |delivery, _integration| delivery.event_type }
 
     @delivery.update!(event_type: 'link.created')
     with_link_handlers('link.created' => handler) do
@@ -128,9 +134,7 @@ class HourglassWebhookProcessorJobTest < ActiveJob::TestCase
 
   test 'link.removed routes to Link::RemovedHandler' do
     captured = []
-    handler = Class.new do
-      define_singleton_method(:call) { |delivery, _integration| captured << delivery.event_type }
-    end
+    handler = capturing_handler(captured) { |delivery, _integration| delivery.event_type }
 
     @delivery.update!(event_type: 'link.removed')
     with_link_handlers('link.removed' => handler) do
@@ -142,7 +146,9 @@ class HourglassWebhookProcessorJobTest < ActiveJob::TestCase
 
   test 'still marks processed when handler raises' do
     raising = Class.new do
-      define_singleton_method(:call) { |_delivery, _integration| raise 'kaboom' }
+      define_method(:initialize) { |_delivery, _integration| nil }
+      define_method(:call) { raise 'kaboom' }
+      define_method(:tracked_team) { nil }
     end
 
     with_handlers('message.created' => raising) do

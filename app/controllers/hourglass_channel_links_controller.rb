@@ -31,6 +31,7 @@ class HourglassChannelLinksController < ApplicationController
       render_create_error(result.error)
     else
       @channel_link = result.link
+      track_integration('hourglass-integration', 'link', provider: 'hourglass', entity: 'project')
       respond_to do |format|
         format.turbo_stream { render :create }
         format.html { redirect_to discussion_team_project_path(@team, @project), notice: 'Channel linked.' }
@@ -40,7 +41,7 @@ class HourglassChannelLinksController < ApplicationController
 
   def destroy
     link = @project.hourglass_channel_link
-    HourglassLinks::DestroyService.call(link: link) if link
+    track_channel_unlinked(link) if link
 
     @channel_link = nil
     respond_to do |format|
@@ -50,6 +51,13 @@ class HourglassChannelLinksController < ApplicationController
   end
 
   private
+
+  def track_channel_unlinked(link)
+    result = HourglassLinks::DestroyService.call(link: link)
+    return if result.error
+
+    track_integration('hourglass-integration', 'unlink', provider: 'hourglass', entity: 'project')
+  end
 
   def set_team
     @team = current_team

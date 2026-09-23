@@ -7,7 +7,9 @@ module Api
       before_action :set_issue
 
       def index
-        comments = @issue.comments.top_level.includes(:user, replies: :user).order(:created_at)
+        comments = @issue.comments.top_level.includes(:user, replies: :user).order(:created_at).to_a
+
+        @tracked_result_count = comments.size
         render json: comments.map { |c| CommentSerializer.new(c).as_json }
       end
 
@@ -23,6 +25,9 @@ module Api
 
         if @comment.save
           after_create_side_effects(@comment)
+          # Only this branch. The Idempotency-Key short-circuit above returns an existing comment,
+          # which is a redelivery rather than new activity and must not be counted twice.
+          track_api_feature('comment', 'create', entity: 'issue', depth: @comment.depth)
           render json: CommentSerializer.new(@comment).as_json, status: :created
         else
           render_validation_errors(@comment)

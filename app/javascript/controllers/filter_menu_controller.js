@@ -1,4 +1,16 @@
 import { Controller } from "@hotwired/stimulus";
+import { trackEngagement, trackFeature } from "vektis";
+
+// URL param -> taxonomy filter_type (§5.2). The dimension only, never the value: lane, label and
+// project names are user-authored free text and are banned outright (§5.2, §6.1).
+const FILTER_TYPES = {
+  lane_ids: "lane",
+  assignee_ids: "assignee",
+  creator_ids: "creator",
+  priority: "priority",
+  label_ids: "label",
+  project_ids: "project",
+};
 
 export default class extends Controller {
   static targets = ["button", "panel", "badge", "rootView", "typeView", "typeCount", "clearAllRow"];
@@ -18,7 +30,10 @@ export default class extends Controller {
   togglePanel(event) {
     event.stopPropagation();
     this.panelTarget.classList.toggle("hidden");
-    if (!this.panelTarget.classList.contains("hidden")) this.showRoot();
+    if (!this.panelTarget.classList.contains("hidden")) {
+      this.showRoot();
+      trackEngagement("issue-filter", "open");
+    }
   }
 
   closePanel() {
@@ -52,6 +67,10 @@ export default class extends Controller {
   }
 
   clearAll() {
+    // Both entry points land here — the menu's own clear-all row and filter-chips#clearAll,
+    // which delegates in via getControllerForElementAndIdentifier. Single emitter (§4.4).
+    trackFeature("issue-filter", "clear");
+
     this.element.querySelectorAll('input[type="checkbox"]').forEach((cb) => (cb.checked = false));
     const url = new URL(window.location.href);
     ["lane_ids", "assignee_ids", "creator_ids", "priority", "label_ids", "project_ids"].forEach((k) =>
@@ -75,11 +94,25 @@ export default class extends Controller {
   applyKeyChange(key) {
     const values = this.selectedValuesFor(key);
     const url = new URL(window.location.href);
+    // commitUrl pushState()s on every change, so the URL is authoritative for the pre-change
+    // state. That is what makes apply-vs-remove decidable rather than guessed from "any values
+    // left" — unchecking one of three labels leaves two selected but is unambiguously a remove.
+    const previousCount = (url.searchParams.get(key) || "").split(",").filter(Boolean).length;
+
     if (values.length > 0) {
       url.searchParams.set(key, values.join(","));
     } else {
       url.searchParams.delete(key);
     }
+
+    // handleExternalRemove takes `key` from an untrusted CustomEvent detail; an unmapped key
+    // would ship filter_type: undefined, which 400s and drops the whole batch (§1).
+    if (FILTER_TYPES[key]) {
+      trackFeature("issue-filter", values.length < previousCount ? "remove" : "apply", {
+        filter_type: FILTER_TYPES[key],
+      });
+    }
+
     this.commitUrl(url);
     this.refreshIndicators();
     this.dispatchChanged();

@@ -13,6 +13,7 @@ class IssueMovesController < ApplicationController
 
     mover = IssueTeamMover.new(issue: issue, target_team: target_team, user: Current.user)
     if mover.call
+      track_feature('issue-transfer', 'move', entity: 'issue')
       redirect_to team_issue_path(target_team, issue), notice: "Issue moved to #{target_team.name}."
     else
       redirect_to team_issue_path(issue.team, issue), alert: mover.error || 'Could not move issue.'

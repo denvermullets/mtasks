@@ -7,6 +7,9 @@ class ImportsController < ApplicationController
     return redirect_to_file_required unless csv_file_present?
 
     result = perform_import
+    # One event for the whole import, never one per row (taxonomy §4.6). A partial import still
+    # moved rows, so this is not gated on result[:success].
+    track_feature('csv-import', 'import', count: result[:imported]) if result[:imported].to_i.positive?
     handle_import_result(result)
   end
 

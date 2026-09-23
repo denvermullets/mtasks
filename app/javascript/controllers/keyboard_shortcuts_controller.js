@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus";
+import { trackEngagement } from "vektis";
 
 export default class extends Controller {
   static targets = ["modal"];
@@ -39,8 +40,16 @@ export default class extends Controller {
     }
   }
 
-  showModal() {
+  showModal(event) {
     this.modalTarget.classList.remove("hidden");
+
+    // Two entry points land here: ⌘K via toggleModal(), which calls this with no argument, and
+    // the sidebar's click->keyboard-shortcuts#showModal, which Stimulus always calls with an
+    // event. `shortcut` is only true of the first, so it only ships there — §5.2 is a closed set.
+    const properties = { via: event ? "web" : "keyboard", surface: "modal" };
+    if (!event) properties.shortcut = "cmd_k";
+
+    trackEngagement("keyboard-shortcut", "open", properties);
   }
 
   hideModal() {

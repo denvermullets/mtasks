@@ -7,6 +7,9 @@ module Webhooks
     skip_before_action :set_current_team
     before_action :verify_github_signature
 
+    # The pull_request actions mtasks acts on.
+    PROCESSABLE_ACTIONS = %w[opened edited synchronize closed reopened].freeze
+
     def create
       event_type = request.headers['X-GitHub-Event']
 
@@ -100,7 +103,7 @@ module Webhooks
     end
 
     def processable_action?(action)
-      %w[opened edited synchronize closed reopened].include?(action)
+      PROCESSABLE_ACTIONS.include?(action)
     end
 
     def log_no_subscriptions(pr_data)

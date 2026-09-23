@@ -8,7 +8,10 @@ class TeamExportsController < ApplicationController
   def create
     exporter = IssueExporter.new(@team)
     filename = "#{@team.identifier.downcase}-issues-#{Date.current.iso8601}.csv"
-    send_data exporter.to_csv, filename: filename, type: 'text/csv', disposition: 'attachment'
+    csv = exporter.to_csv
+    # issue_count reads the relation to_csv just memoized — free only in this order.
+    track_feature('team-export', 'export', count: exporter.issue_count)
+    send_data csv, filename: filename, type: 'text/csv', disposition: 'attachment'
   end
 
   private

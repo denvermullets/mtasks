@@ -11,6 +11,7 @@ class CommentsController < ApplicationController
     @comment.user = Current.user
 
     if @comment.save
+      track_comment_created
       detect_issue_references
       notify_comment_created
       notify_mentions
@@ -24,7 +25,9 @@ class CommentsController < ApplicationController
   end
 
   def destroy
+    depth = @comment.depth
     if @comment.destroy
+      track_feature('comment', 'delete', entity: 'issue', depth: depth)
       respond_to do |format|
         format.turbo_stream
         format.html { redirect_to team_issue_path(@issue.team, @issue), notice: 'Comment was successfully deleted.' }
@@ -65,6 +68,12 @@ class CommentsController < ApplicationController
       end
       format.html { redirect_to team_issue_path(@issue.team, @issue), alert: 'Failed to create comment.' }
     end
+  end
+
+  def track_comment_created
+    track_feature('comment', 'create', entity: 'issue', depth: @comment.depth)
+    files = uploaded_file_count(params.dig(:comment, :files))
+    track_feature('issue-attachment', 'create', entity: 'comment', count: files) if files.positive?
   end
 
   def detect_issue_references

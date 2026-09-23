@@ -9,6 +9,7 @@ module Discussion
       @comment = @issue.comments.new(comment_params.merge(user: Current.user))
 
       if @comment.save
+        track_comment_created
         push_result = maybe_push(@comment)
         broadcast_new_comment(@comment)
         render_create_success(push_result)
@@ -18,6 +19,14 @@ module Discussion
     end
 
     private
+
+    # `tab` is the one surface-like field a server call site can honestly assert: the route
+    # itself is the evidence.
+    def track_comment_created
+      track_feature('comment', 'create', entity: 'issue', depth: @comment.depth, tab: 'discussion')
+      files = uploaded_file_count(params.dig(:comment, :files))
+      track_feature('issue-attachment', 'create', entity: 'comment', count: files) if files.positive?
+    end
 
     def render_create_success(push_result)
       respond_to do |format|

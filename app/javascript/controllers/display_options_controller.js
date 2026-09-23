@@ -1,4 +1,17 @@
 import { Controller } from "@hotwired/stimulus";
+import { trackEngagement, trackFeature } from "vektis";
+
+// data-param -> taxonomy `option` value (§5.2). Names the control, never its value. Anything
+// unmapped is not instrumented: shipping option: undefined would 400 and drop the whole batch (§1).
+const DISPLAY_OPTIONS = {
+  group_by: "grouping",
+  sub_group_by: "grouping",
+  order_by: "ordering",
+  completed_filter: "completed_filter",
+  show_sub_issues: "visible_rows",
+  show_empty_groups: "visible_rows",
+  show_empty_rows: "visible_rows",
+};
 
 export default class extends Controller {
   static targets = ["panel", "saveButton", "rowsSection", "groupingLabel", "groupingIcon"];
@@ -21,6 +34,9 @@ export default class extends Controller {
   togglePanel(event) {
     event.stopPropagation();
     this.panelTarget.classList.toggle("hidden");
+    if (!this.panelTarget.classList.contains("hidden")) {
+      trackEngagement("issue-filter", "open");
+    }
   }
 
   closePanel() {
@@ -36,6 +52,8 @@ export default class extends Controller {
 
   setViewMode(event) {
     const viewMode = event.currentTarget.dataset.viewMode;
+    // The chosen mode is not sent: `option` names the control, not its value.
+    trackFeature("issue-filter", "apply", { option: "view_mode" });
 
     // Build new URL with updated view_mode
     const url = new URL(window.location.href);
@@ -112,6 +130,10 @@ export default class extends Controller {
     const param = event.currentTarget.dataset.param;
     const value = event.currentTarget.value;
 
+    if (DISPLAY_OPTIONS[param]) {
+      trackFeature("issue-filter", "apply", { option: DISPLAY_OPTIONS[param] });
+    }
+
     // Build new URL preserving all params
     const url = new URL(window.location.href);
     url.searchParams.set(param, value);
@@ -136,6 +158,10 @@ export default class extends Controller {
   toggleOption(event) {
     const param = event.currentTarget.dataset.param;
     const checked = event.currentTarget.checked;
+
+    if (DISPLAY_OPTIONS[param]) {
+      trackFeature("issue-filter", "apply", { option: DISPLAY_OPTIONS[param] });
+    }
 
     // Update toggle visual state immediately
     this.updateToggleVisual(param, checked);
@@ -208,6 +234,9 @@ export default class extends Controller {
     clearTimeout(this.propertiesTimeout);
     this.propertiesTimeout = setTimeout(() => {
       window.Turbo.visit(url.toString(), { frame: "issues_board" });
+      // Emitted inside the debounce, not per checkbox: these boxes are a single multi-select
+      // control, so one settled selection is one gesture and one Turbo visit.
+      trackFeature("issue-filter", "apply", { option: "visible_properties" });
       // Check if preferences have changed
       this.checkIfChanged();
     }, 300);
@@ -291,6 +320,9 @@ export default class extends Controller {
     }
   }
 
+  // Not instrumented. This is a form POST that persists the preference to the database, and §9
+  // puts any state change reaching the database on the server side; §7 also excludes
+  // preference tweaks from the catalog. The individual controls above are the browser's half.
   savePreferences() {
     // Form fields are already correctly set by the server from saved preferences
     // Only update visible_properties since they're managed by checkboxes in the UI
