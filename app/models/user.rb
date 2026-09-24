@@ -56,6 +56,12 @@ class User < ApplicationRecord
     AVAILABLE_FONTS.include?(value) ? value : 'inter'
   end
 
+  # IANA-backed Rails zone name (e.g. "Eastern Time (US & Canada)"); anything unrecognised reads as UTC.
+  def time_zone
+    value = resolved_settings['time_zone']
+    ActiveSupport::TimeZone[value.to_s] ? value : 'UTC'
+  end
+
   def team_order
     raw = resolved_settings.fetch('team_order', {})
     {

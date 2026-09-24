@@ -1,0 +1,65 @@
+<% content_for :title, "Recurring Issues · #{@team.name}" %>
+<div class="flex-1 overflow-y-auto">
+  <div class="max-w-3xl mx-auto p-4 sm:p-8">
+    <div class="mb-8">
+      <%= link_to edit_team_path(@team), class: "text-xs text-gray-500 hover:text-gray-300 cursor-pointer" do %>
+        &larr; <%= @team.name %> settings
+      <% end %>
+      <div class="flex items-center justify-between gap-4 mt-2">
+        <h1 class="text-2xl font-semibold text-gray-100">Recurring issues</h1>
+        <%= link_to "New recurring issue", new_team_recurring_issue_path(@team),
+                    class: "px-3 py-1.5 text-sm border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 font-medium cursor-pointer rounded-md" %>
+      </div>
+      <p class="text-sm text-gray-500 mt-1">
+        Each one files a fresh <span class="text-gray-300"><%= @team.identifier %></span> issue on its schedule,
+        to be worked and moved to Done like any other issue.
+      </p>
+    </div>
+
+    <% if flash[:notice] %>
+      <div class="mb-4 px-3 py-2 rounded border border-accent/40 bg-accent/10 text-accent text-sm">
+        <%= flash[:notice] %>
+      </div>
+    <% end %>
+
+    <% if @recurring_issues.any? %>
+      <div class="rounded-lg border border-stroke bg-foreground divide-y divide-stroke">
+        <% @recurring_issues.each do |recurring_issue| %>
+          <%= link_to edit_team_recurring_issue_path(@team, recurring_issue),
+                      class: "flex items-center justify-between gap-4 p-4 hover:bg-background/50 cursor-pointer" do %>
+            <div class="min-w-0">
+              <p class="text-sm font-medium text-gray-200 truncate"><%= recurring_issue.title %></p>
+              <p class="text-xs text-gray-500 mt-0.5">
+                <%= recurring_issue.schedule_summary %>
+                <% if recurring_issue.assignee %>
+                  &middot; <%= recurring_issue.assignee.name %>
+                <% end %>
+                <% if recurring_issue.project %>
+                  &middot; <%= recurring_issue.project.name %>
+                <% end %>
+              </p>
+            </div>
+            <div class="text-right shrink-0">
+              <% if recurring_issue.active? %>
+                <p class="text-xs text-gray-400">
+                  Next <%= recurring_issue.next_run_on.to_fs(:long) %>
+                  <span class="text-gray-600"><%= ActiveSupport::TimeZone[recurring_issue.time_zone]&.tzinfo&.abbreviation %></span>
+                </p>
+              <% else %>
+                <p class="text-xs text-amber-500">Paused</p>
+              <% end %>
+              <% if recurring_issue.last_run_at %>
+                <p class="text-xs text-gray-600">Last <%= time_ago_in_words(recurring_issue.last_run_at) %> ago</p>
+              <% end %>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="rounded-lg border border-dashed border-stroke p-8 text-center">
+        <p class="text-sm text-gray-400">No recurring issues yet.</p>
+        <p class="text-xs text-gray-500 mt-1">Good for chores that need a sign-off every time, like "Deploy every Friday".</p>
+      </div>
+    <% end %>
+  </div>
+</div>

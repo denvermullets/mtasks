@@ -1,0 +1,4 @@
+<% content_for :title, "New Recurring Issue · #{@team.name}" %>
+<%= render "page", title: "New recurring issue" do %>
+  <%= render "form", recurring_issue: @recurring_issue %>
+<% end %>

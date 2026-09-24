@@ -3,11 +3,24 @@ import { Controller } from "@hotwired/stimulus";
 export default class extends Controller {
   static targets = ["dropzone", "input", "fileList"];
 
+  connect() {
+    this.selectedFiles = [];
+  }
+
   openFilePicker() {
     this.inputTarget.click();
   }
 
+  // The browser swaps input.files for each picker selection, so fold new picks into what's already staged
   handleFiles() {
+    const picked = Array.from(this.inputTarget.files);
+    this.setFiles([...this.selectedFiles, ...picked]);
+    this.renderFileList();
+  }
+
+  // Dismissing the picker can leave the input empty; put the staged files back
+  restoreFiles() {
+    this.setFiles(this.selectedFiles);
     this.renderFileList();
   }
 
@@ -72,28 +85,19 @@ export default class extends Controller {
 
   removeFile(event) {
     const index = parseInt(event.currentTarget.dataset.index);
-    const dt = new DataTransfer();
-    const files = this.inputTarget.files;
-
-    for (let i = 0; i < files.length; i++) {
-      if (i !== index) {
-        dt.items.add(files[i]);
-      }
-    }
-    this.inputTarget.files = dt.files;
+    this.setFiles(this.selectedFiles.filter((_, i) => i !== index));
     this.renderFileList();
   }
 
   mergeFiles(newFiles) {
+    this.setFiles([...this.selectedFiles, ...Array.from(newFiles)]);
+  }
+
+  setFiles(files) {
     const dt = new DataTransfer();
-    const existing = this.inputTarget.files;
-    for (let i = 0; i < existing.length; i++) {
-      dt.items.add(existing[i]);
-    }
-    for (let i = 0; i < newFiles.length; i++) {
-      dt.items.add(newFiles[i]);
-    }
+    files.forEach((file) => dt.items.add(file));
     this.inputTarget.files = dt.files;
+    this.selectedFiles = Array.from(dt.files);
   }
 
   renderFileList() {

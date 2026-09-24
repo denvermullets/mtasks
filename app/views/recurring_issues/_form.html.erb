@@ -1,0 +1,118 @@
+<% input_class = "w-full px-3 py-2 rounded-md border border-stroke bg-background text-gray-100 text-sm focus:outline-none focus:border-accent" %>
+<% label_class = "block text-sm font-medium text-gray-300 mb-1" %>
+
+<% if recurring_issue.errors.any? %>
+  <div class="mb-4 px-3 py-2 rounded border border-red-500/40 bg-red-500/10 text-red-300 text-sm">
+    <ul class="list-disc list-inside">
+      <% recurring_issue.errors.full_messages.each do |message| %>
+        <li><%= message %></li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>
+
+<%= form_with model: recurring_issue,
+              url: recurring_issue.persisted? ? team_recurring_issue_path(@team, recurring_issue) : team_recurring_issues_path(@team),
+              class: "space-y-6" do |f| %>
+  <div class="rounded-lg border border-stroke bg-foreground p-5 space-y-4">
+    <h2 class="text-lg font-medium text-gray-100">Issue</h2>
+
+    <div>
+      <%= f.label :title, class: label_class %>
+      <%= f.text_field :title, placeholder: "Deploy to production", class: input_class %>
+    </div>
+
+    <div>
+      <%= f.label :description, class: label_class %>
+      <%= f.text_area :description, rows: 5, placeholder: "Checklist or notes copied into every issue", class: input_class %>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <%= f.label :priority, class: label_class %>
+        <%= f.select :priority, RecurringIssue.priorities.keys.map { |p| [p.humanize, p] }, {}, class: input_class %>
+      </div>
+      <div>
+        <%= f.label :lane_id, "Status", class: label_class %>
+        <%= f.select :lane_id, @lanes.map { |lane| [lane.name, lane.id] }, { include_blank: "Default (#{@lanes.first&.name})" }, class: input_class %>
+      </div>
+      <div>
+        <%= f.label :assignee_id, "Assignee", class: label_class %>
+        <%= f.select :assignee_id, @team_members.map { |user| [user.name, user.id] }, { include_blank: "Unassigned" }, class: input_class %>
+      </div>
+      <div>
+        <%= f.label :project_id, "Project", class: label_class %>
+        <%= f.select :project_id, @projects.map { |project| [project.name, project.id] }, { include_blank: "No project" }, class: input_class %>
+      </div>
+    </div>
+
+    <% if @labels.any? %>
+      <div>
+        <span class="<%= label_class %>">Labels</span>
+        <div class="flex flex-wrap gap-2">
+          <%= f.collection_check_boxes :label_ids, @labels, :id, :name do |b| %>
+            <label class="inline-flex items-center gap-2 px-2 py-1 rounded border border-stroke bg-background text-sm text-gray-300 cursor-pointer">
+              <%= b.check_box class: "rounded border-stroke bg-background text-accent focus:ring-accent cursor-pointer" %>
+              <span class="w-2 h-2 rounded-full" style="background-color: <%= b.object.color %>"></span>
+              <%= b.text %>
+            </label>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="rounded-lg border border-stroke bg-foreground p-5 space-y-4" data-controller="recurring-schedule">
+    <h2 class="text-lg font-medium text-gray-100">Schedule</h2>
+
+    <div class="flex flex-wrap items-end gap-3">
+      <div>
+        <%= f.label :frequency, "Repeats", class: label_class %>
+        <%= f.select :frequency, RecurringIssue.frequencies.keys.map { |freq| [freq.humanize, freq] }, {},
+                     class: input_class, data: { recurring_schedule_target: "frequency", action: "recurring-schedule#update" } %>
+      </div>
+      <div>
+        <%= f.label :interval, "Every", class: label_class %>
+        <div class="flex items-center gap-2">
+          <%= f.number_field :interval, min: 1, max: 365, class: "#{input_class} w-20" %>
+          <span class="text-sm text-gray-400" data-recurring-schedule-target="unit"></span>
+        </div>
+      </div>
+      <div data-recurring-schedule-target="weekly">
+        <%= f.label :weekday, "On", class: label_class %>
+        <%= f.select :weekday, Date::DAYNAMES.each_with_index.to_a, {}, class: input_class %>
+      </div>
+      <div data-recurring-schedule-target="monthly">
+        <%= f.label :day_of_month, "On day", class: label_class %>
+        <%= f.select :day_of_month, (1..31).to_a, {}, class: input_class %>
+      </div>
+    </div>
+    <p class="text-xs text-gray-500">Days past the end of a shorter month fall on its last day.</p>
+
+    <div>
+      <%= f.label :time_zone, "Time zone", class: label_class %>
+      <%= f.time_zone_select :time_zone, ActiveSupport::TimeZone.us_zones, {}, class: "#{input_class} sm:w-96" %>
+      <p class="text-xs text-gray-500 mt-1">
+        Issues are filed shortly after midnight on each scheduled day in this zone.
+        New schedules default to your <%= link_to "time zone preference", settings_time_zone_path, class: "text-accent hover:text-accent/80 cursor-pointer" %>.
+      </p>
+    </div>
+
+    <div>
+      <%= label_tag "recurring_issue[starts_on]", recurring_issue.persisted? ? "Next issue on or after" : "Starts on", class: label_class %>
+      <%= date_field_tag "recurring_issue[starts_on]", recurring_issue.next_run_on || recurring_issue.local_today, class: "#{input_class} w-48" %>
+      <p class="text-xs text-gray-500 mt-1">The first issue is filed on the first matching day from this date.</p>
+    </div>
+
+    <label class="flex items-start gap-3 cursor-pointer">
+      <%= f.check_box :active, class: "mt-1 rounded border-stroke bg-background text-accent focus:ring-accent cursor-pointer" %>
+      <span>
+        <span class="block text-sm font-medium text-gray-300">Active</span>
+        <span class="block text-xs text-gray-500">Paused schedules file nothing and skip missed dates when resumed.</span>
+      </span>
+    </label>
+  </div>
+
+  <%= f.submit recurring_issue.persisted? ? "Save" : "Create recurring issue",
+               class: "px-4 py-2 rounded-md bg-accent text-background hover:bg-accent-hover text-sm font-medium transition-colors cursor-pointer" %>
+<% end %>

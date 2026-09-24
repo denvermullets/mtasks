@@ -60,7 +60,8 @@ class ProjectsController < ApplicationController
   end
 
   def update
-    if @project.update(project_params)
+    if @project.update(project_params.except(:files))
+      attach_new_files(@project, project_params[:files])
       track_project_updated
       if turbo_stream_only_request?
         render_roadmap_card_stream

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_28_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_23_120100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -295,6 +295,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_28_120000) do
     t.bigint "parent_issue_id"
     t.integer "priority", default: 4
     t.bigint "project_id"
+    t.bigint "recurring_issue_id"
     t.datetime "started_at"
     t.bigint "team_id", null: false
     t.integer "team_number"
@@ -305,6 +306,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_28_120000) do
     t.index ["lane_id"], name: "index_issues_on_lane_id"
     t.index ["parent_issue_id"], name: "index_issues_on_parent_issue_id"
     t.index ["project_id"], name: "index_issues_on_project_id"
+    t.index ["recurring_issue_id"], name: "index_issues_on_recurring_issue_id"
     t.index ["team_id", "team_number"], name: "index_issues_on_team_id_and_team_number", unique: true
     t.index ["team_id"], name: "index_issues_on_team_id"
     t.index ["team_id"], name: "index_issues_on_team_id_not_archived", where: "(archived_at IS NULL)"
@@ -418,6 +420,34 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_28_120000) do
     t.string "title"
     t.datetime "updated_at", null: false
     t.index ["github_repository_subscription_id"], name: "index_pull_requests_on_github_repository_subscription_id"
+  end
+
+  create_table "recurring_issues", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.bigint "assignee_id"
+    t.datetime "created_at", null: false
+    t.bigint "creator_id"
+    t.integer "day_of_month"
+    t.text "description"
+    t.integer "frequency", default: 1, null: false
+    t.integer "interval", default: 1, null: false
+    t.bigint "label_ids", default: [], null: false, array: true
+    t.bigint "lane_id"
+    t.datetime "last_run_at"
+    t.date "next_run_on", null: false
+    t.integer "priority", default: 4, null: false
+    t.bigint "project_id"
+    t.bigint "team_id", null: false
+    t.string "time_zone", default: "UTC", null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.integer "weekday"
+    t.index ["assignee_id"], name: "index_recurring_issues_on_assignee_id"
+    t.index ["creator_id"], name: "index_recurring_issues_on_creator_id"
+    t.index ["lane_id"], name: "index_recurring_issues_on_lane_id"
+    t.index ["next_run_on"], name: "index_recurring_issues_on_next_run_on", where: "active"
+    t.index ["project_id"], name: "index_recurring_issues_on_project_id"
+    t.index ["team_id"], name: "index_recurring_issues_on_team_id"
   end
 
   create_table "sessions", force: :cascade do |t|
@@ -598,6 +628,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_28_120000) do
   add_foreign_key "issues", "issues", column: "parent_issue_id"
   add_foreign_key "issues", "lanes"
   add_foreign_key "issues", "projects"
+  add_foreign_key "issues", "recurring_issues", on_delete: :nullify
   add_foreign_key "issues", "teams"
   add_foreign_key "issues", "users", column: "assignee_id"
   add_foreign_key "issues", "users", column: "creator_id"
@@ -615,6 +646,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_28_120000) do
   add_foreign_key "projects", "teams"
   add_foreign_key "projects", "users", column: "lead_id"
   add_foreign_key "pull_requests", "github_repository_subscriptions"
+  add_foreign_key "recurring_issues", "lanes", on_delete: :nullify
+  add_foreign_key "recurring_issues", "projects", on_delete: :nullify
+  add_foreign_key "recurring_issues", "teams"
+  add_foreign_key "recurring_issues", "users", column: "assignee_id"
+  add_foreign_key "recurring_issues", "users", column: "creator_id"
   add_foreign_key "sessions", "users"
   add_foreign_key "team_invitations", "teams"
   add_foreign_key "team_invitations", "users", column: "invited_by_id"

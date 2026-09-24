@@ -11,6 +11,7 @@ class Issue < ApplicationRecord
   belongs_to :creator, class_name: 'User', optional: true
   belongs_to :assignee, class_name: 'User', optional: true
   belongs_to :parent_issue, class_name: 'Issue', optional: true
+  belongs_to :recurring_issue, optional: true
   has_many :sub_issues, class_name: 'Issue', foreign_key: :parent_issue_id, dependent: :nullify
   has_many :issue_labels, dependent: :destroy
   has_many :labels, through: :issue_labels

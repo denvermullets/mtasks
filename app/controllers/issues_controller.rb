@@ -67,10 +67,11 @@ class IssuesController < ApplicationController
 
   def update
     load_form_collections
-    @issue.assign_attributes(issue_params)
+    @issue.assign_attributes(issue_params.except(:files))
     @issue.apply_lane_timestamps!
 
     if @issue.save
+      attach_new_files(@issue, issue_params[:files])
       after_successful_update
 
       respond_to do |format|

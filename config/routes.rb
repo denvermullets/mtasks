@@ -7,6 +7,8 @@ Rails.application.routes.draw do
     patch :appearance, to: 'appearance#update'
     get :team_order, to: 'team_order#show'
     patch :team_order, to: 'team_order#update'
+    get :time_zone, to: 'time_zone#show'
+    patch :time_zone, to: 'time_zone#update'
   end
   resources :workspaces, only: [] do
     resource :github_installation, only: %i[show new destroy], controller: 'workspace_github_installations' do
@@ -32,6 +34,7 @@ Rails.application.routes.draw do
     resources :github_repositories, only: %i[index create update destroy], controller: 'team_github_repositories'
     resources :labels, only: %i[index create update destroy]
     resources :lanes, only: %i[create update destroy]
+    resources :recurring_issues, except: %i[show]
     namespace :settings do
       resource :vektis_integration, only: %i[show update destroy], controller: 'vektis_integrations'
     end

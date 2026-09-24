@@ -1,0 +1,14 @@
+<% content_for :title, "Edit Recurring Issue · #{@team.name}" %>
+<%= render "page", title: "Edit recurring issue" do %>
+  <%= render "form", recurring_issue: @recurring_issue %>
+  <div class="mt-6 rounded-lg border border-stroke bg-foreground p-5">
+    <h2 class="text-lg font-medium text-gray-100 mb-1">Delete</h2>
+    <p class="text-sm text-gray-500 mb-4">
+      Stops future issues from being filed. Issues it already created are kept.
+    </p>
+    <%= button_to "Delete recurring issue", team_recurring_issue_path(@team, @recurring_issue),
+                  method: :delete,
+                  form: { data: { turbo_confirm: "Delete this recurring issue?" } },
+                  class: "px-4 py-2 rounded-md border border-red-500/40 text-red-300 hover:bg-red-500/10 text-sm font-medium transition-colors cursor-pointer" %>
+  </div>
+<% end %>

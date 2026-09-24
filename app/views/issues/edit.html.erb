@@ -263,7 +263,7 @@
             </svg>
             <p class="text-sm text-gray-400 mb-2">Drag and drop files here, or</p>
             <%= form.file_field :files, multiple: true,
-                data: { file_upload_target: "input", action: "change->file-upload#handleFiles" },
+                data: { file_upload_target: "input", action: "change->file-upload#handleFiles cancel->file-upload#restoreFiles" },
                 class: "hidden" %>
             <button type="button"
                     data-action="click->file-upload#openFilePicker"
