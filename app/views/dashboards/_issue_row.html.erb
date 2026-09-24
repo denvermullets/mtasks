@@ -1,0 +1,53 @@
+<%# locals: (issue:, today:) %>
+<% due = dashboard_due_label(issue, today) %>
+<% due_class = due&.fetch(:overdue) ? 'text-red-400' : 'text-gray-400' %>
+<%= link_to team_issue_path(issue.team, issue),
+    id: dom_id(issue, :dashboard_row),
+    data: { turbo_frame: "_top" },
+    class: "block hover:bg-hover-highlight transition-colors cursor-pointer" do %>
+  <!-- Desktop -->
+  <div class="hidden sm:grid grid-cols-[auto_1fr_140px_160px_110px_32px_72px] items-center gap-3 px-4 py-2.5 text-sm">
+    <span class="w-2 h-2 rounded-full <%= priority_dot_class(issue) %>" title="<%= issue.priority.humanize %>"></span>
+    <span class="text-gray-100 truncate"><%= issue.title %></span>
+    <span class="flex items-center gap-1.5 text-xs text-gray-400 min-w-0">
+      <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+      </svg>
+      <span class="truncate"><%= issue.team.name %></span>
+    </span>
+    <span class="flex items-center gap-1.5 text-xs text-gray-400 min-w-0">
+      <% if issue.project %>
+        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+        </svg>
+        <span class="truncate"><%= issue.project.name %></span>
+      <% end %>
+    </span>
+    <span class="text-xs <%= due_class %> truncate"><%= due&.fetch(:text) %></span>
+    <span class="flex items-center justify-center">
+      <% if issue.assignee %>
+        <%= user_avatar(issue.assignee, size: "sm") %>
+      <% end %>
+    </span>
+    <span class="font-mono text-xs text-gray-400 text-right truncate"><%= issue.identifier %></span>
+  </div>
+
+  <!-- Mobile -->
+  <div class="sm:hidden flex items-start gap-2.5 px-3.5 py-3">
+    <span class="w-2 h-2 rounded-full shrink-0 mt-1.5 <%= priority_dot_class(issue) %>"></span>
+    <div class="min-w-0 flex-1">
+      <p class="text-sm text-gray-200 truncate"><%= issue.title %></p>
+      <p class="text-[11px] text-gray-500 truncate">
+        <span class="font-mono"><%= issue.identifier %></span>
+        <% if issue.project %>
+          <span aria-hidden="true">·</span>
+          <span><%= issue.project.name %></span>
+        <% end %>
+        <% if due %>
+          <span aria-hidden="true">·</span>
+          <span class="<%= due_class %>"><%= due[:text] %></span>
+        <% end %>
+      </p>
+    </div>
+  </div>
+<% end %>

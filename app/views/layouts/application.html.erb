@@ -21,7 +21,7 @@
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
   </head>
-  <body class="<%= controller_name == 'landing' ? 'bg-background' : 'bg-background text-gray-100 h-dvh overflow-hidden flex' %>" data-controller="keyboard-shortcuts<%= ' sidebar notification-drawer' if authenticated? && controller_name != 'landing' %><%= vektis_controller_token %>"<%= vektis_body_attributes %>>
+  <body class="<%= controller_name == 'landing' ? 'bg-background' : 'bg-background text-gray-100 h-dvh overflow-hidden flex' %>" data-controller="keyboard-shortcuts<%= ' sidebar notification-drawer dashboard-form' if authenticated? && controller_name != 'landing' %><%= vektis_controller_token %>"<%= vektis_body_attributes %>>
     <% if authenticated? && controller_name != 'landing' %>
       <!-- Mobile drawer (hidden by default) -->
       <div id="mobile-drawer" class="fixed inset-0 z-50 hidden sm:hidden">
@@ -65,6 +65,7 @@
                 </div>
               </div>
             <% end %>
+            <%= render "shared/sidebar_dashboards", mobile: true %>
             <div class="p-2 mt-4" data-controller="teams-section">
               <div class="flex items-center justify-between px-2 mb-2">
                 <button data-action="click->teams-section#toggle"
@@ -158,6 +159,9 @@
         <%= yield %>
       </main>
     <% end %>
-    <%= render "shared/keyboard_shortcuts_modal" if authenticated? && controller_name != 'landing' %>
+    <% if authenticated? && controller_name != 'landing' %>
+      <%= render "shared/keyboard_shortcuts_modal" %>
+      <%= render "dashboards/form_modal", dashboard: @form_dashboard || Dashboard.new %>
+    <% end %>
   </body>
 </html>

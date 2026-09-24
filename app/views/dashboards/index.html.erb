@@ -1,0 +1,55 @@
+<% content_for :title, "Dashboards" %>
+<div class="flex-1 flex flex-col min-h-0">
+  <!-- Top Bar -->
+  <div class="h-12 sm:h-14 bg-menu border-b border-stroke flex items-center justify-between px-3 sm:px-4 shrink-0">
+    <div class="flex items-center gap-2 sm:gap-4 min-w-0">
+      <%= render "shared/mobile_menu_button" %>
+      <span class="text-sm text-gray-400">Dashboards</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <button type="button"
+              data-action="click->dashboard-form#open"
+              data-dashboard-form-url-param="<%= dashboards_path %>"
+              data-dashboard-form-method-param="post"
+              data-dashboard-form-title-param="New dashboard"
+              data-dashboard-form-submit-param="Create"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 transition-colors cursor-pointer">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+        <span class="hidden sm:inline">New dashboard</span>
+        <span class="sm:hidden">New</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="flex-1 overflow-y-auto p-3 sm:p-6">
+    <div class="max-w-6xl mx-auto">
+      <% if flash[:notice] %>
+        <%= render "shared/flash", message: flash[:notice], type: "notice" %>
+      <% end %>
+
+      <% if sidebar_dashboards.any? %>
+        <%# Only reached when a create failed validation; the modal is open with the errors. %>
+        <p class="text-sm text-gray-400">Pick a dashboard from the sidebar or create a new one.</p>
+      <% else %>
+        <div class="max-w-md mx-auto mt-12 rounded-xl border border-stroke bg-foreground p-8 text-center" data-testid="dashboards-empty">
+          <svg class="w-8 h-8 mx-auto mb-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+          </svg>
+          <h2 class="text-base font-medium text-gray-100 m-0">Group teams and projects into one view</h2>
+          <p class="text-sm text-gray-400 mt-1">Pull what's due, overdue or urgent from several teams and projects onto one page.</p>
+          <button type="button"
+                  data-action="click->dashboard-form#open"
+                  data-dashboard-form-url-param="<%= dashboards_path %>"
+                  data-dashboard-form-method-param="post"
+                  data-dashboard-form-title-param="New dashboard"
+                  data-dashboard-form-submit-param="Create"
+                  class="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 transition-colors cursor-pointer">
+            Create dashboard
+          </button>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

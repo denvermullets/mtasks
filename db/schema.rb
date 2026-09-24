@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_23_120100) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_24_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -78,6 +78,41 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_120100) do
     t.index ["pushed_to_hourglass_message_id"], name: "index_comments_on_pushed_to_hourglass_message_id"
     t.index ["user_id"], name: "index_comments_on_user_id"
     t.check_constraint "(issue_id IS NULL) <> (project_id IS NULL)", name: "comments_owner_xor"
+  end
+
+  create_table "dashboard_group_sources", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "dashboard_group_id", null: false
+    t.boolean "include_all", default: false, null: false
+    t.bigint "source_id", null: false
+    t.string "source_type", null: false
+    t.datetime "updated_at", null: false
+    t.index ["dashboard_group_id", "source_type", "source_id"], name: "index_dashboard_group_sources_uniqueness", unique: true
+    t.index ["dashboard_group_id"], name: "index_dashboard_group_sources_on_dashboard_group_id"
+    t.index ["source_type", "source_id"], name: "index_dashboard_group_sources_on_source"
+  end
+
+  create_table "dashboard_groups", force: :cascade do |t|
+    t.string "color", default: "#6366f1", null: false
+    t.datetime "created_at", null: false
+    t.bigint "dashboard_id", null: false
+    t.text "description"
+    t.string "name", null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["dashboard_id", "position"], name: "index_dashboard_groups_on_dashboard_id_and_position"
+    t.index ["dashboard_id"], name: "index_dashboard_groups_on_dashboard_id"
+  end
+
+  create_table "dashboards", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "name", null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["user_id", "position"], name: "index_dashboards_on_user_id_and_position"
+    t.index ["user_id"], name: "index_dashboards_on_user_id"
   end
 
   create_table "decisions", force: :cascade do |t|
@@ -307,6 +342,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_120100) do
     t.index ["parent_issue_id"], name: "index_issues_on_parent_issue_id"
     t.index ["project_id"], name: "index_issues_on_project_id"
     t.index ["recurring_issue_id"], name: "index_issues_on_recurring_issue_id"
+    t.index ["team_id", "due_date"], name: "index_issues_on_team_id_due_date_open", where: "((archived_at IS NULL) AND (completed_at IS NULL) AND (canceled_at IS NULL))"
     t.index ["team_id", "team_number"], name: "index_issues_on_team_id_and_team_number", unique: true
     t.index ["team_id"], name: "index_issues_on_team_id"
     t.index ["team_id"], name: "index_issues_on_team_id_not_archived", where: "(archived_at IS NULL)"
@@ -596,6 +632,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_120100) do
   add_foreign_key "comments", "issues"
   add_foreign_key "comments", "projects"
   add_foreign_key "comments", "users"
+  add_foreign_key "dashboard_group_sources", "dashboard_groups"
+  add_foreign_key "dashboard_groups", "dashboards"
+  add_foreign_key "dashboards", "users"
   add_foreign_key "decisions", "issues"
   add_foreign_key "decisions", "projects"
   add_foreign_key "decisions", "teams"

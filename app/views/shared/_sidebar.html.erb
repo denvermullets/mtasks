@@ -27,6 +27,7 @@
         <% end %>
       </div>
     <% end %>
+    <%= render "shared/sidebar_dashboards" %>
     <% owned_teams, joined_teams = user_teams.partition { |t| team_owner?(t) } %>
     <% owned_teams = current_user.order_teams(owned_teams, :owned) %>
     <% joined_teams = current_user.order_teams(joined_teams, :joined) %>

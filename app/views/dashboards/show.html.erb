@@ -1,0 +1,171 @@
+<% content_for :title, "#{@dashboard.name} · Dashboards" %>
+<div class="flex-1 flex flex-col min-h-0"
+     data-controller="vektis-view dashboard-group-form"
+     data-vektis-view-feature-id-value="dashboard"
+     data-vektis-view-surface-value="dashboard">
+  <!-- Top Bar -->
+  <div class="h-12 sm:h-14 bg-menu border-b border-stroke flex items-center justify-between px-3 sm:px-4 shrink-0">
+    <div class="flex items-center gap-2 sm:gap-4 min-w-0">
+      <%= render "shared/mobile_menu_button" %>
+      <span class="text-sm text-gray-500 hidden sm:inline">Dashboards</span>
+      <span class="text-gray-600 hidden sm:inline">&#8250;</span>
+      <span class="text-sm text-gray-200 truncate"><%= @dashboard.name %></span>
+    </div>
+    <div class="relative" data-controller="team-menu">
+      <button type="button"
+              data-action="click->team-menu#toggleDropdown:stop"
+              class="p-1.5 rounded-md text-gray-400 hover:text-gray-200 hover:bg-gray-800 cursor-pointer"
+              aria-label="Dashboard menu">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+        </svg>
+      </button>
+      <div data-team-menu-target="dropdown"
+           class="hidden absolute right-0 mt-1 w-44 bg-foreground border border-stroke rounded-md shadow-lg z-50">
+        <button type="button"
+                data-action="click->team-menu#toggleDropdown click->dashboard-group-form#open"
+                data-dashboard-group-form-url-param="<%= dashboard_groups_path(@dashboard, dashboard_return_params) %>"
+                data-dashboard-group-form-method-param="post"
+                data-dashboard-group-form-title-param="New group"
+                data-dashboard-group-form-submit-param="Create"
+                class="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-hover-highlight rounded-md cursor-pointer">
+          Add group
+        </button>
+        <button type="button"
+                data-action="click->team-menu#toggleDropdown click->dashboard-form#open"
+                data-dashboard-form-url-param="<%= dashboard_path(@dashboard) %>"
+                data-dashboard-form-method-param="patch"
+                data-dashboard-form-name-param="<%= @dashboard.name %>"
+                data-dashboard-form-description-param="<%= @dashboard.description %>"
+                data-dashboard-form-title-param="Rename dashboard"
+                data-dashboard-form-submit-param="Save"
+                class="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-hover-highlight rounded-md cursor-pointer">
+          Rename
+        </button>
+        <%= button_to "Delete", dashboard_path(@dashboard),
+                      method: :delete,
+                      form: { data: { turbo_confirm: "Delete \"#{@dashboard.name}\"? Its groups will be removed too." } },
+                      class: "block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-hover-highlight rounded-md cursor-pointer" %>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex-1 overflow-y-auto p-3 sm:p-6">
+    <div class="max-w-6xl mx-auto">
+      <% if flash[:notice] %>
+        <%= render "shared/flash", message: flash[:notice], type: "notice" %>
+      <% end %>
+
+      <!-- Header -->
+      <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
+        <div class="min-w-0">
+          <h2 class="text-base font-medium text-gray-200 m-0 mb-1"><%= @dashboard.name %></h2>
+          <% if @dashboard.description.present? %>
+            <p class="text-sm text-gray-400 max-w-xl leading-relaxed"><%= @dashboard.description %></p>
+          <% end %>
+        </div>
+        <div class="flex flex-col items-start sm:items-end gap-2 shrink-0 w-full sm:w-auto">
+          <%# Search + team filter. GET form so the URL stays shareable; turbo-action=replace keeps
+              each debounced keystroke from adding a history entry (so the first search from a clean
+              URL replaces it, and Back leaves the dashboard rather than clearing the search). %>
+          <%= form_with url: dashboard_path(@dashboard), method: :get,
+              data: { controller: "auto-submit", action: "submit->auto-submit#cancel", turbo_action: "replace" },
+              class: "flex items-center gap-2 w-full sm:w-auto" do %>
+            <% dashboard_view_params(filter: @result.filter, mine: @mine).each do |key, value| %>
+              <%= hidden_field_tag key, value, id: nil %>
+            <% end %>
+            <div class="relative flex-1 sm:flex-none">
+              <svg class="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18a7.5 7.5 0 006.15-1.35z"></path>
+              </svg>
+              <%= search_field_tag :q, @result.search,
+                  placeholder: "Search issues…",
+                  autocomplete: "off",
+                  spellcheck: false,
+                  autofocus: @result.search.present?,
+                  aria: { label: "Search issues" },
+                  data: { action: "input->auto-submit#debounce focus->auto-submit#caretToEnd" },
+                  class: "w-full sm:w-56 pl-8 pr-3 py-1.5 text-xs font-medium rounded-md bg-foreground text-gray-200 placeholder-gray-500 border border-stroke focus:outline-none focus:border-accent transition-colors" %>
+            </div>
+            <%= select_tag :team,
+                options_for_select([["All teams", ""]] + @filter_teams.map { |team| [team.name, team.id] }, @result.team_id),
+                aria: { label: "Team" },
+                data: { action: "change->auto-submit#submit" },
+                class: "py-1.5 pl-2.5 pr-7 text-xs font-medium rounded-md bg-foreground text-gray-200 border border-stroke focus:outline-none focus:border-accent cursor-pointer" %>
+          <% end %>
+          <div class="flex items-center flex-wrap gap-1.5" data-testid="dashboard-counts">
+            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-foreground border border-stroke text-gray-400">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+              <%= @result.due_today_count %> due today
+            </span>
+            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-foreground border border-stroke text-gray-400">
+              <span class="w-1.5 h-1.5 rounded-full border border-red-400"></span>
+              <%= @result.overdue_count %> overdue
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls: filter tabs + Mine only -->
+      <div class="flex items-center justify-between gap-2 mb-4 min-w-0">
+        <div class="flex items-center gap-1 overflow-x-auto min-w-0" role="tablist">
+          <% DashboardsHelper::FILTER_TABS.each do |key, label| %>
+            <%= link_to label,
+                dashboard_filter_path(@dashboard, filter: key, mine: @mine),
+                class: dashboard_control_class(@result.filter == key),
+                role: "tab",
+                aria: { selected: @result.filter == key } %>
+          <% end %>
+        </div>
+        <%= link_to dashboard_filter_path(@dashboard, filter: @result.filter, mine: !@mine),
+            class: "#{dashboard_control_class(@mine)} shrink-0",
+            aria: { pressed: @mine } do %>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+          <span>Mine only</span>
+        <% end %>
+      </div>
+
+      <!-- Groups -->
+      <% if @result.groups.empty? %>
+        <div class="rounded-xl border border-dashed border-stroke p-8 text-center" data-testid="dashboard-no-groups">
+          <p class="text-sm text-gray-300">Add a group to start pulling in issues</p>
+          <p class="text-xs text-gray-500 mt-1">e.g. <em class="text-gray-300">Launch</em>: Web, Mobile and API teams</p>
+          <button type="button"
+                  data-action="click->dashboard-group-form#open"
+                  data-dashboard-group-form-url-param="<%= dashboard_groups_path(@dashboard, dashboard_return_params) %>"
+                  data-dashboard-group-form-method-param="post"
+                  data-dashboard-group-form-title-param="New group"
+                  data-dashboard-group-form-submit-param="Create"
+                  class="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 transition-colors cursor-pointer">
+            Add group
+          </button>
+        </div>
+      <% else %>
+        <div class="space-y-3">
+          <% @result.groups.each do |entry| %>
+            <%= render "dashboards/group",
+                dashboard: @dashboard,
+                group: entry[:group],
+                issues: entry[:issues],
+                inaccessible: entry[:inaccessible],
+                filter: @result.filter,
+                mine: @mine,
+                today: @result.today %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <%= render "dashboards/group_form_modal",
+      dashboard: @dashboard,
+      group: @form_group || DashboardGroup.new(dashboard_id: @dashboard.id),
+      teams: @modal_teams,
+      projects: @modal_projects,
+      selected_team_ids: @form_team_ids,
+      selected_project_ids: @form_project_ids,
+      all_team_ids: @form_all_team_ids,
+      all_project_ids: @form_all_project_ids %>
+</div>
