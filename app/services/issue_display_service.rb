@@ -181,6 +181,9 @@ class IssueDisplayService
         next
       end
 
+      # Closed projects only earn a group when they still have matching issues
+      next if issues_in_group.empty? && closed_project?(group)
+
       groups[group_name_for(group)] = { object: group, issues: issues_in_group }
     end
 
@@ -223,6 +226,10 @@ class IssueDisplayService
   def group_by_status(loaded_issues)
     # Status is represented by lanes, so group by lane for correct custom lane support
     group_by_association(loaded_issues, :lane)
+  end
+
+  def closed_project?(group)
+    group.is_a?(Project) && group.status.in?(%w[completed cancelled])
   end
 
   def group_name_for(object)

@@ -299,6 +299,24 @@ class IssueDisplayServiceTest < ActiveSupport::TestCase
     assert_includes grouped['No Project'][:issues], @open_issue
   end
 
+  test 'group_by project hides empty closed projects even when show_empty_groups is true' do
+    @team.projects.create!(name: 'Open Empty', status: 'started')
+    @team.projects.create!(name: 'Done Empty', status: 'completed')
+    @team.projects.create!(name: 'Dropped Empty', status: 'cancelled')
+    done_with_issue = @team.projects.create!(name: 'Done Busy', status: 'completed')
+    @team.issues.create!(title: 'Leftover', lane: @backlog_lane, creator: @user, project: done_with_issue)
+
+    service = IssueDisplayService.new(
+      @team.issues, { completed_filter: 'all_completed', group_by: 'project', show_empty_groups: true }, @team
+    )
+    grouped = service.grouped_issues
+
+    assert grouped.key?('Open Empty')
+    assert grouped.key?('Done Busy')
+    assert_not grouped.key?('Done Empty')
+    assert_not grouped.key?('Dropped Empty')
+  end
+
   test 'group_by label buckets issues into each of their labels' do
     bug = @team.labels.create!(name: 'bug', color: '#FF0000')
     feature = @team.labels.create!(name: 'feature', color: '#00FF00')

@@ -7,7 +7,7 @@ module FormCollections
     @lanes = current_team.lanes
     @team_members = current_team.users
     @labels = current_team.labels
-    @projects = current_team.projects
+    @projects = current_team.projects.not_completed
     @visible_properties = UserPreference.for_user_and_team(Current.user, current_team).visible_properties_array
   end
 end
