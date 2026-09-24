@@ -60,7 +60,7 @@ class DashboardGroupsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, 'Name can&#39;t be blank'
     assert_select '#dashboard_group_form_modal:not(.hidden)'
     # The page behind the modal is the pristine dashboard, not a phantom card.
-    assert_includes response.body, 'No groups yet'
+    assert_includes response.body, 'Add a group to start pulling in issues'
   end
 
   test 'create drops team and project ids the user cannot use' do

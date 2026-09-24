@@ -1,7 +1,20 @@
-<%# locals: (dashboard:, group:, issues:, filter:, today:) %>
+<%# locals: (dashboard:, group:, issues:, inaccessible:, filter:, mine:, today:) %>
 <%# The ⋮ menu is a sibling of the <details>, not a child: anything inside <details> other than the
     summary is hidden when it collapses, <form> isn't allowed inside <summary>, and the card clips overflow. %>
 <% group_url = dashboard_group_path(dashboard, group, dashboard_return_params) %>
+<%# Params for the group modal's edit mode; shared by the ⋮ menu's Edit and the inaccessible-state link. %>
+<% edit_params = {
+     dashboard_group_form_url_param: group_url,
+     dashboard_group_form_method_param: "patch",
+     dashboard_group_form_title_param: "Edit group",
+     dashboard_group_form_submit_param: "Save",
+     dashboard_group_form_name_param: group.name,
+     dashboard_group_form_description_param: group.description.to_s,
+     dashboard_group_form_color_param: group.color,
+     dashboard_group_form_team_ids_param: group.team_ids.to_json,
+     dashboard_group_form_project_ids_param: group.project_ids.to_json,
+     dashboard_group_form_delete_url_param: group_url
+   } %>
 <div class="relative">
   <details open
            id="<%= dom_id(group) %>"
@@ -24,8 +37,16 @@
     </summary>
 
     <div class="border-t border-stroke">
-      <% if issues.empty? %>
-        <p class="px-4 py-3 text-sm text-gray-500"><%= dashboard_empty_group_message(filter) %></p>
+      <% if inaccessible %>
+        <p class="px-4 py-3 text-sm text-gray-500" data-testid="dashboard-group-inaccessible">
+          This group's teams/projects are no longer available.
+          <%= tag.button "Edit group",
+              type: "button",
+              data: edit_params.merge(action: "click->dashboard-group-form#open"),
+              class: "text-accent hover:underline cursor-pointer" %>
+        </p>
+      <% elsif issues.empty? %>
+        <p class="px-4 py-3 text-sm text-gray-500"><%= dashboard_empty_group_message(filter, mine: mine) %></p>
       <% else %>
         <div class="divide-y divide-stroke">
           <% issues.each do |issue| %>
@@ -47,21 +68,10 @@
     </button>
     <div data-team-menu-target="dropdown"
          class="hidden absolute right-0 mt-1 w-40 bg-foreground border border-stroke rounded-md shadow-lg z-50">
-      <button type="button"
-              data-action="click->team-menu#toggleDropdown click->dashboard-group-form#open"
-              data-dashboard-group-form-url-param="<%= group_url %>"
-              data-dashboard-group-form-method-param="patch"
-              data-dashboard-group-form-title-param="Edit group"
-              data-dashboard-group-form-submit-param="Save"
-              data-dashboard-group-form-name-param="<%= group.name %>"
-              data-dashboard-group-form-description-param="<%= group.description %>"
-              data-dashboard-group-form-color-param="<%= group.color %>"
-              data-dashboard-group-form-team-ids-param="<%= group.team_ids.to_json %>"
-              data-dashboard-group-form-project-ids-param="<%= group.project_ids.to_json %>"
-              data-dashboard-group-form-delete-url-param="<%= group_url %>"
-              class="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-hover-highlight rounded-md cursor-pointer">
-        Edit
-      </button>
+      <%= tag.button "Edit",
+          type: "button",
+          data: edit_params.merge(action: "click->team-menu#toggleDropdown click->dashboard-group-form#open"),
+          class: "block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-hover-highlight rounded-md cursor-pointer" %>
       <%= button_to "Move up", move_dashboard_group_path(dashboard, group, dashboard_return_params),
                     method: :patch,
                     params: { direction: "up" },

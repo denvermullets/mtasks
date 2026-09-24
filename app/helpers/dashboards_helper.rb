@@ -18,8 +18,8 @@ module DashboardsHelper
   EMPTY_GROUP_MESSAGES = {
     'today' => 'Nothing due today',
     'week' => 'Nothing due this week',
-    'hot' => 'Nothing urgent or high',
-    'open' => 'Nothing open'
+    'hot' => 'No urgent or high-priority issues',
+    'open' => 'No open issues'
   }.freeze
 
   # `due_date` is a date, so the label never carries a time. `today` comes from the query
@@ -58,8 +58,12 @@ module DashboardsHelper
     PRIORITY_DOT_CLASSES.fetch(issue.priority, 'bg-gray-500')
   end
 
-  def dashboard_empty_group_message(filter)
-    EMPTY_GROUP_MESSAGES.fetch(filter, EMPTY_GROUP_MESSAGES['open'])
+  # "Nothing due today assigned to you 🎉": the Mine-only suffix goes before the emoji.
+  def dashboard_empty_group_message(filter, mine: false)
+    message = EMPTY_GROUP_MESSAGES.fetch(filter, EMPTY_GROUP_MESSAGES['open'])
+    message += ' assigned to you' if mine
+    message += ' 🎉' if filter == 'today'
+    message
   end
 
   CONTROL_BASE_CLASS = 'inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-md whitespace-nowrap ' \

@@ -28,11 +28,30 @@ class DashboardsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to dashboard_path(first)
   end
 
-  test 'index renders the empty state when the user has no dashboards' do
+  test 'index renders the onboarding card when the user has no dashboards' do
     get dashboards_path
 
     assert_response :success
-    assert_includes response.body, 'No dashboards yet'
+    assert_select '[data-testid=dashboards-empty]' do
+      assert_select 'h2', text: 'Group teams and projects into one view'
+      assert_select "button[data-action*='dashboard-form#open'][data-dashboard-form-url-param='#{dashboards_path}']",
+                    text: /Create dashboard/
+    end
+  end
+
+  test 'sidebar offers to create the first dashboard when the user has none' do
+    get dashboards_path
+
+    assert_select "button[data-action*='dashboard-form#open'][data-dashboard-form-method-param='post']",
+                  text: /Create your first dashboard/
+  end
+
+  test 'sidebar drops the first-dashboard link once a dashboard exists' do
+    dashboard = @user.dashboards.create!(name: 'Today')
+
+    get dashboard_path(dashboard)
+
+    assert_not_includes response.body, 'Create your first dashboard'
   end
 
   test 'show highlights the dashboard in the sidebar' do
@@ -44,12 +63,19 @@ class DashboardsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a.bg-foreground[href='#{dashboard_path(dashboard)}']"
   end
 
-  test 'show with no groups renders a placeholder' do
+  test 'show with no groups renders the add-group card' do
     dashboard = @user.dashboards.create!(name: 'Today')
 
     get dashboard_path(dashboard)
 
-    assert_includes response.body, 'No groups yet'
+    assert_select '[data-testid=dashboard-no-groups]' do
+      assert_select 'p', text: 'Add a group to start pulling in issues'
+      assert_select 'p', text: /e\.g\. Launch: Web, Mobile and API teams/
+      assert_select "button[data-action='click->dashboard-group-form#open']" \
+                    "[data-dashboard-group-form-url-param='#{dashboard_groups_path(dashboard)}']" \
+                    "[data-dashboard-group-form-method-param='post']",
+                    text: /Add group/
+    end
   end
 
   # --- show: filters ---------------------------------------------------------
@@ -333,7 +359,7 @@ class DashboardsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_not_includes response.body, 'Secret issue'
-    assert_includes response.body, 'Nothing due today'
+    assert_select '[data-testid=dashboard-group-inaccessible]'
   end
 
   test 'rows link to the issue on its own team' do
@@ -353,9 +379,43 @@ class DashboardsControllerTest < ActionDispatch::IntegrationTest
     dashboard = @user.dashboards.create!(name: 'Today')
     group_with(dashboard, @team)
 
-    get dashboard_path(dashboard, filter: 'open')
+    {
+      'today' => 'Nothing due today 🎉',
+      'week' => 'Nothing due this week',
+      'hot' => 'No urgent or high-priority issues',
+      'open' => 'No open issues'
+    }.each do |filter, copy|
+      get dashboard_path(dashboard, filter: filter)
 
-    assert_includes response.body, 'Nothing open'
+      assert_includes response.body, copy, "filter=#{filter}"
+    end
+  end
+
+  test 'an empty group mentions the user when Mine only is on' do
+    dashboard = @user.dashboards.create!(name: 'Today')
+    group_with(dashboard, @team)
+    create_issue(title: 'Someone else', due_date: @today, assignee: @other_user)
+
+    get dashboard_path(dashboard, filter: 'week', mine: 1)
+
+    assert_includes response.body, 'Nothing due this week assigned to you'
+    assert_not_includes response.body, 'Someone else'
+  end
+
+  test 'a group whose sources are all inaccessible links to its edit modal' do
+    dashboard = @user.dashboards.create!(name: 'Today')
+    group = group_with(dashboard, @other_team)
+
+    get dashboard_path(dashboard)
+
+    assert_select '[data-testid=dashboard-group-inaccessible]',
+                  text: %r{This group's teams/projects are no longer available\.} do
+      assert_select "button[data-action='click->dashboard-group-form#open']" \
+                    "[data-dashboard-group-form-url-param='#{dashboard_group_path(dashboard, group)}']" \
+                    "[data-dashboard-group-form-method-param='patch']",
+                    text: 'Edit group'
+    end
+    assert_not_includes response.body, 'Nothing due today'
   end
 
   test 'sidebar shows only the Dashboards header when the user has none' do
@@ -429,7 +489,7 @@ class DashboardsControllerTest < ActionDispatch::IntegrationTest
     follow_redirect!
 
     assert_response :success
-    assert_includes response.body, 'No dashboards yet'
+    assert_includes response.body, 'Group teams and projects into one view'
     assert_includes response.body, 'Dashboard deleted'
   end
 

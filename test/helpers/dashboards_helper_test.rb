@@ -20,10 +20,17 @@ class DashboardsHelperTest < ActionView::TestCase
     assert_equal({ text: 'Mon Sep 28', overdue: false }, dashboard_due_label(Issue.new(due_date: TODAY + 4), TODAY))
   end
 
-  test 'dashboard_empty_group_message falls back for unknown filters' do
-    assert_equal 'Nothing due today', dashboard_empty_group_message('today')
-    assert_equal 'Nothing urgent or high', dashboard_empty_group_message('hot')
-    assert_equal 'Nothing open', dashboard_empty_group_message('bogus')
+  test 'dashboard_empty_group_message has copy for each filter and falls back for unknown ones' do
+    assert_equal 'Nothing due today 🎉', dashboard_empty_group_message('today')
+    assert_equal 'Nothing due this week', dashboard_empty_group_message('week')
+    assert_equal 'No urgent or high-priority issues', dashboard_empty_group_message('hot')
+    assert_equal 'No open issues', dashboard_empty_group_message('open')
+    assert_equal 'No open issues', dashboard_empty_group_message('bogus')
+  end
+
+  test 'dashboard_empty_group_message adds the Mine-only suffix before the emoji' do
+    assert_equal 'Nothing due today assigned to you 🎉', dashboard_empty_group_message('today', mine: true)
+    assert_equal 'No open issues assigned to you', dashboard_empty_group_message('open', mine: true)
   end
 
   test 'priority_dot_class maps priorities to colors' do

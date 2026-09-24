@@ -7,7 +7,9 @@ class DashboardIssuesQuery < Service
 
   # `search` narrows the rows only; `team_id` (already validated against the user's teams)
   # narrows rows and counts; `team_ids` are the accessible teams behind this dashboard's
-  # sources, for the header's team picker.
+  # sources, for the header's team picker. Each `groups` entry is { group:, issues:, inaccessible: },
+  # where `inaccessible` means the group has sources but none resolve to a team or project
+  # the user can still see.
   Result = Data.define(:groups, :due_today_count, :overdue_count, :filter, :today, :search, :team_id, :team_ids)
   Sources = Data.define(:team_ids, :project_ids) do
     def empty?
@@ -33,7 +35,7 @@ class DashboardIssuesQuery < Service
     union = union_sources(resolved.map(&:last))
 
     Result.new(
-      groups: resolved.map { |group, sources| { group: group, issues: issues_for(sources) } },
+      groups: resolved.map { |group, sources| group_entry(group, sources) },
       due_today_count: count_for(union, @today),
       overdue_count: count_for(union, ...@today),
       filter: @filter,
@@ -81,6 +83,10 @@ class DashboardIssuesQuery < Service
       team_ids: source_ids(group, 'Team') & accessible_team_ids,
       project_ids: source_ids(group, 'Project').select { |id| accessible_project_ids.include?(id) }
     )
+  end
+
+  def group_entry(group, sources)
+    { group: group, issues: issues_for(sources), inaccessible: group.sources.any? && sources.empty? }
   end
 
   def union_sources(all_sources)

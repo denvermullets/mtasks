@@ -129,9 +129,9 @@
 
       <!-- Groups -->
       <% if @result.groups.empty? %>
-        <div class="rounded-lg border border-dashed border-stroke p-8 text-center">
-          <p class="text-sm text-gray-400">No groups yet.</p>
-          <p class="text-xs text-gray-500 mt-1">A group pulls issues from a few teams and projects onto one card.</p>
+        <div class="rounded-xl border border-dashed border-stroke p-8 text-center" data-testid="dashboard-no-groups">
+          <p class="text-sm text-gray-300">Add a group to start pulling in issues</p>
+          <p class="text-xs text-gray-500 mt-1">e.g. <em class="text-gray-300">Launch</em>: Web, Mobile and API teams</p>
           <button type="button"
                   data-action="click->dashboard-group-form#open"
                   data-dashboard-group-form-url-param="<%= dashboard_groups_path(@dashboard, dashboard_return_params) %>"
@@ -149,7 +149,9 @@
                 dashboard: @dashboard,
                 group: entry[:group],
                 issues: entry[:issues],
+                inaccessible: entry[:inaccessible],
                 filter: @result.filter,
+                mine: @mine,
                 today: @result.today %>
           <% end %>
         </div>

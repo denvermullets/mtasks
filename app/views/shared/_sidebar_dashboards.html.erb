@@ -29,5 +29,15 @@
         <% end %>
       <% end %>
     </div>
+  <% else %>
+    <button type="button"
+            data-action="<%= 'click->sidebar#close ' if mobile %>click->dashboard-form#open"
+            data-dashboard-form-url-param="<%= dashboards_path %>"
+            data-dashboard-form-method-param="post"
+            data-dashboard-form-title-param="New dashboard"
+            data-dashboard-form-submit-param="Create"
+            class="block w-full text-left px-2 py-1.5 text-sm text-gray-500 hover:text-gray-300 cursor-pointer">
+      Create your first dashboard
+    </button>
   <% end %>
 </div>

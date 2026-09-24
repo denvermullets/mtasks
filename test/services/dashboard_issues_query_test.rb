@@ -73,10 +73,31 @@ class DashboardIssuesQueryTest < ActiveSupport::TestCase
     assert_equal 0, result.due_today_count
   end
 
-  test 'a group with no accessible sources is still returned with an empty issue list' do
+  test 'a group with no sources is still returned with an empty issue list and is not inaccessible' do
     group = @dashboard.groups.create!(name: 'Empty')
 
-    assert_equal [{ group: group, issues: [] }], query.groups
+    assert_equal [{ group: group, issues: [], inaccessible: false }], query.groups
+  end
+
+  # --- inaccessible --------------------------------------------------------
+
+  test 'a group whose sources are all on teams the user is not in is inaccessible' do
+    group = group_with(@other_team, @other_project)
+
+    assert entry_for(query, group)[:inaccessible]
+  end
+
+  test 'a group whose only team was archived is inaccessible' do
+    group = group_with(@team_a, @project_a)
+    @team_a.update!(archived_at: Time.current)
+
+    assert entry_for(query, group)[:inaccessible]
+  end
+
+  test 'a group with at least one accessible source is not inaccessible' do
+    group = group_with(@other_team, @project_a)
+
+    assert_not entry_for(query, group)[:inaccessible]
   end
 
   # --- mine ----------------------------------------------------------------
@@ -370,7 +391,11 @@ class DashboardIssuesQueryTest < ActiveSupport::TestCase
   end
 
   def issues_for(result, group)
-    result.groups.find { |entry| entry[:group] == group }.fetch(:issues)
+    entry_for(result, group).fetch(:issues)
+  end
+
+  def entry_for(result, group)
+    result.groups.find { |entry| entry[:group] == group }
   end
 
   def create_issue(team, **attrs)
