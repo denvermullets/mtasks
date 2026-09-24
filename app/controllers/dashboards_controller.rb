@@ -1,6 +1,8 @@
 # Dashboards are personal (user-owned, not team-scoped), so every lookup goes through
 # current_user.dashboards and another user's id is simply not found.
 class DashboardsController < ApplicationController
+  include DashboardPage
+
   before_action :set_dashboard, only: %i[show update destroy]
 
   def index
@@ -12,7 +14,7 @@ class DashboardsController < ApplicationController
   end
 
   def show
-    load_result
+    load_dashboard_page
   end
 
   def create
@@ -35,7 +37,7 @@ class DashboardsController < ApplicationController
     else
       @form_dashboard = @dashboard
       @dashboard = current_user.dashboards.find(params[:id]) # pristine copy for the page behind the modal
-      load_result
+      load_dashboard_page
       render :show, status: :unprocessable_entity
     end
   end
@@ -49,14 +51,6 @@ class DashboardsController < ApplicationController
 
   def set_dashboard
     @dashboard = current_user.dashboards.find(params[:id])
-  end
-
-  def load_result
-    @result = DashboardIssuesQuery.call(
-      user: current_user, dashboard: @dashboard,
-      filter: params[:filter], mine: params[:mine]
-    )
-    @mine = ActiveModel::Type::Boolean.new.cast(params[:mine]) || false
   end
 
   def dashboard_params

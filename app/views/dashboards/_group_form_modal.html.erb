@@ -1,0 +1,155 @@
+<%# locals: (dashboard:, group:, teams:, projects:, selected_team_ids: nil, selected_project_ids: nil) %>
+<%# One modal for both "Add group" and "Edit group"; dashboard_group_form_controller.js fills it from the trigger's params. %>
+<% selected_team_ids ||= group.team_ids %>
+<% selected_project_ids ||= group.project_ids %>
+<% input_class = "w-full px-3 py-2 rounded-md border border-stroke bg-background text-gray-100 text-sm focus:outline-none focus:border-accent" %>
+<% label_class = "block text-sm font-medium text-gray-300 mb-1" %>
+<% check_class = "rounded border-stroke bg-background text-accent focus:ring-accent cursor-pointer" %>
+<% row_class = "flex items-center gap-2 px-2 py-1.5 rounded text-sm text-gray-300 hover:bg-hover-highlight cursor-pointer" %>
+<% form_url = group.persisted? ? dashboard_group_path(dashboard, group, dashboard_return_params) : dashboard_groups_path(dashboard, dashboard_return_params) %>
+<div id="dashboard_group_form_modal"
+     data-dashboard-group-form-target="modal"
+     data-action="click->dashboard-group-form#backdropClick"
+     class="<%= 'hidden' unless group.errors.any? %> fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+  <div class="bg-foreground border border-stroke rounded-lg shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col">
+    <!-- Header -->
+    <div class="flex items-center justify-between px-4 py-3 border-b border-stroke shrink-0">
+      <h3 data-dashboard-group-form-target="title" class="text-sm font-medium text-gray-200"><%= group.persisted? ? 'Edit group' : 'New group' %></h3>
+      <button type="button"
+              data-action="click->dashboard-group-form#close"
+              class="text-gray-500 hover:text-gray-300 cursor-pointer"
+              aria-label="Close">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <%# method: :post keeps Rails from emitting its own _method for persisted records; the JS flips ours. %>
+    <%= form_with model: group,
+                  url: form_url,
+                  method: :post,
+                  data: { dashboard_group_form_target: "form" },
+                  class: "flex-1 min-h-0 flex flex-col" do |f| %>
+      <%= hidden_field_tag :_method, (group.persisted? ? 'patch' : 'post'), data: { dashboard_group_form_target: "method" } %>
+
+      <div class="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+        <% if group.errors.any? %>
+          <div data-dashboard-group-form-target="errors" class="px-3 py-2 rounded border border-red-500/40 bg-red-500/10 text-red-300 text-sm">
+            <ul class="list-disc list-inside">
+              <% group.errors.full_messages.each do |message| %>
+                <li><%= message %></li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+
+        <div>
+          <%= f.label :name, class: label_class %>
+          <%= f.text_field :name, required: true, maxlength: 80, placeholder: "Launch", class: input_class, data: { dashboard_group_form_target: "name" } %>
+        </div>
+
+        <div>
+          <%= f.label :description, "Description (optional)", class: label_class %>
+          <%= f.text_field :description, placeholder: "Everything related to our upcoming product launch.", class: input_class, data: { dashboard_group_form_target: "description" } %>
+        </div>
+
+        <div>
+          <span class="<%= label_class %>">Color</span>
+          <div class="flex items-center gap-2.5">
+            <% DashboardGroup::COLORS.each do |hex| %>
+              <label class="cursor-pointer" title="<%= hex %>">
+                <%= f.radio_button :color, hex, checked: hex == group.color, class: "sr-only peer", data: { dashboard_group_form_target: "color" } %>
+                <span class="block w-6 h-6 rounded-full ring-offset-2 ring-offset-foreground peer-checked:ring-2 peer-checked:ring-gray-200 peer-focus-visible:ring-2 peer-focus-visible:ring-accent"
+                      style="background-color: <%= hex %>;"></span>
+              </label>
+            <% end %>
+          </div>
+        </div>
+
+        <div>
+          <span class="<%= label_class %>">Teams</span>
+          <% if teams.empty? %>
+            <p class="text-xs text-gray-500">You're not on any teams yet.</p>
+          <% else %>
+            <div class="rounded-md border border-stroke bg-background p-1 max-h-48 overflow-y-auto">
+              <%= f.collection_check_boxes :team_ids, teams, :id, :name, checked: selected_team_ids do |b| %>
+                <label class="<%= row_class %>">
+                  <%= b.check_box class: check_class, data: { dashboard_group_form_target: "team" } %>
+                  <span class="truncate"><%= b.text %></span>
+                  <span class="font-mono text-[10px] text-gray-500 ml-auto shrink-0"><%= b.object.identifier %></span>
+                </label>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-1">
+            <span class="text-sm font-medium text-gray-300">Projects</span>
+            <input type="search"
+                   placeholder="Filter projects…"
+                   autocomplete="off"
+                   data-dashboard-group-form-target="search"
+                   data-action="input->dashboard-group-form#filter"
+                   class="w-40 px-2 py-1 rounded-md border border-stroke bg-background text-gray-100 text-xs focus:outline-none focus:border-accent">
+          </div>
+          <%# One blank entry so the key always posts (clearing every box still means "no projects"). %>
+          <%= hidden_field_tag "dashboard_group[project_ids][]", "", id: nil %>
+          <div class="rounded-md border border-stroke bg-background p-1 max-h-56 overflow-y-auto">
+            <% teams.each do |team| %>
+              <% team_projects = projects.fetch(team.id, []) %>
+              <% next if team_projects.empty? %>
+              <div data-dashboard-group-form-target="teamHeading"
+                   data-team-id="<%= team.id %>"
+                   class="px-2 pt-2 pb-1 text-[11px] font-medium uppercase tracking-wide text-gray-500">
+                <%= team.name %>
+              </div>
+              <%= f.collection_check_boxes :project_ids, team_projects, :id, :name, { checked: selected_project_ids, include_hidden: false } do |b| %>
+                <% completed = b.object.status == 'completed' %>
+                <label class="<%= row_class %>"
+                       data-dashboard-group-form-target="projectRow"
+                       data-team-id="<%= team.id %>"
+                       data-search="<%= b.text.to_s.downcase %>"
+                       data-completed="<%= completed %>">
+                  <%= b.check_box class: check_class, data: { dashboard_group_form_target: "project" } %>
+                  <span class="truncate"><%= b.text %></span>
+                  <% if completed %>
+                    <span class="text-[10px] text-gray-500 ml-auto shrink-0">completed</span>
+                  <% end %>
+                </label>
+              <% end %>
+            <% end %>
+            <p data-dashboard-group-form-target="emptyState"
+               class="<%= 'hidden' if projects.any? %> px-2 py-3 text-xs text-gray-500 text-center">
+              No projects match.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 px-4 py-3 border-t border-stroke shrink-0">
+        <button type="button"
+                data-action="click->dashboard-group-form#close"
+                class="px-3 py-1.5 text-xs rounded-md border border-stroke text-gray-300 hover:bg-hover-highlight transition-colors cursor-pointer">
+          Cancel
+        </button>
+        <button type="submit"
+                data-dashboard-group-form-target="submit"
+                class="px-3 py-1.5 text-xs font-medium rounded-md border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 transition-colors cursor-pointer">
+          <%= group.persisted? ? 'Save' : 'Create' %>
+        </button>
+      </div>
+    <% end %>
+
+    <%# Separate form (can't nest inside the save form). Hidden in create mode; the JS sets its action. %>
+    <div data-dashboard-group-form-target="deleteSection"
+         class="<%= 'hidden' unless group.persisted? %> px-4 py-3 border-t border-stroke shrink-0">
+      <%= button_to "Delete group",
+                    (group.persisted? ? dashboard_group_path(dashboard, group, dashboard_return_params) : dashboard_groups_path(dashboard)),
+                    method: :delete,
+                    form: { data: { dashboard_group_form_target: "deleteForm", turbo_confirm: "Delete this group? Its issues stay where they are." } },
+                    class: "text-xs text-red-400 hover:text-red-300 transition-colors cursor-pointer" %>
+    </div>
+  </div>
+</div>

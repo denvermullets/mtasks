@@ -64,4 +64,58 @@ class DashboardGroupTest < ActiveSupport::TestCase
       @group.destroy
     end
   end
+
+  # --- replace_sources! ------------------------------------------------------
+
+  test 'replace_sources! adds and removes sources and keeps the ones still listed' do
+    kept = @group.sources.create!(source: @project)
+    @group.sources.create!(source: @team)
+    other_project = @team.projects.create!(name: 'Other project')
+
+    @group.replace_sources!(team_ids: [], project_ids: [@project.id, other_project.id])
+
+    assert_equal [], @group.team_ids
+    assert_equal [@project.id, other_project.id].sort, @group.project_ids.sort
+    assert DashboardGroupSource.exists?(kept.id), 'a source that stays should not be recreated'
+  end
+
+  test 'replace_sources! with empty lists clears everything' do
+    @group.sources.create!(source: @team)
+    @group.sources.create!(source: @project)
+
+    @group.replace_sources!(team_ids: [], project_ids: [])
+
+    assert_empty @group.sources.reload
+  end
+
+  test 'replace_sources! is idempotent' do
+    @group.replace_sources!(team_ids: [@team.id], project_ids: [@project.id])
+
+    assert_no_difference -> { DashboardGroupSource.count } do
+      @group.replace_sources!(team_ids: [@team.id], project_ids: [@project.id])
+    end
+  end
+
+  # --- move! -----------------------------------------------------------------
+
+  test 'move! swaps with the neighbour and renumbers from 1' do
+    a = @group
+    b = @dashboard.groups.create!(name: 'B', position: 5)
+    c = @dashboard.groups.create!(name: 'C', position: 9)
+
+    b.move!('down')
+
+    assert_equal [a, c, b], @dashboard.groups.reload.to_a
+    assert_equal [1, 2, 3], @dashboard.groups.map(&:position)
+  end
+
+  test 'move! at an edge changes nothing' do
+    b = @dashboard.groups.create!(name: 'B', position: 1)
+
+    assert_equal [@group, b], @dashboard.groups.reload.to_a
+    @group.move!('up')
+    b.move!('down')
+
+    assert_equal [@group, b], @dashboard.groups.reload.to_a
+  end
 end

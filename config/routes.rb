@@ -100,7 +100,11 @@ Rails.application.routes.draw do
   end
 
   # User-owned dashboards (not team-scoped)
-  resources :dashboards, only: %i[index show create update destroy]
+  resources :dashboards, only: %i[index show create update destroy] do
+    resources :groups, only: %i[create update destroy], controller: 'dashboard_groups' do
+      patch :move, on: :member # params[:direction] = "up" | "down"
+    end
+  end
 
   # Token-based invitation acceptance (no auth required)
   resources :invitations, only: %i[show update], param: :token, controller: 'invitation_acceptances'

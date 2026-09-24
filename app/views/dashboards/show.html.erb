@@ -1,6 +1,6 @@
 <% content_for :title, "#{@dashboard.name} · Dashboards" %>
 <div class="flex-1 flex flex-col min-h-0"
-     data-controller="vektis-view"
+     data-controller="vektis-view dashboard-group-form"
      data-vektis-view-feature-id-value="dashboard"
      data-vektis-view-surface-value="dashboard">
   <!-- Top Bar -->
@@ -22,6 +22,15 @@
       </button>
       <div data-team-menu-target="dropdown"
            class="hidden absolute right-0 mt-1 w-44 bg-foreground border border-stroke rounded-md shadow-lg z-50">
+        <button type="button"
+                data-action="click->team-menu#toggleDropdown click->dashboard-group-form#open"
+                data-dashboard-group-form-url-param="<%= dashboard_groups_path(@dashboard, dashboard_return_params) %>"
+                data-dashboard-group-form-method-param="post"
+                data-dashboard-group-form-title-param="New group"
+                data-dashboard-group-form-submit-param="Create"
+                class="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-hover-highlight rounded-md cursor-pointer">
+          Add group
+        </button>
         <button type="button"
                 data-action="click->team-menu#toggleDropdown click->dashboard-form#open"
                 data-dashboard-form-url-param="<%= dashboard_path(@dashboard) %>"
@@ -92,11 +101,22 @@
       <% if @result.groups.empty? %>
         <div class="rounded-lg border border-dashed border-stroke p-8 text-center">
           <p class="text-sm text-gray-400">No groups yet.</p>
+          <p class="text-xs text-gray-500 mt-1">A group pulls issues from a few teams and projects onto one card.</p>
+          <button type="button"
+                  data-action="click->dashboard-group-form#open"
+                  data-dashboard-group-form-url-param="<%= dashboard_groups_path(@dashboard, dashboard_return_params) %>"
+                  data-dashboard-group-form-method-param="post"
+                  data-dashboard-group-form-title-param="New group"
+                  data-dashboard-group-form-submit-param="Create"
+                  class="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 transition-colors cursor-pointer">
+            Add group
+          </button>
         </div>
       <% else %>
         <div class="space-y-3">
           <% @result.groups.each do |entry| %>
             <%= render "dashboards/group",
+                dashboard: @dashboard,
                 group: entry[:group],
                 issues: entry[:issues],
                 filter: @result.filter,
@@ -106,4 +126,12 @@
       <% end %>
     </div>
   </div>
+
+  <%= render "dashboards/group_form_modal",
+      dashboard: @dashboard,
+      group: @form_group || DashboardGroup.new(dashboard_id: @dashboard.id),
+      teams: @modal_teams,
+      projects: @modal_projects,
+      selected_team_ids: @form_team_ids,
+      selected_project_ids: @form_project_ids %>
 </div>
