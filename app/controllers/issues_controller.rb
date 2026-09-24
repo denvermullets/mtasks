@@ -40,6 +40,7 @@ class IssuesController < ApplicationController
     @issue = current_team.issues.new
     @issue.lane_id = params[:lane_id] if params[:lane_id].present?
     @issue.project_id = params[:project_id] if params[:project_id].present?
+    @return_to = navigation_return_path
     load_form_collections
   end
 
@@ -54,6 +55,7 @@ class IssuesController < ApplicationController
       HourglassOutboundEmitterJob.dispatch_create(@issue, Current.user)
       redirect_after_create
     else
+      @return_to = navigation_return_path
       load_form_collections
       render :new, status: :unprocessable_entity
     end
@@ -85,7 +87,8 @@ class IssuesController < ApplicationController
     @issue.destroy
     track_issue_deleted(@issue) if @issue.destroyed?
     ProjectVelocityJob.perform_later(project_id) if project_id.present?
-    redirect_to team_issues_path(@issue.team), notice: 'Issue was successfully deleted.'
+    redirect_to navigation_return_path(leaving: team_issue_path(@issue.team, @issue)) || team_issues_path(@issue.team),
+                notice: 'Issue was successfully deleted.'
   end
 
   def card
@@ -130,10 +133,12 @@ class IssuesController < ApplicationController
   end
 
   def redirect_after_create
+    return_to = navigation_return_path
     if params[:create_more] == '1'
-      redirect_to new_team_issue_path(@issue.team), notice: 'Issue was successfully created. Create another?'
+      redirect_to new_team_issue_path(@issue.team, return_to: return_to),
+                  notice: 'Issue was successfully created. Create another?'
     else
-      redirect_to team_issues_path(@issue.team), notice: 'Issue was successfully created.'
+      redirect_to return_to || team_issues_path(@issue.team), notice: 'Issue was successfully created.'
     end
   end
 

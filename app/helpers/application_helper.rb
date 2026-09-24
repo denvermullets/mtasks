@@ -22,9 +22,11 @@ module ApplicationHelper
   end
 
   # Returns { url:, label: } for a top-bar back link.
-  # Prefers request.referer when it's a same-origin page other than the current one
-  # and maps to a known destination. Falls back otherwise.
-  def back_nav_link(fallback_url:, fallback_label:)
+  # Prefers `path` (by default the previous page on the session's NavigationTrail), then
+  # request.referer when it's a same-origin page other than the current one. Falls back otherwise.
+  def back_nav_link(fallback_url:, fallback_label:, path: navigation_back_path)
+    return { url: path, label: back_nav_label_for(path.split('?', 2).first) || fallback_label } if path.present?
+
     fallback = { url: fallback_url, label: fallback_label }
     ref = request.referer
     return fallback if ref.blank?
@@ -47,7 +49,8 @@ module ApplicationHelper
 
   BACK_NAV_RULES = [
     [%r{\A/teams/[^/]+/issues/(?<id>\d+)(?:/edit)?/?\z}, ->(m) { Issue.find_by(id: m[:id])&.identifier || 'Issue' }],
-    [%r{\A/teams/[^/]+/projects/(?<id>\d+)(?:/edit)?/?\z}, ->(m) { Project.find_by(id: m[:id])&.name || 'Project' }],
+    [%r{\A/teams/[^/]+/projects/(?<id>\d+)(?:/(?:edit|overview|discussion|activity))?/?\z},
+     ->(m) { Project.find_by(id: m[:id])&.name || 'Project' }],
     [%r{\A/teams/[^/]+/issues/?\z}, 'Issues'],
     [%r{\A/teams/[^/]+/projects(?:/new)?/?\z}, 'Projects'],
     [%r{\A/teams/[^/]+/roadmap/?\z}, 'Roadmap'],

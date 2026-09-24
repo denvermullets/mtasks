@@ -152,4 +152,67 @@ class IssuesControllerTest < ActionDispatch::IntegrationTest
     assert_equal @team, @issue.reload.team
     assert_redirected_to team_issue_path(@team, @issue)
   end
+
+  test 'back link does not loop between two issues visited in turn' do
+    other = @team.issues.create!(title: 'Other issue', lane: @backlog_lane, creator: @user)
+    list = team_issues_path(@team, lane_ids: @backlog_lane.id)
+
+    get team_issue_path(@team, @issue), headers: { 'Referer' => "http://www.example.com#{list}" }
+    get team_issue_path(@team, other), headers: { 'Referer' => "http://www.example.com#{team_issue_path(@team, @issue)}" }
+    assert_select 'a[href=?]', team_issue_path(@team, @issue)
+
+    get team_issue_path(@team, @issue), headers: { 'Referer' => "http://www.example.com#{team_issue_path(@team, other)}" }
+    assert_select 'a[href=?]', list
+    assert_select 'a[href=?]', team_issue_path(@team, other), count: 0
+  end
+
+  test 'new captures the originating project and create returns there' do
+    project = @team.projects.create!(name: 'Proj', status: 'backlog')
+    project_path = team_project_path(@team, project)
+
+    get new_team_issue_path(@team, project_id: project.id), headers: { 'Referer' => "http://www.example.com#{project_path}" }
+    assert_select 'input[type=hidden][name=return_to][value=?]', project_path
+
+    post team_issues_path(@team), params: { return_to: project_path,
+                                            issue: { title: 'From project', lane_id: @backlog_lane.id } }
+    assert_redirected_to project_path
+  end
+
+  test 'create falls back to the trail and keeps index filters' do
+    list = team_issues_path(@team, lane_ids: @backlog_lane.id)
+    get new_team_issue_path(@team), headers: { 'Referer' => "http://www.example.com#{list}" }
+
+    post team_issues_path(@team), params: { issue: { title: 'Filtered', lane_id: @backlog_lane.id } }
+    assert_redirected_to list
+  end
+
+  test 'create with create_more carries return_to to the next form' do
+    list = team_issues_path(@team, lane_ids: @backlog_lane.id)
+
+    post team_issues_path(@team), params: { return_to: list, create_more: '1',
+                                            issue: { title: 'Again', lane_id: @backlog_lane.id } }
+    assert_redirected_to new_team_issue_path(@team, return_to: list)
+  end
+
+  test 'create ignores a return_to outside the current team' do
+    other_team = @workspace.teams.create!(name: 'Other Team', identifier: 'OTH')
+
+    post team_issues_path(@team), params: { return_to: team_issues_path(other_team),
+                                            issue: { title: 'Nope', lane_id: @backlog_lane.id } }
+    assert_redirected_to team_issues_path(@team)
+
+    post team_issues_path(@team), params: { return_to: 'https://evil.example/teams/1/issues',
+                                            issue: { title: 'Nope', lane_id: @backlog_lane.id } }
+    assert_redirected_to team_issues_path(@team)
+  end
+
+  test 'destroy returns to the page before the deleted issue' do
+    project = @team.projects.create!(name: 'Proj', status: 'backlog')
+    project_path = team_project_path(@team, project)
+
+    get team_issue_path(@team, @issue), headers: { 'Referer' => "http://www.example.com#{project_path}" }
+    delete team_issue_path(@team, @issue), headers: { 'Referer' => "http://www.example.com#{team_issue_path(@team, @issue)}" }
+
+    assert_redirected_to project_path
+  end
 end
