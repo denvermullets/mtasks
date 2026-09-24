@@ -108,6 +108,19 @@
 
         </div>
       </div>
+      <!-- Recurring Issues Section -->
+      <div class="bg-foreground border border-stroke rounded-lg p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-lg font-semibold text-gray-200">Recurring Issues</h2>
+            <p class="text-xs text-gray-400 mt-1">Issues filed automatically on a schedule, e.g. a weekly deploy sign-off</p>
+          </div>
+          <%= link_to team_recurring_issues_path(@team), class: "text-sm text-accent hover:text-accent/80 cursor-pointer" do %>
+            <% recurring_count = @team.recurring_issues.active.count %>
+            <%= recurring_count.positive? ? "Manage (#{recurring_count})" : "Set Up" %>
+          <% end %>
+        </div>
+      </div>
       <!-- Members Section (team admins only) -->
       <% if team_admin?(@team) %>
         <div class="bg-foreground border border-stroke rounded-lg p-6">
