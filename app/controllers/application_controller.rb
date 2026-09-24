@@ -12,7 +12,14 @@ class ApplicationController < ActionController::Base
 
   before_action :configure_paper_trail_whodunnit
 
+  helper_method :sidebar_dashboards
+
   private
+
+  # Loaded once per request; the desktop sidebar and the mobile drawer both render it.
+  def sidebar_dashboards
+    @sidebar_dashboards ||= current_user.dashboards.to_a
+  end
 
   def configure_paper_trail_whodunnit
     ::PaperTrail.request.whodunnit = Current.user&.id&.to_s

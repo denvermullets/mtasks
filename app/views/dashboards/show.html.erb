@@ -1,0 +1,60 @@
+<% content_for :title, "#{@dashboard.name} · Dashboards" %>
+<div class="flex-1 flex flex-col min-h-0">
+  <!-- Top Bar -->
+  <div class="h-12 sm:h-14 bg-menu border-b border-stroke flex items-center justify-between px-3 sm:px-4 shrink-0">
+    <div class="flex items-center gap-2 sm:gap-4 min-w-0">
+      <%= render "shared/mobile_menu_button" %>
+      <span class="text-sm text-gray-500 hidden sm:inline">Dashboards</span>
+      <span class="text-gray-600 hidden sm:inline">&#8250;</span>
+      <span class="text-sm text-gray-200 truncate"><%= @dashboard.name %></span>
+    </div>
+    <div class="relative" data-controller="team-menu">
+      <button type="button"
+              data-action="click->team-menu#toggleDropdown:stop"
+              class="p-1.5 rounded-md text-gray-400 hover:text-gray-200 hover:bg-gray-800 cursor-pointer"
+              aria-label="Dashboard menu">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+        </svg>
+      </button>
+      <div data-team-menu-target="dropdown"
+           class="hidden absolute right-0 mt-1 w-44 bg-foreground border border-stroke rounded-md shadow-lg z-50">
+        <button type="button"
+                data-action="click->team-menu#toggleDropdown click->dashboard-form#open"
+                data-dashboard-form-url-param="<%= dashboard_path(@dashboard) %>"
+                data-dashboard-form-method-param="patch"
+                data-dashboard-form-name-param="<%= @dashboard.name %>"
+                data-dashboard-form-description-param="<%= @dashboard.description %>"
+                data-dashboard-form-title-param="Rename dashboard"
+                data-dashboard-form-submit-param="Save"
+                class="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-hover-highlight rounded-md cursor-pointer">
+          Rename
+        </button>
+        <%= button_to "Delete", dashboard_path(@dashboard),
+                      method: :delete,
+                      form: { data: { turbo_confirm: "Delete \"#{@dashboard.name}\"? Its groups will be removed too." } },
+                      class: "block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-hover-highlight rounded-md cursor-pointer" %>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex-1 overflow-y-auto p-3 sm:p-6">
+    <div class="max-w-6xl mx-auto">
+      <% if flash[:notice] %>
+        <%= render "shared/flash", message: flash[:notice], type: "notice" %>
+      <% end %>
+
+      <!-- Header -->
+      <div class="mb-4">
+        <h2 class="text-base font-medium text-gray-200 m-0 mb-1"><%= @dashboard.name %></h2>
+        <% if @dashboard.description.present? %>
+          <p class="text-sm text-gray-400 max-w-xl leading-relaxed"><%= @dashboard.description %></p>
+        <% end %>
+      </div>
+
+      <div class="rounded-lg border border-dashed border-stroke p-8 text-center">
+        <p class="text-sm text-gray-400">Groups coming soon.</p>
+      </div>
+    </div>
+  </div>
+</div>

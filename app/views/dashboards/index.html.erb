@@ -1,0 +1,52 @@
+<% content_for :title, "Dashboards" %>
+<div class="flex-1 flex flex-col min-h-0">
+  <!-- Top Bar -->
+  <div class="h-12 sm:h-14 bg-menu border-b border-stroke flex items-center justify-between px-3 sm:px-4 shrink-0">
+    <div class="flex items-center gap-2 sm:gap-4 min-w-0">
+      <%= render "shared/mobile_menu_button" %>
+      <span class="text-sm text-gray-400">Dashboards</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <button type="button"
+              data-action="click->dashboard-form#open"
+              data-dashboard-form-url-param="<%= dashboards_path %>"
+              data-dashboard-form-method-param="post"
+              data-dashboard-form-title-param="New dashboard"
+              data-dashboard-form-submit-param="Create"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 transition-colors cursor-pointer">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+        <span class="hidden sm:inline">New dashboard</span>
+        <span class="sm:hidden">New</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="flex-1 overflow-y-auto p-3 sm:p-6">
+    <div class="max-w-6xl mx-auto">
+      <% if flash[:notice] %>
+        <%= render "shared/flash", message: flash[:notice], type: "notice" %>
+      <% end %>
+
+      <% if sidebar_dashboards.any? %>
+        <%# Only reached when a create failed validation; the modal is open with the errors. %>
+        <p class="text-sm text-gray-400">Pick a dashboard from the sidebar or create a new one.</p>
+      <% else %>
+        <div class="rounded-lg border border-dashed border-stroke p-8 text-center">
+          <p class="text-sm text-gray-400">No dashboards yet.</p>
+          <p class="text-xs text-gray-500 mt-1">Pull what's due, overdue or hot across your teams and projects onto one page.</p>
+          <button type="button"
+                  data-action="click->dashboard-form#open"
+                  data-dashboard-form-url-param="<%= dashboards_path %>"
+                  data-dashboard-form-method-param="post"
+                  data-dashboard-form-title-param="New dashboard"
+                  data-dashboard-form-submit-param="Create"
+                  class="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 transition-colors cursor-pointer">
+            New dashboard
+          </button>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

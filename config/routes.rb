@@ -99,6 +99,9 @@ Rails.application.routes.draw do
     collection { patch :mark_all_as_read }
   end
 
+  # User-owned dashboards (not team-scoped)
+  resources :dashboards, only: %i[index show create update destroy]
+
   # Token-based invitation acceptance (no auth required)
   resources :invitations, only: %i[show update], param: :token, controller: 'invitation_acceptances'
 

@@ -1,0 +1,64 @@
+<%# locals: (dashboard:) %>
+<% input_class = "w-full px-3 py-2 rounded-md border border-stroke bg-background text-gray-100 text-sm focus:outline-none focus:border-accent" %>
+<% label_class = "block text-sm font-medium text-gray-300 mb-1" %>
+<div id="dashboard_form_modal"
+     data-dashboard-form-target="modal"
+     data-action="click->dashboard-form#backdropClick"
+     class="<%= 'hidden' unless dashboard.errors.any? %> fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+  <div class="bg-foreground border border-stroke rounded-lg shadow-2xl w-full max-w-md">
+    <!-- Header -->
+    <div class="flex items-center justify-between px-4 py-3 border-b border-stroke">
+      <h3 data-dashboard-form-target="title" class="text-sm font-medium text-gray-200"><%= dashboard.persisted? ? 'Rename dashboard' : 'New dashboard' %></h3>
+      <button type="button"
+              data-action="click->dashboard-form#close"
+              class="text-gray-500 hover:text-gray-300 cursor-pointer"
+              aria-label="Close">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <%# method: :post keeps Rails from emitting its own _method for persisted records; the JS flips ours. %>
+    <%= form_with model: dashboard,
+                  url: (dashboard.persisted? ? dashboard_path(dashboard) : dashboards_path),
+                  method: :post,
+                  data: { dashboard_form_target: "form" },
+                  class: "px-4 py-4 space-y-4" do |f| %>
+      <%= hidden_field_tag :_method, (dashboard.persisted? ? 'patch' : 'post'), data: { dashboard_form_target: "method" } %>
+
+      <% if dashboard.errors.any? %>
+        <div data-dashboard-form-target="errors" class="px-3 py-2 rounded border border-red-500/40 bg-red-500/10 text-red-300 text-sm">
+          <ul class="list-disc list-inside">
+            <% dashboard.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <div>
+        <%= f.label :name, class: label_class %>
+        <%= f.text_field :name, required: true, maxlength: 80, placeholder: "Today", class: input_class, data: { dashboard_form_target: "name" } %>
+      </div>
+
+      <div>
+        <%= f.label :description, "Description (optional)", class: label_class %>
+        <%= f.text_area :description, rows: 3, placeholder: "Work due today across your teams and projects.", class: input_class, data: { dashboard_form_target: "description" } %>
+      </div>
+
+      <div class="flex justify-end gap-2">
+        <button type="button"
+                data-action="click->dashboard-form#close"
+                class="px-3 py-1.5 text-xs rounded-md border border-stroke text-gray-300 hover:bg-hover-highlight transition-colors cursor-pointer">
+          Cancel
+        </button>
+        <button type="submit"
+                data-dashboard-form-target="submit"
+                class="px-3 py-1.5 text-xs font-medium rounded-md border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 transition-colors cursor-pointer">
+          <%= dashboard.persisted? ? 'Save' : 'Create' %>
+        </button>
+      </div>
+    <% end %>
+  </div>
+</div>
