@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus";
 
 // Lives on the dashboard show page. One modal (dashboards/_group_form_modal) serves both
 // "Add group" and "Edit group"; triggers pass url/method/title/submit/name/description/color/
-// teamIds/projectIds/deleteUrl as action params and open() fills the form from them.
+// teamIds/projectIds/allTeamIds/allProjectIds/deleteUrl as action params and open() fills the form from them.
 export default class extends Controller {
   static targets = [
     "modal",
@@ -15,6 +15,8 @@ export default class extends Controller {
     "color",
     "team",
     "project",
+    "allTeam",
+    "allProject",
     "search",
     "projectRow",
     "teamHeading",
@@ -48,6 +50,8 @@ export default class extends Controller {
       color = this.colorTargets[0]?.value,
       teamIds = [],
       projectIds = [],
+      allTeamIds = [],
+      allProjectIds = [],
       deleteUrl = "",
     } = event.params;
 
@@ -65,6 +69,12 @@ export default class extends Controller {
     });
     this.projectTargets.forEach((box) => {
       box.checked = projectIds.includes(Number(box.value));
+    });
+    this.allTeamTargets.forEach((box) => {
+      box.checked = allTeamIds.includes(Number(box.value));
+    });
+    this.allProjectTargets.forEach((box) => {
+      box.checked = allProjectIds.includes(Number(box.value));
     });
     this.searchTarget.value = "";
     this.applyProjectVisibility();
@@ -109,7 +119,7 @@ export default class extends Controller {
     let visibleCount = 0;
 
     this.projectRowTargets.forEach((row) => {
-      const checked = row.querySelector("input[type=checkbox]")?.checked;
+      const checked = row.querySelector("[data-source]")?.checked;
       const hiddenCompleted = row.dataset.completed === "true" && !checked;
       const matches = query === "" || (row.dataset.search || "").includes(query);
       const visible = matches && !hiddenCompleted;

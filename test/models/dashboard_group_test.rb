@@ -96,6 +96,30 @@ class DashboardGroupTest < ActiveSupport::TestCase
     end
   end
 
+  test 'sources default to assigned-to-me' do
+    @group.replace_sources!(team_ids: [@team.id], project_ids: [@project.id])
+
+    assert_equal [], @group.all_team_ids
+    assert_equal [], @group.all_project_ids
+  end
+
+  test 'replace_sources! sets and clears include_all on existing sources' do
+    @group.replace_sources!(team_ids: [@team.id], project_ids: [@project.id], all_team_ids: [@team.id])
+    assert_equal [@team.id], @group.all_team_ids
+    assert_equal [], @group.all_project_ids
+
+    @group.replace_sources!(team_ids: [@team.id], project_ids: [@project.id], all_project_ids: [@project.id])
+    assert_equal [], @group.all_team_ids
+    assert_equal [@project.id], @group.all_project_ids
+  end
+
+  test 'replace_sources! ignores include_all ids that are not sources' do
+    @group.replace_sources!(team_ids: [], project_ids: [@project.id], all_team_ids: [@team.id])
+
+    assert_equal [], @group.team_ids
+    assert_equal [], @group.all_team_ids
+  end
+
   # --- move! -----------------------------------------------------------------
 
   test 'move! swaps with the neighbour and renumbers from 1' do

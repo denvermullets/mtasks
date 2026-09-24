@@ -516,9 +516,10 @@ class DashboardsControllerTest < ActionDispatch::IntegrationTest
 
   private
 
-  def group_with(dashboard, *sources)
+  # Sources show every issue by default here; the assigned-to-me default has its own tests.
+  def group_with(dashboard, *sources, include_all: true)
     dashboard.groups.create!(name: "Group #{dashboard.groups.count + 1}").tap do |group|
-      sources.each { |source| group.sources.create!(source: source) }
+      sources.each { |source| group.sources.create!(source: source, include_all: include_all) }
     end
   end
 

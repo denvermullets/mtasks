@@ -11,7 +11,9 @@ class DashboardIssuesQuery < Service
   # where `inaccessible` means the group has sources but none resolve to a team or project
   # the user can still see.
   Result = Data.define(:groups, :due_today_count, :overdue_count, :filter, :today, :search, :team_id, :team_ids)
-  Sources = Data.define(:team_ids, :project_ids) do
+  # `team_ids` / `project_ids` are every source; `all_*` are the subset that shows every issue.
+  # The rest only contribute issues assigned to the user.
+  Sources = Data.define(:team_ids, :project_ids, :all_team_ids, :all_project_ids) do
     def empty?
       team_ids.empty? && project_ids.empty?
     end
@@ -75,13 +77,18 @@ class DashboardIssuesQuery < Service
   end
 
   def source_ids(group, type)
-    group.sources.select { |source| source.source_type == type }.map(&:source_id)
+    group.source_ids_for(type)
   end
 
   def resolve_sources(group)
+    team_ids = source_ids(group, 'Team') & accessible_team_ids
+    project_ids = source_ids(group, 'Project').select { |id| accessible_project_ids.include?(id) }
+
     Sources.new(
-      team_ids: source_ids(group, 'Team') & accessible_team_ids,
-      project_ids: source_ids(group, 'Project').select { |id| accessible_project_ids.include?(id) }
+      team_ids: team_ids,
+      project_ids: project_ids,
+      all_team_ids: group.source_ids_for('Team', include_all: true) & team_ids,
+      all_project_ids: group.source_ids_for('Project', include_all: true) & project_ids
     )
   end
 
@@ -90,20 +97,27 @@ class DashboardIssuesQuery < Service
   end
 
   def union_sources(all_sources)
-    Sources.new(
-      team_ids: all_sources.flat_map(&:team_ids).uniq,
-      project_ids: all_sources.flat_map(&:project_ids).uniq
-    )
+    Sources.new(**Sources.members.index_with { |key| all_sources.flat_map(&key).uniq })
   end
 
   def base_scope(sources)
     return Issue.none if sources.empty?
 
     scope = Issue.unresolved.where(team_id: accessible_team_ids)
-    scope = scope.where(team_id: sources.team_ids).or(scope.where(project_id: sources.project_ids))
+    scope = source_scope(scope, sources)
     scope = scope.where(assignee_id: @user.id) if @mine
     scope = scope.where(team_id: team_id) if team_id
     scope
+  end
+
+  # Every issue from an include_all source, plus the user's own issues from the rest.
+  def source_scope(scope, sources)
+    assigned = scope.where(assignee_id: @user.id)
+
+    scope.where(team_id: sources.all_team_ids)
+         .or(scope.where(project_id: sources.all_project_ids))
+         .or(assigned.where(team_id: sources.team_ids))
+         .or(assigned.where(project_id: sources.project_ids))
   end
 
   # Search applies to the rows only; the header counts (count_for) ignore it on purpose.

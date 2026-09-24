@@ -1,11 +1,14 @@
-<%# locals: (dashboard:, group:, teams:, projects:, selected_team_ids: nil, selected_project_ids: nil) %>
+<%# locals: (dashboard:, group:, teams:, projects:, selected_team_ids: nil, selected_project_ids: nil, all_team_ids: nil, all_project_ids: nil) %>
 <%# One modal for both "Add group" and "Edit group"; dashboard_group_form_controller.js fills it from the trigger's params. %>
 <% selected_team_ids ||= group.team_ids %>
 <% selected_project_ids ||= group.project_ids %>
+<% all_team_ids ||= group.all_team_ids %>
+<% all_project_ids ||= group.all_project_ids %>
 <% input_class = "w-full px-3 py-2 rounded-md border border-stroke bg-background text-gray-100 text-sm focus:outline-none focus:border-accent" %>
 <% label_class = "block text-sm font-medium text-gray-300 mb-1" %>
 <% check_class = "rounded border-stroke bg-background text-accent focus:ring-accent cursor-pointer" %>
-<% row_class = "flex items-center gap-2 px-2 py-1.5 rounded text-sm text-gray-300 hover:bg-hover-highlight cursor-pointer" %>
+<% row_class = "group/source flex items-center gap-1 pr-1 rounded hover:bg-hover-highlight" %>
+<% row_label_class = "flex-1 min-w-0 flex items-center gap-2 px-2 py-1.5 text-sm text-gray-300 cursor-pointer" %>
 <% form_url = group.persisted? ? dashboard_group_path(dashboard, group, dashboard_return_params) : dashboard_groups_path(dashboard, dashboard_return_params) %>
 <div id="dashboard_group_form_modal"
      data-dashboard-group-form-target="modal"
@@ -69,16 +72,21 @@
 
         <div>
           <span class="<%= label_class %>">Teams</span>
+          <p class="text-xs text-gray-500 mb-1.5">Only issues assigned to you show up unless you tick <span class="text-gray-400">All issues</span>.</p>
           <% if teams.empty? %>
             <p class="text-xs text-gray-500">You're not on any teams yet.</p>
           <% else %>
             <div class="rounded-md border border-stroke bg-background p-1 max-h-48 overflow-y-auto">
               <%= f.collection_check_boxes :team_ids, teams, :id, :name, checked: selected_team_ids do |b| %>
-                <label class="<%= row_class %>">
-                  <%= b.check_box class: check_class, data: { dashboard_group_form_target: "team" } %>
-                  <span class="truncate"><%= b.text %></span>
-                  <span class="font-mono text-[10px] text-gray-500 ml-auto shrink-0"><%= b.object.identifier %></span>
-                </label>
+                <div class="<%= row_class %>">
+                  <label class="<%= row_label_class %>">
+                    <%= b.check_box class: check_class, data: { dashboard_group_form_target: "team", source: true } %>
+                    <span class="truncate"><%= b.text %></span>
+                    <span class="font-mono text-[10px] text-gray-500 ml-auto shrink-0"><%= b.object.identifier %></span>
+                  </label>
+                  <%= render "dashboards/source_include_all", name: "dashboard_group[all_team_ids][]", value: b.value,
+                             checked: all_team_ids.include?(b.value), target: "allTeam" %>
+                </div>
               <% end %>
             </div>
           <% end %>
@@ -107,17 +115,21 @@
               </div>
               <%= f.collection_check_boxes :project_ids, team_projects, :id, :name, { checked: selected_project_ids, include_hidden: false } do |b| %>
                 <% completed = b.object.status == 'completed' %>
-                <label class="<%= row_class %>"
-                       data-dashboard-group-form-target="projectRow"
-                       data-team-id="<%= team.id %>"
-                       data-search="<%= b.text.to_s.downcase %>"
-                       data-completed="<%= completed %>">
-                  <%= b.check_box class: check_class, data: { dashboard_group_form_target: "project" } %>
-                  <span class="truncate"><%= b.text %></span>
-                  <% if completed %>
-                    <span class="text-[10px] text-gray-500 ml-auto shrink-0">completed</span>
-                  <% end %>
-                </label>
+                <div class="<%= row_class %>"
+                     data-dashboard-group-form-target="projectRow"
+                     data-team-id="<%= team.id %>"
+                     data-search="<%= b.text.to_s.downcase %>"
+                     data-completed="<%= completed %>">
+                  <label class="<%= row_label_class %>">
+                    <%= b.check_box class: check_class, data: { dashboard_group_form_target: "project", source: true } %>
+                    <span class="truncate"><%= b.text %></span>
+                    <% if completed %>
+                      <span class="text-[10px] text-gray-500 ml-auto shrink-0">completed</span>
+                    <% end %>
+                  </label>
+                  <%= render "dashboards/source_include_all", name: "dashboard_group[all_project_ids][]", value: b.value,
+                             checked: all_project_ids.include?(b.value), target: "allProject" %>
+                </div>
               <% end %>
             <% end %>
             <p data-dashboard-group-form-target="emptyState"

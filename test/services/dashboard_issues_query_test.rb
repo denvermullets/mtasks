@@ -100,6 +100,48 @@ class DashboardIssuesQueryTest < ActiveSupport::TestCase
     assert_not entry_for(query, group)[:inaccessible]
   end
 
+  # --- include_all ---------------------------------------------------------
+
+  test 'a source without include_all only contributes issues assigned to the user' do
+    group = group_with(@team_a, @project_b, include_all: false)
+    mine_in_team = create_issue(@team_a, due_date: TODAY, assignee: @user)
+    mine_in_project = create_issue(@team_b, project: @project_b, due_date: TODAY, assignee: @user)
+    create_issue(@team_a, due_date: TODAY, assignee: @other_user)
+    create_issue(@team_a, due_date: TODAY)
+    create_issue(@team_b, project: @project_b, due_date: TODAY)
+
+    result = query
+    assert_equal [mine_in_team, mine_in_project], issues_for(result, group)
+    assert_equal 2, result.due_today_count
+  end
+
+  test 'include_all is per source' do
+    group = @dashboard.groups.create!(name: 'Mixed')
+    group.sources.create!(source: @team_a, include_all: true)
+    group.sources.create!(source: @team_b)
+    theirs_in_a = create_issue(@team_a, due_date: TODAY, assignee: @other_user)
+    mine_in_b = create_issue(@team_b, due_date: TODAY, assignee: @user)
+    create_issue(@team_b, due_date: TODAY, assignee: @other_user)
+
+    assert_equal [theirs_in_a, mine_in_b].sort_by(&:id), issues_for(query, group).sort_by(&:id)
+  end
+
+  test 'counts include every issue from a source that any group marks include_all' do
+    group_with(@team_a, include_all: false)
+    group_with(@team_a)
+    create_issue(@team_a, due_date: TODAY, assignee: @other_user)
+
+    assert_equal 1, query.due_today_count
+  end
+
+  test 'mine still narrows include_all sources' do
+    group = group_with(@team_a)
+    mine = create_issue(@team_a, due_date: TODAY, assignee: @user)
+    create_issue(@team_a, due_date: TODAY, assignee: @other_user)
+
+    assert_equal [mine], issues_for(query(mine: true), group)
+  end
+
   # --- mine ----------------------------------------------------------------
 
   test 'mine limits results to issues assigned to the user' do
@@ -384,9 +426,10 @@ class DashboardIssuesQueryTest < ActiveSupport::TestCase
     DashboardIssuesQuery.call(user: @user, dashboard: @dashboard, today: today, **)
   end
 
-  def group_with(*sources)
+  # Sources show every issue by default here; the assigned-to-me default has its own tests.
+  def group_with(*sources, include_all: true)
     @dashboard.groups.create!(name: "Group #{@dashboard.groups.count + 1}").tap do |group|
-      sources.each { |source| group.sources.create!(source: source) }
+      sources.each { |source| group.sources.create!(source: source, include_all: include_all) }
     end
   end
 

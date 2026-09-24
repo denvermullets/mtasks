@@ -20,25 +20,35 @@ class DashboardGroup < ApplicationRecord
     source_ids_for('Project')
   end
 
+  # Sources that show every issue rather than only the ones assigned to the viewer.
+  def all_team_ids
+    source_ids_for('Team', include_all: true)
+  end
+
+  def all_project_ids
+    source_ids_for('Project', include_all: true)
+  end
+
   # Reads the loaded association when it's preloaded (the dashboard page does), otherwise queries.
-  def source_ids_for(type)
+  # `include_all: true` narrows to the sources flagged to show every issue.
+  def source_ids_for(type, include_all: nil)
     if sources.loaded?
-      sources.select { |source| source.source_type == type }.map(&:source_id)
+      sources.select { |source| source.source_type == type && (include_all.nil? || source.include_all == include_all) }
+             .map(&:source_id)
     else
-      sources.where(source_type: type).pluck(:source_id)
+      scope = sources.where(source_type: type)
+      scope = scope.where(include_all: include_all) unless include_all.nil?
+      scope.pluck(:source_id)
     end
   end
 
-  # Makes the group's sources exactly the given ids. Callers own the access checks; this
-  # trusts what it's given.
-  def replace_sources!(team_ids:, project_ids:)
+  # Makes the group's sources exactly the given ids. `all_*_ids` flag which of them show every
+  # issue (the rest are "assigned to me"); ids there that aren't also sources are ignored.
+  # Callers own the access checks; this trusts what it's given.
+  def replace_sources!(team_ids:, project_ids:, all_team_ids: [], all_project_ids: [])
     transaction do
-      # `where.not(source_id: [])` compiles to NOT (1=0), i.e. every row, which is what
-      # "keep none" means here. Don't "fix" it.
-      sources.where(source_type: 'Team').where.not(source_id: team_ids).delete_all
-      sources.where(source_type: 'Project').where.not(source_id: project_ids).delete_all
-      team_ids.each { |id| sources.find_or_create_by!(source_type: 'Team', source_id: id) }
-      project_ids.each { |id| sources.find_or_create_by!(source_type: 'Project', source_id: id) }
+      sync_sources('Team', team_ids, all_team_ids)
+      sync_sources('Project', project_ids, all_project_ids)
     end
     sources.reset
     self
@@ -64,6 +74,17 @@ class DashboardGroup < ApplicationRecord
   end
 
   private
+
+  def sync_sources(type, ids, all_ids)
+    # `where.not(source_id: [])` compiles to NOT (1=0), i.e. every row, which is what
+    # "keep none" means here. Don't "fix" it.
+    sources.where(source_type: type).where.not(source_id: ids).delete_all
+    ids.each do |id|
+      source = sources.find_or_initialize_by(source_type: type, source_id: id)
+      source.include_all = all_ids.include?(id)
+      source.save! if source.changed?
+    end
+  end
 
   def renumber(groups)
     groups.each.with_index(1) do |group, pos|

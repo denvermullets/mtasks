@@ -49,9 +49,12 @@ class DashboardGroupsController < ApplicationController
   def save_and_respond(notice)
     team_ids = permitted_team_ids
     project_ids = permitted_project_ids
+    all_team_ids = submitted_ids(:all_team_ids) & team_ids
+    all_project_ids = submitted_ids(:all_project_ids) & project_ids
 
     saved = DashboardGroup.transaction do
-      @group.save && @group.replace_sources!(team_ids: team_ids, project_ids: project_ids)
+      @group.save && @group.replace_sources!(team_ids: team_ids, project_ids: project_ids,
+                                             all_team_ids: all_team_ids, all_project_ids: all_project_ids)
     end
     return redirect_to(return_path, notice: notice) if saved
 
@@ -60,17 +63,20 @@ class DashboardGroupsController < ApplicationController
     @form_group = @group
     @form_team_ids = team_ids
     @form_project_ids = project_ids
+    @form_all_team_ids = all_team_ids
+    @form_all_project_ids = all_project_ids
     load_dashboard_page
     render 'dashboards/show', status: :unprocessable_entity
   end
 
   def group_params
-    params.require(:dashboard_group).permit(:name, :description, :color, team_ids: [], project_ids: [])
+    params.require(:dashboard_group).permit(:name, :description, :color,
+                                            team_ids: [], project_ids: [], all_team_ids: [], all_project_ids: [])
   end
 
-  # The model exposes team_ids/project_ids as readers only; sources are synced separately.
+  # The model exposes the id lists as readers only; sources are synced separately.
   def group_attributes
-    group_params.except(:team_ids, :project_ids)
+    group_params.except(:team_ids, :project_ids, :all_team_ids, :all_project_ids)
   end
 
   # collection_check_boxes posts a blank entry so the key is always present; drop it.

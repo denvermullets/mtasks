@@ -37,6 +37,29 @@ class DashboardGroupsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 4, group.position
     assert_equal [@team.id], group.team_ids
     assert_equal [@project.id], group.project_ids
+    assert_equal [], group.all_team_ids, 'sources default to assigned-to-me'
+  end
+
+  test 'create stores include_all only for ids that are also sources' do
+    other_project = @team.projects.create!(name: 'Unpicked project')
+
+    post dashboard_groups_path(@dashboard), params: group_params(
+      all_team_ids: [@team.id, @other_team.id], all_project_ids: [other_project.id]
+    )
+
+    group = @dashboard.groups.order(:id).last
+    assert_equal [@team.id], group.all_team_ids
+    assert_equal [], group.all_project_ids
+  end
+
+  test 'update without all ids turns include_all off' do
+    group = @dashboard.groups.create!(name: 'Launch')
+    group.replace_sources!(team_ids: [@team.id], project_ids: [], all_team_ids: [@team.id])
+
+    patch dashboard_group_path(@dashboard, group), params: group_params(project_ids: [])
+
+    assert_equal [@team.id], group.reload.team_ids
+    assert_equal [], group.all_team_ids
   end
 
   test 'create keeps the active filter, mine, search and team params in the redirect' do
@@ -216,7 +239,8 @@ class DashboardGroupsControllerTest < ActionDispatch::IntegrationTest
                   "[data-dashboard-group-form-team-ids-param='[#{@team.id}]']"
     assert_select "form[action='#{move_dashboard_group_path(@dashboard, group, kept)}']", count: 2
     assert_select "input[type=checkbox][value='#{@team.id}'][name='dashboard_group[team_ids][]']"
-    assert_select "label[data-completed=true] input[value='#{completed.id}']"
+    assert_select "input[type=checkbox][value='#{@team.id}'][name='dashboard_group[all_team_ids][]']"
+    assert_select "[data-completed=true] input[value='#{completed.id}']"
     assert_not_includes response.body, 'Old project'
     assert_not_includes response.body, 'Secret project'
   end
