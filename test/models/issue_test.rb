@@ -149,4 +149,49 @@ class IssueTest < ActiveSupport::TestCase
 
     assert_equal @team.issues.count, @team.issues.matching_search('  ').count
   end
+
+  # Dashboard scopes
+  test 'unresolved excludes archived, completed and canceled issues' do
+    open_issue = @team.issues.create!(title: 'Open', lane: @backlog, creator: @user)
+    archived = @team.issues.create!(title: 'Archived', lane: @backlog, creator: @user)
+    completed = @team.issues.create!(title: 'Completed', lane: @backlog, creator: @user)
+    canceled = @team.issues.create!(title: 'Canceled', lane: @backlog, creator: @user)
+    archived.update_columns(archived_at: Time.current)
+    completed.update_columns(completed_at: Time.current)
+    canceled.update_columns(canceled_at: Time.current)
+
+    assert_equal [open_issue], @team.issues.unresolved.to_a
+  end
+
+  test 'due_on_or_before includes past and same-day dates and excludes nil and later dates' do
+    today = Date.new(2026, 9, 23)
+    overdue = @team.issues.create!(title: 'Overdue', lane: @backlog, creator: @user, due_date: today - 3)
+    due_today = @team.issues.create!(title: 'Today', lane: @backlog, creator: @user, due_date: today)
+    @team.issues.create!(title: 'Tomorrow', lane: @backlog, creator: @user, due_date: today + 1)
+    @team.issues.create!(title: 'No date', lane: @backlog, creator: @user)
+
+    assert_equal [overdue, due_today].sort_by(&:id), @team.issues.due_on_or_before(today).order(:id).to_a
+  end
+
+  test 'due_between includes both ends of the range' do
+    from = Date.new(2026, 9, 23)
+    to = from + 7
+    first = @team.issues.create!(title: 'First', lane: @backlog, creator: @user, due_date: from)
+    last = @team.issues.create!(title: 'Last', lane: @backlog, creator: @user, due_date: to)
+    @team.issues.create!(title: 'Before', lane: @backlog, creator: @user, due_date: from - 1)
+    @team.issues.create!(title: 'After', lane: @backlog, creator: @user, due_date: to + 1)
+    @team.issues.create!(title: 'No date', lane: @backlog, creator: @user)
+
+    assert_equal [first, last], @team.issues.due_between(from, to).order(:id).to_a
+  end
+
+  test 'hot returns only urgent and high priority issues' do
+    urgent = @team.issues.create!(title: 'Urgent', lane: @backlog, creator: @user, priority: :urgent)
+    high = @team.issues.create!(title: 'High', lane: @backlog, creator: @user, priority: :high)
+    @team.issues.create!(title: 'Medium', lane: @backlog, creator: @user, priority: :medium)
+    @team.issues.create!(title: 'Low', lane: @backlog, creator: @user, priority: :low)
+    @team.issues.create!(title: 'None', lane: @backlog, creator: @user, priority: :no_priority)
+
+    assert_equal [urgent, high], @team.issues.hot.order(:id).to_a
+  end
 end

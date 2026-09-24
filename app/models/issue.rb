@@ -47,6 +47,10 @@ class Issue < ApplicationRecord
   scope :completed, -> { where.not(completed_at: nil) }
   scope :not_completed, -> { where(completed_at: nil) }
   scope :in_progress, -> { where.not(started_at: nil).where(completed_at: nil, canceled_at: nil) }
+  scope :unresolved, -> { where(archived_at: nil, completed_at: nil, canceled_at: nil) }
+  scope :due_on_or_before, ->(date) { where.not(due_date: nil).where(due_date: ..date) }
+  scope :due_between, ->(from, to) { where(due_date: from..to) }
+  scope :hot, -> { where(priority: %i[urgent high]) }
   scope :matching_search, lambda { |term, include_description: false|
     term = term.to_s.strip
     next all if term.blank?
