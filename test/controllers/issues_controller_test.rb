@@ -215,4 +215,21 @@ class IssuesControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to project_path
   end
+
+  test 'update without new files keeps existing attachments' do
+    @issue.files.attach(io: StringIO.new('one'), filename: 'one.txt', content_type: 'text/plain')
+
+    patch team_issue_path(@team, @issue), params: { issue: { title: 'Renamed', files: [''] } }
+
+    assert_equal(['one.txt'], @issue.reload.files.map { |f| f.filename.to_s })
+  end
+
+  test 'update with new files appends to existing attachments' do
+    @issue.files.attach(io: StringIO.new('one'), filename: 'one.txt', content_type: 'text/plain')
+    upload = Rack::Test::UploadedFile.new(StringIO.new('two'), 'text/plain', original_filename: 'two.txt')
+
+    patch team_issue_path(@team, @issue), params: { issue: { files: ['', upload] } }
+
+    assert_equal %w[one.txt two.txt], @issue.reload.files.map { |f| f.filename.to_s }.sort
+  end
 end

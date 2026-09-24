@@ -24,4 +24,11 @@ class ApplicationController < ActionController::Base
     team_id = current_team&.id || current_user.teams.not_archived.first&.id
     redirect_to team_id ? team_issues_path(team_id) : new_team_path
   end
+
+  # Assigning to a has_many_attached replaces every existing file (and a blank submission purges them),
+  # so edits append uploads instead.
+  def attach_new_files(record, files)
+    uploads = Array(files).compact_blank
+    record.files.attach(uploads) if uploads.any?
+  end
 end
