@@ -18,6 +18,12 @@ export default class extends Controller {
     this.renderFileList();
   }
 
+  // Dismissing the picker can leave the input empty; put the staged files back
+  restoreFiles() {
+    this.setFiles(this.selectedFiles);
+    this.renderFileList();
+  }
+
   // Drop zone methods (for description/comment areas)
   dragOver(event) {
     event.preventDefault();

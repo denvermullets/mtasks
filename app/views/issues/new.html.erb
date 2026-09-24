@@ -244,7 +244,7 @@
               </svg>
               <span>Attach files</span>
               <%= form.file_field :files, multiple: true,
-                  data: { file_upload_target: "input", action: "change->file-upload#handleFiles" },
+                  data: { file_upload_target: "input", action: "change->file-upload#handleFiles cancel->file-upload#restoreFiles" },
                   class: "hidden" %>
             </label>
           </div>
