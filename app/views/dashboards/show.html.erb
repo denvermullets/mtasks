@@ -1,5 +1,8 @@
 <% content_for :title, "#{@dashboard.name} · Dashboards" %>
-<div class="flex-1 flex flex-col min-h-0">
+<div class="flex-1 flex flex-col min-h-0"
+     data-controller="vektis-view"
+     data-vektis-view-feature-id-value="dashboard"
+     data-vektis-view-surface-value="dashboard">
   <!-- Top Bar -->
   <div class="h-12 sm:h-14 bg-menu border-b border-stroke flex items-center justify-between px-3 sm:px-4 shrink-0">
     <div class="flex items-center gap-2 sm:gap-4 min-w-0">
@@ -45,16 +48,62 @@
       <% end %>
 
       <!-- Header -->
-      <div class="mb-4">
-        <h2 class="text-base font-medium text-gray-200 m-0 mb-1"><%= @dashboard.name %></h2>
-        <% if @dashboard.description.present? %>
-          <p class="text-sm text-gray-400 max-w-xl leading-relaxed"><%= @dashboard.description %></p>
+      <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
+        <div class="min-w-0">
+          <h2 class="text-base font-medium text-gray-200 m-0 mb-1"><%= @dashboard.name %></h2>
+          <% if @dashboard.description.present? %>
+            <p class="text-sm text-gray-400 max-w-xl leading-relaxed"><%= @dashboard.description %></p>
+          <% end %>
+        </div>
+        <div class="flex items-center flex-wrap gap-1.5 shrink-0" data-testid="dashboard-counts">
+          <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-foreground border border-stroke text-gray-400">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+            <%= @result.due_today_count %> due today
+          </span>
+          <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-foreground border border-stroke text-gray-400">
+            <span class="w-1.5 h-1.5 rounded-full border border-red-400"></span>
+            <%= @result.overdue_count %> overdue
+          </span>
+        </div>
+      </div>
+
+      <!-- Controls: filter tabs + Mine only -->
+      <div class="flex items-center justify-between gap-2 mb-4 min-w-0">
+        <div class="flex items-center gap-1 overflow-x-auto min-w-0" role="tablist">
+          <% DashboardsHelper::FILTER_TABS.each do |key, label| %>
+            <%= link_to label,
+                dashboard_filter_path(@dashboard, filter: key, mine: @mine),
+                class: dashboard_control_class(@result.filter == key),
+                role: "tab",
+                aria: { selected: @result.filter == key } %>
+          <% end %>
+        </div>
+        <%= link_to dashboard_filter_path(@dashboard, filter: @result.filter, mine: !@mine),
+            class: "#{dashboard_control_class(@mine)} shrink-0",
+            aria: { pressed: @mine } do %>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+          <span>Mine only</span>
         <% end %>
       </div>
 
-      <div class="rounded-lg border border-dashed border-stroke p-8 text-center">
-        <p class="text-sm text-gray-400">Groups coming soon.</p>
-      </div>
+      <!-- Groups -->
+      <% if @result.groups.empty? %>
+        <div class="rounded-lg border border-dashed border-stroke p-8 text-center">
+          <p class="text-sm text-gray-400">No groups yet.</p>
+        </div>
+      <% else %>
+        <div class="space-y-3">
+          <% @result.groups.each do |entry| %>
+            <%= render "dashboards/group",
+                group: entry[:group],
+                issues: entry[:issues],
+                filter: @result.filter,
+                today: @result.today %>
+          <% end %>
+        </div>
+      <% end %>
     </div>
   </div>
 </div>

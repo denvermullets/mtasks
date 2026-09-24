@@ -11,7 +11,9 @@ class DashboardsController < ApplicationController
     redirect_to dashboard_path(first)
   end
 
-  def show; end
+  def show
+    load_result
+  end
 
   def create
     # Not current_user.dashboards.new: that would put the unsaved record in the association
@@ -33,6 +35,7 @@ class DashboardsController < ApplicationController
     else
       @form_dashboard = @dashboard
       @dashboard = current_user.dashboards.find(params[:id]) # pristine copy for the page behind the modal
+      load_result
       render :show, status: :unprocessable_entity
     end
   end
@@ -46,6 +49,14 @@ class DashboardsController < ApplicationController
 
   def set_dashboard
     @dashboard = current_user.dashboards.find(params[:id])
+  end
+
+  def load_result
+    @result = DashboardIssuesQuery.call(
+      user: current_user, dashboard: @dashboard,
+      filter: params[:filter], mine: params[:mine]
+    )
+    @mine = ActiveModel::Type::Boolean.new.cast(params[:mine]) || false
   end
 
   def dashboard_params
