@@ -134,6 +134,176 @@ class DashboardsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[aria-pressed=true][href='#{dashboard_path(dashboard, filter: 'week')}']", text: /Mine only/
   end
 
+  # --- show: search and team filter ------------------------------------------
+
+  test 'q narrows the rendered rows but not the header pills' do
+    dashboard = @user.dashboards.create!(name: 'Today')
+    group_with(dashboard, @team)
+    second_team = member_team('Second Team', 'DST')
+    group_with(dashboard, second_team)
+    create_issue(title: 'Investigate SSO login issue', due_date: @today)
+    create_issue(title: 'Prepare launch comms', due_date: @today - 1)
+    create_issue(team: second_team, title: 'Upgrade database', due_date: @today)
+
+    get dashboard_path(dashboard, q: 'sso')
+
+    assert_response :success
+    assert_includes response.body, 'Investigate SSO login issue'
+    assert_not_includes response.body, 'Prepare launch comms'
+    assert_not_includes response.body, 'Upgrade database'
+    assert_includes response.body, 'Nothing due today'
+    assert_select '[data-testid=dashboard-counts]', text: /2 due today/
+    assert_select '[data-testid=dashboard-counts]', text: /1 overdue/
+  end
+
+  test 'q finds an issue by identifier' do
+    dashboard = @user.dashboards.create!(name: 'Today')
+    group_with(dashboard, @team)
+    issue = create_issue(title: 'Needle issue', due_date: @today)
+    create_issue(title: 'Hay issue', due_date: @today)
+
+    get dashboard_path(dashboard, q: issue.identifier)
+    assert_includes response.body, 'Needle issue'
+    assert_not_includes response.body, 'Hay issue'
+
+    get dashboard_path(dashboard, q: issue.identifier.downcase)
+    assert_includes response.body, 'Needle issue'
+    assert_not_includes response.body, 'Hay issue'
+  end
+
+  test 'team narrows the rows and the header pills' do
+    dashboard = @user.dashboards.create!(name: 'Today')
+    second_team = member_team('Second Team', 'DST')
+    group_with(dashboard, @team)
+    group_with(dashboard, second_team)
+    create_issue(title: 'First team issue', due_date: @today)
+    create_issue(team: second_team, title: 'Second team issue', due_date: @today)
+    create_issue(team: second_team, title: 'Second team overdue', due_date: @today - 1)
+
+    get dashboard_path(dashboard, team: second_team.id)
+
+    assert_response :success
+    assert_includes response.body, 'Second team issue'
+    assert_includes response.body, 'Second team overdue'
+    assert_not_includes response.body, 'First team issue'
+    assert_includes response.body, 'Nothing due today' # the @team group's empty line
+    assert_select '[data-testid=dashboard-counts]', text: /1 due today/
+    assert_select '[data-testid=dashboard-counts]', text: /1 overdue/
+    assert_select 'select[name=team] option[selected][value=?]', second_team.id.to_s
+  end
+
+  test "a team id the user isn't in is ignored and leaks nothing" do
+    dashboard = @user.dashboards.create!(name: 'Today')
+    group_with(dashboard, @team, @other_team)
+    create_issue(title: 'Visible issue', due_date: @today)
+    create_issue(team: @other_team, title: 'Secret issue', due_date: @today)
+
+    get dashboard_path(dashboard, team: @other_team.id)
+
+    assert_response :success
+    assert_includes response.body, 'Visible issue'
+    assert_not_includes response.body, 'Secret issue'
+    assert_select '[data-testid=dashboard-counts]', text: /1 due today/
+    assert_select 'select[name=team] option[selected]', count: 0
+    assert_select 'select[name=team] option', text: 'Other Team', count: 0
+  end
+
+  test 'filtering by team does not change the current team in the session' do
+    dashboard = @user.dashboards.create!(name: 'Today')
+    second_team = member_team('Second Team', 'DST')
+    group_with(dashboard, second_team)
+
+    get dashboard_path(dashboard)
+    assert_equal @team.id, session[:current_team_id]
+
+    get dashboard_path(dashboard, team: second_team.id)
+    assert_equal @team.id, session[:current_team_id]
+
+    get dashboard_path(dashboard, team: @other_team.id)
+    assert_equal @team.id, session[:current_team_id]
+  end
+
+  test 'the header form lists only source teams and carries the filter and mine' do
+    dashboard = @user.dashboards.create!(name: 'Today')
+    second_team = member_team('Second Team', 'DST')
+    member_team('Unused Team', 'DSU')
+    project = second_team.projects.create!(name: 'Second Project')
+    group_with(dashboard, @team)
+    group_with(dashboard, project) # a Project source lists its owning team
+
+    get dashboard_path(dashboard, filter: 'week', mine: 1, q: 'sso')
+
+    assert_select "form[action='#{dashboard_path(dashboard)}'][method=get]" do
+      assert_select 'input[type=hidden][name=filter][value=week]', count: 1
+      assert_select 'input[type=hidden][name=mine][value="1"]', count: 1
+      assert_select 'input[type=search][name=q][value=sso][autofocus]', count: 1
+      assert_select 'select[name=team].cursor-pointer option', count: 3
+      assert_select 'select[name=team] option[value=""]', text: 'All teams'
+      assert_select 'select[name=team] option', text: 'Dash Team'
+      assert_select 'select[name=team] option', text: 'Second Team'
+      assert_select 'select[name=team] option', text: 'Unused Team', count: 0
+    end
+  end
+
+  test 'the header form omits default filter, mine and autofocus' do
+    dashboard = @user.dashboards.create!(name: 'Today')
+
+    get dashboard_path(dashboard)
+
+    assert_select 'input[type=hidden][name=filter]', count: 0
+    assert_select 'input[type=hidden][name=mine]', count: 0
+    assert_select 'input[type=search][name=q]', count: 1
+    assert_select 'input[type=search][name=q][autofocus]', count: 0
+    assert_select 'select[name=team] option', count: 1
+  end
+
+  test 'tabs and Mine-only keep q and team' do
+    dashboard = @user.dashboards.create!(name: 'Today')
+    group_with(dashboard, @team)
+
+    get dashboard_path(dashboard, filter: 'week', mine: 1, q: 'sso', team: @team.id)
+
+    assert_select "a[role=tab][href='#{dashboard_path(dashboard, filter: 'hot', mine: 1, q: 'sso', team: @team.id)}']",
+                  text: 'Urgent / High'
+    assert_select "a[role=tab][href='#{dashboard_path(dashboard, mine: 1, q: 'sso', team: @team.id)}']",
+                  text: 'Due today'
+    assert_select "a[aria-pressed=true][href='#{dashboard_path(dashboard, filter: 'week', q: 'sso', team: @team.id)}']",
+                  text: /Mine only/
+  end
+
+  test 'blank q and team, as the form submits them, render unfiltered and drop out of tab links' do
+    dashboard = @user.dashboards.create!(name: 'Today')
+    group_with(dashboard, @team)
+    create_issue(title: 'Any issue', due_date: @today)
+
+    get dashboard_path(dashboard, filter: 'week', q: '', team: '')
+
+    assert_response :success
+    assert_includes response.body, 'Any issue'
+    assert_select "a[role=tab][href='#{dashboard_path(dashboard, filter: 'hot')}']", text: 'Urgent / High'
+    assert_select "a[aria-pressed=false][href='#{dashboard_path(dashboard, filter: 'week', mine: 1)}']",
+                  text: /Mine only/
+  end
+
+  test 'filter, mine, q and team combine' do
+    dashboard = @user.dashboards.create!(name: 'Today')
+    second_team = member_team('Second Team', 'DST')
+    group_with(dashboard, @team, second_team)
+    create_issue(title: 'SSO urgent mine', priority: :urgent, assignee: @user)
+    create_issue(title: 'SSO urgent theirs', priority: :urgent, assignee: @other_user)
+    create_issue(title: 'SSO low mine', priority: :low, assignee: @user)
+    create_issue(title: 'Other urgent mine', priority: :urgent, assignee: @user)
+    create_issue(team: second_team, title: 'SSO urgent mine elsewhere', priority: :urgent, assignee: @user)
+
+    get dashboard_path(dashboard, filter: 'hot', mine: 1, q: 'sso', team: @team.id)
+
+    assert_includes response.body, 'SSO urgent mine'
+    assert_not_includes response.body, 'SSO urgent theirs'
+    assert_not_includes response.body, 'SSO low mine'
+    assert_not_includes response.body, 'Other urgent mine'
+    assert_not_includes response.body, 'SSO urgent mine elsewhere'
+  end
+
   # --- show: counts, access, rows --------------------------------------------
 
   test 'header pills show dashboard-wide counts that ignore the active tab' do
@@ -289,6 +459,12 @@ class DashboardsControllerTest < ActionDispatch::IntegrationTest
   def group_with(dashboard, *sources)
     dashboard.groups.create!(name: "Group #{dashboard.groups.count + 1}").tap do |group|
       sources.each { |source| group.sources.create!(source: source) }
+    end
+  end
+
+  def member_team(name, identifier)
+    @workspace.teams.create!(name: name, identifier: identifier).tap do |team|
+      team.team_memberships.create!(user: @user)
     end
   end
 

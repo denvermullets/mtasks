@@ -232,6 +232,115 @@ class DashboardIssuesQueryTest < ActiveSupport::TestCase
     assert_equal 1, query.due_today_count
   end
 
+  # --- search --------------------------------------------------------------
+
+  test 'search narrows every group by title and leaves non-matching groups empty' do
+    group_a = group_with(@team_a)
+    group_b = group_with(@team_b)
+    sso = create_issue(@team_a, title: 'Investigate SSO login issue', due_date: TODAY)
+    create_issue(@team_a, title: 'Prepare launch comms', due_date: TODAY)
+    create_issue(@team_b, title: 'Upgrade database', due_date: TODAY)
+
+    result = query(search: 'sso')
+    assert_equal 'sso', result.search
+    assert_equal [sso], issues_for(result, group_a)
+    assert_equal [], issues_for(result, group_b)
+  end
+
+  test 'search finds an issue by identifier' do
+    group = group_with(@team_a)
+    issue = create_issue(@team_a, title: 'Needle', due_date: TODAY)
+    create_issue(@team_a, title: 'Hay', due_date: TODAY)
+
+    assert_equal [issue], issues_for(query(search: "DQA-#{issue.team_number}"), group)
+    assert_equal [issue], issues_for(query(search: "dqa-#{issue.team_number}"), group)
+    assert_equal [], issues_for(query(search: "DQB-#{issue.team_number}"), group)
+  end
+
+  test 'blank search returns everything' do
+    group = group_with(@team_a)
+    create_issue(@team_a, due_date: TODAY)
+    create_issue(@team_a, due_date: TODAY)
+
+    assert_equal 2, issues_for(query(search: '   '), group).size
+    assert_equal '', query(search: nil).search
+  end
+
+  test 'search does not change the header counts' do
+    group_with(@team_a)
+    create_issue(@team_a, title: 'SSO', due_date: TODAY)
+    create_issue(@team_a, title: 'Other', due_date: TODAY - 1)
+
+    result = query(search: 'sso')
+    assert_equal 1, result.due_today_count
+    assert_equal 1, result.overdue_count
+  end
+
+  # --- team filter ---------------------------------------------------------
+
+  test 'team_id limits every group and the counts to that team' do
+    group = group_with(@team_a, @team_b)
+    in_a = create_issue(@team_a, due_date: TODAY)
+    create_issue(@team_b, due_date: TODAY)
+    create_issue(@team_b, due_date: TODAY - 1)
+
+    result = query(team_id: @team_a.id)
+    assert_equal @team_a.id, result.team_id
+    assert_equal [in_a], issues_for(result, group)
+    assert_equal 1, result.due_today_count
+    assert_equal 0, result.overdue_count
+  end
+
+  test 'team_id accepts the string form a URL param arrives in' do
+    group = group_with(@team_a, @team_b)
+    in_a = create_issue(@team_a, due_date: TODAY)
+    create_issue(@team_b, due_date: TODAY)
+
+    assert_equal [in_a], issues_for(query(team_id: @team_a.id.to_s), group)
+  end
+
+  test 'team_id narrows a group whose source is a project on that team' do
+    group = group_with(@project_a, @project_b)
+    in_a = create_issue(@team_a, project: @project_a, due_date: TODAY)
+    create_issue(@team_b, project: @project_b, due_date: TODAY)
+
+    assert_equal [in_a], issues_for(query(team_id: @team_a.id), group)
+  end
+
+  test 'a team id the user cannot access is ignored and leaks nothing' do
+    group = group_with(@team_a, @other_team)
+    mine = create_issue(@team_a, due_date: TODAY)
+    create_issue(@other_team, due_date: TODAY)
+
+    [@other_team.id, 'abc', '', nil, 0].each do |forged|
+      result = query(team_id: forged)
+      assert_nil result.team_id, "team_id #{forged.inspect} should be dropped"
+      assert_equal [mine], issues_for(result, group)
+      assert_equal 1, result.due_today_count
+    end
+  end
+
+  test 'team_ids lists the accessible teams behind the sources, including project owners' do
+    group_with(@team_a)
+    group_with(@project_b)
+    group_with(@other_team, @other_project)
+
+    assert_equal [@team_a.id, @team_b.id], query.team_ids.sort
+    assert_equal [], DashboardIssuesQuery.call(user: @user, dashboard: @user.dashboards.create!(name: 'Empty')).team_ids
+  end
+
+  test 'search, team, filter and mine combine' do
+    group = group_with(@team_a, @team_b)
+    match = create_issue(@team_a, title: 'SSO urgent mine', priority: :urgent, assignee: @user)
+    create_issue(@team_a, title: 'SSO urgent theirs', priority: :urgent, assignee: @other_user)
+    create_issue(@team_a, title: 'SSO low mine', priority: :low, assignee: @user)
+    create_issue(@team_a, title: 'Other urgent mine', priority: :urgent, assignee: @user)
+    create_issue(@team_b, title: 'SSO urgent mine on B', priority: :urgent, assignee: @user)
+
+    result = query(search: 'sso', team_id: @team_a.id, filter: 'hot', mine: true)
+    assert_equal [match], issues_for(result, group)
+  end
+
   # --- groups --------------------------------------------------------------
 
   test 'returns groups in position order' do

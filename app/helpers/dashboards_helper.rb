@@ -38,12 +38,20 @@ module DashboardsHelper
     end
   end
 
-  # Builds a dashboard URL, leaving defaults (filter=today, mine off) out of the query string.
-  def dashboard_filter_path(dashboard, filter:, mine:)
+  # The filter tab and Mine-only state as query params, leaving defaults (filter=today, mine off)
+  # out. Shared by the tab links and the header search form's hidden fields.
+  def dashboard_view_params(filter:, mine:)
     params = {}
     params[:filter] = filter unless filter == DashboardIssuesQuery::DEFAULT_FILTER
     params[:mine] = 1 if mine
-    dashboard_path(dashboard, params)
+    params
+  end
+
+  # Builds a dashboard URL for a tab / Mine-only link. Keeps the current search and team
+  # filter so switching tabs never resets them (blank values are dropped, see DashboardPage).
+  def dashboard_filter_path(dashboard, filter:, mine:)
+    kept = request.query_parameters.slice('q', 'team').compact_blank
+    dashboard_path(dashboard, kept.merge(dashboard_view_params(filter: filter, mine: mine)))
   end
 
   def priority_dot_class(issue)

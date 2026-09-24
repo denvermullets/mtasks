@@ -5,19 +5,26 @@ class DashboardIssuesQuery < Service
   FILTERS = %w[today week hot open].freeze
   DEFAULT_FILTER = 'today'.freeze
 
-  Result = Data.define(:groups, :due_today_count, :overdue_count, :filter, :today)
+  # `search` narrows the rows only; `team_id` (already validated against the user's teams)
+  # narrows rows and counts; `team_ids` are the accessible teams behind this dashboard's
+  # sources, for the header's team picker.
+  Result = Data.define(:groups, :due_today_count, :overdue_count, :filter, :today, :search, :team_id, :team_ids)
   Sources = Data.define(:team_ids, :project_ids) do
     def empty?
       team_ids.empty? && project_ids.empty?
     end
   end
 
-  def initialize(user:, dashboard:, filter: DEFAULT_FILTER, mine: false, today: nil)
+  # Every option past `dashboard:` mirrors one URL param; they're keywords with defaults, so
+  # the count is fine here.
+  def initialize(user:, dashboard:, filter: DEFAULT_FILTER, mine: false, today: nil, search: nil, team_id: nil) # rubocop:disable Metrics/ParameterLists
     @user = user
     @dashboard = dashboard
     @filter = FILTERS.include?(filter.to_s) ? filter.to_s : DEFAULT_FILTER
     @mine = ActiveModel::Type::Boolean.new.cast(mine)
     @today = today || Time.current.in_time_zone(user.time_zone).to_date
+    @search = search.to_s.strip
+    @requested_team_id = team_id
   end
 
   def call
@@ -30,7 +37,10 @@ class DashboardIssuesQuery < Service
       due_today_count: count_for(union, @today),
       overdue_count: count_for(union, ...@today),
       filter: @filter,
-      today: @today
+      today: @today,
+      search: @search,
+      team_id: team_id,
+      team_ids: (union.team_ids + union.project_ids.map { |id| accessible_project_ids[id] }).uniq
     )
   end
 
@@ -40,14 +50,24 @@ class DashboardIssuesQuery < Service
     @accessible_team_ids ||= @user.teams.not_archived.pluck(:id)
   end
 
+  # A team the user isn't in (or a blank / non-numeric value) means "no team filter", so a
+  # forged id can't reveal anything.
+  def team_id
+    return @team_id if defined?(@team_id)
+
+    id = @requested_team_id.to_i
+    @team_id = accessible_team_ids.include?(id) ? id : nil
+  end
+
   # One query for the whole dashboard: every Project source, limited to accessible teams.
+  # Returns { project_id => team_id } so the owning team is known without another query.
   def accessible_project_ids
     @accessible_project_ids ||= begin
       requested = @dashboard.groups.flat_map { |group| source_ids(group, 'Project') }.uniq
       if requested.empty?
-        Set.new
+        {}
       else
-        Project.where(id: requested, team_id: accessible_team_ids).pluck(:id).to_set
+        Project.where(id: requested, team_id: accessible_team_ids).pluck(:id, :team_id).to_h
       end
     end
   end
@@ -76,13 +96,15 @@ class DashboardIssuesQuery < Service
     scope = Issue.unresolved.where(team_id: accessible_team_ids)
     scope = scope.where(team_id: sources.team_ids).or(scope.where(project_id: sources.project_ids))
     scope = scope.where(assignee_id: @user.id) if @mine
+    scope = scope.where(team_id: team_id) if team_id
     scope
   end
 
+  # Search applies to the rows only; the header counts (count_for) ignore it on purpose.
   def issues_for(sources)
     return [] if sources.empty?
 
-    apply_filter(base_scope(sources))
+    apply_filter(base_scope(sources).matching_search(@search))
       .includes(:team, :project, :assignee, :lane)
       .order(Arel.sql('issues.due_date ASC NULLS LAST'), :priority, :id)
       .to_a

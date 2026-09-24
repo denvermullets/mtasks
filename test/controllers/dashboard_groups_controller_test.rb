@@ -39,10 +39,16 @@ class DashboardGroupsControllerTest < ActionDispatch::IntegrationTest
     assert_equal [@project.id], group.project_ids
   end
 
-  test 'create keeps the active filter and mine params in the redirect' do
-    post dashboard_groups_path(@dashboard, filter: 'week', mine: 1), params: group_params
+  test 'create keeps the active filter, mine, search and team params in the redirect' do
+    post dashboard_groups_path(@dashboard, filter: 'week', mine: 1, q: 'sso', team: @team.id), params: group_params
 
-    assert_redirected_to dashboard_path(@dashboard, filter: 'week', mine: 1)
+    assert_redirected_to dashboard_path(@dashboard, filter: 'week', mine: 1, q: 'sso', team: @team.id)
+  end
+
+  test 'create drops blank search and team params from the redirect' do
+    post dashboard_groups_path(@dashboard, filter: 'week', q: '', team: ''), params: group_params
+
+    assert_redirected_to dashboard_path(@dashboard, filter: 'week')
   end
 
   test 'create with a blank name responds 422 with the modal open' do
@@ -201,13 +207,14 @@ class DashboardGroupsControllerTest < ActionDispatch::IntegrationTest
     @team.projects.create!(name: 'Old project', status: 'completed')
     group.sources.create!(source: completed)
 
-    get dashboard_path(@dashboard, filter: 'week')
+    get dashboard_path(@dashboard, filter: 'week', q: 'sso', team: @team.id)
 
     assert_response :success
-    assert_select "[data-dashboard-group-form-url-param='#{dashboard_groups_path(@dashboard, filter: 'week')}']"
-    assert_select "[data-dashboard-group-form-url-param='#{dashboard_group_path(@dashboard, group, filter: 'week')}']" \
+    kept = { filter: 'week', q: 'sso', team: @team.id }
+    assert_select "[data-dashboard-group-form-url-param='#{dashboard_groups_path(@dashboard, kept)}']"
+    assert_select "[data-dashboard-group-form-url-param='#{dashboard_group_path(@dashboard, group, kept)}']" \
                   "[data-dashboard-group-form-team-ids-param='[#{@team.id}]']"
-    assert_select "form[action='#{move_dashboard_group_path(@dashboard, group, filter: 'week')}']", count: 2
+    assert_select "form[action='#{move_dashboard_group_path(@dashboard, group, kept)}']", count: 2
     assert_select "input[type=checkbox][value='#{@team.id}'][name='dashboard_group[team_ids][]']"
     assert_select "label[data-completed=true] input[value='#{completed.id}']"
     assert_not_includes response.body, 'Old project'

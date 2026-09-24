@@ -64,15 +64,45 @@
             <p class="text-sm text-gray-400 max-w-xl leading-relaxed"><%= @dashboard.description %></p>
           <% end %>
         </div>
-        <div class="flex items-center flex-wrap gap-1.5 shrink-0" data-testid="dashboard-counts">
-          <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-foreground border border-stroke text-gray-400">
-            <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-            <%= @result.due_today_count %> due today
-          </span>
-          <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-foreground border border-stroke text-gray-400">
-            <span class="w-1.5 h-1.5 rounded-full border border-red-400"></span>
-            <%= @result.overdue_count %> overdue
-          </span>
+        <div class="flex flex-col items-start sm:items-end gap-2 shrink-0 w-full sm:w-auto">
+          <%# Search + team filter. GET form so the URL stays shareable; turbo-action=replace keeps
+              each debounced keystroke from adding a history entry (so the first search from a clean
+              URL replaces it, and Back leaves the dashboard rather than clearing the search). %>
+          <%= form_with url: dashboard_path(@dashboard), method: :get,
+              data: { controller: "auto-submit", action: "submit->auto-submit#cancel", turbo_action: "replace" },
+              class: "flex items-center gap-2 w-full sm:w-auto" do %>
+            <% dashboard_view_params(filter: @result.filter, mine: @mine).each do |key, value| %>
+              <%= hidden_field_tag key, value, id: nil %>
+            <% end %>
+            <div class="relative flex-1 sm:flex-none">
+              <svg class="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18a7.5 7.5 0 006.15-1.35z"></path>
+              </svg>
+              <%= search_field_tag :q, @result.search,
+                  placeholder: "Search issues…",
+                  autocomplete: "off",
+                  spellcheck: false,
+                  autofocus: @result.search.present?,
+                  aria: { label: "Search issues" },
+                  data: { action: "input->auto-submit#debounce focus->auto-submit#caretToEnd" },
+                  class: "w-full sm:w-56 pl-8 pr-3 py-1.5 text-xs font-medium rounded-md bg-foreground text-gray-200 placeholder-gray-500 border border-stroke focus:outline-none focus:border-accent transition-colors" %>
+            </div>
+            <%= select_tag :team,
+                options_for_select([["All teams", ""]] + @filter_teams.map { |team| [team.name, team.id] }, @result.team_id),
+                aria: { label: "Team" },
+                data: { action: "change->auto-submit#submit" },
+                class: "py-1.5 pl-2.5 pr-7 text-xs font-medium rounded-md bg-foreground text-gray-200 border border-stroke focus:outline-none focus:border-accent cursor-pointer" %>
+          <% end %>
+          <div class="flex items-center flex-wrap gap-1.5" data-testid="dashboard-counts">
+            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-foreground border border-stroke text-gray-400">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+              <%= @result.due_today_count %> due today
+            </span>
+            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-foreground border border-stroke text-gray-400">
+              <span class="w-1.5 h-1.5 rounded-full border border-red-400"></span>
+              <%= @result.overdue_count %> overdue
+            </span>
+          </div>
         </div>
       </div>
 
