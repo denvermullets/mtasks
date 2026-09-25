@@ -7,12 +7,16 @@
     'project_ids'  => { label: 'Project',    collection: @projects,  name_attr: :name }
   }
   active = type_meta.each_with_object([]) do |(key, meta), acc|
-    selected = Array(@display_options[key.to_sym]).map(&:to_i)
-    next if selected.empty?
+    raw = Array(@display_options[key.to_sym])
+    no_project = key == 'project_ids' && raw.include?(DisplayOptionsService::NO_PROJECT)
+    selected = raw.excluding(DisplayOptionsService::NO_PROJECT).map(&:to_i)
+    next if selected.empty? && !no_project
 
     by_id = meta[:collection].index_by(&:id)
     names = selected.map { |id| by_id[id]&.public_send(meta[:name_attr]) || id.to_s }
-    acc << { key: key, label: meta[:label], values: selected.map.with_index { |id, i| { value: id.to_s, label: names[i] } } }
+    values = selected.map.with_index { |id, i| { value: id.to_s, label: names[i] } }
+    values.unshift({ value: DisplayOptionsService::NO_PROJECT, label: 'No project' }) if no_project
+    acc << { key: key, label: meta[:label], values: values }
   end
 
   priority_values = Array(@display_options[:priority]).map(&:to_s)

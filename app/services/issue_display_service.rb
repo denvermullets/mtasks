@@ -142,7 +142,8 @@ class IssueDisplayService
   end
 
   def filter_by_project(issue_scope)
-    issue_scope.where(project_id: options[:project_ids])
+    ids = options[:project_ids].map { |id| id == DisplayOptionsService::NO_PROJECT ? nil : id }
+    issue_scope.where(project_id: ids)
   end
 
   # rubocop:disable-next Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity

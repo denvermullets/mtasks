@@ -1,4 +1,7 @@
 class DisplayOptionsService < Service
+  # Sentinel in the project filter for issues with no project
+  NO_PROJECT = 'none'.freeze
+
   attr_reader :params, :user, :team, :saved_prefs
 
   def initialize(params, user, team)
@@ -23,7 +26,7 @@ class DisplayOptionsService < Service
       assignee_ids: int_list_param(:assignee_ids),
       creator_ids: int_list_param(:creator_ids),
       label_ids: int_list_param(:label_ids),
-      project_ids: int_list_param(:project_ids),
+      project_ids: project_ids_param,
       priority: string_list_param(:priority)
     }
   end
@@ -33,6 +36,10 @@ class DisplayOptionsService < Service
   def int_list_param(key)
     list = string_list_param(key)
     list&.map(&:to_i)
+  end
+
+  def project_ids_param
+    string_list_param(:project_ids)&.map { |v| v == NO_PROJECT ? NO_PROJECT : v.to_i }
   end
 
   def string_list_param(key)

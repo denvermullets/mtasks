@@ -32,6 +32,12 @@ class DisplayOptionsServiceTest < ActiveSupport::TestCase
     assert_equal [5, 9], options[:project_ids]
   end
 
+  test 'keeps the no-project sentinel alongside project ids' do
+    options = DisplayOptionsService.call({ project_ids: 'none,4' }, @user, @team)
+
+    assert_equal ['none', 4], options[:project_ids]
+  end
+
   test 'parses lane_ids, assignee_ids, label_ids as integer arrays' do
     options = DisplayOptionsService.call(
       { lane_ids: '1,2', assignee_ids: '4', label_ids: '7,8' }, @user, @team

@@ -161,6 +161,31 @@ class IssueDisplayServiceTest < ActiveSupport::TestCase
     assert_not_includes filtered, @open_issue
   end
 
+  test 'project_ids filter matches issues with no project via sentinel' do
+    project_a = @team.projects.create!(name: 'Project A')
+    project_b = @team.projects.create!(name: 'Project B')
+
+    in_a = @team.issues.create!(title: 'A1', lane: @backlog_lane, creator: @user, project: project_a)
+    in_b = @team.issues.create!(title: 'B1', lane: @backlog_lane, creator: @user, project: project_b)
+    no_project = @team.issues.create!(title: 'N1', lane: @backlog_lane, creator: @user)
+
+    only_none = IssueDisplayService.new(
+      @team.issues, { completed_filter: 'all_completed', project_ids: ['none'] }, @team
+    ).filter_issues
+
+    assert_includes only_none, no_project
+    assert_not_includes only_none, in_a
+    assert_not_includes only_none, in_b
+
+    none_or_a = IssueDisplayService.new(
+      @team.issues, { completed_filter: 'all_completed', project_ids: ['none', project_a.id] }, @team
+    ).filter_issues
+
+    assert_includes none_or_a, no_project
+    assert_includes none_or_a, in_a
+    assert_not_includes none_or_a, in_b
+  end
+
   test 'project_ids filter is skipped when blank' do
     project = @team.projects.create!(name: 'Solo')
     in_project = @team.issues.create!(title: 'P', lane: @backlog_lane, creator: @user, project: project)
