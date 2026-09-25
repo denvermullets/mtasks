@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_24_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_25_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -275,10 +275,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_130000) do
     t.bigint "blocked_issue_id", null: false
     t.bigint "blocking_issue_id", null: false
     t.datetime "created_at", null: false
+    t.string "kind", default: "blocks", null: false
     t.datetime "updated_at", null: false
     t.index ["blocked_issue_id"], name: "index_issue_dependencies_on_blocked_issue_id"
     t.index ["blocking_issue_id", "blocked_issue_id"], name: "idx_on_blocking_issue_id_blocked_issue_id_e966cd8a46", unique: true
     t.index ["blocking_issue_id"], name: "index_issue_dependencies_on_blocking_issue_id"
+    t.index ["kind"], name: "index_issue_dependencies_on_kind"
   end
 
   create_table "issue_labels", force: :cascade do |t|

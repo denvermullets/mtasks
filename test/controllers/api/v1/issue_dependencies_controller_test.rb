@@ -61,8 +61,9 @@ module Api
 
       # Index
       test 'lists dependencies for an issue with direction relative to it' do
+        issue_c = @team.issues.create!(title: 'Issue C', lane: @backlog, creator: @user)
         blocking = IssueDependency.create!(blocking_issue: @issue_a, blocked_issue: @issue_b)
-        blocked_by = IssueDependency.create!(blocking_issue: @issue_b, blocked_issue: @issue_a)
+        blocked_by = IssueDependency.create!(blocking_issue: issue_c, blocked_issue: @issue_a)
 
         get api_v1_team_issue_issue_dependencies_path(@team, @issue_a), headers: @headers
 
