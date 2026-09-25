@@ -54,6 +54,8 @@ class Issue < ApplicationRecord
   scope :due_on_or_before, ->(date) { where.not(due_date: nil).where(due_date: ..date) }
   scope :due_between, ->(from, to) { where(due_date: from..to) }
   scope :hot, -> { where(priority: %i[urgent high]) }
+  # Every link kind with the issue on the other end, for the relations sidebar.
+  scope :with_links, -> { includes(outgoing_links: :blocked_issue, incoming_links: :blocking_issue) }
   scope :matching_search, lambda { |term, include_description: false|
     term = term.to_s.strip
     next all if term.blank?

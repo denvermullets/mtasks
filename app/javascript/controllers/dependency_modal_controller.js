@@ -1,5 +1,13 @@
 import { Controller } from "@hotwired/stimulus";
 
+const TITLES = {
+  blocking: "Add blocking issues",
+  blocked_by: "Add blocked by issues",
+  relates: "Add related issues",
+  duplicates: "Mark as duplicate of…",
+  duplicated_by: "Add duplicates of this issue",
+};
+
 export default class extends Controller {
   static targets = ["modal", "search", "frame", "title", "directionInput"];
   static values = { searchUrl: String };
@@ -7,8 +15,7 @@ export default class extends Controller {
   open(event) {
     const direction = event.params.direction;
     this.directionInputTarget.value = direction;
-    this.titleTarget.textContent =
-      direction === "blocked_by" ? "Add blocked by issues" : "Add blocking issues";
+    this.titleTarget.textContent = TITLES[direction] || TITLES.blocking;
 
     this.modalTarget.classList.remove("hidden");
     this.searchTarget.value = "";

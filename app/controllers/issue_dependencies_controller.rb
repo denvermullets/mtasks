@@ -13,31 +13,28 @@ class IssueDependenciesController < ApplicationController
     direction = params[:direction]
 
     # count rather than each: one event carries the bulk size, never one event per row.
+    errors = []
     linked = target_ids.count do |target_id|
       target_issue = current_team.issues.find_by(id: target_id)
       next false unless target_issue
 
-      build_dependency(target_issue, direction).save
+      dependency = IssueDependencies::Link.call(issue: @issue, target: target_issue, direction: direction)
+      errors.concat(dependency.errors.full_messages)
+      dependency.persisted?
     end
     track_dependency_link(direction, linked)
 
-    @issue.reload
-    render_relations
+    render_relations(alert: errors.first)
   end
 
   def create
     target_issue = current_team.issues.find(params[:target_issue_id])
     direction = params[:direction]
 
-    dependency = build_dependency(target_issue, direction)
+    dependency = IssueDependencies::Link.call(issue: @issue, target: target_issue, direction: direction)
 
-    if dependency.save
-      track_dependency_link(direction, 1)
-      @issue.reload
-      render_relations
-    else
-      head :unprocessable_entity
-    end
+    track_dependency_link(direction, 1) if dependency.persisted?
+    render_relations(alert: dependency.errors.full_messages.first)
   end
 
   def destroy
@@ -46,7 +43,6 @@ class IssueDependenciesController < ApplicationController
     if dependency && (dependency.blocking_issue_id == @issue.id || dependency.blocked_issue_id == @issue.id)
       dependency.destroy
       track_feature('issue-dependency', 'unlink', direction: link_direction(dependency))
-      @issue.reload
       render_relations
     else
       head :not_found
@@ -56,19 +52,12 @@ class IssueDependenciesController < ApplicationController
   private
 
   # params[:id] is either the join-record id or the other issue's id, depending on which button
-  # in the relations partial was used.
+  # in the relations partial was used. Looks across every link kind.
   def find_dependency
-    IssueDependency.find_by(id: params[:id]) ||
-      @issue.blocking_dependencies.find_by(blocked_issue_id: params[:id]) ||
-      @issue.blocked_dependencies.find_by(blocking_issue_id: params[:id])
-  end
-
-  def build_dependency(target_issue, direction)
-    if direction == 'blocked_by'
-      IssueDependency.new(blocking_issue: target_issue, blocked_issue: @issue)
-    else
-      IssueDependency.new(blocking_issue: @issue, blocked_issue: target_issue)
-    end
+    @issue.outgoing_links.find_by(id: params[:id]) ||
+      @issue.incoming_links.find_by(id: params[:id]) ||
+      @issue.outgoing_links.find_by(blocked_issue_id: params[:id]) ||
+      @issue.incoming_links.find_by(blocking_issue_id: params[:id])
   end
 
   # `direction` names which side of the link the acting issue is on (taxonomy §5.2, amended by
@@ -77,15 +66,17 @@ class IssueDependenciesController < ApplicationController
     return unless count.positive?
 
     track_feature('issue-dependency', 'link',
-                  direction: direction == 'blocked_by' ? 'blocked_by' : 'blocking', count: count)
+                  direction: IssueDependencies::Link.normalize_direction(direction), count: count)
   end
 
   def link_direction(dependency)
-    dependency.blocking_issue_id == @issue.id ? 'blocking' : 'blocked_by'
+    IssueDependencies::Link.direction_for(dependency, @issue)
   end
 
   def search_candidates(query)
-    exclude_ids = [@issue.id] + @issue.blocked_issues.pluck(:id) + @issue.blocking_issues.pluck(:id)
+    # Any existing link, of any kind, rules the pair out (IssueDependency#not_already_linked).
+    exclude_ids = [@issue.id] + @issue.outgoing_links.pluck(:blocked_issue_id) +
+                  @issue.incoming_links.pluck(:blocking_issue_id)
     current_team.issues.not_archived.not_completed
                 .where(canceled_at: nil)
                 .where.not(id: exclude_ids).order(:team_number)
@@ -94,23 +85,30 @@ class IssueDependenciesController < ApplicationController
   end
 
   def set_issue
-    @issue = current_team.issues.includes(:blocked_issues, :blocking_issues,
-                                          :blocking_dependencies, :blocked_dependencies).find(params[:issue_id])
+    @issue = find_issue_with_links(params[:issue_id])
   end
 
-  def render_relations
+  def find_issue_with_links(id)
+    current_team.issues.with_links.find(id)
+  end
+
+  # `alert` surfaces a validation error (cycle, already linked) inside the frame.
+  def render_relations(alert: nil)
+    # Re-fetch rather than reload so the partial still gets preloaded links after a change.
+    @issue = find_issue_with_links(@issue.id)
+
     # The sidebar is rendered twice on the issue show page (desktop + mobile),
     # so both relations frames must be replaced to update whichever one is visible.
     render turbo_stream: [
       turbo_stream.replace(
         'issue_relations',
         partial: 'issue_dependencies/relations',
-        locals: { issue: @issue, mobile: false }
+        locals: { issue: @issue, mobile: false, alert: alert }
       ),
       turbo_stream.replace(
         'issue_relations_mobile',
         partial: 'issue_dependencies/relations',
-        locals: { issue: @issue, mobile: true }
+        locals: { issue: @issue, mobile: true, alert: alert }
       )
     ]
   end
