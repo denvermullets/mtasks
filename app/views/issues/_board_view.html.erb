@@ -13,7 +13,7 @@
 <%= tag.div class: ["flex h-full overflow-auto", ("-ml-3 pl-3" if dependency_overlay?)], data: overlay_data do %>
   <% if swimlanes.present? %>
     <!-- Swimlane Layout: Rows span horizontally across columns -->
-    <div class="flex flex-col flex-1">
+    <div class="flex flex-col flex-1 self-start min-h-full">
       <!-- Column Headers (sticky at top) -->
       <div class="flex gap-3 mb-4 sticky top-0 bg-background z-30 pb-2">
         <% first_row_columns = swimlanes.values.first %>
@@ -76,7 +76,7 @@
 
     <!-- Hidden Columns Section (swimlane view) -->
     <% if @empty_groups.present? %>
-      <div class="shrink-0 w-64 flex flex-col h-full ml-3 pl-3 border-l border-stroke">
+      <div class="shrink-0 w-64 flex flex-col self-start min-h-full ml-3 pl-3 border-l border-stroke">
         <!-- Header -->
         <div class="flex items-center gap-2 mb-3 shrink-0 sticky top-0 bg-background z-30 pb-2">
           <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
