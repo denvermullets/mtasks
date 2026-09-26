@@ -4,7 +4,16 @@
 module IssueIndexFilters
   extend ActiveSupport::Concern
 
+  included do
+    helper_method :dependency_overlay?
+  end
+
   private
+
+  # The Dependencies toggle only applies to the board; list view ignores the preference.
+  def dependency_overlay?
+    @display_options[:view_mode] == 'board' && @display_options[:show_dependencies]
+  end
 
   def load_display_options
     @display_options = DisplayOptionsService.call(params, Current.user, current_team)

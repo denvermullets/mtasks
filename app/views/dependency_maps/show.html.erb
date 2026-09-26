@@ -1,0 +1,131 @@
+<% issue = @graph.issue %>
+<% columns_up = dependency_map_columns(@graph, :upstream) %>
+<% columns_down = dependency_map_columns(@graph, :downstream) %>
+<% related_rows = dependency_map_related_rows(@graph) %>
+<div class="flex-1 flex flex-col min-h-0 min-w-0"
+     data-controller="vektis-view"
+     data-vektis-view-feature-id-value="dependency-map"
+     data-vektis-view-surface-value="dependency-map">
+  <!-- Top Bar -->
+  <div class="h-12 sm:h-14 bg-menu border-b border-stroke flex items-center justify-between px-3 sm:px-4 shrink-0">
+    <div class="flex items-center gap-2 sm:gap-3 min-w-0 text-sm">
+      <%= render "shared/mobile_menu_button" %>
+      <%= link_to current_team.identifier, team_issues_path(current_team), class: "text-gray-500 hover:text-gray-400 cursor-pointer" %>
+      <span class="text-gray-600">&#8250;</span>
+      <%= link_to issue.identifier, team_issue_path(current_team, issue), class: "font-mono text-gray-400 hover:text-gray-300 cursor-pointer truncate" %>
+      <span class="text-gray-600">&#8250;</span>
+      <span class="text-gray-400 truncate">Dependencies</span>
+    </div>
+  </div>
+
+  <div class="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-6">
+    <div class="max-w-7xl mx-auto flex flex-col gap-4 min-w-0">
+      <!-- Header -->
+      <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div class="min-w-0">
+          <h2 class="text-base font-medium text-gray-200 m-0 mb-1">Dependencies</h2>
+          <p class="text-sm text-gray-400 leading-relaxed">
+            Visualize blockers, blocked-by relationships, and related work across your issues.
+          </p>
+        </div>
+        <div class="shrink-0 max-w-full overflow-x-auto">
+          <%= render "shared/dependency_legend" %>
+        </div>
+      </div>
+
+      <!-- Issue header card -->
+      <div class="rounded-xl bg-foreground border border-stroke p-4 flex flex-col sm:flex-row sm:items-start gap-4 min-w-0">
+        <div class="flex-1 min-w-0">
+          <div class="font-mono text-xs text-gray-500 mb-1"><%= issue.identifier %></div>
+          <div class="text-base font-semibold text-gray-100 truncate mb-2"><%= issue.title %></div>
+          <div class="flex items-center gap-2 flex-wrap text-xs text-gray-400">
+            <% issue.labels.each do |label| %>
+              <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-medium bg-foreground border border-stroke">
+                <span class="w-1.5 h-1.5 rounded-full" style="background-color: <%= label.color %>;"></span>
+                <%= label.name %>
+              </span>
+            <% end %>
+            <% if issue.due_date %>
+              <span class="inline-flex items-center gap-1">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+                </svg>
+                <%= issue.due_date.strftime('%b %d') %>
+              </span>
+            <% end %>
+            <span class="inline-flex items-center gap-1">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+              </svg>
+              <%= issue.assignee&.name || "Unassigned" %>
+            </span>
+          </div>
+        </div>
+        <%= form_with model: issue, url: team_issue_path(current_team, issue, format: :html), method: :patch,
+                      class: "shrink-0 sm:w-48", data: { controller: "auto-submit" } do |f| %>
+          <%= hidden_field_tag :return_to, request.fullpath %>
+          <%= f.label :lane_id, "Status", class: "block text-xs text-gray-500 mb-1" %>
+          <%= f.select :lane_id, @lanes.map { |lane| [lane.name, lane.id] }, {},
+                       class: "w-full px-3 py-1.5 bg-background border border-stroke rounded-md text-sm text-gray-200 focus:outline-none focus:border-accent cursor-pointer",
+                       data: { action: "change->auto-submit#submit" } %>
+        <% end %>
+      </div>
+
+      <% if dependency_map_empty?(@graph) %>
+        <div class="rounded-xl border border-stroke px-4 py-16 text-center text-sm text-gray-500">
+          No dependencies yet.
+          <%= link_to "Link issues from the issue's sidebar.", team_issue_path(current_team, issue), class: "text-gray-400 hover:text-gray-300 underline cursor-pointer" %>
+        </div>
+      <% else %>
+        <!-- Graph -->
+        <div class="relative overflow-x-auto rounded-xl border border-stroke bg-[radial-gradient(var(--color-stroke)_1px,transparent_1px)] bg-size-[16px_16px]"
+             data-controller="dependency-map"
+             data-dependency-map-edges-value="<%= dependency_map_edges(@graph).to_json %>"
+             data-dependency-map-focus-id-value="<%= issue.id %>">
+          <div class="flex items-start justify-center gap-16 p-6 min-w-full w-max">
+            <% columns_up.each do |column| %>
+              <%= render "dependency_maps/column", column: column, graph: @graph, depth: @depth %>
+            <% end %>
+
+            <div class="flex flex-col items-center">
+              <div class="h-8 text-xs text-gray-500 text-center mb-2 flex items-end justify-center">Selected issue</div>
+              <%= render "dependency_maps/node", issue: issue, selected: true %>
+              <% if @graph.related.any? %>
+                <div class="flex flex-col items-center" aria-hidden="true">
+                  <span class="w-0.5 h-6" style="background-color: var(--dep-relates)"></span>
+                  <span class="w-2 h-2 rounded-full" style="background-color: var(--dep-relates)"></span>
+                  <span class="w-0.5 h-3" style="background-color: var(--dep-relates)"></span>
+                </div>
+                <div class="flex flex-col gap-3">
+                  <% @graph.related.each do |entry| %>
+                    <%= render "dependency_maps/node", issue: entry[:issue] %>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+
+            <% columns_down.each do |column| %>
+              <%= render "dependency_maps/column", column: column, graph: @graph, depth: @depth %>
+            <% end %>
+          </div>
+        </div>
+
+        <!-- Lists -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <%= render "dependency_maps/list",
+                     title: "Blocked by", color: "blocked-by",
+                     subtitle: "These issues must be completed before this issue can be started.",
+                     rows: @graph.upstream.fetch(1, []).map { |node| { issue: node } } %>
+          <%= render "dependency_maps/list",
+                     title: "Blocks", color: "blocks",
+                     subtitle: "These issues are blocked by this issue.",
+                     rows: @graph.downstream.fetch(1, []).map { |node| { issue: node } } %>
+          <%= render "dependency_maps/list",
+                     title: "Related", color: "relates",
+                     subtitle: "These issues are related but not blocking.",
+                     rows: related_rows %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

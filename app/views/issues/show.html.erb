@@ -31,6 +31,14 @@
     </div>
     <div class="flex items-center gap-2">
       <%= render 'issues/thread_badge', issue: @issue, issue_thread_link: @issue_thread_link %>
+      <%= link_to team_issue_dependency_map_path(@issue.team, @issue),
+          title: "Dependency map",
+          class: "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded bg-gray-800 text-gray-300 hover:bg-gray-700 cursor-pointer" do %>
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+        </svg>
+        <span class="hidden sm:inline">Dependency map</span>
+      <% end %>
       <% if @issue.creator == Current.user || team_admin?(@issue.team) %>
         <%= link_to "Edit", edit_team_issue_path(@issue.team, @issue), class: "px-3 py-1.5 text-xs font-medium rounded bg-gray-800 text-gray-300 hover:bg-gray-700" %>
       <% end %>

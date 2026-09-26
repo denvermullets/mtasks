@@ -1,6 +1,16 @@
 <% swimlanes = organize_for_swimlanes(@grouped_issues) %>
+<%
+  dependency_edges = dependency_overlay? ? board_dependency_edges(board_issues(@grouped_issues)) : []
+  linked_issue_ids = dependency_edges.flat_map { |edge| edge.values_at(:from_id, :to_id) }.to_set
+  overlay_data = if dependency_overlay?
+                   { controller: "dependency-overlay", dependency_overlay_edges_value: dependency_edges.to_json }
+                 else
+                   {}
+                 end
+%>
 
-<div class="flex h-full overflow-auto">
+<%# -ml-3 pl-3 gives the first column's same-column links a gutter without moving any cards. %>
+<%= tag.div class: ["flex h-full overflow-auto", ("-ml-3 pl-3" if dependency_overlay?)], data: overlay_data do %>
   <% if swimlanes.present? %>
     <!-- Swimlane Layout: Rows span horizontally across columns -->
     <div class="flex flex-col flex-1">
@@ -43,7 +53,8 @@
                   <!-- Issues in this cell -->
                   <div class="space-y-1.5 min-h-[60px]" data-lane-issues-container="<%= column_data[:object].id if column_data[:object].respond_to?(:id) %>" data-group-container="<%= group_value_for(column_data[:object]) %>">
                     <% column_data[:issues].each do |issue| %>
-                      <%= render "issue_card", issue: issue, visible_properties: @display_options[:visible_properties] %>
+                      <%= render "issue_card", issue: issue, visible_properties: @display_options[:visible_properties],
+                                   dependency_map_url: (dependency_map_path_for(issue) if linked_issue_ids.include?(issue.id)) %>
                     <% end %>
                   </div>
 
@@ -102,7 +113,8 @@
           <div class="flex-1 overflow-y-auto min-h-0">
             <div class="space-y-1.5" data-lane-issues-container="<%= group_data[:object].id if group_data[:object].respond_to?(:id) %>" data-group-container="<%= group_value_for(group_data[:object]) %>">
               <% group_data[:issues].each do |issue| %>
-                <%= render "issue_card", issue: issue, visible_properties: @display_options[:visible_properties] %>
+                <%= render "issue_card", issue: issue, visible_properties: @display_options[:visible_properties],
+                                   dependency_map_url: (dependency_map_path_for(issue) if linked_issue_ids.include?(issue.id)) %>
               <% end %>
             </div>
 
@@ -142,4 +154,4 @@
       </div>
     <% end %>
   <% end %>
-</div>
+<% end %>

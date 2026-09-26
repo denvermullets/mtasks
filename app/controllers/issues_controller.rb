@@ -16,6 +16,8 @@ class IssuesController < ApplicationController
       :lane, :project, :labels, :assignee, :pull_requests,
       :blocking_dependencies, :blocked_dependencies, :comments
     )
+    # Only the board overlay draws links, so only it pays for loading them.
+    base_issues = base_issues.includes(:outgoing_links) if dependency_overlay?
 
     @display_service = IssueDisplayService.new(
       base_issues, @display_options.merge(search_query: params[:q]), current_team
@@ -76,7 +78,7 @@ class IssuesController < ApplicationController
 
       respond_to do |format|
         format.turbo_stream { render(:update) }
-        format.html { redirect_to team_issue_path(@issue.team, @issue), notice: 'Issue was successfully updated.' }
+        format.html { redirect_to return_to_path || [@issue.team, @issue], notice: 'Issue was successfully updated.' }
       end
     else
       render :edit, status: :unprocessable_entity

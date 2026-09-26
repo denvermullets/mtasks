@@ -1,6 +1,7 @@
 <%
   visible_properties ||= UserPreference::AVAILABLE_PROPERTIES
   group_by ||= @display_options&.dig(:group_by)
+  dependency_map_url = local_assigns[:dependency_map_url]
   show_status_pill = visible_properties.include?('status') && issue.lane && group_by != 'status'
   pr_summary = visible_properties.include?('pull_requests_and_commits') ? issue_pr_summary(issue) : nil
   time_in_status = visible_properties.include?('time_in_status') ? format_time_in_status(issue) : nil
@@ -11,7 +12,8 @@
      data-current-lane-id="<%= issue.lane_id || 0 %>"
      data-current-label-ids="<%= issue.labels.map(&:id).to_json %>"
      data-issue-identifier="<%= issue.identifier %>"
-     data-issue-title="<%= issue.title.truncate(30) %>">
+     data-issue-title="<%= issue.title.truncate(30) %>"<% if dependency_map_url %>
+     data-dependency-map-url="<%= dependency_map_url %>"<% end %>>
   <%= link_to team_issue_path(issue.team, issue), class: "block", data: { turbo_frame: "_top" } do %>
     <div class="group bg-foreground border border-stroke hover:bg-hover-highlight hover:border-stroke rounded px-3 py-2.5 cursor-pointer transition-colors"
          data-action="mouseenter->issue-card#mouseEnter mouseleave->issue-card#mouseLeave">

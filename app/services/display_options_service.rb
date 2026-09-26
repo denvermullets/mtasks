@@ -20,6 +20,7 @@ class DisplayOptionsService < Service
       show_sub_issues: bool_param(:show_sub_issues),
       show_empty_groups: bool_param(:show_empty_groups),
       show_empty_rows: bool_param(:show_empty_rows),
+      show_dependencies: bool_param(:show_dependencies),
       completed_filter: param_or_pref(:completed_filter),
       visible_properties: visible_properties,
       lane_ids: int_list_param(:lane_ids),

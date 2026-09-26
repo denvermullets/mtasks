@@ -19,6 +19,8 @@ export default class extends Controller {
   connect() {
     this.boundHandleClickOutside = this.handleClickOutside.bind(this);
     document.addEventListener("click", this.boundHandleClickOutside);
+    this.boundDependenciesChanged = this.dependenciesChanged.bind(this);
+    window.addEventListener("dependencies-toggle:changed", this.boundDependenciesChanged);
 
     // Store initial saved preferences from the form
     this.savedPreferences = this.getCurrentFormValues();
@@ -29,6 +31,16 @@ export default class extends Controller {
 
   disconnect() {
     document.removeEventListener("click", this.boundHandleClickOutside);
+    window.removeEventListener("dependencies-toggle:changed", this.boundDependenciesChanged);
+  }
+
+  // The toolbar toggle saves show_dependencies itself, so the new value is already the default.
+  dependenciesChanged(event) {
+    const value = String(event.detail.on);
+    const input = this.element.querySelector('form input[name="show_dependencies"]');
+    if (input) input.value = value;
+    this.savedPreferences.show_dependencies = value;
+    this.checkIfChanged();
   }
 
   togglePanel(event) {
@@ -293,6 +305,12 @@ export default class extends Controller {
       showEmptyRowsInput.value = params.get("show_empty_rows") || "false";
     }
 
+    // Update show_dependencies
+    const showDependenciesInput = form.querySelector('input[name="show_dependencies"]');
+    if (showDependenciesInput) {
+      showDependenciesInput.value = params.get("show_dependencies") || showDependenciesInput.value;
+    }
+
     // Update completed_filter
     const completedFilterInput = form.querySelector('input[name="completed_filter"]');
     if (completedFilterInput) {
@@ -369,6 +387,7 @@ export default class extends Controller {
       show_sub_issues: form.querySelector('input[name="show_sub_issues"]')?.value || "true",
       show_empty_groups: form.querySelector('input[name="show_empty_groups"]')?.value || "false",
       show_empty_rows: form.querySelector('input[name="show_empty_rows"]')?.value || "false",
+      show_dependencies: form.querySelector('input[name="show_dependencies"]')?.value || "false",
       completed_filter: form.querySelector('input[name="completed_filter"]')?.value || "",
       visible_properties: properties,
     };
@@ -393,6 +412,7 @@ export default class extends Controller {
       show_sub_issues: params.get("show_sub_issues") || "true",
       show_empty_groups: params.get("show_empty_groups") || "false",
       show_empty_rows: params.get("show_empty_rows") || "false",
+      show_dependencies: params.get("show_dependencies") || this.savedPreferences.show_dependencies,
       completed_filter: params.get("completed_filter") || "",
       visible_properties: properties,
     };
@@ -412,6 +432,7 @@ export default class extends Controller {
       current.show_sub_issues !== saved.show_sub_issues ||
       current.show_empty_groups !== saved.show_empty_groups ||
       current.show_empty_rows !== saved.show_empty_rows ||
+      current.show_dependencies !== saved.show_dependencies ||
       current.completed_filter !== saved.completed_filter ||
       current.visible_properties !== saved.visible_properties;
 

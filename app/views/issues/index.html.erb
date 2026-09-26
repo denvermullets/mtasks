@@ -10,8 +10,13 @@
         <span class="text-sm text-gray-500 hidden sm:inline"><%= current_team&.workspace&.name %></span>
       </div>
       <div class="hidden sm:flex items-center gap-2">
+        <%# Shown by dependencies-toggle; lives in the toolbar so turning it on doesn't shift the board. %>
+        <div id="dependency_legend" class="hidden <%= 'xl:block' if dependency_overlay? %>">
+          <%= render "shared/dependency_legend" %>
+        </div>
         <%= render "issue_search" %>
         <%= render "filter_menu" %>
+        <%= render "dependencies_toggle" %>
         <%= turbo_frame_tag "display_options_bar" do %>
           <%= render "display_options_bar" %>
         <% end %>

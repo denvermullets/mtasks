@@ -26,6 +26,7 @@
           <%= f.hidden_field :show_sub_issues, value: @display_options[:show_sub_issues] %>
           <%= f.hidden_field :show_empty_groups, value: @display_options[:show_empty_groups] %>
           <%= f.hidden_field :show_empty_rows, value: @display_options[:show_empty_rows] %>
+          <%= f.hidden_field :show_dependencies, value: @display_options[:show_dependencies] %>
           <%= f.hidden_field :completed_filter, value: @display_options[:completed_filter] %>
           <% @display_options[:visible_properties].each do |prop| %>
             <%= f.hidden_field "visible_properties[]", value: prop, id: nil %>

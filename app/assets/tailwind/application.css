@@ -67,3 +67,11 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 #discussion-stream.decisions-only > *:not([data-pinned="true"]) {
   display: none;
 }
+/* Dependency connector lines (lib/dependency_connectors.js) — highlight() dims
+   edges that don't touch the hovered/focused issue without redrawing. */
+.dep-edge {
+  transition: opacity 150ms ease-out;
+}
+.dep-edge.is-dimmed {
+  opacity: 0.15;
+}

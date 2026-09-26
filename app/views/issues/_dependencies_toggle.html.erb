@@ -1,0 +1,20 @@
+<% on = @display_options[:show_dependencies] %>
+<button type="button"
+        class="<%= 'hidden' unless @display_options[:view_mode] == 'board' %> flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded bg-foreground text-gray-300 hover:bg-hover-highlight border <%= on ? 'border-accent text-gray-100' : 'border-stroke' %> transition-colors cursor-pointer"
+        role="switch"
+        aria-checked="<%= on %>"
+        aria-label="Show dependencies"
+        data-controller="dependencies-toggle"
+        data-dependencies-toggle-on-value="<%= on %>"
+        data-dependencies-toggle-url-value="<%= team_display_preference_path(current_team) %>"
+        data-action="click->dependencies-toggle#toggle turbo:frame-load@document->dependencies-toggle#syncViewMode">
+  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M6 8a2 2 0 100-4 2 2 0 000 4zm0 12a2 2 0 100-4 2 2 0 000 4zm12-6a2 2 0 100-4 2 2 0 000 4zM6 8v8m0-8c0 3 2 4 5 4h5"></path>
+  </svg>
+  <span>Dependencies</span>
+  <span class="inline-flex items-center shrink-0 w-7 h-4 p-0.5 rounded-full transition-colors <%= on ? 'bg-accent' : 'bg-gray-600' %>"
+        data-dependencies-toggle-target="track">
+    <span class="w-3 h-3 bg-white rounded-full transition-transform <%= on ? 'translate-x-3' : 'translate-x-0' %>"
+          data-dependencies-toggle-target="knob"></span>
+  </span>
+</button>
