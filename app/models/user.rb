@@ -63,6 +63,34 @@ class User < ApplicationRecord
     ActiveSupport::TimeZone[value.to_s] ? value : 'UTC'
   end
 
+  # The dashboard chosen as the landing page, or nil for the issues board. Scoped to the user's own
+  # dashboards so a deleted (or foreign) id quietly falls back to the board.
+  def home_dashboard
+    id = resolved_settings['home_dashboard_id']
+    id.present? ? dashboards.find_by(id: id) : nil
+  end
+
+  # The team whose issues board is the landing page, or nil to follow the last-used team. Archived
+  # teams and teams the user has left fall back the same way.
+  def home_team
+    id = resolved_settings['home_team_id']
+    id.present? ? teams.not_archived.find_by(id: id) : nil
+  end
+
+  # Where "/" and sign-in land: the home dashboard if one is set, then the pinned home team's issues
+  # board, then the preferred (last-used) team, then the first non-archived team.
+  def home_path(preferred_team_id = nil)
+    dashboard = home_dashboard
+    return "/dashboards/#{dashboard.id}" if dashboard
+
+    team = home_team
+    return "/teams/#{team.id}/issues" if team
+
+    active_teams = teams.not_archived
+    team_id = active_teams.exists?(id: preferred_team_id) ? preferred_team_id : active_teams.first&.id
+    team_id ? "/teams/#{team_id}/issues" : '/teams/new'
+  end
+
   def team_order
     raw = resolved_settings.fetch('team_order', {})
     {

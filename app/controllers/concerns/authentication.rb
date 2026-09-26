@@ -49,9 +49,7 @@ module Authentication
     url = session.delete(:return_to_after_authenticating)
     return url if url.present?
 
-    teams = Current.user.teams.not_archived
-    team_id = teams.exists?(id: session[:current_team_id]) ? session[:current_team_id] : teams.first&.id
-    team_id ? "/teams/#{team_id}/issues" : '/teams/new'
+    Current.user.home_path(session[:current_team_id])
   end
 
   def start_new_session_for(user)

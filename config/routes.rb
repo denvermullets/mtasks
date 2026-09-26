@@ -9,6 +9,8 @@ Rails.application.routes.draw do
     patch :team_order, to: 'team_order#update'
     get :time_zone, to: 'time_zone#show'
     patch :time_zone, to: 'time_zone#update'
+    get :home_page, to: 'home_page#show'
+    patch :home_page, to: 'home_page#update'
   end
   resources :workspaces, only: [] do
     resource :github_installation, only: %i[show new destroy], controller: 'workspace_github_installations' do
@@ -171,11 +173,7 @@ Rails.application.routes.draw do
     session_id = request.cookie_jar.signed[:mtasks_session_id]
     session = session_id && Session.find_by(id: session_id)
     if session
-      user = session.user
-      # Try session team_id first, then fall back to user's first team
-      team_id = request.session[:current_team_id]
-      team_id ||= user.teams.not_archived.first&.id
-      team_id ? "/teams/#{team_id}/issues" : '/teams/new'
+      session.user.home_path(request.session[:current_team_id])
     else
       '/landing'
     end
