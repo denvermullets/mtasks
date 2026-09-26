@@ -2,15 +2,13 @@ Rails.application.routes.draw do
   resource :session
   resources :passwords, param: :token
   resources :users, only: %i[new create]
+  get :settings, to: 'settings/account#show'
   namespace :settings do
-    get :appearance, to: 'appearance#show'
-    patch :appearance, to: 'appearance#update'
-    get :team_order, to: 'team_order#show'
-    patch :team_order, to: 'team_order#update'
-    get :time_zone, to: 'time_zone#show'
-    patch :time_zone, to: 'time_zone#update'
-    get :home_page, to: 'home_page#show'
-    patch :home_page, to: 'home_page#update'
+    # Each preference is a section of the single settings page; the old standalone GETs redirect there.
+    %w[appearance team_order time_zone home_page].each do |section|
+      get section, to: redirect("/settings?section=#{section}")
+      patch section, to: "#{section}#update"
+    end
   end
   resources :workspaces, only: [] do
     resource :github_installation, only: %i[show new destroy], controller: 'workspace_github_installations' do

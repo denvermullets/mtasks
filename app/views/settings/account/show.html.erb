@@ -1,0 +1,51 @@
+<% content_for :title, "Settings" %>
+<div class="flex-1 flex flex-col min-h-0">
+  <!-- Top Bar -->
+  <div class="h-14 bg-menu border-b border-stroke flex items-center justify-between px-4 shrink-0">
+    <div class="flex items-center gap-4">
+      <%= render "shared/mobile_menu_button" %>
+      <h1 class="text-base font-semibold">Settings</h1>
+      <span class="text-sm text-gray-500 hidden sm:inline"><%= current_user.name %></span>
+    </div>
+  </div>
+  <!-- Settings Content -->
+  <% sections = user_settings_sections %>
+  <% current_section = sections.key?(params[:section]) ? params[:section] : sections.keys.first %>
+  <% active_link = "bg-hover-highlight text-gray-200" %>
+  <% inactive_link = "text-gray-400 hover:text-gray-200 hover:bg-hover-highlight" %>
+  <div class="flex-1 overflow-y-auto bg-background p-4 sm:p-8"
+       data-controller="settings-nav"
+       data-settings-nav-active-class="<%= active_link %>"
+       data-settings-nav-inactive-class="<%= inactive_link %>">
+    <div class="max-w-5xl mx-auto w-full flex flex-col md:flex-row gap-4 md:gap-8">
+      <!-- Section Nav -->
+      <nav class="md:w-48 shrink-0 flex md:flex-col gap-1 overflow-x-auto md:sticky md:top-0 md:self-start">
+        <% sections.each do |key, label| %>
+          <%= link_to label, settings_path(section: key),
+              data: { settings_nav_target: "link", section: key, action: "click->settings-nav#select" },
+              class: "px-3 py-1.5 text-sm rounded whitespace-nowrap cursor-pointer transition-colors #{current_section == key ? active_link : inactive_link}" %>
+        <% end %>
+      </nav>
+      <!-- Section Panels -->
+      <div class="flex-1 min-w-0">
+        <% if flash[:notice] %>
+          <div class="mb-4 px-3 py-2 rounded border border-accent/40 bg-accent/10 text-accent text-sm">
+            <%= flash[:notice] %>
+          </div>
+        <% end %>
+        <% if flash[:alert] %>
+          <div class="mb-4 px-3 py-2 rounded border border-red-500/40 bg-red-500/10 text-red-300 text-sm">
+            <%= flash[:alert] %>
+          </div>
+        <% end %>
+        <% sections.each_key do |key| %>
+          <div data-settings-nav-target="panel" data-section="<%= key %>" class="<%= "hidden" unless current_section == key %>">
+            <div class="bg-foreground border border-stroke rounded-lg p-6">
+              <%= render "settings/account/#{key}" %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

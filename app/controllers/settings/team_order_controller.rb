@@ -1,10 +1,4 @@
 class Settings::TeamOrderController < ApplicationController
-  def show
-    owned, joined = user_teams.partition { |t| team_owner?(t) }
-    @owned_teams = current_user.order_teams(owned, :owned)
-    @joined_teams = current_user.order_teams(joined, :joined)
-  end
-
   def update
     scope = params[:scope].to_s
     return head :unprocessable_entity unless %w[owned joined].include?(scope)

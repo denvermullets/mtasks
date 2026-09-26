@@ -1,0 +1,44 @@
+<h2 class="text-lg font-semibold text-gray-200">Home Page</h2>
+<p class="text-xs text-gray-400 mt-1 mb-4">Where you land when you sign in or open the app.</p>
+<%= form_with url: settings_home_page_path, method: :patch, class: "space-y-4" do %>
+  <% selected = if (dashboard = current_user.home_dashboard)
+                  "dashboard:#{dashboard.id}"
+                elsif (team = current_user.home_team)
+                  "team:#{team.id}"
+                else
+                  ""
+                end %>
+  <div>
+    <div class="text-sm font-medium text-gray-400 mb-2">Issues board</div>
+    <div class="space-y-1">
+      <label class="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-hover-highlight cursor-pointer">
+        <%= radio_button_tag :home, "", selected == "", id: "home_default", class: "accent-accent cursor-pointer" %>
+        <span class="text-sm text-gray-200">Last team you used</span>
+      </label>
+      <% (@owned_teams + @joined_teams).each do |team| %>
+        <label class="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-hover-highlight cursor-pointer">
+          <%= radio_button_tag :home, "team:#{team.id}", selected == "team:#{team.id}", id: "home_team_#{team.id}", class: "accent-accent cursor-pointer" %>
+          <span class="text-sm text-gray-200"><%= team.name %></span>
+        </label>
+      <% end %>
+    </div>
+  </div>
+  <div>
+    <div class="text-sm font-medium text-gray-400 mb-2">Dashboards</div>
+    <% if @dashboards.any? %>
+      <div class="space-y-1">
+        <% @dashboards.each do |dashboard| %>
+          <label class="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-hover-highlight cursor-pointer">
+            <%= radio_button_tag :home, "dashboard:#{dashboard.id}", selected == "dashboard:#{dashboard.id}", id: "home_dashboard_#{dashboard.id}", class: "accent-accent cursor-pointer" %>
+            <span class="text-sm text-gray-200"><%= dashboard.name %></span>
+          </label>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="text-xs text-gray-500">
+        You don't have any dashboards yet. <%= link_to "Create one", dashboards_path, class: "text-accent hover:text-accent/80 cursor-pointer" %> to use it as your home page.
+      </p>
+    <% end %>
+  </div>
+  <%= submit_tag "Save Home Page", class: "px-4 py-2 border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 font-medium cursor-pointer rounded-md" %>
+<% end %>

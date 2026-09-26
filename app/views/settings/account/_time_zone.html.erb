@@ -1,0 +1,14 @@
+<h2 class="text-lg font-semibold text-gray-200">Time Zone</h2>
+<p class="text-xs text-gray-400 mt-1 mb-4">Used as the default for things scheduled by date, like recurring issues.</p>
+<%= form_with url: settings_time_zone_path, method: :patch, class: "space-y-4" do %>
+  <div>
+    <%= label_tag :time_zone, "Time zone", class: "block text-sm font-medium text-gray-400 mb-2" %>
+    <%= select_tag :time_zone,
+                   time_zone_options_for_select(current_user.time_zone, ActiveSupport::TimeZone.us_zones),
+                   class: "w-full px-3 py-2 bg-background border border-stroke rounded text-gray-200 text-sm focus:outline-none focus:border-accent" %>
+    <p class="text-xs text-gray-500 mt-1">
+      It's currently <%= Time.current.in_time_zone(current_user.time_zone).to_fs(:long) %> in this zone.
+    </p>
+  </div>
+  <%= submit_tag "Save Time Zone", class: "px-4 py-2 border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 font-medium cursor-pointer rounded-md" %>
+<% end %>

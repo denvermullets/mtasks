@@ -1,0 +1,9 @@
+<div class="flex items-center justify-between">
+  <div>
+    <h2 class="text-lg font-semibold text-gray-200">API Tokens</h2>
+    <p class="text-xs text-gray-400 mt-1">Authenticate integrations like chat apps, the MCP server, CI, or scripts</p>
+  </div>
+  <%= link_to api_tokens_path, class: "text-sm text-accent hover:text-accent/80 cursor-pointer" do %>
+    <%= @api_token_count.positive? ? "Manage (#{@api_token_count})" : "Set Up" %>
+  <% end %>
+</div>

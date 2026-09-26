@@ -1,0 +1,26 @@
+<div data-controller="team-order" data-team-order-url-value="<%= settings_team_order_path %>">
+  <h2 class="text-lg font-semibold text-gray-200">Team Order</h2>
+  <p class="text-xs text-gray-400 mt-1 mb-4">Drag to reorder the teams in your sidebar. Changes save automatically.</p>
+  <div class="mb-6">
+    <div class="text-sm font-medium text-gray-400 mb-3">Teams you own</div>
+    <% if @owned_teams.any? %>
+      <div class="space-y-1" data-team-order-target="list" data-scope="owned">
+        <% @owned_teams.each do |team| %>
+          <%= render "settings/team_order/row", team: team %>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="text-xs text-gray-500">You don't own any teams yet.</p>
+    <% end %>
+  </div>
+  <% if @joined_teams.any? %>
+    <div>
+      <div class="text-sm font-medium text-gray-400 mb-3">Teams you've joined</div>
+      <div class="space-y-1" data-team-order-target="list" data-scope="joined">
+        <% @joined_teams.each do |team| %>
+          <%= render "settings/team_order/row", team: team %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>

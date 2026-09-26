@@ -15,11 +15,35 @@ class Settings::AppearanceController < ApplicationController
     { id: 'space-grotesk', name: 'Space Grotesk', family: 'Space Grotesk', category: :sans },
     { id: 'system', name: 'System', family: nil, category: :sans }
   ].freeze
-  private_constant :MONO_STACK_FALLBACK, :SANS_STACK_FALLBACK, :FONT_OPTIONS
+  THEME_SWATCHES = [
+    { id: 'default',             name: 'Default',             colors: %w[#92E8D4 #0B0A0A #22242B] },
+    { id: 'warm-paper',          name: 'Warm Paper',          colors: %w[#da5f1c #f4f0e8 #c9bca8] },
+    { id: 'cool-linen',          name: 'Cool Linen',          colors: %w[#1a8aaa #f0f2f5 #b8bfc9] },
+    { id: 'phosphor-amber',      name: 'Phosphor Amber',      colors: %w[#e8a820 #0e0c08 #3a2a10] },
+    { id: 'phosphor-green',      name: 'Phosphor Green',      colors: %w[#7ae890 #080e08 #1e4a22] },
+    { id: 'dusk',                name: 'Dusk',                colors: %w[#f07a70 #16121e #4a4060] },
+    { id: 'brutalist-newsprint', name: 'Brutalist Newsprint', colors: %w[#e8d820 #181610 #3a3830] },
+    { id: 'muted-sage',          name: 'Muted Sage',          colors: %w[#60d890 #283430 #4a6054] },
+    { id: 'deep-navy',           name: 'Deep Navy',           colors: %w[#f08030 #101828 #2a3a52] },
+    { id: 'warm-dusk',           name: 'Warm Dusk',           colors: %w[#50e8c0 #22141c #3a2430] },
+    { id: 'ink',                 name: 'Ink',                 colors: %w[#aaee44 #141414 #444444] },
+    { id: 'ocean-floor',         name: 'Ocean Floor',         colors: %w[#d4a84a #0e1820 #2a4258] },
+    { id: 'ash',                 name: 'Ash',                 colors: %w[#ff5a3c #282828 #484848] },
+    { id: 'chalk',               name: 'Chalk',               colors: %w[#0a6870 #f5f4f0 #d0cec8] },
+    { id: 'dusk-redux',          name: 'Dusk Redux',          colors: %w[#f0a070 #181424 #3a3060] }
+  ].freeze
+  private_constant :MONO_STACK_FALLBACK, :SANS_STACK_FALLBACK, :FONT_OPTIONS, :THEME_SWATCHES
 
-  def show
-    @themes = theme_swatches
-    @fonts = font_options
+  def self.theme_swatches
+    THEME_SWATCHES
+  end
+
+  def self.font_options
+    FONT_OPTIONS.map do |opt|
+      fallback = opt[:category] == :mono ? MONO_STACK_FALLBACK : SANS_STACK_FALLBACK
+      stack = opt[:family] ? %("#{opt[:family]}", #{fallback}) : fallback
+      { id: opt[:id], name: opt[:name], stack: stack }
+    end
   end
 
   def update
@@ -27,11 +51,11 @@ class Settings::AppearanceController < ApplicationController
     font = params[:font]
 
     unless User::AVAILABLE_THEMES.include?(theme)
-      redirect_to settings_appearance_path, alert: 'Unknown theme.', status: :see_other and return
+      redirect_to settings_path(section: 'appearance'), alert: 'Unknown theme.', status: :see_other and return
     end
 
     unless User::AVAILABLE_FONTS.include?(font)
-      redirect_to settings_appearance_path, alert: 'Unknown font.', status: :see_other and return
+      redirect_to settings_path(section: 'appearance'), alert: 'Unknown font.', status: :see_other and return
     end
 
     settings = current_user.settings || {}
@@ -41,35 +65,5 @@ class Settings::AppearanceController < ApplicationController
     # The picker saves on every selection and has already applied the theme
     # client-side, so there is nothing to re-render.
     head :no_content
-  end
-
-  private
-
-  def theme_swatches
-    [
-      { id: 'default',             name: 'Default',             colors: %w[#92E8D4 #0B0A0A #22242B] },
-      { id: 'warm-paper',          name: 'Warm Paper',          colors: %w[#da5f1c #f4f0e8 #c9bca8] },
-      { id: 'cool-linen',          name: 'Cool Linen',          colors: %w[#1a8aaa #f0f2f5 #b8bfc9] },
-      { id: 'phosphor-amber',      name: 'Phosphor Amber',      colors: %w[#e8a820 #0e0c08 #3a2a10] },
-      { id: 'phosphor-green',      name: 'Phosphor Green',      colors: %w[#7ae890 #080e08 #1e4a22] },
-      { id: 'dusk',                name: 'Dusk',                colors: %w[#f07a70 #16121e #4a4060] },
-      { id: 'brutalist-newsprint', name: 'Brutalist Newsprint', colors: %w[#e8d820 #181610 #3a3830] },
-      { id: 'muted-sage',          name: 'Muted Sage',          colors: %w[#60d890 #283430 #4a6054] },
-      { id: 'deep-navy',           name: 'Deep Navy',           colors: %w[#f08030 #101828 #2a3a52] },
-      { id: 'warm-dusk',           name: 'Warm Dusk',           colors: %w[#50e8c0 #22141c #3a2430] },
-      { id: 'ink',                 name: 'Ink',                 colors: %w[#aaee44 #141414 #444444] },
-      { id: 'ocean-floor',         name: 'Ocean Floor',         colors: %w[#d4a84a #0e1820 #2a4258] },
-      { id: 'ash',                 name: 'Ash',                 colors: %w[#ff5a3c #282828 #484848] },
-      { id: 'chalk',               name: 'Chalk',               colors: %w[#0a6870 #f5f4f0 #d0cec8] },
-      { id: 'dusk-redux',          name: 'Dusk Redux',          colors: %w[#f0a070 #181424 #3a3060] }
-    ]
-  end
-
-  def font_options
-    FONT_OPTIONS.map do |opt|
-      fallback = opt[:category] == :mono ? MONO_STACK_FALLBACK : SANS_STACK_FALLBACK
-      stack = opt[:family] ? %("#{opt[:family]}", #{fallback}) : fallback
-      { id: opt[:id], name: opt[:name], stack: stack }
-    end
   end
 end

@@ -8,7 +8,7 @@ module Settings
     end
 
     test 'show renders with the default theme' do
-      get settings_appearance_path
+      get settings_path
 
       assert_response :success
       assert_equal 'default', @user.theme
@@ -28,7 +28,7 @@ module Settings
 
       # A fresh, full page load is the path that was broken: the layout must
       # render the persisted theme rather than falling back to 'default'.
-      get settings_appearance_path
+      get settings_path
 
       assert_response :success
       assert_select 'html[data-theme=?]', 'ocean-floor'
@@ -47,14 +47,14 @@ module Settings
     test 'update rejects an unknown theme' do
       patch settings_appearance_path, params: { theme: 'not-a-theme', font: 'inter' }
 
-      assert_redirected_to settings_appearance_path
+      assert_redirected_to settings_path(section: 'appearance')
       assert_equal 'default', @user.reload.theme
     end
 
     test 'update rejects an unknown font' do
       patch settings_appearance_path, params: { theme: 'ink', font: 'comic-sans' }
 
-      assert_redirected_to settings_appearance_path
+      assert_redirected_to settings_path(section: 'appearance')
       assert_equal 'inter', @user.reload.font
     end
   end

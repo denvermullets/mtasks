@@ -6,25 +6,8 @@
     <span class="text-sm font-medium text-gray-200"><%= current_user.name %></span>
   </button>
   <div data-avatar-color-picker-target="popover" class="hidden absolute z-50 mt-2 p-1 bg-foreground border border-stroke rounded-lg shadow-lg min-w-[180px]">
-    <%= link_to settings_appearance_path, class: "block px-2 py-1.5 text-xs text-gray-300 hover:text-gray-100 rounded hover:bg-hover-highlight" do %>
-      Appearance
-    <% end %>
-    <%= link_to settings_home_page_path, class: "block px-2 py-1.5 text-xs text-gray-300 hover:text-gray-100 rounded hover:bg-hover-highlight cursor-pointer" do %>
-      Home page
-    <% end %>
-    <%= link_to settings_team_order_path, class: "block px-2 py-1.5 text-xs text-gray-300 hover:text-gray-100 rounded hover:bg-hover-highlight cursor-pointer" do %>
-      Team order
-    <% end %>
-    <%= link_to settings_time_zone_path, class: "block px-2 py-1.5 text-xs text-gray-300 hover:text-gray-100 rounded hover:bg-hover-highlight cursor-pointer" do %>
-      Time zone
-    <% end %>
-    <%= link_to api_tokens_path, class: "block px-2 py-1.5 text-xs text-gray-300 hover:text-gray-100 rounded hover:bg-hover-highlight" do %>
-      API Tokens
-    <% end %>
-    <% if current_team&.workspace %>
-      <%= link_to workspace_settings_hourglass_integration_path(current_team.workspace), class: "block px-2 py-1.5 text-xs text-gray-300 hover:text-gray-100 rounded hover:bg-hover-highlight" do %>
-        Integrations
-      <% end %>
+    <%= link_to settings_path, class: "block px-2 py-1.5 text-xs text-gray-300 hover:text-gray-100 rounded hover:bg-hover-highlight cursor-pointer" do %>
+      Settings
     <% end %>
     <div class="border-t border-stroke my-1"></div>
     <%= button_to session_path, method: :delete, class: "block w-full text-left px-2 py-1.5 text-xs text-gray-300 hover:text-gray-100 rounded hover:bg-hover-highlight cursor-pointer" do %>

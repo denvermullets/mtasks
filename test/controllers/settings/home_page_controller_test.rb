@@ -15,7 +15,7 @@ module Settings
     end
 
     test 'shows the settings page' do
-      get settings_home_page_path
+      get settings_path
 
       assert_response :success
       assert_match 'Today', response.body
@@ -25,7 +25,7 @@ module Settings
     test 'saves a dashboard without touching other settings' do
       patch settings_home_page_path, params: { home: "dashboard:#{@dashboard.id}" }
 
-      assert_redirected_to settings_home_page_path
+      assert_redirected_to settings_path(section: 'home_page')
       assert_equal @dashboard, @user.reload.home_dashboard
       assert_equal 'dusk', @user.theme
     end
@@ -57,11 +57,11 @@ module Settings
       foreign_team = Workspace.create!(name: 'Other WS', owner: other).teams.create!(name: 'Theirs', identifier: 'OTH')
 
       patch settings_home_page_path, params: { home: "dashboard:#{foreign_dashboard.id}" }
-      assert_redirected_to settings_home_page_path
+      assert_redirected_to settings_path(section: 'home_page')
       patch settings_home_page_path, params: { home: "team:#{foreign_team.id}" }
-      assert_redirected_to settings_home_page_path
+      assert_redirected_to settings_path(section: 'home_page')
       patch settings_home_page_path, params: { home: 'bogus:1' }
-      assert_redirected_to settings_home_page_path
+      assert_redirected_to settings_path(section: 'home_page')
 
       @user.reload
       assert_nil @user.home_dashboard

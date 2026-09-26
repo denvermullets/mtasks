@@ -94,7 +94,7 @@
       <%= f.time_zone_select :time_zone, ActiveSupport::TimeZone.us_zones, {}, class: "#{input_class} sm:w-96" %>
       <p class="text-xs text-gray-500 mt-1">
         Issues are filed shortly after midnight on each scheduled day in this zone.
-        New schedules default to your <%= link_to "time zone preference", settings_time_zone_path, class: "text-accent hover:text-accent/80 cursor-pointer" %>.
+        New schedules default to your <%= link_to "time zone preference", settings_path(section: "time_zone"), class: "text-accent hover:text-accent/80 cursor-pointer" %>.
       </p>
     </div>
 
