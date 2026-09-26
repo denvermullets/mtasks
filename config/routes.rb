@@ -35,6 +35,7 @@ Rails.application.routes.draw do
     resources :labels, only: %i[index create update destroy]
     resources :lanes, only: %i[create update destroy]
     resources :recurring_issues, except: %i[show]
+    resources :saved_views, only: %i[create update destroy]
     namespace :settings do
       resource :vektis_integration, only: %i[show update destroy], controller: 'vektis_integrations'
     end

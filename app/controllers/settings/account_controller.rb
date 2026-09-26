@@ -8,6 +8,7 @@ class Settings::AccountController < ApplicationController
     @owned_teams = current_user.order_teams(owned, :owned)
     @joined_teams = current_user.order_teams(joined, :joined)
     @dashboards = current_user.dashboards
+    @saved_views = sidebar_saved_views
     @api_token_count = current_user.api_tokens.active.count
   end
 end

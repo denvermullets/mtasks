@@ -36,6 +36,7 @@ class User < ApplicationRecord
   has_many :sent_invitations, class_name: 'TeamInvitation', foreign_key: :invited_by_id, dependent: :destroy
   has_many :notifications, dependent: :destroy
   has_many :dashboards, -> { ordered }, dependent: :destroy
+  has_many :saved_views, -> { ordered }, dependent: :destroy
 
   # Validations
   validates :email, presence: true, uniqueness: true, format: { with: URI::MailTo::EMAIL_REGEXP }
@@ -70,6 +71,13 @@ class User < ApplicationRecord
     id.present? ? dashboards.find_by(id: id) : nil
   end
 
+  # The saved issues view chosen as the landing page. Like home_team, a view on an archived or
+  # departed team (or a deleted view) falls back.
+  def home_view
+    id = resolved_settings['home_view_id']
+    id.present? ? saved_views.where(team_id: teams.not_archived.select(:id)).find_by(id: id) : nil
+  end
+
   # The team whose issues board is the landing page, or nil to follow the last-used team. Archived
   # teams and teams the user has left fall back the same way.
   def home_team
@@ -77,11 +85,14 @@ class User < ApplicationRecord
     id.present? ? teams.not_archived.find_by(id: id) : nil
   end
 
-  # Where "/" and sign-in land: the home dashboard if one is set, then the pinned home team's issues
-  # board, then the preferred (last-used) team, then the first non-archived team.
+  # Where "/" and sign-in land: the home dashboard if one is set, then the home saved view, then the
+  # pinned home team's issues board, then the preferred (last-used) team, then the first non-archived team.
   def home_path(preferred_team_id = nil)
     dashboard = home_dashboard
     return "/dashboards/#{dashboard.id}" if dashboard
+
+    view = home_view
+    return view.path if view
 
     team = home_team
     return "/teams/#{team.id}/issues" if team

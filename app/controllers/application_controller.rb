@@ -12,13 +12,18 @@ class ApplicationController < ActionController::Base
 
   before_action :configure_paper_trail_whodunnit
 
-  helper_method :sidebar_dashboards
+  helper_method :sidebar_dashboards, :sidebar_saved_views
 
   private
 
   # Loaded once per request; the desktop sidebar and the mobile drawer both render it.
   def sidebar_dashboards
     @sidebar_dashboards ||= current_user.dashboards.to_a
+  end
+
+  # Saved views on teams the user can still see, grouped under their team in the sidebar.
+  def sidebar_saved_views
+    @sidebar_saved_views ||= current_user.saved_views.where(team_id: user_teams.map(&:id)).includes(:team).to_a
   end
 
   def configure_paper_trail_whodunnit

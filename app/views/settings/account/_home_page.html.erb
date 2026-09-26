@@ -3,6 +3,8 @@
 <%= form_with url: settings_home_page_path, method: :patch, class: "space-y-4" do %>
   <% selected = if (dashboard = current_user.home_dashboard)
                   "dashboard:#{dashboard.id}"
+                elsif (view = current_user.home_view)
+                  "view:#{view.id}"
                 elsif (team = current_user.home_team)
                   "team:#{team.id}"
                 else
@@ -22,6 +24,24 @@
         </label>
       <% end %>
     </div>
+  </div>
+  <div>
+    <div class="text-sm font-medium text-gray-400 mb-2">Saved views</div>
+    <% if @saved_views.any? %>
+      <div class="space-y-1">
+        <% @saved_views.each do |view| %>
+          <label class="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-hover-highlight cursor-pointer">
+            <%= radio_button_tag :home, "view:#{view.id}", selected == "view:#{view.id}", id: "home_view_#{view.id}", class: "accent-accent cursor-pointer" %>
+            <span class="text-sm text-gray-200"><%= view.name %></span>
+            <span class="font-mono text-xs text-gray-500"><%= view.team.identifier %></span>
+          </label>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="text-xs text-gray-500">
+        You don't have any saved views yet. Save one from the Views menu on a team's issues board.
+      </p>
+    <% end %>
   </div>
   <div>
     <div class="text-sm font-medium text-gray-400 mb-2">Dashboards</div>

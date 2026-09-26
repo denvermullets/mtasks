@@ -1,0 +1,73 @@
+<% views = sidebar_saved_views.select { |view| view.team_id == current_team.id } %>
+<div class="relative inline-block" data-controller="saved-views">
+  <button type="button"
+          class="flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded bg-foreground text-gray-300 hover:bg-hover-highlight border border-stroke transition-colors cursor-pointer"
+          data-action="click->saved-views#togglePanel"
+          aria-label="Saved views">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+    </svg>
+    <span>Views</span>
+    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+    </svg>
+  </button>
+
+  <div class="hidden absolute top-full right-0 mt-2 w-72 max-h-[calc(100vh-6rem)] bg-foreground border border-stroke rounded-lg shadow-xl z-50 overflow-y-auto"
+       data-saved-views-target="panel">
+    <div class="px-4 py-2 border-b border-stroke text-xs font-semibold text-gray-400 uppercase tracking-wide">
+      Saved views
+    </div>
+    <% if views.any? %>
+      <div class="py-1">
+        <% views.each do |view| %>
+          <div class="group flex items-center gap-1 px-2 hover:bg-hover-highlight">
+            <%= link_to view.name, view.path,
+                data: { turbo_frame: "_top" },
+                class: "flex-1 min-w-0 truncate px-2 py-2 text-sm text-gray-300 hover:text-gray-100 cursor-pointer" %>
+            <%= form_with url: team_saved_view_path(current_team, view), method: :patch,
+                data: { action: "submit->saved-views#captureQuery" } do %>
+              <%= hidden_field_tag "saved_view[query]", "", id: nil %>
+              <button type="submit"
+                      class="p-1 text-gray-500 hover:text-accent opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                      title="Update with current filters"
+                      aria-label="Update <%= view.name %> with current filters">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+              </button>
+            <% end %>
+            <%= form_with url: team_saved_view_path(current_team, view), method: :delete,
+                data: { action: "submit->saved-views#captureQuery", turbo_confirm: "Delete the \"#{view.name}\" view?" } do %>
+              <%= hidden_field_tag "saved_view[query]", "", id: nil %>
+              <button type="submit"
+                      class="p-1 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                      title="Delete view"
+                      aria-label="Delete <%= view.name %>">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="px-4 py-3 text-xs text-gray-500">
+        No saved views yet. Set up filters and display options, then save them here.
+      </p>
+    <% end %>
+    <%= form_with url: team_saved_views_path(current_team), method: :post,
+        data: { action: "submit->saved-views#captureQuery" },
+        class: "p-3 border-t border-stroke space-y-2" do %>
+      <%= hidden_field_tag "saved_view[query]", "", id: nil %>
+      <%= text_field_tag "saved_view[name]", nil,
+          id: nil, required: true, maxlength: 80, placeholder: "View name",
+          autocomplete: "off",
+          data: { saved_views_target: "name" },
+          class: "w-full px-3 py-1.5 text-sm rounded-md bg-background border border-stroke text-gray-200 placeholder-gray-500 focus:outline-none focus:border-accent" %>
+      <%= submit_tag "Save current view", name: nil,
+          class: "w-full rounded-md px-3 py-1.5 text-sm border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 font-medium cursor-pointer" %>
+    <% end %>
+  </div>
+</div>

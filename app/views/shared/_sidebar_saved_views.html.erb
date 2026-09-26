@@ -1,0 +1,22 @@
+<%# locals: (mobile: false) %>
+<%# Rendered by both the desktop sidebar and the mobile drawer; views are created from the issues board's Views menu. %>
+<% if sidebar_saved_views.any? %>
+  <div class="p-2">
+    <div class="px-2 mb-1">
+      <span class="text-xs text-gray-500 <%= 'font-medium uppercase' if mobile %>">Views</span>
+    </div>
+    <div class="space-y-1">
+      <% sidebar_saved_views.each do |view| %>
+        <%= link_to view.path,
+            class: "flex items-center gap-2 px-2 py-1.5 text-sm rounded hover:bg-foreground text-gray-300 cursor-pointer",
+            data: (mobile ? { action: "click->sidebar#close" } : {}) do %>
+          <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+          </svg>
+          <span class="truncate"><%= view.name %></span>
+          <span class="ml-auto font-mono text-xs text-gray-500 shrink-0"><%= view.team.identifier %></span>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+<% end %>

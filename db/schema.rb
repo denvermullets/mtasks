@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_25_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_26_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -488,6 +488,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_25_140000) do
     t.index ["team_id"], name: "index_recurring_issues_on_team_id"
   end
 
+  create_table "saved_views", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.integer "position", default: 0, null: false
+    t.jsonb "query", default: {}, null: false
+    t.bigint "team_id", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["team_id"], name: "index_saved_views_on_team_id"
+    t.index ["user_id", "position"], name: "index_saved_views_on_user_id_and_position"
+    t.index ["user_id"], name: "index_saved_views_on_user_id"
+  end
+
   create_table "sessions", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "ip_address"
@@ -693,6 +706,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_25_140000) do
   add_foreign_key "recurring_issues", "teams"
   add_foreign_key "recurring_issues", "users", column: "assignee_id"
   add_foreign_key "recurring_issues", "users", column: "creator_id"
+  add_foreign_key "saved_views", "teams"
+  add_foreign_key "saved_views", "users"
   add_foreign_key "sessions", "users"
   add_foreign_key "team_invitations", "teams"
   add_foreign_key "team_invitations", "users", column: "invited_by_id"

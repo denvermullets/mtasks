@@ -101,5 +101,39 @@ module Settings
 
       assert_redirected_to "/teams/#{@first_team.id}/issues"
     end
+
+    test 'saves a saved view and root lands on it' do
+      view = @user.saved_views.create!(team: @second_team, name: 'Urgent', query: { 'priority' => 'urgent' })
+      @user.update!(settings: @user.settings.merge('home_dashboard_id' => @dashboard.id))
+
+      patch settings_home_page_path, params: { home: "view:#{view.id}" }
+
+      @user.reload
+      assert_equal view, @user.home_view
+      assert_nil @user.home_dashboard
+
+      get root_path
+      assert_redirected_to "/teams/#{@second_team.id}/issues?priority=urgent"
+    end
+
+    test 'root falls back when the home view team is archived' do
+      view = @user.saved_views.create!(team: @second_team, name: 'Urgent')
+      @user.update!(settings: @user.settings.merge('home_view_id' => view.id))
+
+      @second_team.update!(archived_at: Time.current)
+      get root_path
+      assert_redirected_to "/teams/#{@first_team.id}/issues"
+    end
+
+    test "rejects someone else's saved view" do
+      other = User.create!(name: 'Other', email: "other-view-#{SecureRandom.hex(4)}@example.com", password: 'password')
+      @first_team.team_memberships.create!(user: other)
+      theirs = other.saved_views.create!(team: @first_team, name: 'Theirs')
+
+      patch settings_home_page_path, params: { home: "view:#{theirs.id}" }
+
+      assert_nil @user.reload.home_view
+      assert_not @user.settings.key?('home_view_id')
+    end
   end
 end
