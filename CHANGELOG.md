@@ -1,10 +1,39 @@
-<!-- last-sha: e292728260cc7332ae82fe0b79f2ec2e45f686f7 -->
+<!-- last-sha: 7dd79ec6da7e8c26ff593b8d3bbb773f681c1edc -->
 # What's new
+
+## 2026-09-26
+- **Dependency map.** A new page lays out how issues connect to each other, and dependency lines on the board can be toggled from display options or with a keyboard shortcut.
+- **Due dates on issues.** Issues can now have their own due dates, and dashboards use them alongside project due dates.
+- **Settings, reorganized.** Pick which page you land on after logging in, find your personal settings on their own page, and use a redesigned team settings page where lanes can be dragged into order. Lane colors are gone.
+- **New issues are yours by default.** Issues are now assigned to whoever creates them.
+
+## 2026-09-25
+- **Richer issue relationships.** Issues can now block, relate to, or duplicate each other — on the web and over the API — and circular chains are caught before they're saved.
+- **Filter for issues with no project.** A new filter option finds issues that haven't been put in a project yet.
+
+## 2026-09-24
+- **Dashboards.** Build your own dashboards out of groups that pull issues from the teams and projects you pick, filtered and sorted however you like. Groups show only your assigned issues by default, there's a search box to narrow things down, and new dashboards walk you through setup instead of starting blank.
+
+## 2026-09-23
+- **Repeatable issues.** Set up issues that recreate themselves on a schedule, with a new time zone setting so they land when you expect.
+- **Fixes.** Adding several attachments (or canceling a second image) no longer drops files, completed projects stay out of issue lists, sections that wouldn't scroll now do, and back links follow where you actually came from.
+
+## 2026-08-28
+- **Vektis product analytics.** Connect a team to your Vektis account from a new Analytics page in team settings to send that team's usage events to your Vektis dashboard. That covers activity in the app and over the API. Each team is set up separately, and nothing is tracked until you turn it on.
+- **Under the hood.** Upgraded to Ruby 4.0.6 and refreshed dependencies, including the image processing libraries. Also retired the old Docker setup and tightened up the CI and pre-commit checks.
+
+## 2026-08-11
+- **Groundwork for usage analytics.** Laid the foundation for Vektis tracking between Jul 31 and Aug 11: setup and configuration, then tracking for how the board, filters, search, keyboard shortcuts, display options, notifications, and image viewer are used.
+
+## 2026-07-29
+- **Under the hood.** Updated Rails and other dependencies.
 
 ## 2026-07-11
 - **Link more than one Hourglass channel.** A project can now hold multiple Hourglass links, and you can add or remove them from the integration settings page.
 - **Hover cards in more places.** Issue references in the activity feed now show the same preview card as everywhere else, with a status icon next to the label.
 - **Board fixes.** Hovering a card and using a hotkey no longer assigns the wrong issue, and clickable elements show the hand cursor again.
+- **More fixes.** Search and issue pickers understand issue IDs, status icons appear on issue references in descriptions and comments, choosing a theme now simply saves it, and GitHub pull requests move issues between lanes more reliably.
+- **Under the hood.** The test suite now runs before every commit, and comment handling has more test coverage.
 
 ## 2026-07-09
 - **Set priority from the board.** Priority now has its own picker, reachable by hovering a card and hitting the shortcut key, and the card updates the moment you pick.
@@ -12,6 +41,9 @@
 - **Move issues between teams.** An issue can now be handed off to a different team from the sidebar or edit page, and it picks up a new identifier on the way.
 - **Copy an MCP prompt.** Issue pages have a copy button that grabs a one-line prompt naming the team, project, and issue, so an AI assistant can pull the issue down over MCP instead of you pasting it in. API responses also now include dependency record IDs.
 - **Fixes.** Completed projects stay out of the roadmap modals, completed issues can be hidden from a project's issue list, project issues come pre-sorted, dependencies render on issue pages again, board pickers no longer stutter the browser, and logging in drops you on your board instead of the landing page.
+
+## 2026-06-21
+- **Under the hood.** Updated the CI pipeline to the latest GitHub checkout action.
 
 ## 2026-05-29
 - **Reorder your teams.** A new settings page lets you drag to reorder the teams in your sidebar, separated into teams you own and teams you've joined.
