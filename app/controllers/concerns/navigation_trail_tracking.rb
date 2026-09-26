@@ -51,9 +51,12 @@ module NavigationTrailTracking
   # doesn't redirect this one somewhere unexpected — then the trail. `leaving` is the page being
   # left for good (a deleted issue), which must not be returned to.
   def navigation_return_path(leaving: nil)
-    requested = params[:return_to].to_s
-    return requested if NavigationTrail.team_id_of(requested) == current_team&.id&.to_s
+    return_to_path || navigation_trail.back_from(leaving, team_id: current_team&.id)
+  end
 
-    navigation_trail.back_from(leaving, team_id: current_team&.id)
+  # The `return_to` param alone, only when it points at a page on the current team.
+  def return_to_path
+    requested = params[:return_to].to_s
+    requested if NavigationTrail.team_id_of(requested) == current_team&.id&.to_s
   end
 end

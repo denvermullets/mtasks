@@ -54,6 +54,24 @@ export default class extends Controller {
       event.preventDefault();
       this.openPriorityPicker();
     }
+
+    // Press 'D' to toggle the Dependencies view mode (leaves Cmd/Ctrl+D to the browser)
+    if ((event.key === "d" || event.key === "D") && !event.metaKey && !event.ctrlKey && !event.altKey) {
+      this.toggleDependencies(event);
+    }
+  }
+
+  // Delegates to the Display panel so the URL, View Mode buttons and "Save as default" state stay
+  // in step. The panel only exists on issues/index, so this is a no-op on projects/show.
+  toggleDependencies(event) {
+    const panel = document.querySelector('[data-controller~="display-options"]');
+    const controller =
+      panel && this.application.getControllerForElementAndIdentifier(panel, "display-options");
+    if (!controller) return;
+
+    event.preventDefault();
+    controller.toggleDependencies();
+    trackFeature("keyboard-shortcut", "invoke", this.shortcutProperties("d"));
   }
 
   openPriorityPicker() {

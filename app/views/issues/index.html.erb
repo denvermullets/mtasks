@@ -35,6 +35,18 @@
     <%= render "mobile_group_chips", grouped_issues: @grouped_issues, display_options: @display_options %>
   </div>
 
+  <%# Color key for the Deps view mode. Sits outside the board frame, so dependency-overlay shows and
+      hides it as the board swaps in and out of that mode. Desktop only, like the board itself. %>
+  <div id="dependency_legend" class="<%= 'hidden' unless dependency_overlay? %> shrink-0 bg-menu border-b border-stroke">
+    <div class="hidden sm:flex items-center gap-4 px-4 py-2">
+      <span class="text-xs font-medium text-gray-300">Dependencies</span>
+      <%= render "shared/dependency_legend", bordered: false %>
+      <span class="ml-auto text-xs text-gray-500">
+        Press <kbd class="px-1.5 py-0.5 font-semibold text-gray-300 bg-background border border-stroke rounded">D</kbd> to exit
+      </span>
+    </div>
+  </div>
+
   <!-- Board -->
   <%= turbo_frame_tag "issues_board", class: "flex-1 overflow-x-auto overflow-y-hidden bg-background min-h-0" do %>
     <%= render "issues_board" %>

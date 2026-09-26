@@ -75,6 +75,7 @@ Rails.application.routes.draw do
     end
     resources :issues do
       resource :move, only: %i[update], controller: 'issue_moves'
+      resource :dependency_map, only: :show
       resources :comments, only: %i[create destroy]
       resources :issue_labels, only: %i[create destroy]
       resources :issue_dependencies, only: %i[create destroy] do

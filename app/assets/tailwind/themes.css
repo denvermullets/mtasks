@@ -1,6 +1,16 @@
 /* Theme overrides — each [data-theme] block remaps the 9 semantic color tokens.
    `default` is defined in application.css @theme and needs no override. */
 
+/* Dependency connector colors (lib/dependency_connectors.js + shared/_dependency_legend).
+   Plain :root vars rather than @theme so Tailwind never prunes them; light themes
+   below override with darker shades so lines hold contrast on cream/white. */
+:root {
+  --dep-blocks: #a855f7;
+  --dep-blocked-by: #3b82f6;
+  --dep-relates: #22c55e;
+  --dep-duplicates: #eab308;
+}
+
 /* ═══════════════════════════════════════════════════════════════
    WARM PAPER — Light cream bg, rust accent
    ═══════════════════════════════════════════════════════════════ */
@@ -25,6 +35,11 @@
   --color-gray-700: #a89988;
   --color-gray-800: #c9bca8;
   --color-gray-900: #ded7ca;
+
+  --dep-blocks: #9333ea;
+  --dep-blocked-by: #2563eb;
+  --dep-relates: #16a34a;
+  --dep-duplicates: #b45309;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -50,6 +65,11 @@
   --color-gray-700: #8a9aaa;
   --color-gray-800: #b8bfc9;
   --color-gray-900: #d0d4dc;
+
+  --dep-blocks: #9333ea;
+  --dep-blocked-by: #2563eb;
+  --dep-relates: #16a34a;
+  --dep-duplicates: #b45309;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -225,6 +245,11 @@
   --color-gray-700: #9a9890;
   --color-gray-800: #c0beb8;
   --color-gray-900: #d0cec8;
+
+  --dep-blocks: #9333ea;
+  --dep-blocked-by: #2563eb;
+  --dep-relates: #16a34a;
+  --dep-duplicates: #b45309;
 }
 
 /* ═══════════════════════════════════════════════════════════════

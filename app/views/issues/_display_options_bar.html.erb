@@ -1,4 +1,6 @@
-<div class="relative inline-block" data-controller="display-options">
+<% active_view_mode = dependency_overlay? ? 'dependencies' : @display_options[:view_mode] %>
+<div class="relative inline-block" data-controller="display-options"
+     data-display-options-mode-value="<%= active_view_mode %>">
   <!-- Display Button -->
   <button type="button"
           class="flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded bg-foreground text-gray-300 hover:bg-hover-highlight border border-stroke transition-colors cursor-pointer"
@@ -26,6 +28,7 @@
           <%= f.hidden_field :show_sub_issues, value: @display_options[:show_sub_issues] %>
           <%= f.hidden_field :show_empty_groups, value: @display_options[:show_empty_groups] %>
           <%= f.hidden_field :show_empty_rows, value: @display_options[:show_empty_rows] %>
+          <%= f.hidden_field :show_dependencies, value: @display_options[:show_dependencies] %>
           <%= f.hidden_field :completed_filter, value: @display_options[:completed_filter] %>
           <% @display_options[:visible_properties].each do |prop| %>
             <%= f.hidden_field "visible_properties[]", value: prop, id: nil %>
@@ -41,29 +44,26 @@
           </svg>
           <span class="text-xs font-medium text-gray-400">View Mode</span>
         </div>
+        <%# "Deps" is the board with the dependency overlay on: view_mode=board + show_dependencies=true. %>
         <div class="flex items-center gap-2 bg-background rounded-md p-1">
-          <button type="button"
-                  class="flex-1 px-3 py-2 text-xs font-medium text-center rounded transition-colors cursor-pointer <%= @display_options[:view_mode] == 'board' ? 'bg-foreground text-gray-100 border border-stroke' : 'text-gray-400 hover:text-gray-200' %>"
-                  data-action="click->display-options#setViewMode"
-                  data-view-mode="board">
-            <div class="flex items-center justify-center gap-1">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 4h4a1 1 0 011 1v14a1 1 0 01-1 1H5a1 1 0 01-1-1V5a1 1 0 011-1zM15 4h4a1 1 0 011 1v14a1 1 0 01-1 1h-4a1 1 0 01-1-1V5a1 1 0 011-1z"></path>
-              </svg>
-              Board
-            </div>
-          </button>
-          <button type="button"
-                  class="flex-1 px-3 py-2 text-xs font-medium text-center rounded transition-colors cursor-pointer <%= @display_options[:view_mode] == 'list' ? 'bg-foreground text-gray-100 border border-stroke' : 'text-gray-400 hover:text-gray-200' %>"
-                  data-action="click->display-options#setViewMode"
-                  data-view-mode="list">
-            <div class="flex items-center justify-center gap-1">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
-              </svg>
-              List
-            </div>
-          </button>
+          <% [
+               ['board', 'Board', nil, 'M5 4h4a1 1 0 011 1v14a1 1 0 01-1 1H5a1 1 0 01-1-1V5a1 1 0 011-1zM15 4h4a1 1 0 011 1v14a1 1 0 01-1 1h-4a1 1 0 01-1-1V5a1 1 0 011-1z'],
+               ['list', 'List', nil, 'M4 6h16M4 10h16M4 14h16M4 18h16'],
+               ['dependencies', 'Deps', 'Dependencies (D)', 'M6 8a2 2 0 100-4 2 2 0 000 4zm0 12a2 2 0 100-4 2 2 0 000 4zm12-6a2 2 0 100-4 2 2 0 000 4zM6 8v8m0-8c0 3 2 4 5 4h5']
+             ].each do |mode, label, title, icon_path| %>
+            <button type="button"
+                    class="flex-1 px-3 py-2 text-xs font-medium text-center rounded transition-colors cursor-pointer <%= active_view_mode == mode ? 'bg-foreground text-gray-100 border border-stroke' : 'text-gray-400 hover:text-gray-200' %>"
+                    <%= tag.attributes(title: title) %>
+                    data-action="click->display-options#setViewMode"
+                    data-view-mode="<%= mode %>">
+              <div class="flex items-center justify-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="<%= icon_path %>"></path>
+                </svg>
+                <%= label %>
+              </div>
+            </button>
+          <% end %>
         </div>
       </div>
 

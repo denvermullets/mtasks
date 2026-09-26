@@ -232,4 +232,47 @@ class IssuesControllerTest < ActionDispatch::IntegrationTest
 
     assert_equal %w[one.txt two.txt], @issue.reload.files.map { |f| f.filename.to_s }.sort
   end
+
+  test 'board dependency overlay edges include visible pairs and drop filtered-out ends' do
+    todo_lane = @team.lanes.create!(name: 'Todo', position: 2)
+    blocked = @team.issues.create!(title: 'Blocked', lane: @backlog_lane, creator: @user)
+    hidden = @team.issues.create!(title: 'Filtered out', lane: todo_lane, creator: @user)
+    IssueDependency.create!(blocking_issue: @issue, blocked_issue: blocked)
+    IssueDependency.create!(blocking_issue: @issue, blocked_issue: hidden, kind: 'relates')
+
+    get team_issues_path(@team, view_mode: 'board', show_dependencies: 'true', lane_ids: @backlog_lane.id)
+
+    assert_response :success
+    edges = nil
+    assert_select '[data-controller="dependency-overlay"]', 1 do |elements|
+      edges = JSON.parse(elements.first['data-dependency-overlay-edges-value'])
+    end
+    assert_equal [{ 'from_id' => @issue.id, 'to_id' => blocked.id, 'kind' => 'blocks' }], edges
+  end
+
+  test 'board has no dependency overlay or legend outside Deps mode' do
+    get team_issues_path(@team, view_mode: 'board', show_dependencies: 'false')
+
+    assert_response :success
+    assert_select '[data-controller="dependency-overlay"]', count: 0
+    assert_select '#dependency_legend.hidden', 1
+    assert_select '[data-display-options-mode-value="board"]', 1
+  end
+
+  test 'Deps view mode shows the legend bar and marks the Deps segment active' do
+    get team_issues_path(@team, view_mode: 'board', show_dependencies: 'true')
+
+    assert_response :success
+    assert_select '#dependency_legend:not(.hidden)', 1
+    assert_select '[data-display-options-mode-value="dependencies"]', 1
+    assert_select 'button[data-view-mode="dependencies"].bg-foreground', 1
+  end
+
+  test 'list view ignores show_dependencies' do
+    get team_issues_path(@team, view_mode: 'list', show_dependencies: 'true')
+
+    assert_response :success
+    assert_select '#dependency_legend.hidden', 1
+    assert_select '[data-display-options-mode-value="list"]', 1
+  end
 end

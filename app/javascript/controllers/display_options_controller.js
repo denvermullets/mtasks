@@ -15,6 +15,8 @@ const DISPLAY_OPTIONS = {
 
 export default class extends Controller {
   static targets = ["panel", "saveButton", "rowsSection", "groupingLabel", "groupingIcon"];
+  // Active View Mode segment: "board", "list", or "dependencies" (board + dependency overlay).
+  static values = { mode: String };
 
   connect() {
     this.boundHandleClickOutside = this.handleClickOutside.bind(this);
@@ -51,19 +53,31 @@ export default class extends Controller {
   }
 
   setViewMode(event) {
-    const viewMode = event.currentTarget.dataset.viewMode;
+    this.applyViewMode(event.currentTarget.dataset.viewMode);
+  }
+
+  // D shortcut (board-keyboard): flips between Deps and plain Board from any view mode.
+  toggleDependencies() {
+    this.applyViewMode(this.modeValue === "dependencies" ? "board" : "dependencies");
+  }
+
+  applyViewMode(mode) {
+    const viewMode = mode === "dependencies" ? "board" : mode;
+    const showDependencies = String(mode === "dependencies");
+    this.modeValue = mode;
     // The chosen mode is not sent: `option` names the control, not its value.
     trackFeature("issue-filter", "apply", { option: "view_mode" });
 
     // Build new URL with updated view_mode
     const url = new URL(window.location.href);
     url.searchParams.set("view_mode", viewMode);
+    url.searchParams.set("show_dependencies", showDependencies);
 
     // Update browser URL without reload
     window.history.pushState({}, "", url.toString());
 
     // Update button states immediately
-    this.updateViewModeButtons(viewMode);
+    this.updateViewModeButtons(mode);
 
     // Update visible options based on view mode
     this.updateOptionsForViewMode(viewMode);
@@ -73,6 +87,10 @@ export default class extends Controller {
     const viewModeInput = form?.querySelector('input[name="view_mode"]');
     if (viewModeInput) {
       viewModeInput.value = viewMode;
+    }
+    const showDependenciesInput = form?.querySelector('input[name="show_dependencies"]');
+    if (showDependenciesInput) {
+      showDependenciesInput.value = showDependencies;
     }
 
     // Navigate with Turbo Frame to update only the board
@@ -293,6 +311,12 @@ export default class extends Controller {
       showEmptyRowsInput.value = params.get("show_empty_rows") || "false";
     }
 
+    // Update show_dependencies
+    const showDependenciesInput = form.querySelector('input[name="show_dependencies"]');
+    if (showDependenciesInput) {
+      showDependenciesInput.value = params.get("show_dependencies") || showDependenciesInput.value;
+    }
+
     // Update completed_filter
     const completedFilterInput = form.querySelector('input[name="completed_filter"]');
     if (completedFilterInput) {
@@ -369,6 +393,7 @@ export default class extends Controller {
       show_sub_issues: form.querySelector('input[name="show_sub_issues"]')?.value || "true",
       show_empty_groups: form.querySelector('input[name="show_empty_groups"]')?.value || "false",
       show_empty_rows: form.querySelector('input[name="show_empty_rows"]')?.value || "false",
+      show_dependencies: form.querySelector('input[name="show_dependencies"]')?.value || "false",
       completed_filter: form.querySelector('input[name="completed_filter"]')?.value || "",
       visible_properties: properties,
     };
@@ -393,6 +418,7 @@ export default class extends Controller {
       show_sub_issues: params.get("show_sub_issues") || "true",
       show_empty_groups: params.get("show_empty_groups") || "false",
       show_empty_rows: params.get("show_empty_rows") || "false",
+      show_dependencies: params.get("show_dependencies") || this.savedPreferences.show_dependencies,
       completed_filter: params.get("completed_filter") || "",
       visible_properties: properties,
     };
@@ -412,6 +438,7 @@ export default class extends Controller {
       current.show_sub_issues !== saved.show_sub_issues ||
       current.show_empty_groups !== saved.show_empty_groups ||
       current.show_empty_rows !== saved.show_empty_rows ||
+      current.show_dependencies !== saved.show_dependencies ||
       current.completed_filter !== saved.completed_filter ||
       current.visible_properties !== saved.visible_properties;
 

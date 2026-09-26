@@ -25,6 +25,7 @@ class DisplayPreferencesController < ApplicationController
       :show_sub_issues,
       :show_empty_groups,
       :show_empty_rows,
+      :show_dependencies,
       :completed_filter,
       visible_properties: []
     )
@@ -40,6 +41,7 @@ class DisplayPreferencesController < ApplicationController
       show_sub_issues: prefs[:show_sub_issues] == 'true',
       show_empty_groups: prefs[:show_empty_groups] == 'true',
       show_empty_rows: prefs[:show_empty_rows] == 'true',
+      show_dependencies: prefs[:show_dependencies] == 'true',
       completed_filter: prefs[:completed_filter].presence,
       visible_properties: prefs[:visible_properties] || []
     }
@@ -54,6 +56,7 @@ class DisplayPreferencesController < ApplicationController
       show_sub_issues: params[:show_sub_issues],
       show_empty_groups: params[:show_empty_groups],
       show_empty_rows: params[:show_empty_rows],
+      show_dependencies: params[:show_dependencies],
       completed_filter: params[:completed_filter],
       visible_properties: params[:visible_properties]&.join(',')
     }

@@ -1,0 +1,42 @@
+<%# rows: [{ issue:, kind:, tag: }]; kind picks the row's dot color, tag is an optional pill. %>
+<div class="rounded-xl bg-foreground border border-stroke p-4 min-w-0">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="w-2.5 h-2.5 rounded-full" style="background-color: var(--dep-<%= color %>)"></span>
+    <h3 class="text-sm font-medium text-gray-200"><%= title %></h3>
+    <span class="text-xs text-gray-500"><%= rows.size %></span>
+  </div>
+  <p class="text-xs text-gray-500 mb-3"><%= subtitle %></p>
+
+  <% if rows.empty? %>
+    <p class="text-xs text-gray-500 italic py-2">None</p>
+  <% else %>
+    <div class="flex flex-col gap-1.5">
+      <% rows.each do |row| %>
+        <% issue = row[:issue] %>
+        <%= link_to team_issue_path(issue.team_id, issue),
+            class: "flex items-start gap-3 rounded-lg border border-stroke px-3 py-2 hover:bg-hover-highlight transition-colors cursor-pointer #{'opacity-60' if dependency_node_closed?(issue)}" do %>
+          <span class="mt-1.5 w-2 h-2 rounded-full shrink-0" style="background-color: var(--dep-<%= row[:kind] || color %>)"></span>
+          <span class="font-mono text-xs text-gray-500 mt-0.5 shrink-0"><%= issue.identifier %></span>
+          <span class="flex-1 min-w-0">
+            <span class="block text-xs text-gray-200 line-clamp-2 leading-snug"><%= issue.title %></span>
+            <span class="flex items-center gap-1.5 flex-wrap mt-1 text-xs">
+              <% if row[:tag] %>
+                <span class="px-1.5 py-0.5 rounded border border-stroke" style="color: var(--dep-duplicates)"><%= row[:tag] %></span>
+              <% end %>
+              <% issue.labels.first(2).each do |label| %>
+                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-medium bg-foreground border border-stroke text-gray-400">
+                  <span class="w-1.5 h-1.5 rounded-full" style="background-color: <%= label.color %>;"></span>
+                  <%= label.name %>
+                </span>
+              <% end %>
+            </span>
+          </span>
+          <span class="flex items-center gap-2 text-xs text-gray-400 shrink-0 mt-0.5">
+            <% if issue.estimate %><span><%= issue.estimate %>pt</span><% end %>
+            <% if issue.due_date %><span><%= issue.due_date.strftime('%b %d') %></span><% end %>
+          </span>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+</div>

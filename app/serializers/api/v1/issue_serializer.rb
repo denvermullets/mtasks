@@ -39,6 +39,10 @@ module Api
           # blocked_issues  = issues this one blocks (via blocking_dependencies -> blocked_issue)
           blocking_issues: @issue.blocked_dependencies.map { |d| serialize_dependency_issue(d, d.blocking_issue) },
           blocked_issues: @issue.blocking_dependencies.map { |d| serialize_dependency_issue(d, d.blocked_issue) },
+          # related_issues / duplicates carry `direction` relative to this issue
+          # (relates, or duplicates / duplicated_by).
+          related_issues: serialize_links(:relates),
+          duplicates: serialize_links(:duplicates),
           started_at: @issue.started_at,
           completed_at: @issue.completed_at,
           canceled_at: @issue.canceled_at
@@ -53,6 +57,16 @@ module Api
 
       def serialize_dependency_issue(dependency, issue)
         { id: issue.id, identifier: issue.identifier, title: issue.title, dependency_id: dependency.id }
+      end
+
+      def serialize_links(kind)
+        outgoing = @issue.outgoing_links.public_send(kind).includes(:blocked_issue).map { |d| [d, d.blocked_issue] }
+        incoming = @issue.incoming_links.public_send(kind).includes(:blocking_issue).map { |d| [d, d.blocking_issue] }
+
+        (outgoing + incoming).sort_by { |d, _| d.id }.map do |dependency, other|
+          serialize_dependency_issue(dependency, other)
+            .merge(direction: IssueDependencies::Link.direction_for(dependency, @issue))
+        end
       end
     end
   end

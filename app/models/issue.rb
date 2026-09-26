@@ -22,8 +22,11 @@ class Issue < ApplicationRecord
   has_many :notifications, dependent: :destroy
   has_many :outgoing_references, class_name: 'IssueReference', foreign_key: :source_issue_id, dependent: :destroy
   has_many :incoming_references, class_name: 'IssueReference', foreign_key: :referenced_issue_id, dependent: :destroy
-  has_many :blocking_dependencies, class_name: 'IssueDependency', foreign_key: :blocking_issue_id, dependent: :destroy
-  has_many :blocked_dependencies, class_name: 'IssueDependency', foreign_key: :blocked_issue_id, dependent: :destroy
+  # All link kinds; these own cleanup so deleting an issue removes relates/duplicates rows too.
+  has_many :outgoing_links, class_name: 'IssueDependency', foreign_key: :blocking_issue_id, dependent: :destroy
+  has_many :incoming_links, class_name: 'IssueDependency', foreign_key: :blocked_issue_id, dependent: :destroy
+  has_many :blocking_dependencies, -> { blocks }, class_name: 'IssueDependency', foreign_key: :blocking_issue_id
+  has_many :blocked_dependencies, -> { blocks }, class_name: 'IssueDependency', foreign_key: :blocked_issue_id
   has_many :blocked_issues, through: :blocking_dependencies, source: :blocked_issue
   has_many :blocking_issues, through: :blocked_dependencies, source: :blocking_issue
   has_many_attached :files
@@ -51,6 +54,8 @@ class Issue < ApplicationRecord
   scope :due_on_or_before, ->(date) { where.not(due_date: nil).where(due_date: ..date) }
   scope :due_between, ->(from, to) { where(due_date: from..to) }
   scope :hot, -> { where(priority: %i[urgent high]) }
+  # Every link kind with the issue on the other end, for the relations sidebar.
+  scope :with_links, -> { includes(outgoing_links: :blocked_issue, incoming_links: :blocking_issue) }
   scope :matching_search, lambda { |term, include_description: false|
     term = term.to_s.strip
     next all if term.blank?
@@ -123,6 +128,20 @@ class Issue < ApplicationRecord
 
   def remove_blocking_dependencies!
     blocking_dependencies.destroy_all if completed?
+  end
+
+  # relates links are symmetric, so the other issue can sit on either side.
+  def related_issues
+    Issue.where(id: outgoing_links.relates.select(:blocked_issue_id))
+         .or(Issue.where(id: incoming_links.relates.select(:blocking_issue_id)))
+  end
+
+  def duplicate_of
+    Issue.find_by(id: outgoing_links.duplicates.select(:blocked_issue_id))
+  end
+
+  def duplicated_by
+    Issue.where(id: incoming_links.duplicates.select(:blocking_issue_id))
   end
 
   def enqueue_velocity_recalculation!

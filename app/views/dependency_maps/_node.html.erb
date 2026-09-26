@@ -1,0 +1,40 @@
+<%
+  selected = local_assigns.fetch(:selected, false)
+  closed = dependency_node_closed?(issue)
+  # The focus card opens the issue itself; every other card re-centers the map on its issue.
+  href = selected ? team_issue_path(issue.team_id, issue) : team_issue_dependency_map_path(issue.team_id, issue)
+%>
+<%= link_to href,
+    id: "dep_node_#{issue.id}",
+    data: { issue_id: issue.id, action: "mouseenter->dependency-map#hover mouseleave->dependency-map#unhover" },
+    class: "block shrink-0 rounded-lg bg-foreground border hover:bg-hover-highlight transition-colors cursor-pointer #{selected ? 'w-64 border-2 border-accent px-4 py-3' : 'w-56 border-stroke px-3 py-2.5'} #{'opacity-60' if closed}" do %>
+  <div class="flex items-center gap-1.5 font-mono text-xs text-gray-500 font-medium mb-1.5">
+    <span class="<%= 'text-accent' if selected %>"><%= issue.identifier %></span>
+    <% if closed %>
+      <span class="ml-auto px-1.5 py-0.5 rounded bg-foreground border border-stroke font-sans text-gray-400"><%= issue.lane.name %></span>
+    <% end %>
+  </div>
+  <div class="<%= selected ? 'text-sm font-medium text-gray-100' : 'text-sm text-gray-200' %> line-clamp-2 leading-snug mb-2">
+    <%= issue.title %>
+  </div>
+  <% labels = issue.labels.to_a %>
+  <% if labels.any? || issue.due_date || issue.estimate %>
+    <div class="flex items-center gap-1.5 flex-wrap text-xs">
+      <% labels.first(2).each do |label| %>
+        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-medium bg-foreground border border-stroke text-gray-400">
+          <span class="w-1.5 h-1.5 rounded-full" style="background-color: <%= label.color %>;"></span>
+          <%= label.name %>
+        </span>
+      <% end %>
+      <% if labels.size > 2 %>
+        <span class="text-gray-500">+<%= labels.size - 2 %></span>
+      <% end %>
+      <% if issue.estimate %>
+        <span class="px-1.5 py-0.5 rounded bg-foreground border border-stroke text-gray-400"><%= issue.estimate %>pt</span>
+      <% end %>
+      <% if issue.due_date %>
+        <span class="px-1.5 py-0.5 rounded bg-foreground border border-stroke text-gray-400"><%= issue.due_date.strftime('%b %d') %></span>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>

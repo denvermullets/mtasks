@@ -1,0 +1,25 @@
+<%# column: { side:, depth:, issues: }. Only the depth-1 columns get a heading. %>
+<% upstream = column[:side] == :upstream %>
+<div class="flex flex-col items-center">
+  <div class="h-8 text-xs text-gray-500 text-center leading-tight mb-2 flex flex-col justify-end">
+    <% if column[:depth] == 1 %>
+      <span><%= upstream ? "Upstream" : "Downstream" %></span>
+      <span><%= upstream ? "Blocked by" : "Blocks" %></span>
+    <% end %>
+  </div>
+  <div class="flex flex-col gap-3">
+    <% column[:issues].each do |node| %>
+      <%= render "dependency_maps/node", issue: node %>
+    <% end %>
+  </div>
+  <% if graph.truncated? && column[:depth] == depth %>
+    <div class="mt-3 text-xs text-gray-500 text-center">
+      More beyond depth <%= depth %>
+      <% if depth < DependencyMapsController::MAX_DEPTH %>
+        &mdash;
+        <%= link_to "Show more", team_issue_dependency_map_path(graph.issue.team_id, graph.issue, depth: depth + 1),
+                    class: "text-gray-400 hover:text-gray-300 underline cursor-pointer" %>
+      <% end %>
+    </div>
+  <% end %>
+</div>

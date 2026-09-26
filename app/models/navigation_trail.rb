@@ -14,6 +14,7 @@ class NavigationTrail
   PAGES = [
     %r{\A/teams/(?<team>\d+)/issues/?\z},
     %r{\A/teams/(?<team>\d+)/issues/(?<id>\d+)/?\z},
+    %r{\A/teams/(?<team>\d+)/issues/(?<id>\d+)/dependency_map/?\z},
     %r{\A/teams/(?<team>\d+)/projects/?\z},
     %r{\A/teams/(?<team>\d+)/projects/(?<id>\d+)(?:/(?:overview|discussion|activity))?/?\z},
     %r{\A/teams/(?<team>\d+)/roadmap/?\z}

@@ -5,7 +5,8 @@ module Api
       before_action :set_issue
 
       def index
-        dependencies = (@issue.blocking_dependencies + @issue.blocked_dependencies)
+        dependencies = (@issue.outgoing_links.includes(:blocking_issue, :blocked_issue) +
+                        @issue.incoming_links.includes(:blocking_issue, :blocked_issue))
                        .sort_by(&:id)
                        .map { |dep| serialize_dependency(dep) }
 
@@ -15,19 +16,15 @@ module Api
 
       def create
         target_issue = current_team.issues.find(params[:target_issue_id])
-        direction = params[:direction]
+        # Unknown or missing direction means 'blocking', for backward compatibility.
+        direction = IssueDependencies::Link.normalize_direction(params[:direction])
 
-        dependency = if direction == 'blocked_by'
-                       IssueDependency.new(blocking_issue: target_issue, blocked_issue: @issue)
-                     else
-                       IssueDependency.new(blocking_issue: @issue, blocked_issue: target_issue)
-                     end
+        dependency = IssueDependencies::Link.call(issue: @issue, target: target_issue, direction: direction)
 
-        if dependency.save
+        if dependency.persisted?
           # Same property shape as the web call site: `direction` plus a `count` that separates a
           # bulk form save from a single gesture. The API links one at a time, so it is always 1.
-          tracked_direction = direction == 'blocked_by' ? 'blocked_by' : 'blocking'
-          track_api_feature('issue-dependency', 'link', count: 1, direction: tracked_direction)
+          track_api_feature('issue-dependency', 'link', count: 1, direction: direction)
           render json: serialize_dependency(dependency), status: :created
         else
           render_validation_errors(dependency)
@@ -37,10 +34,10 @@ module Api
       end
 
       def destroy
-        dependency = IssueDependency.find_by(id: params[:id])
+        dependency = @issue.outgoing_links.find_by(id: params[:id]) || @issue.incoming_links.find_by(id: params[:id])
 
-        if dependency && (dependency.blocking_issue_id == @issue.id || dependency.blocked_issue_id == @issue.id)
-          direction = dependency.blocking_issue_id == @issue.id ? 'blocking' : 'blocked_by'
+        if dependency
+          direction = IssueDependencies::Link.direction_for(dependency, @issue)
           dependency.destroy
           track_api_feature('issue-dependency', 'unlink', direction: direction)
           render json: { ok: true, id: dependency.id }
@@ -60,9 +57,10 @@ module Api
       def serialize_dependency(dep)
         {
           id: dep.id,
-          # Direction relative to the current issue: 'blocking' when this issue blocks the other,
-          # 'blocked_by' when this issue is blocked by the other.
-          direction: dep.blocking_issue_id == @issue.id ? 'blocking' : 'blocked_by',
+          kind: dep.kind,
+          # Direction relative to the current issue: blocking/blocked_by for blocks links,
+          # relates, or duplicates/duplicated_by.
+          direction: IssueDependencies::Link.direction_for(dep, @issue),
           blocking_issue: { id: dep.blocking_issue.id, identifier: dep.blocking_issue.identifier,
                             title: dep.blocking_issue.title },
           blocked_issue: { id: dep.blocked_issue.id, identifier: dep.blocked_issue.identifier,

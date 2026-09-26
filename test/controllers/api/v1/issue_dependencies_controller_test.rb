@@ -61,8 +61,9 @@ module Api
 
       # Index
       test 'lists dependencies for an issue with direction relative to it' do
+        issue_c = @team.issues.create!(title: 'Issue C', lane: @backlog, creator: @user)
         blocking = IssueDependency.create!(blocking_issue: @issue_a, blocked_issue: @issue_b)
-        blocked_by = IssueDependency.create!(blocking_issue: @issue_b, blocked_issue: @issue_a)
+        blocked_by = IssueDependency.create!(blocking_issue: issue_c, blocked_issue: @issue_a)
 
         get api_v1_team_issue_issue_dependencies_path(@team, @issue_a), headers: @headers
 
@@ -122,6 +123,80 @@ module Api
 
         json = JSON.parse(response.body)
         assert_equal dep.id, json['blocked_issues'].first['dependency_id']
+      end
+
+      %w[relates duplicates duplicated_by].each do |direction|
+        test "creates #{direction} dependency" do
+          post api_v1_team_issue_issue_dependencies_path(@team, @issue_a),
+               params: { target_issue_id: @issue_b.id, direction: direction }.to_json,
+               headers: @headers
+
+          assert_response :created
+          json = JSON.parse(response.body)
+          assert_equal direction, json['direction']
+          assert_equal IssueDependency.last.kind, json['kind']
+        end
+      end
+
+      test 'missing direction creates a blocking dependency' do
+        post api_v1_team_issue_issue_dependencies_path(@team, @issue_a),
+             params: { target_issue_id: @issue_b.id }.to_json,
+             headers: @headers
+
+        assert_response :created
+        json = JSON.parse(response.body)
+        assert_equal 'blocking', json['direction']
+        assert_equal 'blocks', json['kind']
+        assert_equal @issue_a.id, json['blocking_issue']['id']
+      end
+
+      test 'index lists every kind with kind on each row' do
+        issue_c = @team.issues.create!(title: 'Issue C', lane: @backlog, creator: @user)
+        IssueDependency.create!(blocking_issue: @issue_a, blocked_issue: @issue_b)
+        IssueDependency.create!(blocking_issue: issue_c, blocked_issue: @issue_a, kind: :duplicates)
+
+        get api_v1_team_issue_issue_dependencies_path(@team, @issue_a), headers: @headers
+
+        json = JSON.parse(response.body)
+        assert_equal([%w[blocks blocking], %w[duplicates duplicated_by]],
+                     json.map { |row| [row['kind'], row['direction']] })
+      end
+
+      test 'returns 422 on a cycle' do
+        issue_c = @team.issues.create!(title: 'Issue C', lane: @backlog, creator: @user)
+        IssueDependency.create!(blocking_issue: @issue_a, blocked_issue: @issue_b)
+        IssueDependency.create!(blocking_issue: @issue_b, blocked_issue: issue_c)
+
+        post api_v1_team_issue_issue_dependencies_path(@team, issue_c),
+             params: { target_issue_id: @issue_a.id, direction: 'blocking' }.to_json,
+             headers: @headers
+
+        assert_response :unprocessable_entity
+        assert_includes JSON.parse(response.body)['errors'], 'Would create a circular dependency'
+      end
+
+      test 'destroys a relates dependency' do
+        dep = IssueDependency.create!(blocking_issue: @issue_a, blocked_issue: @issue_b, kind: :relates)
+
+        assert_difference 'IssueDependency.count', -1 do
+          delete api_v1_team_issue_issue_dependency_path(@team, @issue_b, dep), headers: @headers
+        end
+        assert_response :success
+      end
+
+      test 'issue show includes related issues and duplicates' do
+        issue_c = @team.issues.create!(title: 'Issue C', lane: @backlog, creator: @user)
+        related = IssueDependency.create!(blocking_issue: @issue_b, blocked_issue: @issue_a, kind: :relates)
+        IssueDependency.create!(blocking_issue: @issue_a, blocked_issue: issue_c, kind: :duplicates)
+
+        get api_v1_team_issue_path(@team, @issue_a), headers: @headers
+
+        json = JSON.parse(response.body)
+        assert_equal [{ 'id' => @issue_b.id, 'identifier' => @issue_b.identifier, 'title' => 'Issue B',
+                        'dependency_id' => related.id, 'direction' => 'relates' }], json['related_issues']
+        assert_equal([[issue_c.id, 'duplicates']], json['duplicates'].map { |d| [d['id'], d['direction']] })
+        assert_empty json['blocking_issues']
+        assert_empty json['blocked_issues']
       end
     end
   end
