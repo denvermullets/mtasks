@@ -63,6 +63,18 @@ class DashboardsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a.bg-foreground[href='#{dashboard_path(dashboard)}']"
   end
 
+  test 'show swaps tabs, Mine only and search inside the dashboard_content frame' do
+    dashboard = @user.dashboards.create!(name: 'Today')
+
+    get dashboard_path(dashboard)
+
+    assert_select 'turbo-frame#dashboard_content[target=_top][data-turbo-action=advance]' do
+      assert_select 'a[role=tab][data-turbo-frame=dashboard_content]', count: DashboardsHelper::FILTER_TABS.size
+      assert_select 'a[aria-pressed][data-turbo-frame=dashboard_content]', text: /Mine only/
+      assert_select "form[action='#{dashboard_path(dashboard)}'][data-turbo-frame=dashboard_content]"
+    end
+  end
+
   test 'show with no groups renders the add-group card' do
     dashboard = @user.dashboards.create!(name: 'Today')
 

@@ -24,7 +24,7 @@
            class="hidden absolute right-0 mt-1 w-44 bg-foreground border border-stroke rounded-md shadow-lg z-50">
         <button type="button"
                 data-action="click->team-menu#toggleDropdown click->dashboard-group-form#open"
-                data-dashboard-group-form-url-param="<%= dashboard_groups_path(@dashboard, dashboard_return_params) %>"
+                data-dashboard-group-form-url-param="<%= dashboard_groups_path(@dashboard) %>"
                 data-dashboard-group-form-method-param="post"
                 data-dashboard-group-form-title-param="New group"
                 data-dashboard-group-form-submit-param="Create"
@@ -56,6 +56,10 @@
         <%= render "shared/flash", message: flash[:notice], type: "notice" %>
       <% end %>
 
+      <%# Tabs, Mine only, search and team filter only swap this frame (the page shell, sidebar and
+          scroll position stay put); turbo_action advance keeps the URL in sync. Everything else in
+          here (issue links, group actions) targets _top. %>
+      <%= turbo_frame_tag "dashboard_content", target: "_top", class: "block", data: { turbo_action: "advance" } do %>
       <!-- Header -->
       <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
         <div class="min-w-0">
@@ -69,7 +73,7 @@
               each debounced keystroke from adding a history entry (so the first search from a clean
               URL replaces it, and Back leaves the dashboard rather than clearing the search). %>
           <%= form_with url: dashboard_path(@dashboard), method: :get,
-              data: { controller: "auto-submit", action: "submit->auto-submit#cancel", turbo_action: "replace" },
+              data: { controller: "auto-submit", action: "submit->auto-submit#cancel", turbo_frame: "dashboard_content", turbo_action: "replace" },
               class: "flex items-center gap-2 w-full sm:w-auto" do %>
             <% dashboard_view_params(filter: @result.filter, mine: @mine).each do |key, value| %>
               <%= hidden_field_tag key, value, id: nil %>
@@ -114,12 +118,14 @@
                 dashboard_filter_path(@dashboard, filter: key, mine: @mine),
                 class: dashboard_control_class(@result.filter == key),
                 role: "tab",
+                data: { turbo_frame: "dashboard_content" },
                 aria: { selected: @result.filter == key } %>
           <% end %>
         </div>
         <%= link_to dashboard_filter_path(@dashboard, filter: @result.filter, mine: !@mine),
             class: "#{dashboard_control_class(@mine)} shrink-0",
-            aria: { pressed: @mine } do %>
+            aria: { pressed: @mine },
+            data: { turbo_frame: "dashboard_content" } do %>
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
@@ -155,6 +161,7 @@
                 today: @result.today %>
           <% end %>
         </div>
+      <% end %>
       <% end %>
     </div>
   </div>

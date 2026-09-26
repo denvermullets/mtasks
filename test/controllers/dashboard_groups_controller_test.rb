@@ -234,7 +234,9 @@ class DashboardGroupsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     kept = { filter: 'week', q: 'sso', team: @team.id }
-    assert_select "[data-dashboard-group-form-url-param='#{dashboard_groups_path(@dashboard, kept)}']"
+    # The top-bar trigger sits outside the dashboard_content frame, so it renders a bare URL and
+    # the JS appends the current query at open time.
+    assert_select "[data-dashboard-group-form-url-param='#{dashboard_groups_path(@dashboard)}']"
     assert_select "[data-dashboard-group-form-url-param='#{dashboard_group_path(@dashboard, group, kept)}']" \
                   "[data-dashboard-group-form-team-ids-param='[#{@team.id}]']"
     assert_select "form[action='#{move_dashboard_group_path(@dashboard, group, kept)}']", count: 2

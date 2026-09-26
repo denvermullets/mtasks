@@ -55,7 +55,9 @@ export default class extends Controller {
       deleteUrl = "",
     } = event.params;
 
-    this.formTarget.action = url;
+    // Triggers outside the dashboard_content frame pass a bare URL (their rendered query would go
+    // stale after a tab switch), so carry over the current view's filter/mine/q/team from the address bar.
+    this.formTarget.action = url.includes("?") ? url : url + window.location.search;
     this.methodTarget.value = method;
     this.titleTarget.textContent = title;
     this.submitTarget.textContent = submit;
