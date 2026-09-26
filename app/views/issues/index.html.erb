@@ -10,13 +10,8 @@
         <span class="text-sm text-gray-500 hidden sm:inline"><%= current_team&.workspace&.name %></span>
       </div>
       <div class="hidden sm:flex items-center gap-2">
-        <%# Shown by dependencies-toggle; lives in the toolbar so turning it on doesn't shift the board. %>
-        <div id="dependency_legend" class="hidden <%= 'xl:block' if dependency_overlay? %>">
-          <%= render "shared/dependency_legend" %>
-        </div>
         <%= render "issue_search" %>
         <%= render "filter_menu" %>
-        <%= render "dependencies_toggle" %>
         <%= turbo_frame_tag "display_options_bar" do %>
           <%= render "display_options_bar" %>
         <% end %>
@@ -38,6 +33,18 @@
     <%= render "active_filter_chips" %>
     <!-- Mobile group filter chips -->
     <%= render "mobile_group_chips", grouped_issues: @grouped_issues, display_options: @display_options %>
+  </div>
+
+  <%# Color key for the Deps view mode. Sits outside the board frame, so dependency-overlay shows and
+      hides it as the board swaps in and out of that mode. Desktop only, like the board itself. %>
+  <div id="dependency_legend" class="<%= 'hidden' unless dependency_overlay? %> shrink-0 bg-menu border-b border-stroke">
+    <div class="hidden sm:flex items-center gap-4 px-4 py-2">
+      <span class="text-xs font-medium text-gray-300">Dependencies</span>
+      <%= render "shared/dependency_legend", bordered: false %>
+      <span class="ml-auto text-xs text-gray-500">
+        Press <kbd class="px-1.5 py-0.5 font-semibold text-gray-300 bg-background border border-stroke rounded">D</kbd> to exit
+      </span>
+    </div>
   </div>
 
   <!-- Board -->

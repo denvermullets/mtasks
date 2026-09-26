@@ -15,12 +15,12 @@ const DISPLAY_OPTIONS = {
 
 export default class extends Controller {
   static targets = ["panel", "saveButton", "rowsSection", "groupingLabel", "groupingIcon"];
+  // Active View Mode segment: "board", "list", or "dependencies" (board + dependency overlay).
+  static values = { mode: String };
 
   connect() {
     this.boundHandleClickOutside = this.handleClickOutside.bind(this);
     document.addEventListener("click", this.boundHandleClickOutside);
-    this.boundDependenciesChanged = this.dependenciesChanged.bind(this);
-    window.addEventListener("dependencies-toggle:changed", this.boundDependenciesChanged);
 
     // Store initial saved preferences from the form
     this.savedPreferences = this.getCurrentFormValues();
@@ -31,16 +31,6 @@ export default class extends Controller {
 
   disconnect() {
     document.removeEventListener("click", this.boundHandleClickOutside);
-    window.removeEventListener("dependencies-toggle:changed", this.boundDependenciesChanged);
-  }
-
-  // The toolbar toggle saves show_dependencies itself, so the new value is already the default.
-  dependenciesChanged(event) {
-    const value = String(event.detail.on);
-    const input = this.element.querySelector('form input[name="show_dependencies"]');
-    if (input) input.value = value;
-    this.savedPreferences.show_dependencies = value;
-    this.checkIfChanged();
   }
 
   togglePanel(event) {
@@ -63,19 +53,31 @@ export default class extends Controller {
   }
 
   setViewMode(event) {
-    const viewMode = event.currentTarget.dataset.viewMode;
+    this.applyViewMode(event.currentTarget.dataset.viewMode);
+  }
+
+  // D shortcut (board-keyboard): flips between Deps and plain Board from any view mode.
+  toggleDependencies() {
+    this.applyViewMode(this.modeValue === "dependencies" ? "board" : "dependencies");
+  }
+
+  applyViewMode(mode) {
+    const viewMode = mode === "dependencies" ? "board" : mode;
+    const showDependencies = String(mode === "dependencies");
+    this.modeValue = mode;
     // The chosen mode is not sent: `option` names the control, not its value.
     trackFeature("issue-filter", "apply", { option: "view_mode" });
 
     // Build new URL with updated view_mode
     const url = new URL(window.location.href);
     url.searchParams.set("view_mode", viewMode);
+    url.searchParams.set("show_dependencies", showDependencies);
 
     // Update browser URL without reload
     window.history.pushState({}, "", url.toString());
 
     // Update button states immediately
-    this.updateViewModeButtons(viewMode);
+    this.updateViewModeButtons(mode);
 
     // Update visible options based on view mode
     this.updateOptionsForViewMode(viewMode);
@@ -85,6 +87,10 @@ export default class extends Controller {
     const viewModeInput = form?.querySelector('input[name="view_mode"]');
     if (viewModeInput) {
       viewModeInput.value = viewMode;
+    }
+    const showDependenciesInput = form?.querySelector('input[name="show_dependencies"]');
+    if (showDependenciesInput) {
+      showDependenciesInput.value = showDependencies;
     }
 
     // Navigate with Turbo Frame to update only the board

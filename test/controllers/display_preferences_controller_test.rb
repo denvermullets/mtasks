@@ -19,21 +19,4 @@ class DisplayPreferencesControllerTest < ActionDispatch::IntegrationTest
                                                  show_dependencies: 'true')
     assert UserPreference.for_user_and_team(@user, @team).show_dependencies
   end
-
-  test 'the toolbar toggle saves show_dependencies without touching other defaults' do
-    preference = UserPreference.for_user_and_team(@user, @team)
-    preference.update!(view_mode: 'board', group_by: 'priority')
-
-    patch team_display_preference_path(@team), params: { show_dependencies: true }, as: :json
-
-    assert_response :no_content
-    preference.reload
-    assert preference.show_dependencies
-    assert_equal 'board', preference.view_mode
-    assert_equal 'priority', preference.group_by
-
-    patch team_display_preference_path(@team), params: { show_dependencies: false }, as: :json
-
-    assert_not preference.reload.show_dependencies
-  end
 end

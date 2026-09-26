@@ -40,9 +40,11 @@ export default class extends Controller {
     this.mutationObserver.observe(this.element, { childList: true, subtree: true });
 
     this.scheduleRedraw();
+    this.legend?.classList.remove("hidden");
   }
 
   disconnect() {
+    this.legend?.classList.add("hidden");
     cancelAnimationFrame(this.frame);
     this.element.removeEventListener("scroll", this.scheduleRedraw, { capture: true });
     this.element.removeEventListener("mouseover", this.onMouseOver);
@@ -53,6 +55,11 @@ export default class extends Controller {
     this.mutationObserver.disconnect();
     this.setHovered(null);
     this.layer.destroy();
+  }
+
+  // The color key bar under the top bar (issues/index), outside the board frame.
+  get legend() {
+    return document.getElementById("dependency_legend");
   }
 
   scheduleRedraw() {

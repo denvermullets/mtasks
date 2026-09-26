@@ -3,7 +3,6 @@ class DisplayPreferencesController < ApplicationController
 
   def update
     preference = UserPreference.for_user_and_team(Current.user, current_team)
-    return update_show_dependencies(preference) if request.format.json?
 
     if preference.update(sanitized_params)
       # Redirect back to issues with current display options
@@ -16,16 +15,6 @@ class DisplayPreferencesController < ApplicationController
   end
 
   private
-
-  # The board's Dependencies toggle saves on click, so it only touches its own column rather
-  # than resetting every other display default the way the full form submit does.
-  def update_show_dependencies(preference)
-    if preference.update(show_dependencies: params[:show_dependencies].to_s == 'true')
-      head :no_content
-    else
-      render json: { errors: preference.errors.full_messages }, status: :unprocessable_content
-    end
-  end
 
   def preference_params
     params.permit(

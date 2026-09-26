@@ -250,11 +250,29 @@ class IssuesControllerTest < ActionDispatch::IntegrationTest
     assert_equal [{ 'from_id' => @issue.id, 'to_id' => blocked.id, 'kind' => 'blocks' }], edges
   end
 
-  test 'board has no dependency overlay when the toggle is off' do
+  test 'board has no dependency overlay or legend outside Deps mode' do
     get team_issues_path(@team, view_mode: 'board', show_dependencies: 'false')
 
     assert_response :success
     assert_select '[data-controller="dependency-overlay"]', count: 0
-    assert_select '[data-controller="dependencies-toggle"]', 1
+    assert_select '#dependency_legend.hidden', 1
+    assert_select '[data-display-options-mode-value="board"]', 1
+  end
+
+  test 'Deps view mode shows the legend bar and marks the Deps segment active' do
+    get team_issues_path(@team, view_mode: 'board', show_dependencies: 'true')
+
+    assert_response :success
+    assert_select '#dependency_legend:not(.hidden)', 1
+    assert_select '[data-display-options-mode-value="dependencies"]', 1
+    assert_select 'button[data-view-mode="dependencies"].bg-foreground', 1
+  end
+
+  test 'list view ignores show_dependencies' do
+    get team_issues_path(@team, view_mode: 'list', show_dependencies: 'true')
+
+    assert_response :success
+    assert_select '#dependency_legend.hidden', 1
+    assert_select '[data-display-options-mode-value="list"]', 1
   end
 end
