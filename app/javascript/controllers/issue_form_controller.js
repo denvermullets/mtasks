@@ -129,6 +129,16 @@ export default class extends Controller {
     this.triggerChange(this.estimateInputTarget);
   }
 
+  openDatePicker(event) {
+    if (event.target.showPicker) {
+      try {
+        event.target.showPicker();
+      } catch (e) {
+        // showPicker may throw if already open
+      }
+    }
+  }
+
   triggerChange(element) {
     // Dispatch a change event to trigger any listeners
     element.dispatchEvent(new Event("change", { bubbles: true }));

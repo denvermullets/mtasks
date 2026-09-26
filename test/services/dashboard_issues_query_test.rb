@@ -177,6 +177,18 @@ class DashboardIssuesQueryTest < ActiveSupport::TestCase
     assert_equal [overdue, in_week], issues_for(query(filter: 'week'), group)
   end
 
+  test 'an issue without a due date inherits its project due date' do
+    group = group_with(@team_a)
+    @project_a.update!(due_date: TODAY + 3)
+    inherited = create_issue(@team_a, project: @project_a, due_date: nil)
+    own_date_wins = create_issue(@team_a, project: @project_a, due_date: TODAY + 10)
+    create_issue(@team_a, due_date: nil)
+
+    assert_equal [inherited], issues_for(query(filter: 'week'), group)
+    assert_empty issues_for(query, group)
+    assert_equal [inherited, own_date_wins], issues_for(query(filter: 'open'), group).first(2)
+  end
+
   test 'hot filter returns urgent and high priority issues regardless of due date' do
     group = group_with(@team_a)
     urgent = create_issue(@team_a, priority: :urgent, due_date: nil)
@@ -411,6 +423,17 @@ class DashboardIssuesQueryTest < ActiveSupport::TestCase
     first = @dashboard.groups.create!(name: 'First', position: 1)
 
     assert_equal([first, second], query.groups.map { |entry| entry[:group] })
+  end
+
+  test 'counts use the project due date when the issue has none' do
+    group_with(@team_a)
+    @project_a.update!(due_date: TODAY)
+    create_issue(@team_a, project: @project_a, due_date: nil)
+    create_issue(@team_a, project: @project_a, due_date: TODAY - 2)
+
+    result = query
+    assert_equal 1, result.due_today_count
+    assert_equal 1, result.overdue_count
   end
 
   test 'a dashboard with no groups returns no groups and zero counts' do

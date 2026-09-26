@@ -8,16 +8,30 @@ class DashboardsHelperTest < ActionView::TestCase
   end
 
   test 'dashboard_due_label says Today for issues due today' do
-    assert_equal({ text: 'Today', overdue: false }, dashboard_due_label(Issue.new(due_date: TODAY), TODAY))
+    assert_equal({ text: 'Today', overdue: false, inherited: false },
+                 dashboard_due_label(Issue.new(due_date: TODAY), TODAY))
   end
 
   test 'dashboard_due_label counts overdue days' do
-    assert_equal({ text: 'Overdue · 3d', overdue: true }, dashboard_due_label(Issue.new(due_date: TODAY - 3), TODAY))
-    assert_equal({ text: 'Overdue · 1d', overdue: true }, dashboard_due_label(Issue.new(due_date: TODAY - 1), TODAY))
+    assert_equal({ text: 'Overdue · 3d', overdue: true, inherited: false },
+                 dashboard_due_label(Issue.new(due_date: TODAY - 3), TODAY))
+    assert_equal({ text: 'Overdue · 1d', overdue: true, inherited: false },
+                 dashboard_due_label(Issue.new(due_date: TODAY - 1), TODAY))
   end
 
   test 'dashboard_due_label formats future dates as weekday month day' do
-    assert_equal({ text: 'Mon Sep 28', overdue: false }, dashboard_due_label(Issue.new(due_date: TODAY + 4), TODAY))
+    assert_equal({ text: 'Mon Sep 28', overdue: false, inherited: false },
+                 dashboard_due_label(Issue.new(due_date: TODAY + 4), TODAY))
+  end
+
+  test 'dashboard_due_label falls back to the project due date and flags it as inherited' do
+    issue = Issue.new(due_date: nil, project: Project.new(due_date: TODAY + 1))
+    assert_equal({ text: 'Fri Sep 25', overdue: false, inherited: true }, dashboard_due_label(issue, TODAY))
+  end
+
+  test 'dashboard_due_label prefers the issue due date over the project one' do
+    issue = Issue.new(due_date: TODAY, project: Project.new(due_date: TODAY + 1))
+    assert_equal({ text: 'Today', overdue: false, inherited: false }, dashboard_due_label(issue, TODAY))
   end
 
   test 'dashboard_empty_group_message has copy for each filter and falls back for unknown ones' do

@@ -4,6 +4,9 @@
 class DashboardIssuesQuery < Service
   FILTERS = %w[today week hot open].freeze
   DEFAULT_FILTER = 'today'.freeze
+  # An issue without its own due date inherits its project's, so a dated project's work shows
+  # up in the date tabs without dating every issue. Needs `projects` joined (see base_scope).
+  DUE_DATE_SQL = 'COALESCE(issues.due_date, projects.due_date)'.freeze
 
   # `search` narrows the rows only; `team_id` (already validated against the user's teams)
   # narrows rows and counts; `team_ids` are the accessible teams behind this dashboard's
@@ -38,8 +41,8 @@ class DashboardIssuesQuery < Service
 
     Result.new(
       groups: resolved.map { |group, sources| group_entry(group, sources) },
-      due_today_count: count_for(union, @today),
-      overdue_count: count_for(union, ...@today),
+      due_today_count: count_for(union, '=', @today),
+      overdue_count: count_for(union, '<', @today),
       filter: @filter,
       today: @today,
       search: @search,
@@ -103,7 +106,7 @@ class DashboardIssuesQuery < Service
   def base_scope(sources)
     return Issue.none if sources.empty?
 
-    scope = Issue.unresolved.where(team_id: accessible_team_ids)
+    scope = Issue.unresolved.left_joins(:project).where(team_id: accessible_team_ids)
     scope = source_scope(scope, sources)
     scope = scope.where(assignee_id: @user.id) if @mine
     scope = scope.where(team_id: team_id) if team_id
@@ -126,23 +129,24 @@ class DashboardIssuesQuery < Service
 
     apply_filter(base_scope(sources).matching_search(@search))
       .includes(:team, :project, :assignee, :lane)
-      .order(Arel.sql('issues.due_date ASC NULLS LAST'), :priority, :id)
+      .order(Arel.sql("#{DUE_DATE_SQL} ASC NULLS LAST"), :priority, :id)
       .to_a
   end
 
   def apply_filter(scope)
     case @filter
-    when 'today' then scope.due_on_or_before(@today)
-    when 'week' then scope.due_on_or_before(@today + 6)
+    when 'today' then scope.where("#{DUE_DATE_SQL} <= ?", @today)
+    when 'week' then scope.where("#{DUE_DATE_SQL} <= ?", @today + 6)
     when 'hot' then scope.hot
     else scope
     end
   end
 
   # Header counts ignore the active filter tab; they always mean "due today" and "overdue".
-  def count_for(sources, due_date)
+  # `operator` is one of the literals passed from #call, never user input.
+  def count_for(sources, operator, date)
     return 0 if sources.empty?
 
-    base_scope(sources).where(due_date: due_date).count
+    base_scope(sources).where("#{DUE_DATE_SQL} #{operator} ?", date).count
   end
 end

@@ -23,7 +23,8 @@
         <span class="truncate"><%= issue.project.name %></span>
       <% end %>
     </span>
-    <span class="text-xs <%= due_class %> truncate"><%= due&.fetch(:text) %></span>
+    <span class="text-xs <%= due_class %> <%= 'italic' if due&.fetch(:inherited) %> truncate"
+          <% if due&.fetch(:inherited) %>title="Project due date"<% end %>><%= due&.fetch(:text) %></span>
     <span class="flex items-center justify-center">
       <% if issue.assignee %>
         <%= user_avatar(issue.assignee, size: "sm") %>
@@ -45,7 +46,7 @@
         <% end %>
         <% if due %>
           <span aria-hidden="true">·</span>
-          <span class="<%= due_class %>"><%= due[:text] %></span>
+          <span class="<%= due_class %> <%= 'italic' if due[:inherited] %>"><%= due[:text] %></span>
         <% end %>
       </p>
     </div>

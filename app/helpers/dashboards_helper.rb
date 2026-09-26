@@ -23,12 +23,17 @@ module DashboardsHelper
   }.freeze
 
   # `due_date` is a date, so the label never carries a time. `today` comes from the query
-  # result so the header counts and every row agree on what "today" means.
-  # Returns { text:, overdue: } or nil when the issue has no due date.
+  # result so the header counts and every row agree on what "today" means. An issue without
+  # its own due date falls back to its project's, matching DashboardIssuesQuery::DUE_DATE_SQL.
+  # Returns { text:, overdue:, inherited: } or nil when neither has a due date.
   def dashboard_due_label(issue, today)
-    due = issue.due_date
+    due = issue.due_date || issue.project&.due_date
     return nil unless due
 
+    { **dashboard_due_text(due, today), inherited: issue.due_date.nil? }
+  end
+
+  def dashboard_due_text(due, today)
     if due == today
       { text: 'Today', overdue: false }
     elsif due < today

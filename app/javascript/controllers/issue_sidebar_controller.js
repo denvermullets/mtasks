@@ -18,6 +18,7 @@ export default class extends Controller {
     "estimateDropdown",
     "estimateLabel",
     "estimateInput",
+    "dueDateInput",
     "labelsDropdown",
   ];
 
@@ -118,6 +119,26 @@ export default class extends Controller {
     event.stopPropagation();
     this.updateField(event, "estimate", "estimateInput", "estimateLabel", "estimateLabel");
     this.estimateDropdownTarget.classList.add("hidden");
+  }
+
+  openDatePicker(event) {
+    if (event.target.showPicker) {
+      try {
+        event.target.showPicker();
+      } catch (e) {
+        // showPicker may throw if already open
+      }
+    }
+  }
+
+  dueDateChanged() {
+    this.element.requestSubmit();
+  }
+
+  clearDueDate(event) {
+    event.stopPropagation();
+    this.dueDateInputTarget.value = "";
+    this.element.requestSubmit();
   }
 
   updateField(event, fieldType, inputTarget, labelTarget, dataAttribute) {
