@@ -41,7 +41,7 @@
                 placeholder: "Add description...",
                 rows: 6,
                 autocomplete: "off",
-                data: { controller: "auto-resize", action: "input->auto-resize#resize" },
+                data: { controller: "auto-resize image-paste", action: "input->auto-resize#resize paste->image-paste#paste", image_paste_url_value: image_uploads_path },
                 class: "w-full bg-transparent border border-transparent rounded-md px-2 py-1 text-gray-300 placeholder-gray-600 focus:outline-none focus:border-accent focus:ring-0 resize-none overflow-hidden" %>
         </div>
 

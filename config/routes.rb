@@ -1,5 +1,6 @@
 Rails.application.routes.draw do
   resource :session
+  resources :image_uploads, only: :create
   resources :passwords, param: :token
   resources :users, only: %i[new create]
   get :settings, to: 'settings/account#show'

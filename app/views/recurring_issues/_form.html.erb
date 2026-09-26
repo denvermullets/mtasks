@@ -24,7 +24,7 @@
 
     <div>
       <%= f.label :description, class: label_class %>
-      <%= f.text_area :description, rows: 5, placeholder: "Checklist or notes copied into every issue", class: input_class %>
+      <%= f.text_area :description, rows: 5, placeholder: "Checklist or notes copied into every issue", class: input_class, data: { controller: "image-paste", action: "paste->image-paste#paste", image_paste_url_value: image_uploads_path } %>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">

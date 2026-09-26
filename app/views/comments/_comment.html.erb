@@ -54,7 +54,7 @@
                   placeholder: "Write a reply...",
                   class: "w-full bg-transparent text-gray-300 placeholder-gray-500 focus:outline-none resize-none border-0 p-0 text-sm overflow-hidden",
                   rows: 2,
-                  data: { controller: "auto-resize", action: "focus->auto-resize#resize input->auto-resize#resize keydown->submit-on-cmd-enter#submit input->issue-mention#onInput keydown->issue-mention#onKeydown paste->issue-mention#onPaste", issue_mention_target: "textarea" } %>
+                  data: { controller: "auto-resize image-paste", action: "focus->auto-resize#resize input->auto-resize#resize keydown->submit-on-cmd-enter#submit input->issue-mention#onInput keydown->issue-mention#onKeydown paste->issue-mention#onPaste paste->image-paste#paste", issue_mention_target: "textarea", image_paste_url_value: image_uploads_path } %>
               <%= render "issue_mentions/dropdown" %>
               <div class="flex items-center justify-end gap-2 mt-2">
                 <button type="button" class="text-gray-500 hover:text-gray-400 text-xs cursor-pointer" data-action="click->comment-reply#hide">

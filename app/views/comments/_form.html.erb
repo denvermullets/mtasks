@@ -15,7 +15,7 @@
             placeholder: "Leave a comment (drop files here)...",
             class: "w-full bg-transparent text-gray-300 placeholder-gray-500 focus:outline-none resize-none border-0 p-0 overflow-hidden",
             rows: 2,
-            data: { controller: "auto-resize", action: "input->auto-resize#resize keydown->submit-on-cmd-enter#submit input->issue-mention#onInput keydown->issue-mention#onKeydown paste->issue-mention#onPaste input->user-mention#onInput keydown->user-mention#onKeydown", issue_mention_target: "textarea", user_mention_target: "textarea" } %>
+            data: { controller: "auto-resize image-paste", action: "input->auto-resize#resize keydown->submit-on-cmd-enter#submit input->issue-mention#onInput keydown->issue-mention#onKeydown paste->issue-mention#onPaste paste->image-paste#paste input->user-mention#onInput keydown->user-mention#onKeydown", issue_mention_target: "textarea", user_mention_target: "textarea", image_paste_url_value: image_uploads_path } %>
         <%= render "issue_mentions/dropdown" %>
         <%= render "user_mentions/dropdown" %>
       </div>
