@@ -6,7 +6,7 @@
       <h1 class="text-base font-semibold">Team Members</h1>
       <span class="text-sm text-gray-500 hidden sm:inline"><%= @team.name %></span>
     </div>
-    <%= link_to edit_team_path(@team), class: "text-sm text-gray-400 hover:text-gray-300" do %>
+    <%= link_to edit_team_path(@team, section: "members"), class: "text-sm text-gray-400 hover:text-gray-300" do %>
       <span class="hidden sm:inline">Back to Settings</span>
       <span class="sm:hidden">Back</span>
     <% end %>

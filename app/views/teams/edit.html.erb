@@ -12,161 +12,186 @@
     <% end %>
   </div>
   <!-- Settings Content -->
-  <div class="flex-1 overflow-y-auto bg-background p-8">
-    <div class="max-w-4xl mx-auto w-full space-y-6">
-      <!-- Team Details Section -->
-      <div class="bg-foreground border border-stroke rounded-lg p-6">
-        <h2 class="text-lg font-semibold text-gray-200 mb-4">Team Details</h2>
-        <%= form_with model: @team, method: :patch, local: true do |f| %>
-          <!-- Team Name -->
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-400 mb-2">Team Name</label>
-            <%= f.text_field :name, class: "w-full px-3 py-2 bg-background border border-stroke rounded text-gray-200 focus:outline-none focus:border-accent" %>
-            <% if @team.errors[:name].any? %>
-              <p class="text-red-500 text-xs mt-1"><%= @team.errors[:name].first %></p>
-            <% end %>
-          </div>
-          <!-- Team Identifier -->
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-400 mb-2">
-              Identifier (3-4 alphanumeric characters)
-            </label>
-            <%= f.text_field :identifier,
-                maxlength: 4,
-                class: "w-32 px-3 py-2 bg-background border border-stroke rounded text-gray-200 font-mono uppercase focus:outline-none focus:border-accent" %>
-            <p class="text-xs text-gray-500 mt-1">
-              Used in issue identifiers (e.g., <%= @team.identifier %>-123).
-              <span class="text-amber-500">Warning: Changing this will affect all existing issue IDs.</span>
-            </p>
-            <% if @team.errors[:identifier].any? %>
-              <p class="text-red-500 text-xs mt-1"><%= @team.errors[:identifier].first %></p>
-            <% end %>
-          </div>
-          <%= f.submit "Save Team Details", class: "px-4 py-2 border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 font-medium cursor-pointer rounded-md" %>
+  <% sections = team_settings_sections(@team) %>
+  <% current_section = sections.key?(params[:section]) ? params[:section] : sections.keys.first %>
+  <% active_link = "bg-hover-highlight text-gray-200" %>
+  <% inactive_link = "text-gray-400 hover:text-gray-200 hover:bg-hover-highlight" %>
+  <div class="flex-1 overflow-y-auto bg-background p-4 sm:p-8"
+       data-controller="settings-nav"
+       data-settings-nav-active-class="<%= active_link %>"
+       data-settings-nav-inactive-class="<%= inactive_link %>">
+    <div class="max-w-5xl mx-auto w-full flex flex-col md:flex-row gap-4 md:gap-8">
+      <!-- Section Nav -->
+      <nav class="md:w-48 shrink-0 flex md:flex-col gap-1 overflow-x-auto md:sticky md:top-0 md:self-start">
+        <% sections.each do |key, label| %>
+          <%= link_to label, edit_team_path(@team, section: key),
+              data: { settings_nav_target: "link", section: key, action: "click->settings-nav#select" },
+              class: "px-3 py-1.5 text-sm rounded whitespace-nowrap cursor-pointer transition-colors #{current_section == key ? active_link : inactive_link}" %>
         <% end %>
-      </div>
-      <!-- Integrations Section -->
-      <div class="bg-foreground border border-stroke rounded-lg p-6">
-        <h2 class="text-lg font-semibold text-gray-200 mb-4">Integrations</h2>
-        <div class="space-y-3">
-          <!-- GitHub Repositories -->
-          <div class="flex items-center justify-between p-3 bg-background rounded border border-stroke">
-            <div class="flex items-center gap-3">
-              <div class="text-2xl">🔗</div>
-              <div>
-                <h3 class="text-sm font-medium text-gray-200">GitHub Repositories</h3>
-                <p class="text-xs text-gray-400">Subscribe to repositories and link PRs to issues</p>
+      </nav>
+      <!-- Section Panels -->
+      <div class="flex-1 min-w-0">
+        <div data-settings-nav-target="panel" data-section="general" class="<%= "hidden" unless current_section == "general" %>">
+          <div class="bg-foreground border border-stroke rounded-lg p-6">
+            <h2 class="text-lg font-semibold text-gray-200 mb-4">Team Details</h2>
+            <%= form_with model: @team, method: :patch, local: true do |f| %>
+              <!-- Team Name -->
+              <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-400 mb-2">Team Name</label>
+                <%= f.text_field :name, class: "w-full px-3 py-2 bg-background border border-stroke rounded text-gray-200 focus:outline-none focus:border-accent" %>
+                <% if @team.errors[:name].any? %>
+                  <p class="text-red-500 text-xs mt-1"><%= @team.errors[:name].first %></p>
+                <% end %>
               </div>
-            </div>
-            <%= link_to team_github_repositories_path(@team),
-                class: "text-sm text-accent hover:text-accent/80" do %>
-              <% if @team.github_repository_subscriptions.active.any? %>
-                Manage (<%= @team.github_repository_subscriptions.active.count %>)
-              <% else %>
-                Set Up
-              <% end %>
+              <!-- Team Identifier -->
+              <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-400 mb-2">
+                  Identifier (3-4 alphanumeric characters)
+                </label>
+                <%= f.text_field :identifier,
+                    maxlength: 4,
+                    class: "w-32 px-3 py-2 bg-background border border-stroke rounded text-gray-200 font-mono uppercase focus:outline-none focus:border-accent" %>
+                <p class="text-xs text-gray-500 mt-1">
+                  Used in issue identifiers (e.g., <%= @team.identifier %>-123).
+                  <span class="text-amber-500">Warning: Changing this will affect all existing issue IDs.</span>
+                </p>
+                <% if @team.errors[:identifier].any? %>
+                  <p class="text-red-500 text-xs mt-1"><%= @team.errors[:identifier].first %></p>
+                <% end %>
+              </div>
+              <%= f.submit "Save Team Details", class: "px-4 py-2 border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 font-medium cursor-pointer rounded-md" %>
             <% end %>
           </div>
-
-          <!-- Product Analytics -->
-          <div class="flex items-center justify-between p-3 bg-background rounded border border-stroke">
-            <div class="flex items-center gap-3">
-              <div class="text-2xl">📈</div>
-              <div>
-                <h3 class="text-sm font-medium text-gray-200">Product Analytics</h3>
-                <p class="text-xs text-gray-400">Send this team's usage events to your own Vektis account</p>
-              </div>
-            </div>
-            <%= link_to team_settings_vektis_integration_path(@team),
-                class: "text-sm text-accent hover:text-accent/80" do %>
-              <% if @team.vektis_integration&.enabled? %>
-                Manage
-              <% else %>
-                Set Up
-              <% end %>
-            <% end %>
-          </div>
-
-          <!-- Workspace GitHub Installation -->
-          <div class="flex items-center justify-between p-3 bg-background rounded border border-stroke">
-            <div class="flex items-center gap-3">
-              <div class="text-2xl">⚙️</div>
-              <div>
-                <h3 class="text-sm font-medium text-gray-200">Workspace GitHub Installation</h3>
-                <p class="text-xs text-gray-400">Manage GitHub App installation (workspace-level)</p>
-              </div>
-            </div>
-            <%= link_to workspace_github_installation_path(@team.workspace),
-                class: "text-sm text-accent hover:text-accent/80" do %>
-              <% if @team.workspace.github_installation&.active? %>
-                View
-              <% else %>
-                Install
-              <% end %>
-            <% end %>
-          </div>
-
         </div>
-      </div>
-      <!-- Recurring Issues Section -->
-      <div class="bg-foreground border border-stroke rounded-lg p-6">
-        <div class="flex items-center justify-between">
-          <div>
-            <h2 class="text-lg font-semibold text-gray-200">Recurring Issues</h2>
-            <p class="text-xs text-gray-400 mt-1">Issues filed automatically on a schedule, e.g. a weekly deploy sign-off</p>
+        <div data-settings-nav-target="panel" data-section="lanes" class="<%= "hidden" unless current_section == "lanes" %>">
+          <!-- Lanes Section -->
+          <div class="bg-foreground border border-stroke rounded-lg p-6"
+               data-controller="lane-settings">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-lg font-semibold text-gray-200">Lanes</h2>
+              <button
+                type="button"
+                data-action="click->lane-settings#toggleAddLaneForm"
+                class="px-3 py-1.5 text-sm border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 font-medium cursor-pointer rounded-md">
+                Add Lane
+              </button>
+            </div>
+            <!-- Add Lane Form (hidden initially) -->
+            <%= render "lanes/add_lane_form" %>
+            <!-- Lane List -->
+            <div id="lanes_list" class="space-y-1" data-controller="lane-order">
+              <% @lanes.each do |lane| %>
+                <%= render "lanes/lane_row", lane: lane %>
+              <% end %>
+            </div>
           </div>
-          <%= link_to team_recurring_issues_path(@team), class: "text-sm text-accent hover:text-accent/80 cursor-pointer" do %>
-            <% recurring_count = @team.recurring_issues.active.count %>
-            <%= recurring_count.positive? ? "Manage (#{recurring_count})" : "Set Up" %>
-          <% end %>
         </div>
-      </div>
-      <!-- Members Section (team admins only) -->
-      <% if team_admin?(@team) %>
-        <div class="bg-foreground border border-stroke rounded-lg p-6">
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-semibold text-gray-200">Members</h2>
-            <%= link_to team_team_invitations_path(@team), class: "text-sm text-accent hover:text-accent/80" do %>
-              Manage Members
-            <% end %>
+        <% if sections.key?("members") %>
+          <div data-settings-nav-target="panel" data-section="members" class="<%= "hidden" unless current_section == "members" %>">
+            <div class="bg-foreground border border-stroke rounded-lg p-6">
+              <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-200">Members</h2>
+                <%= link_to team_team_invitations_path(@team), class: "text-sm text-accent hover:text-accent/80 cursor-pointer" do %>
+                  Manage Members
+                <% end %>
+              </div>
+              <div class="space-y-2">
+                <% @team.users.order(:name).limit(5).each do |member| %>
+                  <div class="flex items-center gap-3 p-2">
+                    <%= user_avatar(member, size: "lg", shape: "square") %>
+                    <div>
+                      <p class="text-sm text-gray-200"><%= member.name %></p>
+                      <p class="text-xs text-gray-400"><%= member.email %></p>
+                    </div>
+                  </div>
+                <% end %>
+                <% pending_count = @team.team_invitations.pending.count %>
+                <% if pending_count > 0 %>
+                  <p class="text-xs text-gray-500 mt-2"><%= pending_count %> pending invitation<%= pending_count == 1 ? '' : 's' %></p>
+                <% end %>
+              </div>
+            </div>
           </div>
-          <div class="space-y-2">
-            <% @team.users.order(:name).limit(5).each do |member| %>
-              <div class="flex items-center gap-3 p-2">
-                <%= user_avatar(member, size: "lg", shape: "square") %>
-                <div>
-                  <p class="text-sm text-gray-200"><%= member.name %></p>
-                  <p class="text-xs text-gray-400"><%= member.email %></p>
+        <% end %>
+        <div data-settings-nav-target="panel" data-section="integrations" class="<%= "hidden" unless current_section == "integrations" %>">
+          <!-- Integrations Section -->
+          <div class="bg-foreground border border-stroke rounded-lg p-6">
+            <h2 class="text-lg font-semibold text-gray-200 mb-4">Integrations</h2>
+            <div class="space-y-3">
+              <!-- GitHub Repositories -->
+              <div class="flex items-center justify-between p-3 bg-background rounded border border-stroke">
+                <div class="flex items-center gap-3">
+                  <div class="text-2xl">🔗</div>
+                  <div>
+                    <h3 class="text-sm font-medium text-gray-200">GitHub Repositories</h3>
+                    <p class="text-xs text-gray-400">Subscribe to repositories and link PRs to issues</p>
+                  </div>
                 </div>
+                <%= link_to team_github_repositories_path(@team),
+                    class: "text-sm text-accent hover:text-accent/80" do %>
+                  <% if @team.github_repository_subscriptions.active.any? %>
+                    Manage (<%= @team.github_repository_subscriptions.active.count %>)
+                  <% else %>
+                    Set Up
+                  <% end %>
+                <% end %>
               </div>
-            <% end %>
-            <% pending_count = @team.team_invitations.pending.count %>
-            <% if pending_count > 0 %>
-              <p class="text-xs text-gray-500 mt-2"><%= pending_count %> pending invitation<%= pending_count == 1 ? '' : 's' %></p>
-            <% end %>
+
+              <!-- Product Analytics -->
+              <div class="flex items-center justify-between p-3 bg-background rounded border border-stroke">
+                <div class="flex items-center gap-3">
+                  <div class="text-2xl">📈</div>
+                  <div>
+                    <h3 class="text-sm font-medium text-gray-200">Product Analytics</h3>
+                    <p class="text-xs text-gray-400">Send this team's usage events to your own Vektis account</p>
+                  </div>
+                </div>
+                <%= link_to team_settings_vektis_integration_path(@team),
+                    class: "text-sm text-accent hover:text-accent/80" do %>
+                  <% if @team.vektis_integration&.enabled? %>
+                    Manage
+                  <% else %>
+                    Set Up
+                  <% end %>
+                <% end %>
+              </div>
+
+              <!-- Workspace GitHub Installation -->
+              <div class="flex items-center justify-between p-3 bg-background rounded border border-stroke">
+                <div class="flex items-center gap-3">
+                  <div class="text-2xl">⚙️</div>
+                  <div>
+                    <h3 class="text-sm font-medium text-gray-200">Workspace GitHub Installation</h3>
+                    <p class="text-xs text-gray-400">Manage GitHub App installation (workspace-level)</p>
+                  </div>
+                </div>
+                <%= link_to workspace_github_installation_path(@team.workspace),
+                    class: "text-sm text-accent hover:text-accent/80" do %>
+                  <% if @team.workspace.github_installation&.active? %>
+                    View
+                  <% else %>
+                    Install
+                  <% end %>
+                <% end %>
+              </div>
+
+            </div>
           </div>
         </div>
-      <% end %>
-
-      <!-- Lanes Section -->
-      <div class="bg-foreground border border-stroke rounded-lg p-6"
-           data-controller="lane-settings">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-lg font-semibold text-gray-200">Lanes</h2>
-          <button
-            type="button"
-            data-action="click->lane-settings#toggleAddLaneForm"
-            class="px-3 py-1.5 text-sm border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 font-medium cursor-pointer rounded-md">
-            Add Lane
-          </button>
-        </div>
-        <!-- Add Lane Form (hidden initially) -->
-        <%= render "lanes/add_lane_form" %>
-        <!-- Lane List -->
-        <div id="lanes_list" class="space-y-2">
-          <% @lanes.each do |lane| %>
-            <%= render "lanes/lane_row", lane: lane %>
-          <% end %>
+        <div data-settings-nav-target="panel" data-section="recurring" class="<%= "hidden" unless current_section == "recurring" %>">
+          <!-- Recurring Issues Section -->
+          <div class="bg-foreground border border-stroke rounded-lg p-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <h2 class="text-lg font-semibold text-gray-200">Recurring Issues</h2>
+                <p class="text-xs text-gray-400 mt-1">Issues filed automatically on a schedule, e.g. a weekly deploy sign-off</p>
+              </div>
+              <%= link_to team_recurring_issues_path(@team), class: "text-sm text-accent hover:text-accent/80 cursor-pointer" do %>
+                <% recurring_count = @team.recurring_issues.active.count %>
+                <%= recurring_count.positive? ? "Manage (#{recurring_count})" : "Set Up" %>
+              <% end %>
+            </div>
+          </div>
         </div>
       </div>
     </div>

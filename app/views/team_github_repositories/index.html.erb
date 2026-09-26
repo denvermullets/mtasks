@@ -5,7 +5,7 @@
       <h1 class="text-base font-semibold">GitHub Repositories</h1>
       <span class="text-sm text-gray-500"><%= @team.name %></span>
     </div>
-    <%= link_to edit_team_path(@team), class: "text-sm text-gray-400 hover:text-gray-300" do %>
+    <%= link_to edit_team_path(@team, section: "integrations"), class: "text-sm text-gray-400 hover:text-gray-300" do %>
       Back to Settings
     <% end %>
   </div>

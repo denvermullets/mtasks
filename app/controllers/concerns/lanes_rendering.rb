@@ -21,7 +21,7 @@ module LanesRendering
           'flash_messages', partial: 'shared/flash', locals: { message: 'Cannot delete the last lane', type: 'alert' }
         ), status: :unprocessable_entity
       end
-      format.html { redirect_to edit_team_path(current_team), alert: 'Cannot delete the last lane' }
+      format.html { redirect_to edit_team_path(current_team, section: 'lanes'), alert: 'Cannot delete the last lane' }
     end
   end
 
@@ -37,7 +37,8 @@ module LanesRendering
         )
       end
       format.html do
-        redirect_to edit_team_path(current_team), alert: 'This lane has issues. Please reassign them first.'
+        redirect_to edit_team_path(current_team, section: 'lanes'),
+                    alert: 'This lane has issues. Please reassign them first.'
       end
     end
   end
@@ -50,7 +51,7 @@ module LanesRendering
           turbo_stream.update('add_lane_form', partial: 'lanes/add_lane_form_content', locals: { lane: Lane.new })
         ]
       end
-      format.html { redirect_to edit_team_path(current_team) }
+      format.html { redirect_to edit_team_path(current_team, section: 'lanes') }
     end
   end
 
@@ -60,7 +61,9 @@ module LanesRendering
         render turbo_stream: turbo_stream.update('add_lane_form', partial: 'lanes/add_lane_form_content',
                                                                   locals: { lane: @lane })
       end
-      format.html { redirect_to edit_team_path(current_team), alert: @lane.errors.full_messages.join(', ') }
+      format.html do
+        redirect_to edit_team_path(current_team, section: 'lanes'), alert: @lane.errors.full_messages.join(', ')
+      end
     end
   end
 end

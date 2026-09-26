@@ -30,7 +30,7 @@ class LanesController < ApplicationController
 
     respond_to do |format|
       format.turbo_stream { render_lane_update }
-      format.html { redirect_to edit_team_path(current_team) }
+      format.html { redirect_to edit_team_path(current_team, section: 'lanes') }
     end
   end
 
@@ -48,7 +48,7 @@ class LanesController < ApplicationController
       format.turbo_stream do
         render turbo_stream: turbo_stream.remove("lane_#{@lane.id}")
       end
-      format.html { redirect_to edit_team_path(current_team) }
+      format.html { redirect_to edit_team_path(current_team, section: 'lanes') }
     end
   end
 
@@ -97,19 +97,13 @@ class LanesController < ApplicationController
   end
 
   def update_lane_positions
-    new_position = lane_params[:position].to_i
-    old_position = @lane.position
+    ordered = current_team.lanes.order(:position).to_a
+    ordered.delete(@lane)
+    ordered.insert(lane_params[:position].to_i.clamp(0, ordered.size), @lane)
 
-    # Find the lane at the target position
-    lane_at_target = current_team.lanes.find_by(position: new_position)
-
-    # Swap positions and re-normalize
+    # Move the lane to its new index and re-normalize all positions to be sequential
     Lane.transaction do
-      lane_at_target&.update_column(:position, old_position)
-      @lane.update_column(:position, new_position)
-
-      # Re-normalize all positions to be sequential
-      current_team.lanes.order(:position).each_with_index do |lane, index|
+      ordered.each_with_index do |lane, index|
         lane.update_column(:position, index) if lane.position != index
       end
     end
