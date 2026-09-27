@@ -6,7 +6,7 @@
 # associations are remapped: lane is matched by name (falling back to the
 # team's first lane), the assignee is kept only if still a member, and the
 # project, labels, and cross-team parent/child links are cleared.
-class IssueTeamMover
+class IssueTeamMover < Service
   attr_reader :error
 
   def initialize(issue:, target_team:, user:)
@@ -17,7 +17,8 @@ class IssueTeamMover
   end
 
   def call
-    return false unless authorized?
+    @success = false
+    return self unless authorized?
 
     Issue.transaction do
       remap_associations
@@ -28,11 +29,14 @@ class IssueTeamMover
     end
 
     @issue.enqueue_velocity_recalculation!
-    true
+    @success = true
+    self
   rescue ActiveRecord::RecordInvalid => e
     @error = e.record.errors.full_messages.to_sentence
-    false
+    self
   end
+
+  def success? = @success
 
   private
 

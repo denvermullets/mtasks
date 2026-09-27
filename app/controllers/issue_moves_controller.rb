@@ -11,8 +11,8 @@ class IssueMovesController < ApplicationController
       return redirect_to team_issue_path(issue.team, issue), alert: "You don't have access to that team."
     end
 
-    mover = IssueTeamMover.new(issue: issue, target_team: target_team, user: Current.user)
-    if mover.call
+    mover = IssueTeamMover.call(issue: issue, target_team: target_team, user: Current.user)
+    if mover.success?
       track_feature('issue-transfer', 'move', entity: 'issue')
       redirect_to team_issue_path(target_team, issue), notice: "Issue moved to #{target_team.name}."
     else

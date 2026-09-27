@@ -14,7 +14,7 @@ class GithubCommentProcessorJob < ApplicationJob
     pull_request = find_or_fetch_pull_request(subscription, pr_number)
     return unless pull_request
 
-    GithubPrSyncService.new(subscription).link_issues_from_text(pull_request, comment_body)
+    GhIntegration::LinkIssuesFromText.call(subscription: subscription, pull_request: pull_request, text: comment_body)
   end
 
   private
@@ -32,9 +32,8 @@ class GithubCommentProcessorJob < ApplicationJob
     client = Octokit::Client.new(access_token: subscription.access_token)
     pr_data = client.pull_request(subscription.github_repo_full_name, pr_number)
 
-    sync_service = GithubPrSyncService.new(subscription)
     # Octokit hands back symbol keys; the sync service reads string keys.
-    sync_service.sync_pull_request(pr_data.to_h.deep_stringify_keys)
+    GithubPrSyncService.call(subscription: subscription, pr_data: pr_data.to_h.deep_stringify_keys)
   rescue StandardError => e
     Rails.logger.error("Failed to fetch PR ##{pr_number}: #{e.message}")
     nil

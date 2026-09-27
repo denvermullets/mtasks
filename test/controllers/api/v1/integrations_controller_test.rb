@@ -14,7 +14,7 @@ module Api
       end
 
       def issue_bootstrap(name: 'bootstrap', scopes: ApiToken::AVAILABLE_SCOPES)
-        ApiTokens::Issuer.workspace_token(
+        ApiTokens::Issuer.call(
           user: @user, workspace: @workspace, name: name, one_time_use: true, scopes: scopes
         )
       end

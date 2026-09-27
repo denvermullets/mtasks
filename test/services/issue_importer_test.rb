@@ -12,8 +12,7 @@ class IssueImporterTest < ActiveSupport::TestCase
       Engineering,Test Issue,Backlog
     CSV
 
-    importer = IssueImporter.new(@workspace, @user)
-    result = importer.import(csv_data)
+    result = IssueImporter.call(workspace: @workspace, user: @user, csv: csv_data)
 
     assert result[:success]
     assert_equal 1, result[:imported]
@@ -29,8 +28,7 @@ class IssueImporterTest < ActiveSupport::TestCase
       99 Staples,Test Issue,Backlog
     CSV
 
-    importer = IssueImporter.new(@workspace, @user)
-    result = importer.import(csv_data)
+    result = IssueImporter.call(workspace: @workspace, user: @user, csv: csv_data)
 
     assert result[:success]
 
@@ -45,8 +43,7 @@ class IssueImporterTest < ActiveSupport::TestCase
       AI,Test Issue,Backlog
     CSV
 
-    importer = IssueImporter.new(@workspace, @user)
-    result = importer.import(csv_data)
+    result = IssueImporter.call(workspace: @workspace, user: @user, csv: csv_data)
 
     assert result[:success]
 
@@ -61,8 +58,7 @@ class IssueImporterTest < ActiveSupport::TestCase
       Design,Test Issue,Backlog
     CSV
 
-    importer = IssueImporter.new(@workspace, @user)
-    importer.import(csv_data)
+    IssueImporter.call(workspace: @workspace, user: @user, csv: csv_data)
 
     team = @workspace.teams.find_by(identifier: 'DES')
     assert team.users.include?(@user)
@@ -76,8 +72,7 @@ class IssueImporterTest < ActiveSupport::TestCase
       Engineering,Test Issue,Backlog
     CSV
 
-    importer = IssueImporter.new(@workspace, @user)
-    importer.import(csv_data)
+    IssueImporter.call(workspace: @workspace, user: @user, csv: csv_data)
 
     assert_equal 1, @workspace.teams.count
     assert_equal existing_team, @workspace.teams.first
@@ -89,8 +84,7 @@ class IssueImporterTest < ActiveSupport::TestCase
       Test Issue,Backlog
     CSV
 
-    importer = IssueImporter.new(@workspace, @user)
-    result = importer.import(csv_data)
+    result = IssueImporter.call(workspace: @workspace, user: @user, csv: csv_data)
 
     assert result[:success]
 
@@ -105,8 +99,7 @@ class IssueImporterTest < ActiveSupport::TestCase
       ENG,Test Issue,Test description,In Progress,high,5
     CSV
 
-    importer = IssueImporter.new(@workspace, @user)
-    result = importer.import(csv_data)
+    result = IssueImporter.call(workspace: @workspace, user: @user, csv: csv_data)
 
     assert result[:success]
     assert_equal 1, result[:imported]
@@ -125,8 +118,7 @@ class IssueImporterTest < ActiveSupport::TestCase
       DES,Issue 2,In Review
     CSV
 
-    importer = IssueImporter.new(@workspace, @user)
-    importer.import(csv_data)
+    IssueImporter.call(workspace: @workspace, user: @user, csv: csv_data)
 
     eng_team = @workspace.teams.find_by(identifier: 'ENG')
     des_team = @workspace.teams.find_by(identifier: 'DES')
@@ -143,8 +135,7 @@ class IssueImporterTest < ActiveSupport::TestCase
       ENG,Issue 3,Done
     CSV
 
-    importer = IssueImporter.new(@workspace, @user)
-    result = importer.import(csv_data)
+    result = IssueImporter.call(workspace: @workspace, user: @user, csv: csv_data)
 
     assert result[:success]
     assert_equal 3, result[:imported]

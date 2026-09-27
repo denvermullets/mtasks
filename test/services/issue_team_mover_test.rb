@@ -24,7 +24,7 @@ class IssueTeamMoverTest < ActiveSupport::TestCase
   test 'renumbers from target team counter and changes identifier' do
     target_next = @target.issue_counter + 1
 
-    assert IssueTeamMover.new(issue: @issue, target_team: @target, user: @user).call
+    assert IssueTeamMover.call(issue: @issue, target_team: @target, user: @user).success?
 
     @issue.reload
     assert_equal @target, @issue.team
@@ -35,7 +35,7 @@ class IssueTeamMoverTest < ActiveSupport::TestCase
   test 'remaps lane by name and clears project and labels' do
     target_backlog = @target.lanes.find_by(name: 'Backlog')
 
-    assert IssueTeamMover.new(issue: @issue, target_team: @target, user: @user).call
+    assert IssueTeamMover.call(issue: @issue, target_team: @target, user: @user).success?
 
     @issue.reload
     assert_equal target_backlog, @issue.lane
@@ -46,14 +46,14 @@ class IssueTeamMoverTest < ActiveSupport::TestCase
   test 'falls back to first lane when no name match exists' do
     @issue.update!(lane: @source.lanes.create!(name: 'Custom', position: 9))
 
-    assert IssueTeamMover.new(issue: @issue, target_team: @target, user: @user).call
+    assert IssueTeamMover.call(issue: @issue, target_team: @target, user: @user).success?
 
     @issue.reload
     assert_equal @target.lanes.order(:position).first, @issue.lane
   end
 
   test 'keeps assignee when they are a member of the target team' do
-    assert IssueTeamMover.new(issue: @issue, target_team: @target, user: @user).call
+    assert IssueTeamMover.call(issue: @issue, target_team: @target, user: @user).success?
 
     assert_equal @user, @issue.reload.assignee
   end
@@ -63,7 +63,7 @@ class IssueTeamMoverTest < ActiveSupport::TestCase
     @source.team_memberships.create!(user: other)
     @issue.update!(assignee: other)
 
-    assert IssueTeamMover.new(issue: @issue, target_team: @target, user: @user).call
+    assert IssueTeamMover.call(issue: @issue, target_team: @target, user: @user).success?
 
     assert_nil @issue.reload.assignee
   end
@@ -74,14 +74,14 @@ class IssueTeamMoverTest < ActiveSupport::TestCase
     @issue.update!(parent_issue: parent)
     child.update!(parent_issue: @issue)
 
-    assert IssueTeamMover.new(issue: @issue, target_team: @target, user: @user).call
+    assert IssueTeamMover.call(issue: @issue, target_team: @target, user: @user).success?
 
     assert_nil @issue.reload.parent_issue
     assert_nil child.reload.parent_issue
   end
 
   test 'records a paper_trail activity describing the team move' do
-    assert IssueTeamMover.new(issue: @issue, target_team: @target, user: @user).call
+    assert IssueTeamMover.call(issue: @issue, target_team: @target, user: @user).success?
 
     version = @issue.versions.last
     description = VersionDescriptionService.call(version)
@@ -94,17 +94,17 @@ class IssueTeamMoverTest < ActiveSupport::TestCase
   test 'fails when user does not belong to both teams' do
     stranger = User.create!(name: 'Stranger', email: 'stranger@example.com', password: 'password')
 
-    mover = IssueTeamMover.new(issue: @issue, target_team: @target, user: stranger)
+    mover = IssueTeamMover.call(issue: @issue, target_team: @target, user: stranger)
 
-    assert_not mover.call
+    assert_not mover.success?
     assert mover.error.present?
     assert_equal @source, @issue.reload.team
   end
 
   test 'fails when target team is the current team' do
-    mover = IssueTeamMover.new(issue: @issue, target_team: @source, user: @user)
+    mover = IssueTeamMover.call(issue: @issue, target_team: @source, user: @user)
 
-    assert_not mover.call
+    assert_not mover.success?
     assert mover.error.present?
   end
 end

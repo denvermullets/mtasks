@@ -51,7 +51,7 @@ module Api
       end
 
       def mint_callback_token(integration)
-        callback = ApiTokens::Issuer.workspace_token(
+        callback = ApiTokens::Issuer.call(
           user: current_user,
           workspace: integration.workspace,
           name: "Hourglass callback (workspace #{integration.workspace_id})"

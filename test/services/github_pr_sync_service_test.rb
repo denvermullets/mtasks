@@ -17,8 +17,6 @@ class GithubPrSyncServiceTest < ActiveSupport::TestCase
       github_installation: @installation,
       github_repo_full_name: 'denvermullets/mtasks'
     )
-
-    @service = GithubPrSyncService.new(@subscription)
   end
 
   test 'links issue when shortcode is only in branch name' do
@@ -29,7 +27,7 @@ class GithubPrSyncServiceTest < ActiveSupport::TestCase
     )
 
     assert_difference 'IssuePullRequest.count', 1 do
-      @service.sync_pull_request(pr_data)
+      sync(pr_data)
     end
 
     pull_request = @subscription.pull_requests.find_by(pr_number: 1)
@@ -44,7 +42,7 @@ class GithubPrSyncServiceTest < ActiveSupport::TestCase
     )
 
     assert_difference 'IssuePullRequest.count', 1 do
-      @service.sync_pull_request(pr_data)
+      sync(pr_data)
     end
   end
 
@@ -53,7 +51,8 @@ class GithubPrSyncServiceTest < ActiveSupport::TestCase
              ['closed', true, 'pr_merged'], ['closed', false, 'pr_closed'],
              ['edited', false, nil], ['synchronize', false, nil]]
     cases.each do |action, merged, expected|
-      result = @service.send(:determine_trigger, action, PullRequest.new(merged: merged))
+      service = GithubPrSyncService.new(subscription: @subscription, pr_data: {}, action: action)
+      result = service.send(:determine_trigger, PullRequest.new(merged: merged))
       msg = "action=#{action} merged=#{merged}"
       expected.nil? ? assert_nil(result, msg) : assert_equal(expected, result, msg)
     end
@@ -63,7 +62,7 @@ class GithubPrSyncServiceTest < ActiveSupport::TestCase
     target = Lane.create!(name: 'In Progress', team: @team, position: 1)
     create_rule(trigger: 'pr_opened', lane: target)
 
-    @service.sync_pull_request(build_pr_data(title: 'HOUR-4 work'), action: 'opened')
+    sync(build_pr_data(title: 'HOUR-4 work'), action: 'opened')
 
     assert_equal target.id, @issue.reload.lane_id
   end
@@ -72,7 +71,7 @@ class GithubPrSyncServiceTest < ActiveSupport::TestCase
     target = Lane.create!(name: 'Done', team: @team, position: 2)
     create_rule(trigger: 'pr_merged', branch_pattern: 'main', lane: target)
 
-    @service.sync_pull_request(build_pr_data(base_ref: 'main', merged: true), action: 'closed')
+    sync(build_pr_data(base_ref: 'main', merged: true), action: 'closed')
 
     @issue.reload
     assert_equal target.id, @issue.lane_id
@@ -85,7 +84,7 @@ class GithubPrSyncServiceTest < ActiveSupport::TestCase
     create_rule(trigger: 'pr_merged', branch_pattern: 'staging', lane: staging_lane)
     create_rule(trigger: 'pr_merged', branch_pattern: 'main', lane: main_lane)
 
-    @service.sync_pull_request(build_pr_data(base_ref: 'staging', merged: true), action: 'closed')
+    sync(build_pr_data(base_ref: 'staging', merged: true), action: 'closed')
 
     assert_equal staging_lane.id, @issue.reload.lane_id
   end
@@ -94,7 +93,7 @@ class GithubPrSyncServiceTest < ActiveSupport::TestCase
     target = Lane.create!(name: 'Released', team: @team, position: 1)
     create_rule(trigger: 'pr_merged', branch_pattern: 'release/*', lane: target)
 
-    @service.sync_pull_request(build_pr_data(base_ref: 'release/v1.2', merged: true), action: 'closed')
+    sync(build_pr_data(base_ref: 'release/v1.2', merged: true), action: 'closed')
 
     assert_equal target.id, @issue.reload.lane_id
   end
@@ -103,7 +102,7 @@ class GithubPrSyncServiceTest < ActiveSupport::TestCase
     done = Lane.create!(name: 'Done', team: @team, position: 2)
     create_rule(trigger: 'pr_merged', branch_pattern: 'main', lane: done)
 
-    @service.sync_pull_request(build_pr_data(base_ref: 'staging', merged: true), action: 'closed')
+    sync(build_pr_data(base_ref: 'staging', merged: true), action: 'closed')
 
     assert_equal @lane.id, @issue.reload.lane_id
   end
@@ -112,14 +111,14 @@ class GithubPrSyncServiceTest < ActiveSupport::TestCase
     target = Lane.create!(name: 'Canceled', team: @team, position: 1)
     create_rule(trigger: 'pr_closed', lane: target)
 
-    @service.sync_pull_request(build_pr_data, action: 'closed')
+    sync(build_pr_data, action: 'closed')
 
     assert_equal target.id, @issue.reload.lane_id
   end
 
   test 'no automation rules configured is a no-op' do
     assert_nothing_raised do
-      @service.sync_pull_request(build_pr_data, action: 'opened')
+      sync(build_pr_data, action: 'opened')
     end
     assert_equal @lane.id, @issue.reload.lane_id
   end
@@ -129,7 +128,7 @@ class GithubPrSyncServiceTest < ActiveSupport::TestCase
 
     original_updated_at = @issue.updated_at
     travel 1.second
-    @service.sync_pull_request(build_pr_data, action: 'opened')
+    sync(build_pr_data, action: 'opened')
 
     assert_equal original_updated_at.to_i, @issue.reload.updated_at.to_i
   end
@@ -139,7 +138,7 @@ class GithubPrSyncServiceTest < ActiveSupport::TestCase
     target = Lane.create!(name: 'In Progress', team: @team, position: 1)
     create_rule(trigger: 'pr_opened', lane: target)
 
-    @service.sync_pull_request(build_pr_data(title: 'HOUR-4 HOUR-5'), action: 'opened')
+    sync(build_pr_data(title: 'HOUR-4 HOUR-5'), action: 'opened')
 
     assert_equal target.id, @issue.reload.lane_id
     assert_equal target.id, second_issue.reload.lane_id
@@ -149,10 +148,10 @@ class GithubPrSyncServiceTest < ActiveSupport::TestCase
     target = Lane.create!(name: 'In Progress', team: @team, position: 1)
     create_rule(trigger: 'pr_opened', lane: target)
 
-    @service.sync_pull_request(build_pr_data(title: 'No shortcode', head_ref: 'fix/thing'), action: 'opened')
+    sync(build_pr_data(title: 'No shortcode', head_ref: 'fix/thing'), action: 'opened')
     assert_equal @lane.id, @issue.reload.lane_id
 
-    @service.sync_pull_request(build_pr_data(title: 'HOUR-4 work', head_ref: 'fix/thing'), action: 'edited')
+    sync(build_pr_data(title: 'HOUR-4 work', head_ref: 'fix/thing'), action: 'edited')
 
     pull_request = @subscription.pull_requests.find_by(pr_number: 1)
     assert_includes pull_request.issues, @issue
@@ -163,7 +162,7 @@ class GithubPrSyncServiceTest < ActiveSupport::TestCase
     target = Lane.create!(name: 'In Progress', team: @team, position: 1)
     create_rule(trigger: 'pr_opened', lane: target)
 
-    @service.sync_pull_request(build_pr_data(title: 'HOUR-4 work'), action: 'synchronize')
+    sync(build_pr_data(title: 'HOUR-4 work'), action: 'synchronize')
 
     assert_equal target.id, @issue.reload.lane_id
   end
@@ -173,11 +172,11 @@ class GithubPrSyncServiceTest < ActiveSupport::TestCase
     in_review = Lane.create!(name: 'In Review', team: @team, position: 2)
     create_rule(trigger: 'pr_opened', lane: in_progress)
 
-    @service.sync_pull_request(build_pr_data, action: 'opened')
+    sync(build_pr_data, action: 'opened')
     assert_equal in_progress.id, @issue.reload.lane_id
 
     @issue.update!(lane: in_review)
-    @service.sync_pull_request(build_pr_data, action: 'synchronize')
+    sync(build_pr_data, action: 'synchronize')
 
     assert_equal in_review.id, @issue.reload.lane_id
   end
@@ -188,7 +187,7 @@ class GithubPrSyncServiceTest < ActiveSupport::TestCase
     create_rule(trigger: 'pr_opened', lane: in_progress)
     create_rule(trigger: 'pr_merged', branch_pattern: 'main', lane: done)
 
-    @service.sync_pull_request(
+    sync(
       build_pr_data(base_ref: 'main', merged: true, state: 'closed'), action: 'closed'
     )
 
@@ -196,28 +195,28 @@ class GithubPrSyncServiceTest < ActiveSupport::TestCase
   end
 
   test 'newly linked issue is left alone when no pr_opened rule is configured' do
-    @service.sync_pull_request(build_pr_data(title: 'HOUR-4 work'), action: 'synchronize')
+    sync(build_pr_data(title: 'HOUR-4 work'), action: 'synchronize')
 
     assert_equal @lane.id, @issue.reload.lane_id
   end
 
-  test 'link_issues_from_text links issues referenced in a comment body' do
+  test 'LinkIssuesFromText links issues referenced in a comment body' do
     target = Lane.create!(name: 'In Progress', team: @team, position: 1)
     create_rule(trigger: 'pr_opened', lane: target)
-    pull_request = @service.sync_pull_request(build_pr_data(title: 'No shortcode', head_ref: 'fix/thing'))
+    pull_request = sync(build_pr_data(title: 'No shortcode', head_ref: 'fix/thing'))
 
     assert_difference 'IssuePullRequest.count', 1 do
-      @service.link_issues_from_text(pull_request, 'this also covers HOUR-4')
+      link_from_text(pull_request, 'this also covers HOUR-4')
     end
 
     assert_includes pull_request.reload.issues, @issue
     assert_equal target.id, @issue.reload.lane_id
   end
 
-  test 'link_issues_from_text returns only issues it newly attached' do
-    pull_request = @service.sync_pull_request(build_pr_data(title: 'HOUR-4 work'))
+  test 'LinkIssuesFromText returns only issues it newly attached' do
+    pull_request = sync(build_pr_data(title: 'HOUR-4 work'))
 
-    assert_equal [], @service.link_issues_from_text(pull_request, 'still HOUR-4')
+    assert_equal [], link_from_text(pull_request, 'still HOUR-4')
   end
 
   test 'moving out of Done clears completed_at via apply_lane_timestamps!' do
@@ -226,10 +225,10 @@ class GithubPrSyncServiceTest < ActiveSupport::TestCase
     create_rule(trigger: 'pr_merged', branch_pattern: 'main', lane: done)
     create_rule(trigger: 'pr_opened', lane: in_progress)
 
-    @service.sync_pull_request(build_pr_data(base_ref: 'main', merged: true, number: 10), action: 'closed')
+    sync(build_pr_data(base_ref: 'main', merged: true, number: 10), action: 'closed')
     assert_not_nil @issue.reload.completed_at
 
-    @service.sync_pull_request(build_pr_data(number: 11), action: 'opened')
+    sync(build_pr_data(number: 11), action: 'opened')
 
     assert_nil @issue.reload.completed_at
     assert_equal in_progress.id, @issue.lane_id
@@ -244,6 +243,14 @@ class GithubPrSyncServiceTest < ActiveSupport::TestCase
       branch_pattern: branch_pattern,
       lane: lane
     )
+  end
+
+  def sync(pr_data, action: nil)
+    GithubPrSyncService.call(subscription: @subscription, pr_data: pr_data, action: action)
+  end
+
+  def link_from_text(pull_request, text)
+    GhIntegration::LinkIssuesFromText.call(subscription: @subscription, pull_request: pull_request, text: text)
   end
 
   def build_pr_data(**opts)

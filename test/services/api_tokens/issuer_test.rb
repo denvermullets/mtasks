@@ -8,8 +8,8 @@ module ApiTokens
       @workspace = Workspace.create!(name: 'Issuer WS', owner: @user)
     end
 
-    test 'workspace_token persists workspace and one_time_use, returns raw_token' do
-      token = Issuer.workspace_token(user: @user, workspace: @workspace, name: 'b', one_time_use: true)
+    test 'call persists workspace and one_time_use, returns raw_token' do
+      token = Issuer.call(user: @user, workspace: @workspace, name: 'b', one_time_use: true)
 
       assert token.persisted?
       assert_equal @workspace, token.workspace
@@ -18,15 +18,15 @@ module ApiTokens
       assert_equal Digest::SHA256.hexdigest(token.raw_token), token.token_digest
     end
 
-    test 'workspace_token defaults to one_time_use false and full scopes' do
-      token = Issuer.workspace_token(user: @user, workspace: @workspace, name: 'cb')
+    test 'call defaults to one_time_use false and full scopes' do
+      token = Issuer.call(user: @user, workspace: @workspace, name: 'cb')
 
       assert_not token.one_time_use?
       assert_equal %w[read write], token.scopes
     end
 
-    test 'workspace_token coerces scopes to strings' do
-      token = Issuer.workspace_token(user: @user, workspace: @workspace, name: 'r', scopes: [:read])
+    test 'call coerces scopes to strings' do
+      token = Issuer.call(user: @user, workspace: @workspace, name: 'r', scopes: [:read])
       assert_equal %w[read], token.scopes
     end
   end

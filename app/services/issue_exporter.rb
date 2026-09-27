@@ -1,6 +1,8 @@
 require 'csv'
 
-class IssueExporter
+class IssueExporter < Service
+  Result = Struct.new(:csv, :issue_count, keyword_init: true)
+
   HEADERS = [
     'ID', 'Team', 'Title', 'Description', 'Status', 'Estimate', 'Priority',
     'Project ID', 'Project', 'Creator', 'Assignee', 'Labels',
@@ -20,18 +22,18 @@ class IssueExporter
     @team = team
   end
 
+  def call
+    Result.new(csv: to_csv, issue_count: issues.size)
+  end
+
+  private
+
   def to_csv
     CSV.generate do |csv|
       csv << HEADERS
       issues.each { |issue| csv << row_for(issue) }
     end
   end
-
-  def issue_count
-    issues.size
-  end
-
-  private
 
   def issues
     @issues ||= @team.issues.includes(:lane, :project, :assignee, :creator, :labels,

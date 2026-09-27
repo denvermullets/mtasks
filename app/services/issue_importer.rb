@@ -1,24 +1,17 @@
 require 'csv'
 
-class IssueImporter
-  attr_reader :workspace, :user, :errors, :imported_count
-
-  def initialize(workspace, user)
+class IssueImporter < Service
+  def initialize(workspace:, user:, csv:)
     @workspace = workspace
     @user = user
+    @csv = csv
     @errors = []
     @imported_count = 0
     @old_id_to_new_issue = {}
     @team_cache = {}
   end
 
-  def import(csv_file_path_or_string)
-    csv_data = if csv_file_path_or_string.is_a?(String) && File.exist?(csv_file_path_or_string)
-                 File.read(csv_file_path_or_string)
-               else
-                 csv_file_path_or_string
-               end
-
+  def call
     CSV.parse(csv_data, headers: true) do |row|
       import_issue(row)
     end
@@ -30,6 +23,13 @@ class IssueImporter
   end
 
   private
+
+  # Accepts either raw CSV content or a path to a CSV file.
+  def csv_data
+    return File.read(@csv) if @csv.is_a?(String) && File.exist?(@csv)
+
+    @csv
+  end
 
   def import_issue(row)
     old_id = row['ID']
