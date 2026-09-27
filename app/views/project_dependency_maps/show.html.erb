@@ -1,0 +1,63 @@
+<div class="flex-1 flex flex-col min-h-0 min-w-0"
+     data-controller="vektis-view"
+     data-vektis-view-feature-id-value="dependency-map"
+     data-vektis-view-surface-value="project-dependency-map">
+  <!-- Top Bar -->
+  <div class="h-12 sm:h-14 bg-menu border-b border-stroke flex items-center justify-between px-3 sm:px-4 shrink-0">
+    <div class="flex items-center gap-2 sm:gap-3 min-w-0 text-sm">
+      <%= render "shared/mobile_menu_button" %>
+      <%= link_to "Projects", team_projects_path(current_team), class: "text-gray-500 hover:text-gray-400 cursor-pointer" %>
+      <span class="text-gray-600">&#8250;</span>
+      <%= link_to @project.name, team_project_path(current_team, @project), class: "text-gray-400 hover:text-gray-300 cursor-pointer truncate" %>
+      <span class="text-gray-600">&#8250;</span>
+      <span class="text-gray-400 truncate">Dependencies</span>
+    </div>
+  </div>
+
+  <div class="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-6">
+    <div class="max-w-7xl mx-auto flex flex-col gap-4 min-w-0">
+      <!-- Header -->
+      <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div class="min-w-0">
+          <h2 class="text-base font-medium text-gray-200 m-0 mb-1"><%= @project.name %> dependencies</h2>
+          <p class="text-sm text-gray-400 leading-relaxed">
+            Work flows left to right: each issue sits to the right of everything blocking it.
+            Click an issue to focus the map on it.
+          </p>
+        </div>
+        <div class="shrink-0 max-w-full overflow-x-auto">
+          <%= render "shared/dependency_legend" %>
+        </div>
+      </div>
+
+      <% if @graph.empty? %>
+        <div class="rounded-xl border border-stroke px-4 py-16 text-center text-sm text-gray-500">
+          No dependencies between this project's issues yet.
+          <%= link_to "Back to the project.", team_project_path(current_team, @project), class: "text-gray-400 hover:text-gray-300 underline cursor-pointer" %>
+        </div>
+      <% else %>
+        <!-- Graph -->
+        <div class="relative overflow-x-auto rounded-xl border border-stroke bg-[radial-gradient(var(--color-stroke)_1px,transparent_1px)] bg-size-[16px_16px]"
+             data-controller="dependency-map"
+             data-dependency-map-edges-value="<%= @graph.edges.to_json %>">
+          <div class="flex items-start justify-center gap-16 p-6 min-w-full w-max">
+            <% @graph.columns.each do |column| %>
+              <div class="flex flex-col gap-3">
+                <% column.each do |issue| %>
+                  <%= render "dependency_maps/node", issue: issue,
+                             tag: (issue.project&.name || "No project" unless issue.project_id == @project.id) %>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+
+      <% if !@graph.empty? && @graph.unlinked_count.positive? %>
+        <p class="text-xs text-gray-500">
+          <%= pluralize(@graph.unlinked_count, "other issue") %> in this project <%= @graph.unlinked_count == 1 ? "has" : "have" %> no dependencies.
+        </p>
+      <% end %>
+    </div>
+  </div>
+</div>

@@ -49,6 +49,7 @@ Rails.application.routes.draw do
         get :card
       end
       resources :project_labels, only: %i[create destroy]
+      resource :dependency_map, only: :show, controller: 'project_dependency_maps'
       resource :hourglass_channel_link,
                only: %i[new create destroy],
                controller: 'hourglass_channel_links' do
