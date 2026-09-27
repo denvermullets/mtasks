@@ -8,6 +8,8 @@
 <% all_project_ids = form_sources ? form_sources[:all_project_ids] : group.all_project_ids %>
 <% input_class = "w-full px-3 py-2 rounded-md border border-stroke bg-background text-gray-100 text-sm focus:outline-none focus:border-accent" %>
 <% label_class = "block text-sm font-medium text-gray-300 mb-1" %>
+<% section_heading_class = "flex items-center justify-between gap-2 mb-1" %>
+<% search_class = "w-40 px-2 py-1 rounded-md border border-stroke bg-background text-gray-100 text-xs focus:outline-none focus:border-accent" %>
 <% check_class = "rounded border-stroke bg-background text-accent focus:ring-accent cursor-pointer" %>
 <% row_class = "group/source flex items-center gap-1 pr-1 rounded hover:bg-hover-highlight" %>
 <% row_label_class = "flex-1 min-w-0 flex items-center gap-2 px-2 py-1.5 text-sm text-gray-300 cursor-pointer" %>
@@ -73,16 +75,28 @@
         </div>
 
         <div>
-          <span class="<%= label_class %>">Teams</span>
+          <div class="<%= section_heading_class %>">
+            <span class="text-sm font-medium text-gray-300">Teams</span>
+            <% if teams.any? %>
+              <input type="search"
+                   placeholder="Filter teams…"
+                   autocomplete="off"
+                   data-dashboard-group-form-target="teamSearch"
+                   data-action="input->dashboard-group-form#applyTeamVisibility"
+                   class="<%= search_class %>">
+            <% end %>
+          </div>
           <p class="text-xs text-gray-500 mb-1.5">Only issues assigned to you show up unless you tick <span class="text-gray-400">All issues</span>.</p>
           <% if teams.empty? %>
             <p class="text-xs text-gray-500">You're not on any teams yet.</p>
           <% else %>
             <div class="rounded-md border border-stroke bg-background p-1 max-h-48 overflow-y-auto">
               <%= f.collection_check_boxes :team_ids, teams, :id, :name, checked: selected_team_ids do |b| %>
-                <div class="<%= row_class %>">
+                <div class="<%= row_class %>"
+                     data-dashboard-group-form-target="teamRow"
+                     data-search="<%= "#{b.text} #{b.object.identifier}".downcase %>">
                   <label class="<%= row_label_class %>">
-                    <%= b.check_box class: check_class, data: { dashboard_group_form_target: "team", source: true } %>
+                    <%= b.check_box class: check_class, data: { dashboard_group_form_target: "team", source: true, action: "change->dashboard-group-form#applyLabelVisibility" } %>
                     <span class="truncate"><%= b.text %></span>
                     <span class="font-mono text-[10px] text-gray-500 ml-auto shrink-0"><%= b.object.identifier %></span>
                   </label>
@@ -90,19 +104,23 @@
                              checked: all_team_ids.include?(b.value), target: "allTeam" %>
                 </div>
               <% end %>
+              <p data-dashboard-group-form-target="teamEmptyState"
+                 class="hidden px-2 py-3 text-xs text-gray-500 text-center">
+                No teams match.
+              </p>
             </div>
           <% end %>
         </div>
 
         <div>
-          <div class="flex items-center justify-between gap-2 mb-1">
+          <div class="<%= section_heading_class %>">
             <span class="text-sm font-medium text-gray-300">Projects</span>
             <input type="search"
                    placeholder="Filter projects…"
                    autocomplete="off"
-                   data-dashboard-group-form-target="search"
-                   data-action="input->dashboard-group-form#filter"
-                   class="w-40 px-2 py-1 rounded-md border border-stroke bg-background text-gray-100 text-xs focus:outline-none focus:border-accent">
+                   data-dashboard-group-form-target="projectSearch"
+                   data-action="input->dashboard-group-form#applyProjectVisibility"
+                   class="<%= search_class %>">
           </div>
           <%# One blank entry so the key always posts (clearing every box still means "no projects"). %>
           <%= hidden_field_tag "dashboard_group[project_ids][]", "", id: nil %>
@@ -123,7 +141,7 @@
                      data-search="<%= b.text.to_s.downcase %>"
                      data-completed="<%= completed %>">
                   <label class="<%= row_label_class %>">
-                    <%= b.check_box class: check_class, data: { dashboard_group_form_target: "project", source: true } %>
+                    <%= b.check_box class: check_class, data: { dashboard_group_form_target: "project", source: true, action: "change->dashboard-group-form#applyLabelVisibility" } %>
                     <span class="truncate"><%= b.text %></span>
                     <% if completed %>
                       <span class="text-[10px] text-gray-500 ml-auto shrink-0">completed</span>
@@ -142,8 +160,19 @@
         </div>
 
         <div>
-          <span class="<%= label_class %>">Labels</span>
+          <div class="<%= section_heading_class %>">
+            <span class="text-sm font-medium text-gray-300">Labels</span>
+            <% if labels.any? %>
+              <input type="search"
+                   placeholder="Filter labels…"
+                   autocomplete="off"
+                   data-dashboard-group-form-target="labelSearch"
+                   data-action="input->dashboard-group-form#applyLabelVisibility"
+                   class="<%= search_class %>">
+            <% end %>
+          </div>
           <p class="text-xs text-gray-500 mb-1.5">Narrows the group to issues with any of these labels. Pick labels alone to see every labeled issue on their teams.</p>
+          <%# Once teams/projects are ticked, dashboard_group_form_controller.js hides labels from other teams. %>
           <%# One blank entry so the key always posts (clearing every box still means "no labels"). %>
           <%= hidden_field_tag "dashboard_group[label_ids][]", "", id: nil %>
           <% if labels.empty? %>
@@ -153,17 +182,26 @@
               <% teams.each do |team| %>
                 <% team_labels = labels.fetch(team.id, []) %>
                 <% next if team_labels.empty? %>
-                <div class="px-2 pt-2 pb-1 text-[11px] font-medium uppercase tracking-wide text-gray-500">
+                <div data-dashboard-group-form-target="labelHeading"
+                     data-team-id="<%= team.id %>"
+                     class="px-2 pt-2 pb-1 text-[11px] font-medium uppercase tracking-wide text-gray-500">
                   <%= team.name %>
                 </div>
                 <%= f.collection_check_boxes :label_ids, team_labels, :id, :name, { checked: selected_label_ids, include_hidden: false } do |b| %>
-                  <label class="<%= row_label_class %> rounded hover:bg-hover-highlight">
+                  <label data-dashboard-group-form-target="labelRow"
+                         data-team-id="<%= team.id %>"
+                         data-search="<%= b.text.to_s.downcase %>"
+                         class="<%= row_label_class %> rounded hover:bg-hover-highlight">
                     <%= b.check_box class: check_class, data: { dashboard_group_form_target: "label" } %>
                     <span class="w-2 h-2 rounded-full shrink-0" style="background-color: <%= b.object.color %>;"></span>
                     <span class="truncate"><%= b.text %></span>
                   </label>
                 <% end %>
               <% end %>
+              <p data-dashboard-group-form-target="labelEmptyState"
+                 class="hidden px-2 py-3 text-xs text-gray-500 text-center">
+                No labels match.
+              </p>
             </div>
           <% end %>
         </div>

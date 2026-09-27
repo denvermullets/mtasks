@@ -18,10 +18,17 @@ export default class extends Controller {
     "label",
     "allTeam",
     "allProject",
-    "search",
+    "teamSearch",
+    "teamRow",
+    "teamEmptyState",
+    "projectSearch",
     "projectRow",
     "teamHeading",
     "emptyState",
+    "labelSearch",
+    "labelRow",
+    "labelHeading",
+    "labelEmptyState",
     "deleteSection",
     "deleteForm",
     "errors",
@@ -31,7 +38,7 @@ export default class extends Controller {
     this.boundHandleEscape = this.handleEscape.bind(this);
     // The server re-rendered the modal open after a 422: wire Escape + focus as if the user opened it.
     if (this.hasModalTarget && !this.modalTarget.classList.contains("hidden")) {
-      this.applyProjectVisibility();
+      this.applyAllVisibility();
       this.show();
     }
   }
@@ -83,8 +90,10 @@ export default class extends Controller {
     this.allProjectTargets.forEach((box) => {
       box.checked = allProjectIds.includes(Number(box.value));
     });
-    this.searchTarget.value = "";
-    this.applyProjectVisibility();
+    this.searchTargets().forEach((input) => {
+      input.value = "";
+    });
+    this.applyAllVisibility();
 
     this.deleteSectionTarget.classList.toggle("hidden", !deleteUrl);
     if (deleteUrl) this.deleteFormTarget.action = deleteUrl;
@@ -113,23 +122,56 @@ export default class extends Controller {
     if (event.key === "Escape") this.close();
   }
 
-  filter() {
+  // Teams and labels have no search box when their list is empty, so collect whichever exist.
+  searchTargets() {
+    return [
+      this.hasTeamSearchTarget && this.teamSearchTarget,
+      this.projectSearchTarget,
+      this.hasLabelSearchTarget && this.labelSearchTarget,
+    ].filter(Boolean);
+  }
+
+  query(input) {
+    return input ? input.value.trim().toLowerCase() : "";
+  }
+
+  matches(row, query) {
+    return query === "" || (row.dataset.search || "").includes(query);
+  }
+
+  applyAllVisibility() {
+    this.applyTeamVisibility();
     this.applyProjectVisibility();
+    this.applyLabelVisibility();
+  }
+
+  applyTeamVisibility() {
+    const query = this.query(this.hasTeamSearchTarget && this.teamSearchTarget);
+    let visibleCount = 0;
+
+    this.teamRowTargets.forEach((row) => {
+      const visible = this.matches(row, query);
+      row.classList.toggle("hidden", !visible);
+      if (visible) visibleCount += 1;
+    });
+
+    if (this.hasTeamEmptyStateTarget) {
+      this.teamEmptyStateTarget.classList.toggle("hidden", visibleCount > 0);
+    }
   }
 
   // A project row shows when it matches the filter text and is either still open or currently
   // checked (completed projects only stay listed so they can be unchecked). Team headings
   // follow their rows.
   applyProjectVisibility() {
-    const query = this.searchTarget.value.trim().toLowerCase();
+    const query = this.query(this.projectSearchTarget);
     const visibleTeams = new Set();
     let visibleCount = 0;
 
     this.projectRowTargets.forEach((row) => {
       const checked = row.querySelector("[data-source]")?.checked;
       const hiddenCompleted = row.dataset.completed === "true" && !checked;
-      const matches = query === "" || (row.dataset.search || "").includes(query);
-      const visible = matches && !hiddenCompleted;
+      const visible = this.matches(row, query) && !hiddenCompleted;
 
       row.classList.toggle("hidden", !visible);
       if (visible) {
@@ -144,6 +186,43 @@ export default class extends Controller {
 
     if (this.hasEmptyStateTarget) {
       this.emptyStateTarget.classList.toggle("hidden", visibleCount > 0);
+    }
+  }
+
+  // Labels are team-scoped, so once any team or project is ticked only labels from those teams
+  // show. Nothing ticked shows every label (labels alone is a valid group). A checked label from
+  // another team stays listed so it can be unchecked. The filter text applies on top of both.
+  applyLabelVisibility() {
+    const query = this.query(this.hasLabelSearchTarget && this.labelSearchTarget);
+    const teamIds = new Set();
+    this.teamTargets.forEach((box) => {
+      if (box.checked) teamIds.add(box.value);
+    });
+    this.projectTargets.forEach((box) => {
+      if (box.checked) teamIds.add(box.closest("[data-team-id]").dataset.teamId);
+    });
+
+    const visibleTeams = new Set();
+    let visibleCount = 0;
+
+    this.labelRowTargets.forEach((row) => {
+      const checked = row.querySelector("input[type=checkbox]")?.checked;
+      const inTeams = teamIds.size === 0 || teamIds.has(row.dataset.teamId) || checked;
+      const visible = inTeams && this.matches(row, query);
+
+      row.classList.toggle("hidden", !visible);
+      if (visible) {
+        visibleTeams.add(row.dataset.teamId);
+        visibleCount += 1;
+      }
+    });
+
+    this.labelHeadingTargets.forEach((heading) => {
+      heading.classList.toggle("hidden", !visibleTeams.has(heading.dataset.teamId));
+    });
+
+    if (this.hasLabelEmptyStateTarget) {
+      this.labelEmptyStateTarget.classList.toggle("hidden", visibleCount > 0);
     }
   }
 }
