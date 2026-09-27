@@ -5,7 +5,7 @@ class IssueDependenciesController < ApplicationController
 
   def search
     issues = search_candidates(params[:q].to_s.strip)
-    render partial: 'issue_dependencies/search_results', locals: { issues: issues }
+    render partial: 'issue_dependencies/search_results', locals: { issues: issues, project: @issue.project }
   end
 
   def bulk_create
@@ -77,11 +77,17 @@ class IssueDependenciesController < ApplicationController
     # Any existing link, of any kind, rules the pair out (IssueDependency#not_already_linked).
     exclude_ids = [@issue.id] + @issue.outgoing_links.pluck(:blocked_issue_id) +
                   @issue.incoming_links.pluck(:blocking_issue_id)
-    current_team.issues.not_archived.not_completed
-                .where(canceled_at: nil)
-                .where.not(id: exclude_ids).order(:team_number)
-                .matching_search(query)
-                .limit(20)
+    candidates = current_team.issues.not_archived.not_completed
+                             .where(canceled_at: nil)
+                             .where.not(id: exclude_ids)
+                             .matching_search(query)
+    candidates = candidates.order(same_project_first) if @issue.project_id
+    candidates.order(:team_number).limit(20)
+  end
+
+  # Issues in the same project as the one being edited sort ahead of everything else.
+  def same_project_first
+    Arel.sql(Issue.sanitize_sql_array(['CASE WHEN issues.project_id = ? THEN 0 ELSE 1 END', @issue.project_id]))
   end
 
   def set_issue

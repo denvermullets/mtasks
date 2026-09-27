@@ -1,11 +1,18 @@
 <turbo-frame id="dependency_search_results">
-  <% issues.each do |issue| %>
-    <label class="flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer hover:bg-hover-highlight text-sm transition-colors">
-      <input type="checkbox" name="target_issue_ids[]" value="<%= issue.id %>"
-             class="rounded bg-background border-stroke accent-accent focus:ring-0 focus:ring-offset-0 cursor-pointer">
-      <span class="font-mono text-xs text-gray-500 shrink-0"><%= issue.identifier %></span>
-      <span class="text-gray-300 truncate"><%= issue.title %></span>
-    </label>
+  <% project_issues, other_issues = project ? issues.partition { |issue| issue.project_id == project.id } : [[], issues] %>
+  <% [[project&.name, project_issues], ['Other issues', other_issues]].each do |heading, group| %>
+    <% next if group.empty? %>
+    <% if project_issues.any? %>
+      <div class="px-3 pt-2 pb-1 text-xs font-medium text-gray-500 truncate"><%= heading %></div>
+    <% end %>
+    <% group.each do |issue| %>
+      <label class="flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer hover:bg-hover-highlight text-sm transition-colors">
+        <input type="checkbox" name="target_issue_ids[]" value="<%= issue.id %>"
+               class="rounded bg-background border-stroke accent-accent focus:ring-0 focus:ring-offset-0 cursor-pointer">
+        <span class="font-mono text-xs text-gray-500 shrink-0"><%= issue.identifier %></span>
+        <span class="text-gray-300 truncate"><%= issue.title %></span>
+      </label>
+    <% end %>
   <% end %>
   <% if issues.empty? %>
     <div class="px-3 py-8 text-center text-sm text-gray-500">No issues found</div>

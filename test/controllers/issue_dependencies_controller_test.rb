@@ -122,6 +122,24 @@ class IssueDependenciesControllerTest < ActionDispatch::IntegrationTest
     assert_not_includes response.body, @issue_c.identifier
   end
 
+  test 'search lists issues from the same project first' do
+    project = @team.projects.create!(name: 'Launch Project')
+    @issue_a.update!(project: project)
+    @issue_c.update!(project: project)
+
+    get search_team_issue_issue_dependencies_path(@team, @issue_a), params: { q: '' }
+    assert_response :success
+    assert_includes response.body, 'Launch Project'
+    assert_includes response.body, 'Other issues'
+    assert_operator response.body.index(@issue_c.identifier), :<, response.body.index(@issue_b.identifier)
+  end
+
+  test 'search shows no group headings when the issue has no project' do
+    get search_team_issue_issue_dependencies_path(@team, @issue_a), params: { q: '' }
+    assert_response :success
+    assert_not_includes response.body, 'Other issues'
+  end
+
   test 'a cycle re-renders the relations with an error instead of failing' do
     IssueDependency.create!(blocking_issue: @issue_a, blocked_issue: @issue_b)
     IssueDependency.create!(blocking_issue: @issue_b, blocked_issue: @issue_c)
