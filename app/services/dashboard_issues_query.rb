@@ -46,8 +46,8 @@ class DashboardIssuesQuery < Service
 
     Result.new(
       groups: resolved.map { |group, sources| group_entry(group, sources) },
-      due_today_count: count_for(all_sources, '=', @today),
-      overdue_count: count_for(all_sources, '<', @today),
+      due_today_count: count_for(all_sources, due_date.eq(@today)),
+      overdue_count: count_for(all_sources, due_date.lt(@today)),
       filter: @filter,
       today: @today,
       search: @search,
@@ -179,12 +179,16 @@ class DashboardIssuesQuery < Service
   end
 
   # Header counts ignore the active filter tab; they always mean "due today" and "overdue".
-  # An issue counts once even when several groups show it. `operator` is one of the literals
-  # passed from #call, never user input.
-  def count_for(all_sources, operator, date)
+  # An issue counts once even when several groups show it.
+  def count_for(all_sources, condition)
     return 0 if all_sources.empty?
 
     in_any_group = all_sources.map { |sources| Issue.where(id: base_scope(sources).select(:id)) }.reduce(:or)
-    in_any_group.left_joins(:project).where("#{DUE_DATE_SQL} #{operator} ?", date).count
+    in_any_group.left_joins(:project).where(condition).count
+  end
+
+  # Arel form of DUE_DATE_SQL, so count_for can take a comparison without interpolating SQL.
+  def due_date
+    Arel::Nodes::NamedFunction.new('COALESCE', [Issue.arel_table[:due_date], Project.arel_table[:due_date]])
   end
 end
