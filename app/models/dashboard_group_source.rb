@@ -1,5 +1,5 @@
 class DashboardGroupSource < ApplicationRecord
-  SOURCE_TYPES = %w[Team Project].freeze
+  SOURCE_TYPES = %w[Team Project Label].freeze
 
   # Associations
   belongs_to :dashboard_group

@@ -421,7 +421,7 @@ class DashboardsControllerTest < ActionDispatch::IntegrationTest
     get dashboard_path(dashboard)
 
     assert_select '[data-testid=dashboard-group-inaccessible]',
-                  text: %r{This group's teams/projects are no longer available\.} do
+                  text: /This group's teams, projects and labels are no longer available\./ do
       assert_select "button[data-action='click->dashboard-group-form#open']" \
                     "[data-dashboard-group-form-url-param='#{dashboard_group_path(dashboard, group)}']" \
                     "[data-dashboard-group-form-method-param='patch']",

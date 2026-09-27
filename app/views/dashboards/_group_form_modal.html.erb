@@ -1,9 +1,11 @@
-<%# locals: (dashboard:, group:, teams:, projects:, selected_team_ids: nil, selected_project_ids: nil, all_team_ids: nil, all_project_ids: nil) %>
-<%# One modal for both "Add group" and "Edit group"; dashboard_group_form_controller.js fills it from the trigger's params. %>
-<% selected_team_ids ||= group.team_ids %>
-<% selected_project_ids ||= group.project_ids %>
-<% all_team_ids ||= group.all_team_ids %>
-<% all_project_ids ||= group.all_project_ids %>
+<%# locals: (dashboard:, group:, teams:, projects:, labels:, form_sources: nil) %>
+<%# One modal for both "Add group" and "Edit group"; dashboard_group_form_controller.js fills it from the trigger's params.
+    `form_sources` is the sanitized submission after a failed save, so unsaved checkbox changes survive. %>
+<% selected_team_ids = form_sources ? form_sources[:team_ids] : group.team_ids %>
+<% selected_project_ids = form_sources ? form_sources[:project_ids] : group.project_ids %>
+<% selected_label_ids = form_sources ? form_sources[:label_ids] : group.label_ids %>
+<% all_team_ids = form_sources ? form_sources[:all_team_ids] : group.all_team_ids %>
+<% all_project_ids = form_sources ? form_sources[:all_project_ids] : group.all_project_ids %>
 <% input_class = "w-full px-3 py-2 rounded-md border border-stroke bg-background text-gray-100 text-sm focus:outline-none focus:border-accent" %>
 <% label_class = "block text-sm font-medium text-gray-300 mb-1" %>
 <% check_class = "rounded border-stroke bg-background text-accent focus:ring-accent cursor-pointer" %>
@@ -137,6 +139,33 @@
               No projects match.
             </p>
           </div>
+        </div>
+
+        <div>
+          <span class="<%= label_class %>">Labels</span>
+          <p class="text-xs text-gray-500 mb-1.5">Narrows the group to issues with any of these labels. Pick labels alone to see every labeled issue on their teams.</p>
+          <%# One blank entry so the key always posts (clearing every box still means "no labels"). %>
+          <%= hidden_field_tag "dashboard_group[label_ids][]", "", id: nil %>
+          <% if labels.empty? %>
+            <p class="text-xs text-gray-500">Your teams don't have any labels yet.</p>
+          <% else %>
+            <div class="rounded-md border border-stroke bg-background p-1 max-h-56 overflow-y-auto">
+              <% teams.each do |team| %>
+                <% team_labels = labels.fetch(team.id, []) %>
+                <% next if team_labels.empty? %>
+                <div class="px-2 pt-2 pb-1 text-[11px] font-medium uppercase tracking-wide text-gray-500">
+                  <%= team.name %>
+                </div>
+                <%= f.collection_check_boxes :label_ids, team_labels, :id, :name, { checked: selected_label_ids, include_hidden: false } do |b| %>
+                  <label class="<%= row_label_class %> rounded hover:bg-hover-highlight">
+                    <%= b.check_box class: check_class, data: { dashboard_group_form_target: "label" } %>
+                    <span class="w-2 h-2 rounded-full shrink-0" style="background-color: <%= b.object.color %>;"></span>
+                    <span class="truncate"><%= b.text %></span>
+                  </label>
+                <% end %>
+              <% end %>
+            </div>
+          <% end %>
         </div>
       </div>
 

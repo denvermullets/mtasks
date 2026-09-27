@@ -24,6 +24,7 @@ module DashboardPage
     @mine = ActiveModel::Type::Boolean.new.cast(params[:mine]) || false
     @modal_teams = modal_teams
     @modal_projects = modal_projects(@modal_teams.map(&:id))
+    @modal_labels = Label.where(team_id: @modal_teams.map(&:id)).order(:name).group_by(&:team_id)
     # Teams offered in the header picker: only those behind this dashboard's sources, sidebar order.
     @filter_teams = @modal_teams.select { |team| @result.team_ids.include?(team.id) }
   end

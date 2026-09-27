@@ -20,6 +20,10 @@ class DashboardGroup < ApplicationRecord
     source_ids_for('Project')
   end
 
+  def label_ids
+    source_ids_for('Label')
+  end
+
   # Sources that show every issue rather than only the ones assigned to the viewer.
   def all_team_ids
     source_ids_for('Team', include_all: true)
@@ -45,10 +49,11 @@ class DashboardGroup < ApplicationRecord
   # Makes the group's sources exactly the given ids. `all_*_ids` flag which of them show every
   # issue (the rest are "assigned to me"); ids there that aren't also sources are ignored.
   # Callers own the access checks; this trusts what it's given.
-  def replace_sources!(team_ids:, project_ids:, all_team_ids: [], all_project_ids: [])
+  def replace_sources!(team_ids:, project_ids:, label_ids: [], all_team_ids: [], all_project_ids: [])
     transaction do
       sync_sources('Team', team_ids, all_team_ids)
       sync_sources('Project', project_ids, all_project_ids)
+      sync_sources('Label', label_ids, [])
     end
     sources.reset
     self

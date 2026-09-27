@@ -101,6 +101,19 @@ class DashboardGroupsControllerTest < ActionDispatch::IntegrationTest
     assert_equal [@project.id], group.project_ids
   end
 
+  test 'create stores label sources and drops labels from teams the user cannot use' do
+    bug = @team.labels.create!(name: 'bug', color: '#ff0000')
+    secret = @other_team.labels.create!(name: 'secret', color: '#ff0000')
+
+    post dashboard_groups_path(@dashboard), params: group_params(
+      label_ids: [bug.id, secret.id, 999_999]
+    )
+
+    group = @dashboard.groups.order(:id).last
+    assert_redirected_to dashboard_path(@dashboard)
+    assert_equal [bug.id], group.label_ids
+  end
+
   # --- update ----------------------------------------------------------------
 
   test 'update replaces the sources and attributes' do
@@ -229,6 +242,8 @@ class DashboardGroupsControllerTest < ActionDispatch::IntegrationTest
     completed = @team.projects.create!(name: 'Shipped project', status: 'completed')
     @team.projects.create!(name: 'Old project', status: 'completed')
     group.sources.create!(source: completed)
+    label = @team.labels.create!(name: 'bug', color: '#ff0000')
+    @other_team.labels.create!(name: 'secret-label', color: '#ff0000')
 
     get dashboard_path(@dashboard, filter: 'week', q: 'sso', team: @team.id)
 
@@ -243,6 +258,9 @@ class DashboardGroupsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[type=checkbox][value='#{@team.id}'][name='dashboard_group[team_ids][]']"
     assert_select "input[type=checkbox][value='#{@team.id}'][name='dashboard_group[all_team_ids][]']"
     assert_select "[data-completed=true] input[value='#{completed.id}']"
+    assert_select "input[type=checkbox][value='#{label.id}'][name='dashboard_group[label_ids][]']"
+    assert_select "input[type=checkbox][name='dashboard_group[all_label_ids][]']", count: 0
+    assert_not_includes response.body, 'secret-label'
     assert_not_includes response.body, 'Old project'
     assert_not_includes response.body, 'Secret project'
   end

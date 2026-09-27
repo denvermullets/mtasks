@@ -13,6 +13,7 @@
      dashboard_group_form_color_param: group.color,
      dashboard_group_form_team_ids_param: group.team_ids.to_json,
      dashboard_group_form_project_ids_param: group.project_ids.to_json,
+     dashboard_group_form_label_ids_param: group.label_ids.to_json,
      dashboard_group_form_all_team_ids_param: group.all_team_ids.to_json,
      dashboard_group_form_all_project_ids_param: group.all_project_ids.to_json,
      dashboard_group_form_delete_url_param: group_url
@@ -41,7 +42,7 @@
     <div class="border-t border-stroke">
       <% if inaccessible %>
         <p class="px-4 py-3 text-sm text-gray-500" data-testid="dashboard-group-inaccessible">
-          This group's teams/projects are no longer available.
+          This group's teams, projects and labels are no longer available.
           <%= tag.button "Edit group",
               type: "button",
               data: edit_params.merge(action: "click->dashboard-group-form#open"),

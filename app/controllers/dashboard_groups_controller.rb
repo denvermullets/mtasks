@@ -1,8 +1,10 @@
 # Groups belong to a user-owned dashboard, so every lookup goes through current_user.dashboards
 # and a foreign dashboard or group id is simply not found. Source ids from the client are
-# intersected with the teams/projects the user can actually see; the rest are dropped silently.
+# intersected with the teams/projects/labels the user can actually see; the rest are dropped silently.
 class DashboardGroupsController < ApplicationController
   include DashboardPage
+
+  SOURCE_ID_KEYS = %i[team_ids project_ids label_ids all_team_ids all_project_ids].freeze
 
   before_action :set_dashboard
   before_action :set_group, only: %i[update destroy move]
@@ -47,36 +49,38 @@ class DashboardGroupsController < ApplicationController
   end
 
   def save_and_respond(notice)
-    team_ids = permitted_team_ids
-    project_ids = permitted_project_ids
-    all_team_ids = submitted_ids(:all_team_ids) & team_ids
-    all_project_ids = submitted_ids(:all_project_ids) & project_ids
-
-    saved = DashboardGroup.transaction do
-      @group.save && @group.replace_sources!(team_ids: team_ids, project_ids: project_ids,
-                                             all_team_ids: all_team_ids, all_project_ids: all_project_ids)
-    end
+    sources = permitted_sources
+    saved = DashboardGroup.transaction { @group.save && @group.replace_sources!(**sources) }
     return redirect_to(return_path, notice: notice) if saved
 
     # Re-render the page with the modal open. The submitted (sanitized) ids are handed to the
     # view so the user's unsaved checkbox changes survive the round trip.
     @form_group = @group
-    @form_team_ids = team_ids
-    @form_project_ids = project_ids
-    @form_all_team_ids = all_team_ids
-    @form_all_project_ids = all_project_ids
+    @form_sources = sources
     load_dashboard_page
     render 'dashboards/show', status: :unprocessable_entity
   end
 
   def group_params
-    params.require(:dashboard_group).permit(:name, :description, :color,
-                                            team_ids: [], project_ids: [], all_team_ids: [], all_project_ids: [])
+    params.require(:dashboard_group).permit(:name, :description, :color, **SOURCE_ID_KEYS.index_with([]))
   end
 
   # The model exposes the id lists as readers only; sources are synced separately.
   def group_attributes
-    group_params.except(:team_ids, :project_ids, :all_team_ids, :all_project_ids)
+    group_params.except(*SOURCE_ID_KEYS)
+  end
+
+  # Keyword args for DashboardGroup#replace_sources!. `all_*` ids only count when they're also sources.
+  def permitted_sources
+    team_ids = permitted_team_ids
+    project_ids = permitted_project_ids
+    label_ids = permitted_label_ids
+
+    {
+      team_ids: team_ids, project_ids: project_ids, label_ids: label_ids,
+      all_team_ids: submitted_ids(:all_team_ids) & team_ids,
+      all_project_ids: submitted_ids(:all_project_ids) & project_ids
+    }
   end
 
   # collection_check_boxes posts a blank entry so the key is always present; drop it.
@@ -97,5 +101,12 @@ class DashboardGroupsController < ApplicationController
     return [] if ids.empty?
 
     Project.where(id: ids, team_id: allowed_team_ids).pluck(:id)
+  end
+
+  def permitted_label_ids
+    ids = submitted_ids(:label_ids)
+    return [] if ids.empty?
+
+    Label.where(id: ids, team_id: allowed_team_ids).pluck(:id)
   end
 end

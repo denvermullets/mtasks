@@ -11,14 +11,19 @@ class DashboardIssuesQuery < Service
   # `search` narrows the rows only; `team_id` (already validated against the user's teams)
   # narrows rows and counts; `team_ids` are the accessible teams behind this dashboard's
   # sources, for the header's team picker. Each `groups` entry is { group:, issues:, inaccessible: },
-  # where `inaccessible` means the group has sources but none resolve to a team or project
-  # the user can still see.
+  # where `inaccessible` means the group has sources but nothing the user can still see is left
+  # to match.
   Result = Data.define(:groups, :due_today_count, :overdue_count, :filter, :today, :search, :team_id, :team_ids)
-  # `team_ids` / `project_ids` are every source; `all_*` are the subset that shows every issue.
-  # The rest only contribute issues assigned to the user.
-  Sources = Data.define(:team_ids, :project_ids, :all_team_ids, :all_project_ids) do
+  # Teams and projects define the group's pool: `team_ids` / `project_ids` are every such source,
+  # `all_*` the subset that shows every issue (the rest only contribute issues assigned to the user).
+  # Labels narrow that pool to issues carrying any of `label_ids`; a labels-only group pools every
+  # issue on the labels' teams. `pooled` / `labeled` say whether the group had team/project or label
+  # sources at all, so a source the user lost access to empties the group instead of widening it.
+  Sources = Data.define(:team_ids, :project_ids, :all_team_ids, :all_project_ids, :label_ids, :pooled, :labeled) do
     def empty?
-      team_ids.empty? && project_ids.empty?
+      return true unless pooled || labeled
+
+      (pooled && team_ids.empty? && project_ids.empty?) || (labeled && label_ids.empty?)
     end
   end
 
@@ -37,17 +42,17 @@ class DashboardIssuesQuery < Service
   def call
     groups = @dashboard.groups.includes(:sources).to_a
     resolved = groups.map { |group| [group, resolve_sources(group)] }
-    union = union_sources(resolved.map(&:last))
+    all_sources = resolved.map(&:last).reject(&:empty?)
 
     Result.new(
       groups: resolved.map { |group, sources| group_entry(group, sources) },
-      due_today_count: count_for(union, '=', @today),
-      overdue_count: count_for(union, '<', @today),
+      due_today_count: count_for(all_sources, '=', @today),
+      overdue_count: count_for(all_sources, '<', @today),
       filter: @filter,
       today: @today,
       search: @search,
       team_id: team_id,
-      team_ids: (union.team_ids + union.project_ids.map { |id| accessible_project_ids[id] }).uniq
+      team_ids: all_sources.flat_map { |sources| source_team_ids(sources) }.uniq
     )
   end
 
@@ -79,6 +84,29 @@ class DashboardIssuesQuery < Service
     end
   end
 
+  # Same as accessible_project_ids, for Label sources. Labels are team-scoped.
+  def accessible_label_ids
+    @accessible_label_ids ||= begin
+      requested = @dashboard.groups.flat_map { |group| source_ids(group, 'Label') }.uniq
+      if requested.empty?
+        {}
+      else
+        Label.where(id: requested, team_id: accessible_team_ids).pluck(:id, :team_id).to_h
+      end
+    end
+  end
+
+  # Accessible teams a group's issues can come from: its pool, or the labels' teams when it has none.
+  def source_team_ids(sources)
+    return label_team_ids(sources) unless sources.pooled
+
+    (sources.team_ids + sources.project_ids.map { |id| accessible_project_ids[id] }).uniq
+  end
+
+  def label_team_ids(sources)
+    sources.label_ids.map { |id| accessible_label_ids[id] }.uniq
+  end
+
   def source_ids(group, type)
     group.source_ids_for(type)
   end
@@ -86,21 +114,21 @@ class DashboardIssuesQuery < Service
   def resolve_sources(group)
     team_ids = source_ids(group, 'Team') & accessible_team_ids
     project_ids = source_ids(group, 'Project').select { |id| accessible_project_ids.include?(id) }
+    requested_labels = source_ids(group, 'Label')
 
     Sources.new(
       team_ids: team_ids,
       project_ids: project_ids,
       all_team_ids: group.source_ids_for('Team', include_all: true) & team_ids,
-      all_project_ids: group.source_ids_for('Project', include_all: true) & project_ids
+      all_project_ids: group.source_ids_for('Project', include_all: true) & project_ids,
+      label_ids: requested_labels.select { |id| accessible_label_ids.include?(id) },
+      pooled: group.sources.any? { |source| source.source_type != 'Label' },
+      labeled: requested_labels.any?
     )
   end
 
   def group_entry(group, sources)
     { group: group, issues: issues_for(sources), inaccessible: group.sources.any? && sources.empty? }
-  end
-
-  def union_sources(all_sources)
-    Sources.new(**Sources.members.index_with { |key| all_sources.flat_map(&key).uniq })
   end
 
   def base_scope(sources)
@@ -113,8 +141,16 @@ class DashboardIssuesQuery < Service
     scope
   end
 
-  # Every issue from an include_all source, plus the user's own issues from the rest.
   def source_scope(scope, sources)
+    scope = sources.pooled ? pool_scope(scope, sources) : scope.where(team_id: label_team_ids(sources))
+    return scope unless sources.labeled
+
+    # Subquery (not an issue_labels join) so an issue carrying several of the labels stays one row.
+    scope.where(id: IssueLabel.where(label_id: sources.label_ids).select(:issue_id))
+  end
+
+  # Every issue from an include_all source, plus the user's own issues from the rest.
+  def pool_scope(scope, sources)
     assigned = scope.where(assignee_id: @user.id)
 
     scope.where(team_id: sources.all_team_ids)
@@ -143,10 +179,12 @@ class DashboardIssuesQuery < Service
   end
 
   # Header counts ignore the active filter tab; they always mean "due today" and "overdue".
-  # `operator` is one of the literals passed from #call, never user input.
-  def count_for(sources, operator, date)
-    return 0 if sources.empty?
+  # An issue counts once even when several groups show it. `operator` is one of the literals
+  # passed from #call, never user input.
+  def count_for(all_sources, operator, date)
+    return 0 if all_sources.empty?
 
-    base_scope(sources).where("#{DUE_DATE_SQL} #{operator} ?", date).count
+    in_any_group = all_sources.map { |sources| Issue.where(id: base_scope(sources).select(:id)) }.reduce(:or)
+    in_any_group.left_joins(:project).where("#{DUE_DATE_SQL} #{operator} ?", date).count
   end
 end

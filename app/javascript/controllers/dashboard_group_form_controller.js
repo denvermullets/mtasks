@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus";
 
 // Lives on the dashboard show page. One modal (dashboards/_group_form_modal) serves both
 // "Add group" and "Edit group"; triggers pass url/method/title/submit/name/description/color/
-// teamIds/projectIds/allTeamIds/allProjectIds/deleteUrl as action params and open() fills the form from them.
+// teamIds/projectIds/labelIds/allTeamIds/allProjectIds/deleteUrl as action params and open() fills the form from them.
 export default class extends Controller {
   static targets = [
     "modal",
@@ -15,6 +15,7 @@ export default class extends Controller {
     "color",
     "team",
     "project",
+    "label",
     "allTeam",
     "allProject",
     "search",
@@ -50,6 +51,7 @@ export default class extends Controller {
       color = this.colorTargets[0]?.value,
       teamIds = [],
       projectIds = [],
+      labelIds = [],
       allTeamIds = [],
       allProjectIds = [],
       deleteUrl = "",
@@ -71,6 +73,9 @@ export default class extends Controller {
     });
     this.projectTargets.forEach((box) => {
       box.checked = projectIds.includes(Number(box.value));
+    });
+    this.labelTargets.forEach((box) => {
+      box.checked = labelIds.includes(Number(box.value));
     });
     this.allTeamTargets.forEach((box) => {
       box.checked = allTeamIds.includes(Number(box.value));

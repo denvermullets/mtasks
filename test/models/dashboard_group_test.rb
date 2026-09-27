@@ -49,9 +49,15 @@ class DashboardGroupTest < ActiveSupport::TestCase
     assert other_group.sources.new(source: @team).valid?
   end
 
-  test 'rejects source types other than Team and Project' do
+  test 'can attach a label as a source' do
     label = @team.labels.create!(name: 'bug', color: '#ff0000')
-    source = @group.sources.new(source: label)
+    @group.sources.create!(source: label)
+
+    assert_equal [label.id], @group.label_ids
+  end
+
+  test 'rejects source types other than Team, Project and Label' do
+    source = @group.sources.new(source: @team.lanes.first)
 
     assert_not source.valid?
     assert source.errors[:source_type].any?

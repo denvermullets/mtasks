@@ -40,6 +40,67 @@ class DashboardIssuesQueryTest < ActiveSupport::TestCase
     assert_equal [in_project], issues_for(query, group)
   end
 
+  test 'labels narrow a team to issues carrying any of them' do
+    bug = @team_a.labels.create!(name: 'bug', color: '#ff0000')
+    urgent = @team_a.labels.create!(name: 'urgent', color: '#ff8800')
+    other = @team_a.labels.create!(name: 'docs', color: '#00ff00')
+    group = group_with(@team_a, bug, urgent)
+    bug_issue = create_issue(@team_a, due_date: TODAY)
+    bug_issue.labels << bug
+    both = create_issue(@team_a, due_date: TODAY)
+    both.labels << [bug, urgent]
+    create_issue(@team_a, due_date: TODAY).labels << other
+    create_issue(@team_a, due_date: TODAY)
+    create_issue(@team_b, due_date: TODAY).labels << @team_b.labels.create!(name: 'bug', color: '#ff0000')
+
+    result = query(filter: 'open')
+    assert_equal [bug_issue, both].sort_by(&:id), issues_for(result, group).sort_by(&:id)
+    assert_equal 2, result.due_today_count
+  end
+
+  test 'labels keep the team source assigned-to-me default' do
+    bug = @team_a.labels.create!(name: 'bug', color: '#ff0000')
+    group = group_with(@team_a, include_all: false)
+    group.sources.create!(source: bug)
+    mine = create_issue(@team_a, due_date: TODAY, assignee: @user)
+    theirs = create_issue(@team_a, due_date: TODAY, assignee: @other_user)
+    [mine, theirs].each { |issue| issue.labels << bug }
+
+    assert_equal [mine], issues_for(query, group)
+  end
+
+  test 'a labels-only group shows every issue with the label on its team' do
+    bug = @team_a.labels.create!(name: 'bug', color: '#ff0000')
+    group = group_with(bug)
+    theirs = create_issue(@team_a, due_date: TODAY, assignee: @other_user)
+    theirs.labels << bug
+    create_issue(@team_a, due_date: TODAY)
+
+    assert_equal [theirs], issues_for(query, group)
+  end
+
+  test 'a group whose labels are all inaccessible is empty rather than the whole team' do
+    secret = @other_team.labels.create!(name: 'secret', color: '#ff0000')
+    group = group_with(@team_a, secret)
+    create_issue(@team_a, due_date: TODAY)
+
+    entry = entry_for(query, group)
+    assert entry[:inaccessible]
+    assert_equal [], entry[:issues]
+    assert_equal 0, query.due_today_count
+  end
+
+  test 'counts only include issues a group actually shows' do
+    bug = @team_a.labels.create!(name: 'bug', color: '#ff0000')
+    group_with(@team_a, bug)
+    group_with(@project_b)
+    create_issue(@team_a, due_date: TODAY).labels << bug
+    create_issue(@team_a, due_date: TODAY)
+    create_issue(@team_b, project: @project_b, due_date: TODAY)
+
+    assert_equal 2, query.due_today_count
+  end
+
   test 'archived, completed and canceled issues never appear' do
     group = group_with(@team_a)
     now = Time.current
@@ -395,12 +456,16 @@ class DashboardIssuesQueryTest < ActiveSupport::TestCase
     end
   end
 
-  test 'team_ids lists the accessible teams behind the sources, including project owners' do
+  test 'team_ids lists the accessible teams behind the sources, including project and label owners' do
     group_with(@team_a)
     group_with(@project_b)
     group_with(@other_team, @other_project)
+    group_with(@other_team.labels.create!(name: 'secret', color: '#ff0000'))
+    extra = @workspace.teams.create!(name: 'Team C', identifier: 'DQC')
+    extra.team_memberships.create!(user: @user)
+    group_with(extra.labels.create!(name: 'bug', color: '#ff0000'))
 
-    assert_equal [@team_a.id, @team_b.id], query.team_ids.sort
+    assert_equal [@team_a.id, @team_b.id, extra.id], query.team_ids.sort
     assert_equal [], DashboardIssuesQuery.call(user: @user, dashboard: @user.dashboards.create!(name: 'Empty')).team_ids
   end
 
