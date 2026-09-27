@@ -1,0 +1,45 @@
+<%# Right-click menu for board cards. Render once per page, inside the board-keyboard
+    element and outside any turbo-stream-replaced frame, next to the shared pickers. %>
+<%
+  items = [
+    { label: "Change status", shortcut: "s", picker: "lane" },
+    { label: "Change priority", shortcut: "p", picker: "priority" },
+    { label: "Edit labels", shortcut: "l", picker: "label" },
+    { label: "Move to project", shortcut: "j", picker: "project" },
+    :divider,
+    { label: "Open issue", command: "openIssue" },
+    { label: "Open in new tab", command: "openInNewTab" },
+    { label: "Copy link", command: "copyLink" },
+    { label: "Copy ID", command: "copyIdentifier" }
+  ]
+%>
+<div data-controller="issue-context-menu"
+     data-shared-picker="context-menu"
+     role="menu"
+     class="hidden fixed z-50 w-56 bg-context-foreground border-2 border-stroke rounded-md shadow-2xl">
+  <div class="px-3 py-2 border-b border-stroke">
+    <span class="block text-xs text-gray-500 truncate" data-issue-context-menu-target="header"></span>
+  </div>
+
+  <div class="py-1">
+    <% items.each do |item| %>
+      <% if item == :divider %>
+        <div class="my-1 border-t border-stroke"></div>
+      <% else %>
+        <button type="button"
+                role="menuitem"
+                class="w-full text-left px-3 py-1.5 text-sm text-gray-300 hover:bg-hover-highlight transition-colors cursor-pointer flex items-center gap-2"
+                data-issue-context-menu-target="item"
+                data-action="click->issue-context-menu#select"
+                <% if item[:picker] %>data-picker="<%= item[:picker] %>"<% end %>
+                <% if item[:command] %>data-command="<%= item[:command] %>"<% end %>
+                <% if item[:shortcut] %>data-shortcut="<%= item[:shortcut] %>"<% end %>>
+          <span><%= item[:label] %></span>
+          <% if item[:shortcut] %>
+            <kbd class="ml-auto px-1.5 text-xs font-mono text-gray-500 bg-background border border-stroke rounded"><%= item[:shortcut].upcase %></kbd>
+          <% end %>
+        </button>
+      <% end %>
+    <% end %>
+  </div>
+</div>

@@ -75,93 +75,45 @@ export default class extends Controller {
   }
 
   openPriorityPicker() {
-    const hoveredCard = document.querySelector('[data-hovered="true"]');
-    if (!hoveredCard) {
-      return;
-    }
-
-    const priorityPicker = document.querySelector('[data-shared-picker="priority"]');
-    if (!priorityPicker) {
-      return;
-    }
-
-    const controller = this.application.getControllerForElementAndIdentifier(
-      priorityPicker,
-      "priority-picker"
-    );
-    if (controller && controller.openForCard) {
-      controller.openForCard(hoveredCard);
-      trackFeature("keyboard-shortcut", "invoke", this.shortcutProperties("p"));
-    }
+    this.openHoveredCardPicker("priority", "p");
   }
 
   openLabelPicker() {
-    // Find the currently hovered card
-    const hoveredCard = document.querySelector('[data-hovered="true"]');
-    if (!hoveredCard) {
-      return;
-    }
-
-    // Open the single shared label picker, retargeted at the hovered card
-    const labelPicker = document.querySelector('[data-shared-picker="label"]');
-    if (!labelPicker) {
-      return;
-    }
-
-    const controller = this.application.getControllerForElementAndIdentifier(
-      labelPicker,
-      "label-picker"
-    );
-    if (controller && controller.openForCard) {
-      controller.openForCard(hoveredCard);
-      trackFeature("keyboard-shortcut", "invoke", this.shortcutProperties("l"));
-    }
+    this.openHoveredCardPicker("label", "l");
   }
 
   openLanePicker() {
-    // Find the currently hovered card
-    const hoveredCard = document.querySelector('[data-hovered="true"]');
-    if (!hoveredCard) {
-      return;
-    }
-
-    // Open the single shared lane picker, retargeted at the hovered card
-    const lanePicker = document.querySelector('[data-shared-picker="lane"]');
-    if (!lanePicker) {
-      return;
-    }
-
-    const controller = this.application.getControllerForElementAndIdentifier(
-      lanePicker,
-      "lane-picker"
-    );
-    if (controller && controller.openForCard) {
-      controller.openForCard(hoveredCard);
-      trackFeature("keyboard-shortcut", "invoke", this.shortcutProperties("s"));
-    }
+    this.openHoveredCardPicker("lane", "s");
   }
 
   openProjectPicker() {
-    // Find the currently hovered card
-    const hoveredCard = document.querySelector('[data-hovered="true"]');
-    if (!hoveredCard) {
-      return;
-    }
+    this.openHoveredCardPicker("project", "j");
+  }
 
-    // Open the single shared project picker, retargeted at the hovered card
-    const projectPicker = document.querySelector('[data-shared-picker="project"]');
-    if (!projectPicker) {
-      return;
+  openHoveredCardPicker(picker, shortcut) {
+    const hoveredCard = document.querySelector('[data-hovered="true"]');
+    if (!hoveredCard) return;
+
+    if (this.openPickerForCard(picker, hoveredCard)) {
+      trackFeature("keyboard-shortcut", "invoke", this.shortcutProperties(shortcut));
     }
+  }
+
+  // Retargets the page's single shared picker (label, lane, project or priority) at `card`
+  // and opens it. Also the entry point for the issue context menu. Returns whether a picker
+  // opened — projects/show has no project picker, for one.
+  openPickerForCard(picker, card) {
+    const pickerElement = document.querySelector(`[data-shared-picker="${picker}"]`);
+    if (!pickerElement) return false;
 
     const controller = this.application.getControllerForElementAndIdentifier(
-      projectPicker,
-      "project-picker"
+      pickerElement,
+      `${picker}-picker`
     );
-    if (controller && controller.openForCard) {
-      controller.openForCard(hoveredCard);
-      trackFeature("keyboard-shortcut", "invoke", this.shortcutProperties("j"));
-    }
+    if (!controller?.openForCard) return false;
+
+    controller.openForCard(card);
+    return true;
   }
 
   createNewIssue() {

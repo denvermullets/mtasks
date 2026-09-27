@@ -63,6 +63,7 @@
              team: current_team, lanes: current_team.lanes.order(:position) %>
   <%= render "labels/picker", issue: nil, shared: true, context: "card",
              team: current_team, labels: current_team.labels %>
+  <%= render "issues/context_menu" %>
 
   <!-- Mobile FAB for new issue -->
   <%= link_to new_team_issue_path(current_team),
