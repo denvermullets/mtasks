@@ -12,7 +12,7 @@ class ApplicationController < ActionController::Base
 
   before_action :configure_paper_trail_whodunnit
 
-  helper_method :sidebar_dashboards, :sidebar_saved_views
+  helper_method :sidebar_dashboards, :sidebar_saved_views, :sidebar_team_layout
 
   private
 
@@ -24,6 +24,11 @@ class ApplicationController < ActionController::Base
   # Saved views on teams the user can still see, grouped under their team in the sidebar.
   def sidebar_saved_views
     @sidebar_saved_views ||= current_user.saved_views.where(team_id: user_teams.map(&:id)).includes(:team).to_a
+  end
+
+  # The user's team groups plus ungrouped owned / joined teams, shared by the desktop sidebar and mobile drawer.
+  def sidebar_team_layout
+    @sidebar_team_layout ||= current_user.sidebar_layout(user_teams)
   end
 
   def configure_paper_trail_whodunnit

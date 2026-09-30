@@ -1,9 +1,11 @@
 import { Controller } from "@hotwired/stimulus";
 import Sortable from "sortablejs";
 
-// Drag-and-drop reordering of sidebar teams, auto-saving each change.
+// Drag-and-drop layout of sidebar teams: reorder groups, reorder teams, and move teams in and out of
+// groups. Every change saves the whole layout. Owned and joined teams can share a group, but an
+// ungrouped team can only return to its own section.
 export default class extends Controller {
-  static targets = ["list"];
+  static targets = ["list", "groups"];
   static values = { url: String };
 
   connect() {
@@ -11,9 +13,26 @@ export default class extends Controller {
     this.sortables = this.listTargets.map((list) =>
       Sortable.create(list, {
         animation: 150,
-        onEnd: () => this.save(list),
+        group: {
+          name: "sidebar-teams",
+          put: (to, _from, dragEl) => {
+            const kind = to.el.dataset.kind;
+            return kind === "group" || kind === dragEl.dataset.scope;
+          },
+        },
+        onEnd: () => this.save(),
       })
     );
+    if (this.hasGroupsTarget) {
+      this.sortables.push(
+        Sortable.create(this.groupsTarget, {
+          animation: 150,
+          handle: "[data-group-handle]",
+          draggable: "[data-group-id]",
+          onEnd: () => this.save(),
+        })
+      );
+    }
   }
 
   disconnect() {
@@ -21,11 +40,28 @@ export default class extends Controller {
     this.sortables = [];
   }
 
-  async save(list) {
-    const scope = list.dataset.scope;
-    const ids = Array.from(list.querySelectorAll("[data-team-id]")).map((el) =>
-      Number(el.dataset.teamId)
-    );
+  rename(event) {
+    event.target.form.requestSubmit();
+  }
+
+  teamIds(list) {
+    return list
+      ? Array.from(list.querySelectorAll("[data-team-id]")).map((el) => Number(el.dataset.teamId))
+      : [];
+  }
+
+  async save() {
+    const groups = this.hasGroupsTarget
+      ? Array.from(this.groupsTarget.querySelectorAll("[data-group-id]")).map((group) => ({
+          id: group.dataset.groupId,
+          team_ids: this.teamIds(group.querySelector('[data-kind="group"]')),
+        }))
+      : [];
+    const body = {
+      groups,
+      owned: this.teamIds(this.element.querySelector('[data-kind="owned"]')),
+      joined: this.teamIds(this.element.querySelector('[data-kind="joined"]')),
+    };
 
     try {
       const response = await fetch(this.urlValue, {
@@ -35,7 +71,7 @@ export default class extends Controller {
           Accept: "text/vnd.turbo-stream.html",
           "X-CSRF-Token": this.csrfToken,
         },
-        body: JSON.stringify({ scope, ids }),
+        body: JSON.stringify(body),
       });
       if (response.ok) {
         const html = await response.text();

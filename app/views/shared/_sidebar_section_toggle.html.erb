@@ -1,0 +1,11 @@
+<%# locals: (label:, controller:, collapsed: false, mobile: false) %>
+<button data-action="click-><%= controller %>#toggle"
+        class="flex items-center gap-1 text-xs text-gray-500 <%= 'font-medium uppercase' if mobile %> flex-1 min-w-0 text-left hover:text-gray-400 cursor-pointer">
+  <svg data-<%= controller %>-target="chevron"
+       class="w-3 h-3 shrink-0 transition-transform <%= 'rotate-180' if collapsed %>"
+       fill="currentColor"
+       viewBox="0 0 20 20">
+    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+  </svg>
+  <span class="truncate"><%= label %></span>
+</button>

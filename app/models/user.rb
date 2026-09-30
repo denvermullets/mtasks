@@ -23,8 +23,15 @@ class User < ApplicationRecord
     'team_order' => {
       'owned' => [],
       'joined' => []
-    }
+    },
+    'sidebar_groups' => []
   }.freeze
+
+  SIDEBAR_GROUP_NAME_LIMIT = 40
+
+  # The desktop sidebar's teams: the user's named groups (each a [group, teams] pair) followed by the
+  # ungrouped owned and joined teams.
+  SidebarLayout = Data.define(:groups, :owned, :joined)
 
   # Associations
   has_many :owned_workspaces, class_name: 'Workspace', foreign_key: :owner_id, dependent: :destroy
@@ -116,6 +123,30 @@ class User < ApplicationRecord
     index = team_order.fetch(scope.to_s, []).each_with_index.to_h
     fallback = index.size
     teams.each_with_index.sort_by { |team, i| [index.fetch(team.id, fallback), i] }.map(&:first)
+  end
+
+  # User-defined sidebar groups, in display order. A group can hold any mix of owned and joined teams.
+  def sidebar_groups
+    Array(resolved_settings['sidebar_groups']).filter_map do |group|
+      next unless group.is_a?(Hash) && group['id'].present?
+
+      {
+        'id' => group['id'].to_s,
+        'name' => group['name'].to_s,
+        'team_ids' => Array(group['team_ids']).map(&:to_i),
+        'collapsed' => group['collapsed'] == true
+      }
+    end
+  end
+
+  def sidebar_layout(teams)
+    by_id = teams.index_by(&:id)
+    claimed = Set.new
+    groups = sidebar_groups.map do |group|
+      [group, group['team_ids'].filter_map { |id| by_id[id] if claimed.add?(id) }]
+    end
+    owned, joined = teams.reject { |team| claimed.include?(team.id) }.partition { |team| team.owner?(self) }
+    SidebarLayout.new(groups: groups, owned: order_teams(owned, :owned), joined: order_teams(joined, :joined))
   end
 
   def personal_workspace

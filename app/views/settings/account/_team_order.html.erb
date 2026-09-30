@@ -1,12 +1,67 @@
 <div data-controller="team-order" data-team-order-url-value="<%= settings_team_order_path %>">
   <h2 class="text-lg font-semibold text-gray-200">Team Order</h2>
-  <p class="text-xs text-gray-400 mt-1 mb-4">Drag to reorder the teams in your sidebar. Changes save automatically.</p>
+  <p class="text-xs text-gray-400 mt-1 mb-4">
+    Drag to reorder the teams in your sidebar, or drag teams into a group to nest them under a collapsible
+    heading. Groups can mix teams you own and teams you've joined. Changes save automatically.
+  </p>
+
+  <%= form_with url: settings_sidebar_groups_path, method: :post, class: "flex items-center gap-2 mb-6" do |f| %>
+    <%= f.text_field :name,
+        placeholder: "New group name",
+        maxlength: User::SIDEBAR_GROUP_NAME_LIMIT,
+        required: true,
+        class: "flex-1 min-w-0 px-3 py-1.5 text-sm bg-background border border-stroke rounded text-gray-200 placeholder-gray-500 focus:outline-none focus:border-accent" %>
+    <%= f.submit "Add group", class: "px-3 py-1.5 text-xs font-medium rounded-md border border-accent text-gray-200 hover:bg-accent hover:text-gray-800 transition-colors cursor-pointer" %>
+  <% end %>
+
+  <% if sidebar_team_layout.groups.any? %>
+    <div class="mb-6">
+      <div class="text-sm font-medium text-gray-400 mb-3">Groups</div>
+      <div class="space-y-3" data-team-order-target="groups">
+        <% sidebar_team_layout.groups.each do |group, teams| %>
+          <div class="rounded border border-stroke p-2" data-group-id="<%= group['id'] %>">
+            <div class="flex items-center gap-2 mb-2">
+              <svg class="w-4 h-4 text-gray-500 shrink-0 cursor-grab" data-group-handle fill="currentColor" viewBox="0 0 20 20">
+                <path d="M7 4a1 1 0 110 2 1 1 0 010-2zM7 9a1 1 0 110 2 1 1 0 010-2zM7 14a1 1 0 110 2 1 1 0 010-2zM13 4a1 1 0 110 2 1 1 0 010-2zM13 9a1 1 0 110 2 1 1 0 010-2zM13 14a1 1 0 110 2 1 1 0 010-2z"></path>
+              </svg>
+              <%= form_with url: settings_sidebar_group_path(group['id']), method: :patch, class: "flex-1 min-w-0" do |f| %>
+                <%= f.text_field :name,
+                    value: group['name'],
+                    maxlength: User::SIDEBAR_GROUP_NAME_LIMIT,
+                    required: true,
+                    "aria-label": "Group name",
+                    data: { action: "change->team-order#rename" },
+                    class: "w-full px-2 py-1 text-sm font-medium bg-transparent border border-transparent rounded text-gray-200 hover:border-stroke focus:outline-none focus:border-accent" %>
+              <% end %>
+              <%= button_to settings_sidebar_group_path(group['id']),
+                  method: :delete,
+                  form: { data: { turbo_confirm: "Delete the \"#{group['name']}\" group? Its teams move back to their sections." } },
+                  class: "p-1 text-gray-500 hover:text-red-400 cursor-pointer",
+                  "aria-label": "Delete group" do %>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+              <% end %>
+            </div>
+            <div class="space-y-1 min-h-10 rounded border border-dashed border-stroke p-1"
+                 data-team-order-target="list"
+                 data-kind="group">
+              <% teams.each do |team| %>
+                <%= render "settings/team_order/row", team: team, scope: team_owner?(team) ? "owned" : "joined" %>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
   <div class="mb-6">
     <div class="text-sm font-medium text-gray-400 mb-3">Teams you own</div>
     <% if @owned_teams.any? %>
-      <div class="space-y-1" data-team-order-target="list" data-scope="owned">
-        <% @owned_teams.each do |team| %>
-          <%= render "settings/team_order/row", team: team %>
+      <div class="space-y-1 min-h-10" data-team-order-target="list" data-kind="owned">
+        <% sidebar_team_layout.owned.each do |team| %>
+          <%= render "settings/team_order/row", team: team, scope: "owned" %>
         <% end %>
       </div>
     <% else %>
@@ -16,9 +71,9 @@
   <% if @joined_teams.any? %>
     <div>
       <div class="text-sm font-medium text-gray-400 mb-3">Teams you've joined</div>
-      <div class="space-y-1" data-team-order-target="list" data-scope="joined">
-        <% @joined_teams.each do |team| %>
-          <%= render "settings/team_order/row", team: team %>
+      <div class="space-y-1 min-h-10" data-team-order-target="list" data-kind="joined">
+        <% sidebar_team_layout.joined.each do |team| %>
+          <%= render "settings/team_order/row", team: team, scope: "joined" %>
         <% end %>
       </div>
     </div>

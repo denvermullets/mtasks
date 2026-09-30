@@ -1,0 +1,67 @@
+<%# locals: (layout:, mobile: false) %>
+<%# The sidebar's teams: the user's collapsible groups, then the ungrouped owned and joined teams. Rendered by
+    both the desktop sidebar and the mobile drawer; `mobile` adds the drawer-close action. %>
+<% has_grouped_teams = layout.groups.any? { |_, teams| teams.any? } %>
+<%# The owned section hides once it's empty and groups hold teams; its new-team + moves to the first group. %>
+<% show_owned = layout.owned.any? || !has_grouped_teams %>
+<div id="<%= mobile ? 'sidebar_teams_mobile' : 'sidebar_teams' %>">
+  <% layout.groups.each_with_index do |(group, teams), index| %>
+    <div class="p-2 mt-1"
+         data-controller="sidebar-group"
+         data-sidebar-group-url-value="<%= settings_sidebar_group_path(group['id']) %>">
+      <div class="group flex items-center justify-between px-2 mb-2">
+        <%= render "shared/sidebar_section_toggle", label: group["name"], controller: "sidebar-group", collapsed: group["collapsed"], mobile: mobile %>
+        <% unless mobile %>
+          <%= link_to settings_path(section: "team_order"),
+              class: "p-1 text-gray-500 hover:text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer",
+              title: "Manage groups" do %>
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+            </svg>
+          <% end %>
+        <% end %>
+        <%= render "shared/sidebar_new_team_link", mobile: mobile if index.zero? && !show_owned %>
+      </div>
+      <div class="space-y-1 <%= 'hidden' if group['collapsed'] %>" data-sidebar-group-target="list">
+        <% if teams.any? %>
+          <% teams.each do |team| %>
+            <%= render "shared/sidebar_team_row", team: team, mobile: mobile %>
+          <% end %>
+        <% else %>
+          <p class="px-2 py-1.5 text-xs text-gray-500">No teams in this group.</p>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <% if show_owned %>
+    <div class="p-2 mt-1" data-controller="teams-section">
+      <div class="flex items-center justify-between px-2 mb-2">
+        <%= render "shared/sidebar_section_toggle", label: "Teams you own", controller: "teams-section", mobile: mobile %>
+        <%= render "shared/sidebar_new_team_link", mobile: mobile %>
+      </div>
+
+      <div class="space-y-1" data-teams-section-target="list">
+        <% layout.owned.each do |team| %>
+          <%= render "shared/sidebar_team_row", team: team, mobile: mobile %>
+        <% end %>
+        <% if layout.owned.empty? %>
+          <p class="px-2 py-1.5 text-xs text-gray-500">No teams yet. Create one above.</p>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <% if layout.joined.any? %>
+    <div class="p-2 mt-2" data-controller="teams-section">
+      <div class="flex items-center px-2 mb-2">
+        <%= render "shared/sidebar_section_toggle", label: "Teams you've joined", controller: "teams-section", mobile: mobile %>
+      </div>
+      <div class="space-y-1" data-teams-section-target="list">
+        <% layout.joined.each do |team| %>
+          <%= render "shared/sidebar_team_row", team: team, mobile: mobile %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>

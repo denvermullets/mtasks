@@ -10,6 +10,7 @@ Rails.application.routes.draw do
       get section, to: redirect("/settings?section=#{section}")
       patch section, to: "#{section}#update"
     end
+    resources :sidebar_groups, only: %i[create update destroy]
   end
   resources :workspaces, only: [] do
     resource :github_installation, only: %i[show new destroy], controller: 'workspace_github_installations' do

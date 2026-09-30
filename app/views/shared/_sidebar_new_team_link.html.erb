@@ -1,0 +1,8 @@
+<%# locals: (mobile: false) %>
+<%= link_to new_team_path,
+    class: "p-1 text-gray-500 hover:text-gray-300 cursor-pointer",
+    data: (mobile ? { action: "click->sidebar#close" } : {}) do %>
+  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+  </svg>
+<% end %>
