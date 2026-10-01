@@ -7,7 +7,7 @@ class DependencyMapsControllerTest < ActionDispatch::IntegrationTest
     @team = @workspace.teams.create!(name: 'Map Team', identifier: 'MAP')
     @team.team_memberships.create!(user: @user)
     @backlog = @team.lanes.create!(name: 'Backlog', position: 0)
-    @done = @team.lanes.create!(name: 'Done', position: 1)
+    @done = @team.lanes.create!(name: 'Done', position: 1, category: 'completed')
 
     sign_in_as(@user)
   end

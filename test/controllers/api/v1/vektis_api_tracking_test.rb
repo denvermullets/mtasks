@@ -25,7 +25,7 @@ module Api
         enable_vektis!(@team)
 
         @backlog = @team.lanes.create!(name: 'Backlog', position: 0)
-        @done = @team.lanes.create!(name: 'Done', position: 1)
+        @done = @team.lanes.create!(name: 'Done', position: 1, category: 'completed')
         @project = @team.projects.create!(name: 'Api Tracking Project')
         @label = @team.labels.create!(name: 'bug', color: '#ff0000')
         @issue = @team.issues.create!(title: 'Tracked issue', lane: @backlog, creator: @user)

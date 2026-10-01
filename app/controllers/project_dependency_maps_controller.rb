@@ -6,6 +6,8 @@ class ProjectDependencyMapsController < ApplicationController
     raise ActiveRecord::RecordNotFound unless current_team
 
     @project = current_team.projects.find(params[:project_id])
-    @graph = ProjectDependencyGraphQuery.call(project: @project)
+    # Active by default; ?show=all brings back completed and canceled issues.
+    @show_all = params[:show] == 'all'
+    @graph = ProjectDependencyGraphQuery.call(project: @project, active_only: !@show_all)
   end
 end

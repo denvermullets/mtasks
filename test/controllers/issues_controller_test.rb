@@ -8,7 +8,7 @@ class IssuesControllerTest < ActionDispatch::IntegrationTest
     @team.team_memberships.create!(user: @user)
 
     @backlog_lane = @team.lanes.create!(name: 'Backlog', position: 0)
-    @done_lane = @team.lanes.create!(name: 'Done', position: 1)
+    @done_lane = @team.lanes.create!(name: 'Done', position: 1, category: 'completed')
 
     @issue = @team.issues.create!(
       title: 'Test issue', lane: @backlog_lane, creator: @user
@@ -45,10 +45,10 @@ class IssuesControllerTest < ActionDispatch::IntegrationTest
     assert_in_delta original_time, @issue.completed_at, 1.second
   end
 
-  test 'handles case-insensitive Done lane name' do
-    mixed_case_lane = @team.lanes.create!(name: 'done', position: 2)
+  test 'sets completed_at for any lane in the completed category' do
+    preview_lane = @team.lanes.create!(name: 'Preview', position: 2, category: 'completed')
 
-    patch team_issue_path(@team, @issue), params: { issue: { lane_id: mixed_case_lane.id } }
+    patch team_issue_path(@team, @issue), params: { issue: { lane_id: preview_lane.id } }
 
     @issue.reload
     assert_not_nil @issue.completed_at

@@ -20,6 +20,14 @@
         class: "w-full px-2 py-0.5 text-sm bg-transparent border border-transparent hover:border-stroke focus:border-accent focus:bg-background rounded text-gray-200 focus:outline-none" %>
   <% end %>
 
+  <!-- Category: decides started/completed/canceled timestamps for issues moved here -->
+  <%= form_with model: lane, url: team_lane_path(lane.team, lane), method: :patch, data: { controller: "auto-submit" }, class: "m-0" do |f| %>
+    <%= f.select :category, lane_category_options, {},
+        title: "Category",
+        data: { action: "change->auto-submit#submit" },
+        class: "px-1.5 py-0.5 text-xs bg-transparent border border-transparent hover:border-stroke focus:border-accent rounded text-gray-400 focus:outline-none cursor-pointer" %>
+  <% end %>
+
   <!-- Issue count badge -->
   <span class="text-xs text-gray-500 px-1.5 py-0.5 bg-foreground rounded whitespace-nowrap">
     <%= pluralize(lane.issues.count, 'issue') %>

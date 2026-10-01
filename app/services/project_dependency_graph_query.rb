@@ -1,37 +1,39 @@
-# Every dependency touching a project's issues, laid out left to right by the blocks chain:
-# column 0 holds issues nothing in the graph blocks, and each later column holds issues blocked by
-# something in an earlier one. Issues outside the project show up when a project issue links to
-# them directly. Fixed query count regardless of project size.
+# Every issue in a project, laid out left to right by the blocks chain: column 0 holds issues
+# nothing in the graph blocks (including ones with no links at all), and each later column holds
+# issues blocked by something in an earlier one. Issues outside the project show up when a project
+# issue links to them directly. Fixed query count regardless of project size.
 class ProjectDependencyGraphQuery < Service
   # `columns` is [[Issue]] in display order. `edges` are { from_id:, to_id:, kind: }.
-  # `unlinked_count` is how many project issues have no links at all.
-  Result = Data.define(:project, :columns, :edges, :unlinked_count) do
+  Result = Data.define(:project, :columns, :edges, :active_only) do
     def empty?
       columns.empty?
     end
   end
 
-  def initialize(project:)
+  # active_only drops completed/canceled issues (by timestamp or lane category), along with any
+  # links to them.
+  def initialize(project:, active_only: false)
     @project = project
+    @active_only = active_only
   end
 
   def call
-    project_ids = scope.where(project_id: @project.id).pluck(:id)
-    issues_by_id, edges = load_graph(links_touching(project_ids))
+    project_issues = preload(scope.where(project_id: @project.id))
+    issues_by_id, edges = load_graph(project_issues, links_touching(project_issues.keys))
     index_edges(edges)
 
-    Result.new(
-      project: @project,
-      columns: layout(issues_by_id),
-      edges: edges,
-      unlinked_count: (project_ids - issues_by_id.keys).size
-    )
+    Result.new(project: @project, columns: layout(issues_by_id), edges: edges, active_only: @active_only)
   end
 
   private
 
   def scope
-    Issue.where(team_id: @project.team_id, archived_at: nil)
+    base = Issue.where(team_id: @project.team_id, archived_at: nil)
+    @active_only ? base.active : base
+  end
+
+  def preload(relation)
+    relation.includes(:team, :lane, :labels, :assignee, :project).index_by(&:id)
   end
 
   def links_touching(ids)
@@ -42,14 +44,13 @@ class ProjectDependencyGraphQuery < Service
                    .map { |from_id, to_id, kind| { from_id: from_id, to_id: to_id, kind: kind } }
   end
 
-  # The scope drops other-team and archived issues, so links to them go too, along with any
-  # issue that was only linked to one of those.
-  def load_graph(links)
-    loaded = scope.where(id: links.flat_map { |link| [link[:from_id], link[:to_id]] }.uniq)
-                  .includes(:team, :lane, :labels, :assignee, :project)
-                  .index_by(&:id)
+  # The scope drops other-team, archived (and with active_only, closed) issues, so links to them
+  # go too. Outside issues only come in through a surviving link.
+  def load_graph(project_issues, links)
+    outside_ids = links.flat_map { |link| [link[:from_id], link[:to_id]] }.uniq - project_issues.keys
+    loaded = project_issues.merge(preload(scope.where(id: outside_ids)))
     edges = links.select { |link| loaded.key?(link[:from_id]) && loaded.key?(link[:to_id]) }
-    [loaded.slice(*edges.flat_map { |edge| [edge[:from_id], edge[:to_id]] }), edges]
+    [loaded, edges]
   end
 
   # Adjacency lists: @blockers / @blocked over blocks edges, @related over the rest (both ways).
@@ -74,6 +75,10 @@ class ProjectDependencyGraphQuery < Service
     ranks = ranks_for(issues_by_id.keys)
     columns = issues_by_id.values.group_by { |issue| ranks[issue.id] }.sort.map(&:last)
     order_columns(columns)
+  end
+
+  def linked?(id)
+    in_chain?(id) || @related.key?(id)
   end
 
   def in_chain?(id)
@@ -117,19 +122,24 @@ class ProjectDependencyGraphQuery < Service
     ranks
   end
 
-  # First column by status then number; each later column by the average row of its linked
-  # issues in earlier columns, which keeps most lines from crossing.
+  # First column puts linked issues above unlinked ones, then sorts by status and number; each
+  # later column by the average row of its linked issues in earlier columns, which keeps most
+  # lines from crossing.
   def order_columns(columns)
     rows = {}
     columns.each_with_index.map do |column, index|
       ordered = if index.zero?
-                  column.sort_by { |issue| sort_key(issue) }
+                  column.sort_by { |issue| first_column_key(issue) }
                 else
                   column.sort_by { |issue| [barycenter(issue.id, rows) || Float::INFINITY, *sort_key(issue)] }
                 end
       ordered.each_with_index { |issue, row| rows[issue.id] = row }
       ordered
     end
+  end
+
+  def first_column_key(issue)
+    [linked?(issue.id) ? 0 : 1, *sort_key(issue)]
   end
 
   def barycenter(id, rows)

@@ -21,18 +21,26 @@
         <div class="min-w-0">
           <h2 class="text-base font-medium text-gray-200 m-0 mb-1"><%= @project.name %> dependencies</h2>
           <p class="text-sm text-gray-400 leading-relaxed">
-            Work flows left to right: each issue sits to the right of everything blocking it.
+            Work flows left to right: each issue sits to the right of everything blocking it, and issues
+            with no blockers start in the first column.
             Click an issue to focus the map on it.
           </p>
         </div>
-        <div class="shrink-0 max-w-full overflow-x-auto">
+        <div class="shrink-0 max-w-full overflow-x-auto flex items-center gap-2">
+          <div class="inline-flex items-center rounded-lg bg-foreground border border-stroke p-0.5 text-xs">
+            <% [["Active", nil, !@show_all], ["All", "all", @show_all]].each do |label, show, current| %>
+              <%= link_to label, team_project_dependency_map_path(current_team, @project, show: show),
+                          aria: { current: current },
+                          class: "px-2.5 py-1 rounded-md transition-colors cursor-pointer #{current ? 'bg-hover-highlight text-gray-200' : 'text-gray-400 hover:text-gray-300'}" %>
+            <% end %>
+          </div>
           <%= render "shared/dependency_legend" %>
         </div>
       </div>
 
       <% if @graph.empty? %>
         <div class="rounded-xl border border-stroke px-4 py-16 text-center text-sm text-gray-500">
-          No dependencies between this project's issues yet.
+          <%= @show_all ? "No issues in this project yet." : "No active issues in this project." %>
           <%= link_to "Back to the project.", team_project_path(current_team, @project), class: "text-gray-400 hover:text-gray-300 underline cursor-pointer" %>
         </div>
       <% else %>
@@ -51,12 +59,6 @@
             <% end %>
           </div>
         </div>
-      <% end %>
-
-      <% if !@graph.empty? && @graph.unlinked_count.positive? %>
-        <p class="text-xs text-gray-500">
-          <%= pluralize(@graph.unlinked_count, "other issue") %> in this project <%= @graph.unlinked_count == 1 ? "has" : "have" %> no dependencies.
-        </p>
       <% end %>
     </div>
   </div>

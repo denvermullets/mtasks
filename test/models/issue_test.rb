@@ -6,8 +6,8 @@ class IssueTest < ActiveSupport::TestCase
     @workspace = Workspace.create!(name: 'Test Workspace', owner: @user)
     @team = @workspace.teams.create!(name: 'Test Team', identifier: 'IST')
     @team.team_memberships.create!(user: @user)
-    @backlog = @team.lanes.create!(name: 'Backlog', position: 0)
-    @done = @team.lanes.create!(name: 'Done', position: 1)
+    @backlog = @team.lanes.create!(name: 'Backlog', position: 0, category: 'backlog')
+    @done = @team.lanes.create!(name: 'Done', position: 1, category: 'completed')
   end
 
   test 'title is required' do
@@ -83,7 +83,7 @@ class IssueTest < ActiveSupport::TestCase
   end
 
   test 'apply_lane_timestamps! sets canceled_at when moving to a Cancelled lane' do
-    cancelled = @team.lanes.create!(name: 'Cancelled', position: 2)
+    cancelled = @team.lanes.create!(name: 'Cancelled', position: 2, category: 'canceled')
     issue = @team.issues.create!(title: 'A', lane: @backlog, creator: @user)
 
     issue.lane_id = cancelled.id
@@ -93,18 +93,46 @@ class IssueTest < ActiveSupport::TestCase
     assert_nil issue.completed_at
   end
 
-  test 'apply_lane_timestamps! also matches a Canceled (US spelling) lane' do
-    canceled = @team.lanes.create!(name: 'Canceled', position: 2)
+  test 'apply_lane_timestamps! follows the category, not the lane name' do
+    preview = @team.lanes.create!(name: 'Preview', position: 2, category: 'completed')
     issue = @team.issues.create!(title: 'A', lane: @backlog, creator: @user)
 
-    issue.lane_id = canceled.id
+    issue.lane_id = preview.id
     issue.apply_lane_timestamps!
 
-    assert_not_nil issue.canceled_at
+    assert_not_nil issue.completed_at
+  end
+
+  test 'apply_lane_timestamps! keeps completed_at when moving between completed lanes' do
+    verified = @team.lanes.create!(name: 'QA Verified', position: 2, category: 'completed')
+    completed_at = 2.days.ago.change(usec: 0)
+    issue = @team.issues.create!(title: 'A', lane: verified, creator: @user, completed_at: completed_at)
+
+    issue.lane_id = @done.id
+    issue.apply_lane_timestamps!
+
+    assert_equal completed_at, issue.completed_at
+  end
+
+  test 'apply_lane_timestamps! sets started_at once and keeps it across started lanes' do
+    doing = @team.lanes.create!(name: 'In Progress', position: 2, category: 'started')
+    qa = @team.lanes.create!(name: 'Deployed QA', position: 3, category: 'started')
+    issue = @team.issues.create!(title: 'A', lane: @backlog, creator: @user)
+
+    issue.lane_id = doing.id
+    issue.apply_lane_timestamps!
+    issue.save!
+    started_at = issue.started_at
+
+    issue.lane_id = qa.id
+    issue.apply_lane_timestamps!
+
+    assert_not_nil started_at
+    assert_equal started_at, issue.started_at
   end
 
   test 'apply_lane_timestamps! clears canceled_at when moving away from a Cancelled lane' do
-    cancelled = @team.lanes.create!(name: 'Cancelled', position: 2)
+    cancelled = @team.lanes.create!(name: 'Cancelled', position: 2, category: 'canceled')
     issue = @team.issues.create!(
       title: 'A', lane: cancelled, creator: @user, canceled_at: 1.day.ago
     )

@@ -33,13 +33,33 @@ class ProjectDependencyMapsControllerTest < ActionDispatch::IntegrationTest
     assert_equal [[outside.id, a.id], [a.id, b.id]].sort, edges.map { |e| [e['from_id'], e['to_id']] }.sort
   end
 
-  test 'shows the empty state when nothing is linked' do
-    create_issue('Loner')
+  test 'shows unlinked issues alongside linked ones' do
+    loner = create_issue('Loner')
 
     get team_project_dependency_map_path(@team, @project)
 
     assert_response :success
-    assert_match "No dependencies between this project's issues yet.", response.body
+    assert_select "#dep_node_#{loner.id}"
+  end
+
+  test 'hides closed issues unless showing all' do
+    done = @team.lanes.create!(name: 'Done', position: 1, category: 'completed')
+    shipped = create_issue('Shipped', lane: done)
+    open_issue = create_issue('Open')
+
+    get team_project_dependency_map_path(@team, @project)
+    assert_select "#dep_node_#{open_issue.id}"
+    assert_select "#dep_node_#{shipped.id}", count: 0
+
+    get team_project_dependency_map_path(@team, @project, show: 'all')
+    assert_select "#dep_node_#{shipped.id}"
+  end
+
+  test 'shows the empty state when the project has no active issues' do
+    get team_project_dependency_map_path(@team, @project)
+
+    assert_response :success
+    assert_match 'No active issues in this project.', response.body
   end
 
   test "another team's project is not found" do
@@ -52,7 +72,7 @@ class ProjectDependencyMapsControllerTest < ActionDispatch::IntegrationTest
 
   private
 
-  def create_issue(title, project: @project)
-    @team.issues.create!(title: title, lane: @backlog, creator: @user, project: project)
+  def create_issue(title, project: @project, lane: @backlog)
+    @team.issues.create!(title: title, lane: lane, creator: @user, project: project)
   end
 end

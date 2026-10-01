@@ -8,7 +8,7 @@ class IssueDisplayServiceTest < ActiveSupport::TestCase
     @team.team_memberships.create!(user: @user)
 
     @backlog_lane = @team.lanes.create!(name: 'Backlog', position: 0)
-    @done_lane = @team.lanes.create!(name: 'Done', position: 1)
+    @done_lane = @team.lanes.create!(name: 'Done', position: 1, category: 'completed')
 
     @open_issue = @team.issues.create!(
       title: 'Open issue', lane: @backlog_lane, creator: @user
@@ -114,7 +114,7 @@ class IssueDisplayServiceTest < ActiveSupport::TestCase
   end
 
   test 'canceled issues respect the past_* time window the same way completed issues do' do
-    cancelled_lane = @team.lanes.create!(name: 'Cancelled', position: 2)
+    cancelled_lane = @team.lanes.create!(name: 'Cancelled', position: 2, category: 'canceled')
     canceled_recently = @team.issues.create!(
       title: 'C-recent', lane: cancelled_lane, creator: @user, canceled_at: 2.hours.ago
     )

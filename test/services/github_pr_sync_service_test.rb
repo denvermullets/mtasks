@@ -68,7 +68,7 @@ class GithubPrSyncServiceTest < ActiveSupport::TestCase
   end
 
   test 'pr_merged rule with exact branch match moves issues and sets completed_at for Done' do
-    target = Lane.create!(name: 'Done', team: @team, position: 2)
+    target = Lane.create!(name: 'Done', team: @team, position: 2, category: 'completed')
     create_rule(trigger: 'pr_merged', branch_pattern: 'main', lane: target)
 
     sync(build_pr_data(base_ref: 'main', merged: true), action: 'closed')
@@ -99,7 +99,7 @@ class GithubPrSyncServiceTest < ActiveSupport::TestCase
   end
 
   test 'pr_merged with no matching branch rule does not move issues' do
-    done = Lane.create!(name: 'Done', team: @team, position: 2)
+    done = Lane.create!(name: 'Done', team: @team, position: 2, category: 'completed')
     create_rule(trigger: 'pr_merged', branch_pattern: 'main', lane: done)
 
     sync(build_pr_data(base_ref: 'staging', merged: true), action: 'closed')
@@ -183,7 +183,7 @@ class GithubPrSyncServiceTest < ActiveSupport::TestCase
 
   test 'issue first referenced by a merge webhook lands in the pr_merged lane, not In Progress' do
     in_progress = Lane.create!(name: 'In Progress', team: @team, position: 1)
-    done = Lane.create!(name: 'Done', team: @team, position: 2)
+    done = Lane.create!(name: 'Done', team: @team, position: 2, category: 'completed')
     create_rule(trigger: 'pr_opened', lane: in_progress)
     create_rule(trigger: 'pr_merged', branch_pattern: 'main', lane: done)
 
@@ -220,7 +220,7 @@ class GithubPrSyncServiceTest < ActiveSupport::TestCase
   end
 
   test 'moving out of Done clears completed_at via apply_lane_timestamps!' do
-    done = Lane.create!(name: 'Done', team: @team, position: 2)
+    done = Lane.create!(name: 'Done', team: @team, position: 2, category: 'completed')
     in_progress = Lane.create!(name: 'In Progress', team: @team, position: 1)
     create_rule(trigger: 'pr_merged', branch_pattern: 'main', lane: done)
     create_rule(trigger: 'pr_opened', lane: in_progress)

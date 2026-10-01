@@ -8,7 +8,7 @@ module Api
 
         @tracked_result_count = lanes.size
         render json: lanes.map { |l|
-          { id: l.id, name: l.name, position: l.position, color: l.color }
+          { id: l.id, name: l.name, position: l.position, color: l.color, category: l.category }
         }
       end
     end

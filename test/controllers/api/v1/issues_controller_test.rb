@@ -10,7 +10,7 @@ module Api
         @team.team_memberships.create!(user: @user)
 
         @backlog = @team.lanes.create!(name: 'Backlog', position: 0)
-        @done = @team.lanes.create!(name: 'Done', position: 1)
+        @done = @team.lanes.create!(name: 'Done', position: 1, category: 'completed')
 
         @issue = @team.issues.create!(title: 'Existing issue', lane: @backlog, creator: @user)
         @headers = api_headers_for(@user)

@@ -10,12 +10,12 @@ module IconHelper
   end
 
   def render_lane_icon(lane)
-    case lane&.name&.downcase
-    when 'backlog'     then dashed_circle_icon('text-gray-500')
-    when 'in progress' then half_circle_icon('text-yellow-400')
-    when 'done'        then svg_icon('text-green-400', CHECKMARK_CIRCLE)
-    when 'cancelled'   then svg_icon('text-gray-500', X_CIRCLE)
-    else                    circle_icon('text-gray-500')
+    case lane&.category
+    when 'backlog'   then dashed_circle_icon('text-gray-500')
+    when 'started'   then half_circle_icon('text-yellow-400')
+    when 'completed' then svg_icon('text-green-400', CHECKMARK_CIRCLE)
+    when 'canceled'  then svg_icon('text-gray-500', X_CIRCLE)
+    else                  circle_icon('text-gray-500')
     end
   end
 

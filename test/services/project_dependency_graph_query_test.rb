@@ -25,17 +25,34 @@ class ProjectDependencyGraphQueryTest < ActiveSupport::TestCase
     assert_equal 4, result.edges.size
   end
 
-  test 'pulls in directly linked issues from other projects and counts unlinked ones' do
+  test 'pulls in directly linked issues from other projects and keeps unlinked ones' do
     outside = create_issue('Outside', project: @other_project)
     inside = create_issue('Inside')
-    create_issue('Loner')
+    loner = create_issue('Loner')
     create_issue('Unrelated', project: @other_project)
     block(outside, inside)
 
     result = ProjectDependencyGraphQuery.call(project: @project)
 
-    assert_equal [[outside], [inside]], result.columns
-    assert_equal 1, result.unlinked_count
+    assert_equal [[outside, loner], [inside]], result.columns
+  end
+
+  test 'active_only drops closed issues and their links' do
+    done = @team.lanes.create!(name: 'Done', position: 1, category: 'completed')
+    preview = @team.lanes.create!(name: 'Preview', position: 2, category: 'completed')
+    shipped = create_issue('Shipped', lane: done, completed_at: Time.current)
+    # In a completed lane but missing completed_at, e.g. moved before the lane was recategorized.
+    staged = create_issue('Staged', lane: preview)
+    open_issue = create_issue('Open')
+    block(shipped, open_issue)
+    block(staged, open_issue)
+
+    all = ProjectDependencyGraphQuery.call(project: @project)
+    active = ProjectDependencyGraphQuery.call(project: @project, active_only: true)
+
+    assert_equal [shipped, staged, open_issue].map(&:id).sort, all.columns.flatten.map(&:id).sort
+    assert_equal [[open_issue]], active.columns
+    assert_empty active.edges
   end
 
   test 'related-only issues sit beside their partner' do
@@ -68,14 +85,14 @@ class ProjectDependencyGraphQueryTest < ActiveSupport::TestCase
 
     result = ProjectDependencyGraphQuery.call(project: @project)
 
-    assert result.empty?
-    assert_equal 1, result.unlinked_count
+    assert_equal [[a]], result.columns
+    assert_empty result.edges
   end
 
   private
 
-  def create_issue(title, project: @project, **attrs)
-    @team.issues.create!(title: title, lane: @backlog, creator: @user, project: project, **attrs)
+  def create_issue(title, project: @project, lane: @backlog, **attrs)
+    @team.issues.create!(title: title, lane: lane, creator: @user, project: project, **attrs)
   end
 
   def block(from, to)

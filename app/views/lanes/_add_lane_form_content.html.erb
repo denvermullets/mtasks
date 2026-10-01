@@ -13,6 +13,10 @@
         <% end %>
       </div>
 
+      <%= f.select :category, lane_category_options, {},
+          title: "Category",
+          class: "px-2 py-1 bg-background border border-stroke rounded text-gray-200 text-sm focus:outline-none focus:border-accent cursor-pointer" %>
+
       <!-- Position (blank = add at end) -->
       <%= f.number_field :position,
           min: 0,

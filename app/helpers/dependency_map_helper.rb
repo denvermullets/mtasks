@@ -31,6 +31,6 @@ module DependencyMapHelper
   end
 
   def dependency_node_closed?(issue)
-    issue.completed_at.present? || issue.canceled_at.present?
+    issue.closed?
   end
 end

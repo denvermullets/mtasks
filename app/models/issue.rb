@@ -51,6 +51,9 @@ class Issue < ApplicationRecord
   scope :not_completed, -> { where(completed_at: nil) }
   scope :in_progress, -> { where.not(started_at: nil).where(completed_at: nil, canceled_at: nil) }
   scope :unresolved, -> { where(archived_at: nil, completed_at: nil, canceled_at: nil) }
+  # Unresolved and not sitting in a completed/canceled lane (covers issues whose timestamps
+  # predate the lane's category).
+  scope :active, -> { unresolved.where.not(lane_id: Lane.unscoped.closed.select(:id)) }
   scope :due_on_or_before, ->(date) { where.not(due_date: nil).where(due_date: ..date) }
   scope :due_between, ->(from, to) { where(due_date: from..to) }
   scope :hot, -> { where(priority: %i[urgent high]) }
@@ -94,36 +97,26 @@ class Issue < ApplicationRecord
     completed_at.present?
   end
 
+  def closed?
+    completed_at.present? || canceled_at.present? || lane&.closed?
+  end
+
   def time_in_current_status
     last_lane_change = versions.where('object_changes::text LIKE ?', '%"lane_id"%').order(:created_at).last
     started_at = last_lane_change&.created_at || created_at
     Time.current - started_at
   end
 
-  CANCELED_LANE_NAMES = %w[cancelled canceled].freeze
-
+  # Timestamps follow the lane's category, so they only move when an issue crosses categories:
+  # QA Verified -> Production deployed (both completed) keeps the original completed_at, and
+  # bouncing back to a started lane clears it. started_at is set once and never reset.
   def apply_lane_timestamps!
     return unless lane_id_changed?
 
-    new_lane_name = Lane.find_by(id: lane_id)&.name&.downcase
-    apply_completion_timestamp(new_lane_name)
-    apply_cancellation_timestamp(new_lane_name)
-  end
-
-  def apply_completion_timestamp(new_lane_name)
-    if new_lane_name == 'done'
-      self.completed_at = Time.current
-    elsif completed_at.present?
-      self.completed_at = nil
-    end
-  end
-
-  def apply_cancellation_timestamp(new_lane_name)
-    if CANCELED_LANE_NAMES.include?(new_lane_name)
-      self.canceled_at = Time.current
-    elsif canceled_at.present?
-      self.canceled_at = nil
-    end
+    category = Lane.find_by(id: lane_id)&.category
+    self.started_at ||= Time.current if category == 'started'
+    self.completed_at = category_timestamp(completed_at, category == 'completed')
+    self.canceled_at = category_timestamp(canceled_at, category == 'canceled')
   end
 
   def remove_blocking_dependencies!
@@ -154,6 +147,11 @@ class Issue < ApplicationRecord
   end
 
   private
+
+  # Keeps an existing timestamp while the issue stays in the category, and clears it on the way out.
+  def category_timestamp(current, in_category)
+    in_category ? current || Time.current : nil
+  end
 
   def assign_team_number
     return if team_number.present?

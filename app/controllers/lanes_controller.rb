@@ -67,7 +67,7 @@ class LanesController < ApplicationController
   end
 
   def lane_params
-    params.require(:lane).permit(:name, :color, :position)
+    params.require(:lane).permit(:name, :color, :position, :category)
   end
 
   def authorize_team_membership!
