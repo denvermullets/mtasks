@@ -122,6 +122,17 @@ export default class extends Controller {
     if (event.key === "Escape") this.close();
   }
 
+  // Projects are usually tracked as a whole, so ticking one turns on its "All issues" toggle.
+  // Only a user's click does this; open() restores saved groups exactly as they were.
+  projectToggled(event) {
+    const box = event.target;
+    if (!box.checked) return;
+
+    const all = box.closest("[data-dashboard-group-form-target~='projectRow']")
+      ?.querySelector("[data-dashboard-group-form-target~='allProject']");
+    if (all) all.checked = true;
+  }
+
   // Teams and labels have no search box when their list is empty, so collect whichever exist.
   searchTargets() {
     return [

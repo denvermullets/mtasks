@@ -6,7 +6,7 @@ module DashboardPage
 
   # Query params that identify the view the user was on; every redirect and form URL keeps them.
   # `team` (not `team_id`): TeamScoped#set_current_team reads params[:team_id] into the session.
-  RETURN_PARAMS = %w[filter mine q team].freeze
+  RETURN_PARAMS = %w[filter mine q team sort assignee label status].freeze
 
   included do
     helper_method :dashboard_return_params
@@ -25,13 +25,28 @@ module DashboardPage
     @modal_teams = modal_teams
     @modal_projects = modal_projects(@modal_teams.map(&:id))
     @modal_labels = Label.where(team_id: @modal_teams.map(&:id)).order(:name).group_by(&:team_id)
-    # Teams offered in the header picker: only those behind this dashboard's sources, sidebar order.
+    load_header_pickers
+  end
+
+  # Options for the header pickers: only teams behind this dashboard's sources (sidebar order),
+  # their members, and their label names.
+  def load_header_pickers
     @filter_teams = @modal_teams.select { |team| @result.team_ids.include?(team.id) }
+    @filter_assignees = filter_assignees(@result.team_ids)
+    @filter_label_names = Label.where(team_id: @result.team_ids).distinct.order(:name).pluck(:name)
   end
 
   # URL param -> query option. `team` on the wire, `team_id` in the service (see RETURN_PARAMS).
   def query_options
-    { filter: params[:filter], mine: params[:mine], search: params[:q], team_id: params[:team] }
+    refinements = DashboardRefinements.new(sort: params[:sort], assignee: params[:assignee],
+                                           label: params[:label], status: params[:status])
+    { filter: params[:filter], mine: params[:mine], search: params[:q], team_id: params[:team],
+      refinements: refinements }
+  end
+
+  # Members of the teams behind this dashboard's sources, for the header's assignee picker.
+  def filter_assignees(team_ids)
+    User.where(id: TeamMembership.where(team_id: team_ids).select(:user_id)).order(:name)
   end
 
   # Same order as the sidebar: owned teams first, each half in the user's saved order.

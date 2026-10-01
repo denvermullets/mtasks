@@ -8,12 +8,13 @@ class DashboardIssuesQuery < Service
   # up in the date tabs without dating every issue. Needs `projects` joined (see base_scope).
   DUE_DATE_SQL = 'COALESCE(issues.due_date, projects.due_date)'.freeze
 
-  # `search` narrows the rows only; `team_id` (already validated against the user's teams)
-  # narrows rows and counts; `team_ids` are the accessible teams behind this dashboard's
-  # sources, for the header's team picker. Each `groups` entry is { group:, issues:, inaccessible: },
-  # where `inaccessible` means the group has sources but nothing the user can still see is left
-  # to match.
-  Result = Data.define(:groups, :due_today_count, :overdue_count, :filter, :today, :search, :team_id, :team_ids)
+  # `search` narrows the rows only; `team_id` (already validated against the user's teams) and
+  # `refinements` (sort + header pickers) narrow rows and counts; `team_ids` are the accessible
+  # teams behind this dashboard's sources, for the header's pickers. Each `groups` entry is
+  # { group:, issues:, inaccessible: }, where `inaccessible` means the group has sources but
+  # nothing the user can still see is left to match.
+  Result = Data.define(:groups, :due_today_count, :overdue_count, :filter, :today, :search, :team_id, :team_ids,
+                       :refinements)
   # Teams and projects define the group's pool: `team_ids` / `project_ids` are every such source,
   # `all_*` the subset that shows every issue (the rest only contribute issues assigned to the user).
   # Labels narrow that pool to issues carrying any of `label_ids`; a labels-only group pools every
@@ -29,7 +30,11 @@ class DashboardIssuesQuery < Service
 
   # Every option past `dashboard:` mirrors one URL param; they're keywords with defaults, so
   # the count is fine here.
-  def initialize(user:, dashboard:, filter: DEFAULT_FILTER, mine: false, today: nil, search: nil, team_id: nil) # rubocop:disable Metrics/ParameterLists
+  # `refinements` is a DashboardRefinements (sort + assignee/label/status pickers).
+  # rubocop:disable Metrics/ParameterLists
+  def initialize(user:, dashboard:, filter: DEFAULT_FILTER, mine: false, today: nil, search: nil, team_id: nil,
+                 refinements: DashboardRefinements.new)
+    # rubocop:enable Metrics/ParameterLists
     @user = user
     @dashboard = dashboard
     @filter = FILTERS.include?(filter.to_s) ? filter.to_s : DEFAULT_FILTER
@@ -37,6 +42,7 @@ class DashboardIssuesQuery < Service
     @today = today || Time.current.in_time_zone(user.time_zone).to_date
     @search = search.to_s.strip
     @requested_team_id = team_id
+    @refinements = refinements
   end
 
   def call
@@ -52,7 +58,8 @@ class DashboardIssuesQuery < Service
       today: @today,
       search: @search,
       team_id: team_id,
-      team_ids: all_sources.flat_map { |sources| source_team_ids(sources) }.uniq
+      team_ids: all_sources.flat_map { |sources| source_team_ids(sources) }.uniq,
+      refinements: @refinements
     )
   end
 
@@ -138,7 +145,7 @@ class DashboardIssuesQuery < Service
     scope = source_scope(scope, sources)
     scope = scope.where(assignee_id: @user.id) if @mine
     scope = scope.where(team_id: team_id) if team_id
-    scope
+    @refinements.narrow(scope, accessible_team_ids)
   end
 
   def source_scope(scope, sources)
@@ -165,7 +172,7 @@ class DashboardIssuesQuery < Service
 
     apply_filter(base_scope(sources).matching_search(@search))
       .includes(:team, :project, :assignee, :lane)
-      .order(Arel.sql("#{DUE_DATE_SQL} ASC NULLS LAST"), :priority, :id)
+      .order(*@refinements.order)
       .to_a
   end
 

@@ -6,6 +6,21 @@ module DashboardsHelper
     ['open', 'All open']
   ].freeze
 
+  SORT_OPTIONS = [
+    ['Sort: Due date', 'due'],
+    ['Sort: Priority', 'priority'],
+    ['Sort: Recently updated', 'updated'],
+    ['Sort: Newest', 'created']
+  ].freeze
+
+  # Lane categories, labelled the way team settings label them.
+  STATUS_OPTIONS = [['Any status', '']].concat(
+    DashboardRefinements::STATUSES.map { |status| [LanesHelper::LANE_CATEGORY_LABELS[status], status] }
+  ).freeze
+
+  # Header picker params a tab / Mine-only link carries over unchanged.
+  KEPT_VIEW_PARAMS = %w[q team sort assignee label status].freeze
+
   # Tailwind background class for the row's priority dot; colors match IconHelper#render_priority_icon.
   # Lives here rather than IssuesHelper only because that module is at its length limit.
   PRIORITY_DOT_CLASSES = {
@@ -52,10 +67,10 @@ module DashboardsHelper
     params
   end
 
-  # Builds a dashboard URL for a tab / Mine-only link. Keeps the current search and team
-  # filter so switching tabs never resets them (blank values are dropped, see DashboardPage).
+  # Builds a dashboard URL for a tab / Mine-only link. Keeps the current search, sort and pickers
+  # so switching tabs never resets them (blank values are dropped, see DashboardPage).
   def dashboard_filter_path(dashboard, filter:, mine:)
-    kept = request.query_parameters.slice('q', 'team').compact_blank
+    kept = request.query_parameters.slice(*KEPT_VIEW_PARAMS).compact_blank
     dashboard_path(dashboard, kept.merge(dashboard_view_params(filter: filter, mine: mine)))
   end
 

@@ -292,6 +292,85 @@ class DashboardIssuesQueryTest < ActiveSupport::TestCase
     assert_equal [overdue, today_urgent, today_low, later, no_date], issues_for(query(filter: 'open'), group)
   end
 
+  test 'sort=priority orders by priority, then due date' do
+    group = group_with(@team_a)
+    low = create_issue(@team_a, due_date: TODAY - 5, priority: :low)
+    urgent_later = create_issue(@team_a, due_date: TODAY + 2, priority: :urgent)
+    urgent_soon = create_issue(@team_a, due_date: TODAY, priority: :urgent)
+
+    assert_equal [urgent_soon, urgent_later, low], issues_for(query(filter: 'open', sort: 'priority'), group)
+  end
+
+  test 'sort=updated and sort=created put the newest first' do
+    group = group_with(@team_a)
+    old = create_issue(@team_a, created_at: 3.days.ago, updated_at: 1.hour.ago)
+    fresh = create_issue(@team_a, created_at: 1.day.ago, updated_at: 2.days.ago)
+
+    assert_equal [old, fresh], issues_for(query(filter: 'open', sort: 'updated'), group)
+    assert_equal [fresh, old], issues_for(query(filter: 'open', sort: 'created'), group)
+  end
+
+  test 'an invalid sort falls back to due date' do
+    assert_equal 'due', query(sort: 'issues.id; drop table').refinements.sort
+  end
+
+  # --- header pickers ------------------------------------------------------
+
+  test 'assignee narrows rows and counts to that user' do
+    group = group_with(@team_a)
+    theirs = create_issue(@team_a, due_date: TODAY, assignee: @other_user)
+    create_issue(@team_a, due_date: TODAY, assignee: @user)
+    create_issue(@team_a, due_date: TODAY)
+
+    result = query(assignee: @other_user.id.to_s)
+    assert_equal [theirs], issues_for(result, group)
+    assert_equal 1, result.due_today_count
+    assert_equal @other_user.id.to_s, result.refinements.assignee
+  end
+
+  test 'assignee=none shows unassigned issues' do
+    group = group_with(@team_a)
+    create_issue(@team_a, due_date: TODAY, assignee: @user)
+    unassigned = create_issue(@team_a, due_date: TODAY)
+
+    assert_equal [unassigned], issues_for(query(assignee: 'none'), group)
+  end
+
+  test 'a junk assignee is ignored' do
+    group = group_with(@team_a)
+    issue = create_issue(@team_a, due_date: TODAY)
+
+    result = query(assignee: 'abc')
+    assert_nil result.refinements.assignee
+    assert_equal [issue], issues_for(result, group)
+  end
+
+  test 'label matches by name across teams and narrows counts' do
+    group = group_with(@team_a, @team_b)
+    bug_a = create_issue(@team_a, due_date: TODAY)
+    bug_a.labels << @team_a.labels.create!(name: 'bug', color: '#ff0000')
+    bug_b = create_issue(@team_b, due_date: TODAY)
+    bug_b.labels << @team_b.labels.create!(name: 'bug', color: '#ff0000')
+    create_issue(@team_a, due_date: TODAY).labels << @team_a.labels.create!(name: 'docs', color: '#00ff00')
+
+    result = query(label: 'bug')
+    assert_equal [bug_a, bug_b].sort_by(&:id), issues_for(result, group).sort_by(&:id)
+    assert_equal 2, result.due_today_count
+  end
+
+  test 'status narrows to issues in lanes of that category' do
+    group = group_with(@team_a)
+    started = create_issue(@team_a, due_date: TODAY, lane: @team_a.lanes.find_by!(category: 'started'))
+    create_issue(@team_a, due_date: TODAY, lane: @team_a.lanes.find_by!(category: 'backlog'))
+
+    assert_equal [started], issues_for(query(status: 'started'), group)
+  end
+
+  test 'a closed or unknown status is ignored' do
+    assert_nil query(status: 'completed').refinements.status
+    assert_nil query(status: 'nope').refinements.status
+  end
+
   # --- today / time zone ---------------------------------------------------
 
   test 'today follows the user time zone' do
@@ -510,8 +589,11 @@ class DashboardIssuesQueryTest < ActiveSupport::TestCase
 
   private
 
-  def query(today: TODAY, **)
-    DashboardIssuesQuery.call(user: @user, dashboard: @dashboard, today: today, **)
+  # Picker kwargs (sort/assignee/label/status) go through DashboardRefinements, as DashboardPage does.
+  def query(today: TODAY, **options)
+    picks = options.extract!(:sort, :assignee, :label, :status)
+    DashboardIssuesQuery.call(user: @user, dashboard: @dashboard, today: today,
+                              refinements: DashboardRefinements.new(**picks), **options)
   end
 
   # Sources show every issue by default here; the assigned-to-me default has its own tests.

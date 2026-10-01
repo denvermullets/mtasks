@@ -309,6 +309,33 @@ class DashboardsControllerTest < ActionDispatch::IntegrationTest
                   text: /Mine only/
   end
 
+  test 'the header form offers assignee, label, status and sort pickers' do
+    dashboard = @user.dashboards.create!(name: 'Today')
+    group_with(dashboard, @team)
+    @team.labels.create!(name: 'bug', color: '#ff0000')
+    @other_team.labels.create!(name: 'secret', color: '#ff0000')
+
+    get dashboard_path(dashboard, assignee: 'none', label: 'bug', status: 'started', sort: 'priority')
+
+    assert_select 'select[name=assignee] option[selected][value=none]', text: 'Unassigned'
+    assert_select 'select[name=assignee] option', text: 'Dash User'
+    assert_select 'select[name=assignee] option', text: 'Other', count: 0
+    assert_select 'select[name=label] option[selected][value=bug]'
+    assert_select 'select[name=label] option', text: 'secret', count: 0
+    assert_select 'select[name=status] option[selected][value=started]'
+    assert_select 'select[name=sort] option[selected][value=priority]'
+  end
+
+  test 'tabs keep the sort and pickers' do
+    dashboard = @user.dashboards.create!(name: 'Today')
+    group_with(dashboard, @team)
+
+    pickers = { sort: 'updated', assignee: 'none', label: 'bug', status: 'backlog' }
+    get dashboard_path(dashboard, pickers)
+
+    assert_select "a[role=tab][href='#{dashboard_path(dashboard, filter: 'hot', **pickers)}']", text: 'Urgent / High'
+  end
+
   test 'blank q and team, as the form submits them, render unfiltered and drop out of tab links' do
     dashboard = @user.dashboards.create!(name: 'Today')
     group_with(dashboard, @team)

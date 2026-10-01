@@ -122,6 +122,7 @@
                    data-action="input->dashboard-group-form#applyProjectVisibility"
                    class="<%= search_class %>">
           </div>
+          <p class="text-xs text-gray-500 mb-1.5">A project shows every issue in it. Untick <span class="text-gray-400">All issues</span> to see only yours.</p>
           <%# One blank entry so the key always posts (clearing every box still means "no projects"). %>
           <%= hidden_field_tag "dashboard_group[project_ids][]", "", id: nil %>
           <div class="rounded-md border border-stroke bg-background p-1 max-h-56 overflow-y-auto">
@@ -141,7 +142,7 @@
                      data-search="<%= b.text.to_s.downcase %>"
                      data-completed="<%= completed %>">
                   <label class="<%= row_label_class %>">
-                    <%= b.check_box class: check_class, data: { dashboard_group_form_target: "project", source: true, action: "change->dashboard-group-form#applyLabelVisibility" } %>
+                    <%= b.check_box class: check_class, data: { dashboard_group_form_target: "project", source: true, action: "change->dashboard-group-form#projectToggled change->dashboard-group-form#applyLabelVisibility" } %>
                     <span class="truncate"><%= b.text %></span>
                     <% if completed %>
                       <span class="text-[10px] text-gray-500 ml-auto shrink-0">completed</span>
