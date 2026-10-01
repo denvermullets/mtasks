@@ -1,11 +1,9 @@
-# The dashboard header's sort and pickers (assignee, label, lane category), normalized from URL
+# The dashboard header's sort and pickers (assignee, label, lane), normalized from URL
 # params. Unknown values fall back to "no filter" / the default sort, so a forged param is harmless:
 # every picker only narrows issues DashboardIssuesQuery already allows.
 class DashboardRefinements
   SORTS = %w[due priority updated created].freeze
   DEFAULT_SORT = 'due'.freeze
-  # Lane categories offered in the status picker; closed ones never show (issues are unresolved).
-  STATUSES = %w[backlog unstarted started].freeze
   # `assignee=none` means unassigned issues.
   UNASSIGNED = 'none'.freeze
 
@@ -18,14 +16,20 @@ class DashboardRefinements
     @sort = SORTS.include?(sort.to_s) ? sort.to_s : DEFAULT_SORT
     @assignee = normalize_assignee(assignee)
     @label = label.to_s.strip.presence
-    @status = STATUSES.include?(status.to_s) ? status.to_s : nil
+    @status = status.to_s.strip.presence
   end
 
-  # Labels match by name, so "bug" covers every team's bug label; `team_ids` keeps that to teams
-  # the user can see.
+  # Issues the dashboard starts from. With no status picked, completed/canceled issues stay hidden;
+  # picking a lane (even a closed one like Done) shows whatever sits in it.
+  def base_scope
+    @status ? Issue.not_archived : Issue.unresolved
+  end
+
+  # Labels and lanes match by name, so "bug" / "In Progress" cover every team's label / lane of that
+  # name; `team_ids` keeps that to teams the user can see.
   def narrow(scope, team_ids)
     scope = scope.where(assignee_id: @assignee == UNASSIGNED ? nil : @assignee.to_i) if @assignee
-    scope = scope.where(lane_id: Lane.unscoped.where(category: @status).select(:id)) if @status
+    scope = scope.where(lane_id: Lane.unscoped.where(team_id: team_ids, name: @status).select(:id)) if @status
     return scope unless @label
 
     labeled = IssueLabel.joins(:label).where(labels: { name: @label, team_id: team_ids })

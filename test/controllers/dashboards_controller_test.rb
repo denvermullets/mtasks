@@ -315,14 +315,15 @@ class DashboardsControllerTest < ActionDispatch::IntegrationTest
     @team.labels.create!(name: 'bug', color: '#ff0000')
     @other_team.labels.create!(name: 'secret', color: '#ff0000')
 
-    get dashboard_path(dashboard, assignee: 'none', label: 'bug', status: 'started', sort: 'priority')
+    get dashboard_path(dashboard, assignee: 'none', label: 'bug', status: 'In Progress', sort: 'priority')
 
     assert_select 'select[name=assignee] option[selected][value=none]', text: 'Unassigned'
     assert_select 'select[name=assignee] option', text: 'Dash User'
     assert_select 'select[name=assignee] option', text: 'Other', count: 0
     assert_select 'select[name=label] option[selected][value=bug]'
     assert_select 'select[name=label] option', text: 'secret', count: 0
-    assert_select 'select[name=status] option[selected][value=started]'
+    assert_select 'select[name=status] option[selected][value=?]', 'In Progress'
+    assert_select 'select[name=status] option', text: 'Done'
     assert_select 'select[name=sort] option[selected][value=priority]'
   end
 
@@ -330,7 +331,7 @@ class DashboardsControllerTest < ActionDispatch::IntegrationTest
     dashboard = @user.dashboards.create!(name: 'Today')
     group_with(dashboard, @team)
 
-    pickers = { sort: 'updated', assignee: 'none', label: 'bug', status: 'backlog' }
+    pickers = { sort: 'updated', assignee: 'none', label: 'bug', status: 'Backlog' }
     get dashboard_path(dashboard, pickers)
 
     assert_select "a[role=tab][href='#{dashboard_path(dashboard, filter: 'hot', **pickers)}']", text: 'Urgent / High'

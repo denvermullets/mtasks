@@ -29,11 +29,12 @@ module DashboardPage
   end
 
   # Options for the header pickers: only teams behind this dashboard's sources (sidebar order),
-  # their members, and their label names.
+  # their members, their label names, and their lane names (board order).
   def load_header_pickers
     @filter_teams = @modal_teams.select { |team| @result.team_ids.include?(team.id) }
     @filter_assignees = filter_assignees(@result.team_ids)
     @filter_label_names = Label.where(team_id: @result.team_ids).distinct.order(:name).pluck(:name)
+    @filter_lane_names = Lane.where(team_id: @result.team_ids).reorder(:position, :id).pluck(:name).uniq
   end
 
   # URL param -> query option. `team` on the wire, `team_id` in the service (see RETURN_PARAMS).

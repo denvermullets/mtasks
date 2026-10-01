@@ -13,11 +13,6 @@ module DashboardsHelper
     ['Sort: Newest', 'created']
   ].freeze
 
-  # Lane categories, labelled the way team settings label them.
-  STATUS_OPTIONS = [['Any status', '']].concat(
-    DashboardRefinements::STATUSES.map { |status| [LanesHelper::LANE_CATEGORY_LABELS[status], status] }
-  ).freeze
-
   # Header picker params a tab / Mine-only link carries over unchanged.
   KEPT_VIEW_PARAMS = %w[q team sort assignee label status].freeze
 

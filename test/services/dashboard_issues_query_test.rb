@@ -358,17 +358,42 @@ class DashboardIssuesQueryTest < ActiveSupport::TestCase
     assert_equal 2, result.due_today_count
   end
 
-  test 'status narrows to issues in lanes of that category' do
-    group = group_with(@team_a)
-    started = create_issue(@team_a, due_date: TODAY, lane: @team_a.lanes.find_by!(category: 'started'))
-    create_issue(@team_a, due_date: TODAY, lane: @team_a.lanes.find_by!(category: 'backlog'))
+  test 'status narrows to issues in lanes of that name across teams' do
+    group = group_with(@team_a, @team_b)
+    started_a = create_issue(@team_a, due_date: TODAY, lane: @team_a.lanes.find_by!(name: 'In Progress'))
+    started_b = create_issue(@team_b, due_date: TODAY, lane: @team_b.lanes.find_by!(name: 'In Progress'))
+    create_issue(@team_a, due_date: TODAY, lane: @team_a.lanes.find_by!(name: 'Backlog'))
 
-    assert_equal [started], issues_for(query(status: 'started'), group)
+    result = query(status: 'In Progress')
+    assert_equal [started_a, started_b].sort_by(&:id), issues_for(result, group).sort_by(&:id)
+    assert_equal 2, result.due_today_count
   end
 
-  test 'a closed or unknown status is ignored' do
-    assert_nil query(status: 'completed').refinements.status
-    assert_nil query(status: 'nope').refinements.status
+  test 'completed and canceled issues are hidden by default' do
+    group = group_with(@team_a)
+    open_issue = create_issue(@team_a, due_date: TODAY)
+    create_issue(@team_a, due_date: TODAY, lane: @team_a.lanes.find_by!(name: 'Done'), completed_at: 1.day.ago)
+    create_issue(@team_a, due_date: TODAY, lane: @team_a.lanes.find_by!(name: 'Cancelled'), canceled_at: 1.day.ago)
+
+    result = query
+    assert_equal [open_issue], issues_for(result, group)
+    assert_equal 1, result.due_today_count
+  end
+
+  test 'picking a closed lane shows its issues, timestamps and all' do
+    group = group_with(@team_a)
+    done = create_issue(@team_a, due_date: TODAY, lane: @team_a.lanes.find_by!(name: 'Done'),
+                                 completed_at: 1.day.ago)
+    create_issue(@team_a, due_date: TODAY)
+
+    assert_equal [done], issues_for(query(status: 'Done'), group)
+  end
+
+  test 'an unknown status matches nothing' do
+    group = group_with(@team_a)
+    create_issue(@team_a, due_date: TODAY)
+
+    assert_equal [], issues_for(query(status: 'nope'), group)
   end
 
   # --- today / time zone ---------------------------------------------------

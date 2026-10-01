@@ -141,7 +141,7 @@ class DashboardIssuesQuery < Service
   def base_scope(sources)
     return Issue.none if sources.empty?
 
-    scope = Issue.unresolved.left_joins(:project).where(team_id: accessible_team_ids)
+    scope = @refinements.base_scope.left_joins(:project).where(team_id: accessible_team_ids)
     scope = source_scope(scope, sources)
     scope = scope.where(assignee_id: @user.id) if @mine
     scope = scope.where(team_id: team_id) if team_id

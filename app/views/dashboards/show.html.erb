@@ -111,7 +111,7 @@
                   class: picker_class %>
             <% end %>
             <%= select_tag :status,
-                options_for_select(DashboardsHelper::STATUS_OPTIONS, @result.refinements.status),
+                options_for_select([["Any status", ""]] + @filter_lane_names, @result.refinements.status),
                 aria: { label: "Status" },
                 data: { action: "change->auto-submit#submit" },
                 class: picker_class %>
