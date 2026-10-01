@@ -71,7 +71,7 @@ class DashboardGroup < ApplicationRecord
 
       if target.between?(0, siblings.size - 1)
         siblings[index], siblings[target] = siblings[target], siblings[index]
-        renumber(siblings)
+        dashboard.renumber_groups(siblings)
       end
     end
 
@@ -88,12 +88,6 @@ class DashboardGroup < ApplicationRecord
       source = sources.find_or_initialize_by(source_type: type, source_id: id)
       source.include_all = all_ids.include?(id)
       source.save! if source.changed?
-    end
-  end
-
-  def renumber(groups)
-    groups.each.with_index(1) do |group, pos|
-      group.update_column(:position, pos) unless group.position == pos
     end
   end
 end

@@ -1,5 +1,5 @@
 <%# locals: (dashboard:, group:, issues:, inaccessible:, filter:, mine:, today:) %>
-<%# The ⋮ menu is a sibling of the <details>, not a child: anything inside <details> other than the
+<%# The ⋮ menu and drag handle are siblings of the <details>, not children: anything inside <details> other than the
     summary is hidden when it collapses, <form> isn't allowed inside <summary>, and the card clips overflow. %>
 <% group_url = dashboard_group_path(dashboard, group, dashboard_return_params) %>
 <%# Params for the group modal's edit mode; shared by the ⋮ menu's Edit and the inaccessible-state link. %>
@@ -18,11 +18,19 @@
      dashboard_group_form_all_project_ids_param: group.all_project_ids.to_json,
      dashboard_group_form_delete_url_param: group_url
    } %>
-<div class="relative">
+<div class="relative" data-group-id="<%= group.id %>">
+  <%# Drag handle for reordering; a sibling of <details> so grabbing it doesn't toggle the card. %>
+  <span data-dashboard-group-handle
+        class="absolute left-1.5 top-3 z-10 text-gray-500 hover:text-gray-300 cursor-grab active:cursor-grabbing"
+        title="Drag to reorder">
+    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+      <path d="M7 4a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm6 0a1.5 1.5 0 110 3 1.5 1.5 0 010-3zM7 8.5a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm6 0a1.5 1.5 0 110 3 1.5 1.5 0 010-3zM7 13a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm6 0a1.5 1.5 0 110 3 1.5 1.5 0 010-3z"></path>
+    </svg>
+  </span>
   <details open
            id="<%= dom_id(group) %>"
            class="group rounded-xl border border-stroke bg-foreground overflow-hidden">
-    <summary class="list-none w-full flex items-start justify-between gap-3 pl-4 pr-12 py-3 cursor-pointer select-none">
+    <summary class="list-none w-full flex items-start justify-between gap-3 pl-7 pr-12 py-3 cursor-pointer select-none">
       <div class="min-w-0">
         <div class="flex items-center gap-2 min-w-0">
           <span class="w-2 h-2 rounded-full shrink-0" style="background-color: <%= group.color %>;"></span>

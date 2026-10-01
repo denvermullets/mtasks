@@ -173,7 +173,9 @@
           </button>
         </div>
       <% else %>
-        <div class="space-y-3">
+        <div class="space-y-3"
+             data-controller="dashboard-group-order"
+             data-dashboard-group-order-url-value="<%= reorder_dashboard_groups_path(@dashboard) %>">
           <% @result.groups.each do |entry| %>
             <%= render "dashboards/group",
                 dashboard: @dashboard,

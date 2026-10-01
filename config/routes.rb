@@ -108,6 +108,7 @@ Rails.application.routes.draw do
   resources :dashboards, only: %i[index show create update destroy] do
     resources :groups, only: %i[create update destroy], controller: 'dashboard_groups' do
       patch :move, on: :member # params[:direction] = "up" | "down"
+      patch :reorder, on: :collection # params[:ids] = every group id in display order
     end
   end
 

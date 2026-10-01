@@ -34,6 +34,12 @@ class DashboardGroupsController < ApplicationController
     redirect_to return_path
   end
 
+  # Drag-and-drop on the dashboard. The page already shows the new order, so there's nothing to render.
+  def reorder
+    @dashboard.reorder_groups!(params[:ids])
+    head :no_content
+  end
+
   private
 
   def set_dashboard

@@ -27,6 +27,25 @@ class DashboardTest < ActiveSupport::TestCase
     assert_equal [first, second, third], dashboard.groups.reload.to_a
   end
 
+  test 'reorder_groups! follows the given ids and renumbers from 1' do
+    dashboard = @user.dashboards.create!(name: 'Today')
+    a, b, c = %w[A B C].map { |name| dashboard.groups.create!(name: name, position: 0) }
+
+    dashboard.reorder_groups!([c.id, a.id, b.id].map(&:to_s))
+
+    assert_equal [c, a, b], dashboard.groups.reload.to_a
+    assert_equal [1, 2, 3], dashboard.groups.map(&:position)
+  end
+
+  test 'reorder_groups! keeps unlisted groups at the end and ignores unknown ids' do
+    dashboard = @user.dashboards.create!(name: 'Today')
+    a, b, c = %w[A B C].each_with_index.map { |name, i| dashboard.groups.create!(name: name, position: i + 1) }
+
+    dashboard.reorder_groups!([c.id, 999_999])
+
+    assert_equal [c, a, b], dashboard.groups.reload.to_a
+  end
+
   test 'user dashboards are ordered by position' do
     later = @user.dashboards.create!(name: 'Later', position: 2)
     sooner = @user.dashboards.create!(name: 'Sooner', position: 1)

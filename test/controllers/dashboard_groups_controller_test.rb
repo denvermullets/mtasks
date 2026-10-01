@@ -212,6 +212,24 @@ class DashboardGroupsControllerTest < ActionDispatch::IntegrationTest
     assert_response :bad_request
   end
 
+  test 'reorder saves the dragged order' do
+    a, b, c = %w[A B C].each_with_index.map { |name, i| @dashboard.groups.create!(name: name, position: i + 1) }
+
+    patch reorder_dashboard_groups_path(@dashboard), params: { ids: [b.id, c.id, a.id] }
+
+    assert_response :no_content
+    assert_equal [b, c, a], @dashboard.groups.reload.to_a
+  end
+
+  test "reorder ignores another dashboard's group ids" do
+    a, b = %w[A B].each_with_index.map { |name, i| @dashboard.groups.create!(name: name, position: i + 1) }
+
+    patch reorder_dashboard_groups_path(@dashboard), params: { ids: [@other_group.id, b.id, a.id] }
+
+    assert_equal [b, a], @dashboard.groups.reload.to_a
+    assert_equal 0, @other_group.reload.position
+  end
+
   # --- access ----------------------------------------------------------------
 
   test "another user's dashboard or group is not found" do
@@ -223,6 +241,9 @@ class DashboardGroupsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
 
     patch move_dashboard_group_path(@other_dashboard, @other_group), params: { direction: 'down' }
+    assert_response :not_found
+
+    patch reorder_dashboard_groups_path(@other_dashboard), params: { ids: [@other_group.id] }
     assert_response :not_found
 
     delete dashboard_group_path(@other_dashboard, @other_group)
@@ -255,6 +276,10 @@ class DashboardGroupsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-dashboard-group-form-url-param='#{dashboard_group_path(@dashboard, group, kept)}']" \
                   "[data-dashboard-group-form-team-ids-param='[#{@team.id}]']"
     assert_select "form[action='#{move_dashboard_group_path(@dashboard, group, kept)}']", count: 2
+    assert_select "[data-controller='dashboard-group-order']" \
+                  "[data-dashboard-group-order-url-value='#{reorder_dashboard_groups_path(@dashboard)}']" do
+      assert_select "[data-group-id='#{group.id}'] [data-dashboard-group-handle]"
+    end
     assert_select "input[type=checkbox][value='#{@team.id}'][name='dashboard_group[team_ids][]']"
     assert_select "input[type=checkbox][value='#{@team.id}'][name='dashboard_group[all_team_ids][]']"
     assert_select "[data-completed=true] input[value='#{completed.id}']"
