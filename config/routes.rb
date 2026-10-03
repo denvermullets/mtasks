@@ -155,7 +155,10 @@ Rails.application.routes.draw do
   # GitHub Webhooks
   namespace :webhooks do
     resource :github, only: [:create], controller: 'github'
-    post 'hourglass/:workspace_id', to: 'hourglass#create', as: :hourglass
+    # Legacy workspace-addressed URL, kept only for Hourglass servers configured before webhooks were
+    # addressed per integration. Resolves only when the workspace has exactly one active integration.
+    post 'hourglass/:workspace_id', to: 'hourglass#create', as: :hourglass_legacy, constraints: { workspace_id: /\d+/ }
+    post 'hourglass/:public_id', to: 'hourglass#create', as: :hourglass
   end
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

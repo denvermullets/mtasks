@@ -57,7 +57,7 @@
     <dl class="text-sm space-y-2">
       <div>
         <dt class="text-gray-400">Webhook URL</dt>
-        <dd class="text-gray-200 font-mono break-all"><%= "#{request.protocol}#{request.host_with_port}/webhooks/hourglass/#{integration.workspace_id}" %></dd>
+        <dd class="text-gray-200 font-mono break-all"><%= webhooks_hourglass_url(public_id: integration.public_id) %></dd>
       </div>
       <div>
         <dt class="text-gray-400">Webhook secret</dt>
@@ -74,7 +74,7 @@
 
   <div class="mt-5 pt-5 border-t border-stroke">
     <h3 class="text-sm font-medium text-gray-200 mb-1">Test webhook</h3>
-    <p class="text-xs text-gray-500 mb-3">Send a signed sample event to <code class="text-gray-300"><%= "/webhooks/hourglass/#{integration.workspace_id}" %></code> to verify end-to-end delivery.</p>
+    <p class="text-xs text-gray-500 mb-3">Send a signed sample event to <code class="text-gray-300"><%= webhooks_hourglass_path(public_id: integration.public_id) %></code> to verify end-to-end delivery.</p>
     <%= form_with url: test_webhook_workspace_settings_hourglass_integration_path(workspace), method: :post, class: 'space-y-3' do |f| %>
       <%= hidden_field_tag :integration_id, integration.id %>
       <div>

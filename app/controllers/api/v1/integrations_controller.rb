@@ -19,7 +19,9 @@ module Api
         render json: {
           integration_id: integration.id,
           workspace_id: integration.workspace_id,
-          callback_token: callback.raw_token
+          callback_token: callback.raw_token,
+          webhook_url: webhooks_hourglass_url(public_id: integration.public_id),
+          webhook_secret: integration.webhook_secret
         }, status: :created
       end
 

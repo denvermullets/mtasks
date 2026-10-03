@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_03_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_03_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -44,8 +44,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_130000) do
 
   create_table "api_token_teams", force: :cascade do |t|
     t.bigint "api_token_id", null: false
-    t.datetime "created_at", null: false
     t.bigint "team_id", null: false
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["api_token_id", "team_id"], name: "index_api_token_teams_on_api_token_id_and_team_id", unique: true
     t.index ["team_id"], name: "index_api_token_teams_on_team_id"
@@ -59,11 +59,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_130000) do
     t.datetime "revoked_at"
     t.string "scopes", default: ["read", "write"], null: false, array: true
     t.bigint "team_id"
-    t.boolean "team_scoped", default: false, null: false
     t.string "token_digest", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.bigint "workspace_id"
+    t.boolean "team_scoped", default: false, null: false
     t.index ["team_id"], name: "index_api_tokens_on_team_id"
     t.index ["token_digest"], name: "index_api_tokens_on_token_digest", unique: true
     t.index ["user_id"], name: "index_api_tokens_on_user_id"
@@ -91,36 +91,36 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_130000) do
   end
 
   create_table "dashboard_group_sources", force: :cascade do |t|
-    t.datetime "created_at", null: false
     t.bigint "dashboard_group_id", null: false
-    t.boolean "include_all", default: false, null: false
-    t.bigint "source_id", null: false
     t.string "source_type", null: false
+    t.bigint "source_id", null: false
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "include_all", default: false, null: false
     t.index ["dashboard_group_id", "source_type", "source_id"], name: "index_dashboard_group_sources_uniqueness", unique: true
     t.index ["dashboard_group_id"], name: "index_dashboard_group_sources_on_dashboard_group_id"
     t.index ["source_type", "source_id"], name: "index_dashboard_group_sources_on_source"
   end
 
   create_table "dashboard_groups", force: :cascade do |t|
-    t.string "color", default: "#6366f1", null: false
-    t.datetime "created_at", null: false
     t.bigint "dashboard_id", null: false
-    t.text "description"
     t.string "name", null: false
+    t.text "description"
+    t.string "color", default: "#6366f1", null: false
     t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["dashboard_id", "position"], name: "index_dashboard_groups_on_dashboard_id_and_position"
     t.index ["dashboard_id"], name: "index_dashboard_groups_on_dashboard_id"
   end
 
   create_table "dashboards", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.text "description"
-    t.string "name", null: false
-    t.integer "position", default: 0, null: false
-    t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.string "name", null: false
+    t.text "description"
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["user_id", "position"], name: "index_dashboards_on_user_id_and_position"
     t.index ["user_id"], name: "index_dashboards_on_user_id"
   end
@@ -202,9 +202,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_130000) do
     t.datetime "updated_at", null: false
     t.text "webhook_secret"
     t.bigint "workspace_id", null: false
+    t.uuid "public_id", default: -> { "gen_random_uuid()" }, null: false
     t.index ["callback_api_token_id"], name: "index_hourglass_integrations_on_callback_api_token_id"
     t.index ["connected_by_user_id"], name: "index_hourglass_integrations_on_connected_by_user_id"
     t.index ["hourglass_integration_id"], name: "index_hourglass_integrations_on_hourglass_integration_id"
+    t.index ["public_id"], name: "index_hourglass_integrations_on_public_id", unique: true
     t.index ["workspace_id", "hourglass_server_id"], name: "idx_on_workspace_id_hourglass_server_id_0e69960644", unique: true
     t.index ["workspace_id"], name: "index_hourglass_integrations_on_workspace_id"
   end
@@ -285,8 +287,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_130000) do
     t.bigint "blocked_issue_id", null: false
     t.bigint "blocking_issue_id", null: false
     t.datetime "created_at", null: false
-    t.string "kind", default: "blocks", null: false
     t.datetime "updated_at", null: false
+    t.string "kind", default: "blocks", null: false
     t.index ["blocked_issue_id"], name: "index_issue_dependencies_on_blocked_issue_id"
     t.index ["blocking_issue_id", "blocked_issue_id"], name: "idx_on_blocking_issue_id_blocked_issue_id_e966cd8a46", unique: true
     t.index ["blocking_issue_id"], name: "index_issue_dependencies_on_blocking_issue_id"
@@ -342,12 +344,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_130000) do
     t.bigint "parent_issue_id"
     t.integer "priority", default: 4
     t.bigint "project_id"
-    t.bigint "recurring_issue_id"
     t.datetime "started_at"
     t.bigint "team_id", null: false
     t.integer "team_number"
     t.string "title"
     t.datetime "updated_at", null: false
+    t.bigint "recurring_issue_id"
     t.index ["assignee_id"], name: "index_issues_on_assignee_id"
     t.index ["creator_id"], name: "index_issues_on_creator_id"
     t.index ["lane_id"], name: "index_issues_on_lane_id"
@@ -371,13 +373,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_130000) do
   end
 
   create_table "lanes", force: :cascade do |t|
-    t.string "category", default: "started", null: false
     t.string "color"
     t.datetime "created_at", null: false
     t.string "name"
     t.integer "position"
     t.bigint "team_id", null: false
     t.datetime "updated_at", null: false
+    t.string "category", default: "started", null: false
     t.index ["team_id"], name: "index_lanes_on_team_id"
   end
 
@@ -472,25 +474,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_130000) do
   end
 
   create_table "recurring_issues", force: :cascade do |t|
-    t.boolean "active", default: true, null: false
-    t.bigint "assignee_id"
-    t.datetime "created_at", null: false
+    t.bigint "team_id", null: false
     t.bigint "creator_id"
-    t.integer "day_of_month"
+    t.bigint "assignee_id"
+    t.bigint "project_id"
+    t.bigint "lane_id"
+    t.string "title", null: false
     t.text "description"
+    t.integer "priority", default: 4, null: false
+    t.bigint "label_ids", default: [], null: false, array: true
     t.integer "frequency", default: 1, null: false
     t.integer "interval", default: 1, null: false
-    t.bigint "label_ids", default: [], null: false, array: true
-    t.bigint "lane_id"
-    t.datetime "last_run_at"
-    t.date "next_run_on", null: false
-    t.integer "priority", default: 4, null: false
-    t.bigint "project_id"
-    t.bigint "team_id", null: false
-    t.string "time_zone", default: "UTC", null: false
-    t.string "title", null: false
-    t.datetime "updated_at", null: false
     t.integer "weekday"
+    t.integer "day_of_month"
+    t.string "time_zone", default: "UTC", null: false
+    t.date "next_run_on", null: false
+    t.datetime "last_run_at"
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["assignee_id"], name: "index_recurring_issues_on_assignee_id"
     t.index ["creator_id"], name: "index_recurring_issues_on_creator_id"
     t.index ["lane_id"], name: "index_recurring_issues_on_lane_id"
@@ -500,13 +502,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_130000) do
   end
 
   create_table "saved_views", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.string "name", null: false
-    t.integer "position", default: 0, null: false
-    t.jsonb "query", default: {}, null: false
-    t.bigint "team_id", null: false
-    t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.bigint "team_id", null: false
+    t.string "name", null: false
+    t.jsonb "query", default: {}, null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["team_id"], name: "index_saved_views_on_team_id"
     t.index ["user_id", "position"], name: "index_saved_views_on_user_id_and_position"
     t.index ["user_id"], name: "index_saved_views_on_user_id"
@@ -560,14 +562,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_130000) do
   end
 
   create_table "team_vektis_integrations", force: :cascade do |t|
-    t.datetime "connected_at"
-    t.bigint "connected_by_user_id"
-    t.datetime "created_at", null: false
-    t.string "customer_id"
+    t.bigint "team_id", null: false
     t.boolean "enabled", default: false, null: false
     t.string "publishable_key"
     t.string "server_key"
-    t.bigint "team_id", null: false
+    t.string "customer_id"
+    t.bigint "connected_by_user_id"
+    t.datetime "connected_at"
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["connected_by_user_id"], name: "index_team_vektis_integrations_on_connected_by_user_id"
     t.index ["team_id"], name: "index_team_vektis_integrations_on_team_id", unique: true
@@ -593,7 +595,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_130000) do
     t.datetime "created_at", null: false
     t.string "group_by", default: "status"
     t.string "order_by", default: "manual"
-    t.boolean "show_dependencies", default: false, null: false
     t.boolean "show_empty_groups", default: true
     t.boolean "show_empty_rows", default: false
     t.boolean "show_sub_issues", default: true
@@ -603,6 +604,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_130000) do
     t.bigint "user_id", null: false
     t.string "view_mode", default: "list"
     t.json "visible_properties", default: ["id", "priority", "assignee", "labels"]
+    t.boolean "show_dependencies", default: false, null: false
     t.index ["team_id"], name: "index_user_preferences_on_team_id"
     t.index ["user_id", "team_id"], name: "index_user_preferences_on_user_id_and_team_id", unique: true
     t.index ["user_id"], name: "index_user_preferences_on_user_id"

@@ -1,7 +1,7 @@
 class HourglassIntegration < ApplicationRecord
-  # workspace_id stays for now: the inbound webhook URL (/webhooks/hourglass/:workspace_id) still
-  # resolves integrations by workspace. Which teams actually use the integration is decided by its
-  # active subscriptions, and those may only name teams in this workspace.
+  # Inbound webhooks are addressed by public_id (/webhooks/hourglass/:public_id), so several servers
+  # in one workspace each verify against their own secret. Which teams actually use the integration
+  # is decided by its active subscriptions, and those may only name teams in this workspace.
   belongs_to :workspace
   belongs_to :connected_by_user, class_name: 'User', optional: true
   belongs_to :callback_api_token, class_name: 'ApiToken', optional: true

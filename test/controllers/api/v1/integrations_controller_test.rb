@@ -43,6 +43,8 @@ module Api
         assert_predicate json['callback_token'], :present?
 
         integration = HourglassIntegration.find(json['integration_id'])
+        assert_equal "http://www.example.com/webhooks/hourglass/#{integration.public_id}", json['webhook_url']
+        assert_equal integration.webhook_secret, json['webhook_secret']
         assert_equal 'srv_42', integration.hourglass_server_id
         assert_equal 'Acme', integration.hourglass_server_name
         assert_equal 'https://hg.example', integration.base_url
