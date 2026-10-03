@@ -11,6 +11,8 @@ class HourglassThreadLinksController < ApplicationController
   end
 
   def create
+    return render_create_error(missing_integration_error) unless @integration
+
     result = HourglassLinks::CreateThreadService.call(
       issue: @issue,
       hourglass_thread_id: params[:hourglass_thread_id],
@@ -60,16 +62,30 @@ class HourglassThreadLinksController < ApplicationController
     redirect_to team_issues_path(current_team), alert: 'Issue not found.'
   end
 
-  # A thread lives under the channel its project is linked to, so pull the
-  # integration from that project's channel link. Fall back to the first active
-  # integration only when the project isn't channel-linked.
+  # A thread lives under the channel its project is linked to, so pull the integration from that
+  # project's channel link. When the project isn't linked, the user picks one of the team's
+  # subscribed integrations; there is no default.
   def set_integration
-    @integration = issue_project_integration ||
-                   current_team.workspace.hourglass_integrations.active.first
+    @integrations = current_team.hourglass_integrations.order(:created_at).to_a
+    @project_integration = issue_project_integration
+    @integration = @project_integration || chosen_integration
   end
 
   def issue_project_integration
     @issue.project&.hourglass_channel_link&.hourglass_integration
+  end
+
+  def chosen_integration
+    id = params[:hourglass_integration_id]
+    return if id.blank?
+
+    @integrations.find { |integration| integration.id.to_s == id.to_s }
+  end
+
+  def missing_integration_error
+    return 'This team is not subscribed to a Hourglass server.' if @integrations.empty?
+
+    'Choose which Hourglass server the thread is on.'
   end
 
   def modal_frame_id

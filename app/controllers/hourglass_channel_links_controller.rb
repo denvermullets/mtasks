@@ -17,26 +17,19 @@ class HourglassChannelLinksController < ApplicationController
 
   def create
     integration = link_integration
-    return render_create_error('Select a channel from a connected Hourglass server.') unless integration
+    channel_id = params.require(:hourglass_channel_id)
+    error = integration ? verify_channel(integration, channel_id) : missing_integration_error
+    return render_create_error(error) if error
 
     result = HourglassLinks::CreateService.call(
       project: @project,
-      channel_id: params.require(:hourglass_channel_id),
+      channel_id: channel_id,
       channel_name: params[:hourglass_channel_name].to_s,
       integration: integration,
       current_user: current_user
     )
 
-    if result.error
-      render_create_error(result.error)
-    else
-      @channel_link = result.link
-      track_integration('hourglass-integration', 'link', provider: 'hourglass', entity: 'project')
-      respond_to do |format|
-        format.turbo_stream { render :create }
-        format.html { redirect_to discussion_team_project_path(@team, @project), notice: 'Channel linked.' }
-      end
-    end
+    result.error ? render_create_error(result.error) : render_created(result.link)
   end
 
   def destroy
@@ -51,6 +44,15 @@ class HourglassChannelLinksController < ApplicationController
   end
 
   private
+
+  def render_created(link)
+    @channel_link = link
+    track_integration('hourglass-integration', 'link', provider: 'hourglass', entity: 'project')
+    respond_to do |format|
+      format.turbo_stream { render :create }
+      format.html { redirect_to discussion_team_project_path(@team, @project), notice: 'Channel linked.' }
+    end
+  end
 
   def track_channel_unlinked(link)
     result = HourglassLinks::DestroyService.call(link: link)
@@ -70,16 +72,33 @@ class HourglassChannelLinksController < ApplicationController
   end
 
   def set_integrations
-    @integrations = current_team.workspace.hourglass_integrations.active.order(:created_at)
+    @integrations = current_team.hourglass_integrations.order(:created_at).to_a
   end
 
-  # The channel picker submits the integration that owns the chosen channel.
-  # Fall back to the sole integration when only one is connected.
+  # The channel picker submits the integration that owns the chosen channel. Only a team subscribed
+  # to exactly one server may leave it out.
   def link_integration
     id = params[:hourglass_integration_id]
-    return @integrations.first if id.blank?
+    return (@integrations.size == 1 ? @integrations.first : nil) if id.blank?
 
     @integrations.find { |integration| integration.id.to_s == id.to_s }
+  end
+
+  def missing_integration_error
+    return 'This team is not subscribed to a Hourglass server.' if @integrations.empty?
+
+    'Select a channel from a Hourglass server this team is subscribed to.'
+  end
+
+  # The submitted channel id is client-supplied, so confirm with Hourglass that it lives on the
+  # integration's server before pairing them. Returns an error message, or nil when it checks out.
+  def verify_channel(integration, channel_id)
+    return if Hourglass::ApiClient.for_integration(integration).channel_on_server?(channel_id)
+
+    "That channel isn't on the selected Hourglass server."
+  rescue Hourglass::ApiClient::Error => e
+    Rails.logger.warn("Hourglass channel verify failed (integration #{integration.id}): #{e.message}")
+    'Could not reach Hourglass to verify the channel. Try again.'
   end
 
   def modal_frame_id

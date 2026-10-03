@@ -61,7 +61,8 @@ module HourglassWebhookProcessor
       # existing `return if ...exists?` guards above are what stop a link mtasks created itself
       # from being counted twice when Hourglass echoes it back.
       def track_link(result, entity)
-        return if result.error || result.link.nil?
+        return logger.warn("link.created #{entity} rejected: #{result.error}") if result.error
+        return if result.link.nil?
 
         track_integration('hourglass-integration', 'link', result.link.id,
                           entity: entity, team: result.link.team)
