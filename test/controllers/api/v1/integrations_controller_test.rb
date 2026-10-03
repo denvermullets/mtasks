@@ -52,6 +52,21 @@ module Api
         assert boot.reload.revoked?
       end
 
+      test 'callback token is scoped to the workspace teams only' do
+        mine = @workspace.teams.create!(name: 'Mine', identifier: 'MINE')
+        elsewhere = Workspace.create!(name: 'Elsewhere', owner: @user).teams.create!(name: 'Far', identifier: 'FAR')
+        [mine, elsewhere].each { |t| t.team_memberships.create!(user: @user) }
+
+        post api_v1_integrations_handshake_path,
+             params: valid_payload, headers: bootstrap_headers(issue_bootstrap)
+
+        callback = HourglassIntegration.find(JSON.parse(response.body)['integration_id']).callback_api_token
+        assert callback.team_scoped?
+        assert callback.allows_team?(mine)
+        assert_not callback.allows_team?(elsewhere)
+        assert_nil callback.workspace_id
+      end
+
       test 'replay with revoked bootstrap returns 401' do
         boot = issue_bootstrap
 

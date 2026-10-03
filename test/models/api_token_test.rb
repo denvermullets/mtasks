@@ -18,7 +18,8 @@ class ApiTokenTest < ActiveSupport::TestCase
     assert_equal 'Test', token.name
     assert_nil token.revoked_at
     assert_equal %w[read write], token.scopes
-    assert_nil token.team_id
+    assert_not token.team_scoped?
+    assert_empty token.scoped_teams
   end
 
   test 'generate_for does not revoke existing tokens (multi-token support)' do
@@ -32,13 +33,58 @@ class ApiTokenTest < ActiveSupport::TestCase
   end
 
   test 'generate_for accepts team and scopes' do
-    token = ApiToken.generate_for(@user, name: 'Scoped', team: @team, scopes: %w[read])
+    token = ApiToken.generate_for(@user, name: 'Scoped', teams: [@team], scopes: %w[read])
 
-    assert_equal @team, token.team
+    assert_equal [@team], token.scoped_teams.to_a
     assert_equal %w[read], token.scopes
-    assert token.scoped_to_team?
+    assert token.team_scoped?
     assert token.can_read?
     assert_not token.can_write?
+  end
+
+  test 'unscoped token allows any team' do
+    token = ApiToken.generate_for(@user)
+    other = @workspace.teams.create!(name: 'Other', identifier: 'OTHR')
+
+    assert token.allows_team?(@team)
+    assert token.allows_team?(other)
+  end
+
+  test 'team-scoped token allows only teams in its set' do
+    b = @workspace.teams.create!(name: 'Bravo', identifier: 'BRV')
+    c = @workspace.teams.create!(name: 'Charlie', identifier: 'CHR')
+    token = ApiToken.generate_for(@user, teams: [@team, b])
+
+    assert token.allows_team?(@team)
+    assert token.allows_team?(b)
+    assert_not token.allows_team?(c)
+    assert_equal [@team.id, b.id].sort, token.filter_teams(Team.all).pluck(:id).sort
+  end
+
+  test 'scope is mutable without changing the credential' do
+    b = @workspace.teams.create!(name: 'Bravo', identifier: 'BRV')
+    token = ApiToken.generate_for(@user, teams: [@team])
+    raw = token.raw_token
+    digest = token.token_digest
+
+    token.add_team!(b)
+    assert token.allows_team?(b)
+
+    token.remove_team!(@team)
+    assert_not token.allows_team?(@team)
+    assert_equal [b.id], token.scoped_team_ids
+
+    assert_equal digest, token.reload.token_digest
+    assert_equal token, ApiToken.authenticate(raw)
+  end
+
+  test 'removing the last team leaves the token reaching nothing, not everything' do
+    token = ApiToken.generate_for(@user, teams: [@team])
+    token.remove_team!(@team)
+
+    assert token.team_scoped?
+    assert_not token.allows_team?(@team)
+    assert_empty token.filter_teams(@user.teams)
   end
 
   test 'scopes must be a subset of available scopes' do

@@ -54,7 +54,7 @@ module Api
         other_lane = other_team.lanes.create!(name: 'Backlog', position: 0)
         other_issue = other_team.issues.create!(title: 'Other', lane: other_lane, creator: @user)
 
-        scoped = ApiToken.generate_for(@user, name: 'scoped', team: @team)
+        scoped = ApiToken.generate_for(@user, name: 'scoped', teams: [@team])
         scoped_headers = { 'Authorization' => "Bearer #{scoped.raw_token}", 'Content-Type' => 'application/json' }
 
         get "/api/v1/issues/by_identifier/#{other_issue.identifier}", headers: scoped_headers

@@ -41,6 +41,7 @@ module HourglassIntegrations
       assert_integration_persisted(integration, api_token: 'tk_good',
                                                 server_id: 'srv_1', server_name: 'Acme')
       assert_subscriptions_for_each_team(integration)
+      assert_equal @workspace.team_ids.sort, integration.callback_api_token.scoped_team_ids.sort
     end
 
     test 'persists hourglass_integration_id from /me integration field' do

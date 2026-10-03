@@ -40,7 +40,7 @@
                 <h3 class="font-semibold text-gray-200 truncate"><%= token.name %></h3>
                 <p class="text-xs text-gray-400 mt-1 flex flex-wrap gap-x-2 gap-y-1">
                   <span>
-                    <%= token.scoped_to_team? ? "Team: #{token.team.name}" : 'All teams' %>
+                    <%= token.team_scoped? ? "Teams: #{token.scoped_teams.map(&:name).sort.join(', ').presence || 'none'}" : 'All teams' %>
                   </span>
                   <span>&middot;</span>
                   <span><%= token.can_write? ? 'Read &amp; write'.html_safe : 'Read only' %></span>

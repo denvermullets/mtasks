@@ -29,14 +29,14 @@ module Api
       end
 
       test 'team-scoped token allows requests to its team' do
-        token = ApiToken.generate_for(@user, name: 'Scoped', team: @team)
+        token = ApiToken.generate_for(@user, name: 'Scoped', teams: [@team])
 
         get api_v1_team_projects_path(@team), headers: headers_for(token)
         assert_response :success
       end
 
       test 'team-scoped token rejects requests to other teams' do
-        token = ApiToken.generate_for(@user, name: 'Scoped', team: @team)
+        token = ApiToken.generate_for(@user, name: 'Scoped', teams: [@team])
 
         get api_v1_team_projects_path(@other_team), headers: headers_for(token)
         assert_response :not_found

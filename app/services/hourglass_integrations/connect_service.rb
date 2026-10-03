@@ -33,9 +33,12 @@ module HourglassIntegrations
     private
 
     def mint_callback_token
+      # Same team set the subscription fan-out below covers, rather than every team the connecting
+      # user can reach across workspaces.
       ApiToken.generate_for(
         @current_user,
         name: "Hourglass connection (workspace #{@workspace.id})",
+        teams: @workspace.teams,
         scopes: %w[read write]
       )
     end

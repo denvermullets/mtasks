@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_30_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_03_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -42,6 +42,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_30_120000) do
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
+  create_table "api_token_teams", force: :cascade do |t|
+    t.bigint "api_token_id", null: false
+    t.datetime "created_at", null: false
+    t.bigint "team_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["api_token_id", "team_id"], name: "index_api_token_teams_on_api_token_id_and_team_id", unique: true
+    t.index ["team_id"], name: "index_api_token_teams_on_team_id"
+  end
+
   create_table "api_tokens", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "last_used_at"
@@ -50,6 +59,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_30_120000) do
     t.datetime "revoked_at"
     t.string "scopes", default: ["read", "write"], null: false, array: true
     t.bigint "team_id"
+    t.boolean "team_scoped", default: false, null: false
     t.string "token_digest", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
@@ -642,6 +652,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_30_120000) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "api_token_teams", "api_tokens"
+  add_foreign_key "api_token_teams", "teams"
   add_foreign_key "api_tokens", "teams"
   add_foreign_key "api_tokens", "users"
   add_foreign_key "api_tokens", "workspaces"

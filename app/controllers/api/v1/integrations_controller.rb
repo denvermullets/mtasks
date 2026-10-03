@@ -51,9 +51,11 @@ module Api
       end
 
       def mint_callback_token(integration)
+        # Scoped to the workspace's teams: before this the callback could reach every team the
+        # connecting user belongs to, in any workspace.
         callback = ApiTokens::Issuer.call(
           user: current_user,
-          workspace: integration.workspace,
+          teams: integration.workspace.teams,
           name: "Hourglass callback (workspace #{integration.workspace_id})"
         )
         integration.update!(callback_api_token: callback)

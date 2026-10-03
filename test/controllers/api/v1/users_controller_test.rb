@@ -27,16 +27,18 @@ module Api
         assert_equal 'CLI Token', json.dig('token', 'name')
         assert_equal %w[read write], json.dig('token', 'scopes')
         assert_nil json.dig('token', 'team_id')
+        assert_nil json.dig('token', 'team_ids')
       end
 
       test 'reports team_id for team-scoped tokens' do
-        token = ApiToken.generate_for(@user, name: 'Scoped', team: @team)
+        token = ApiToken.generate_for(@user, name: 'Scoped', teams: [@team])
 
         get api_v1_me_path, headers: headers_for(token)
 
         assert_response :success
         json = JSON.parse(response.body)
         assert_equal @team.id, json.dig('token', 'team_id')
+        assert_equal [@team.id], json.dig('token', 'team_ids')
       end
 
       test 'rejects requests without a valid token' do
