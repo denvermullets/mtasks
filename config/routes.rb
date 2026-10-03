@@ -21,6 +21,8 @@ Rails.application.routes.draw do
                only: %i[show update destroy],
                controller: 'hourglass_integrations' do
         post :test_webhook
+        post :add_team
+        delete :remove_team
       end
     end
   end
