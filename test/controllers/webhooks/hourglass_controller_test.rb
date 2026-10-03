@@ -22,7 +22,8 @@ module Webhooks
       "sha256=#{OpenSSL::HMAC.hexdigest(OpenSSL::Digest.new('sha256'), secret, body)}"
     end
 
-    def post_webhook(body:, signature:, delivery_id: nil, event_type: 'message.created', timestamp: nil)
+    def post_webhook(body:, signature:, delivery_id: nil, event_type: 'message.created', timestamp: nil,
+                     path: webhooks_hourglass_path(public_id: @integration.public_id))
       headers = {
         'Content-Type' => 'application/json',
         'X-Hourglass-Event' => event_type,
@@ -31,8 +32,21 @@ module Webhooks
       }
       headers['X-Hourglass-Timestamp'] = timestamp.to_s if timestamp
 
-      post webhooks_hourglass_path(workspace_id: @workspace.id),
-           params: body, headers: headers
+      post path, params: body, headers: headers
+    end
+
+    def for_integration(integration)
+      ->(job_args) { job_args.first == integration.id }
+    end
+
+    def add_second_integration(secret: 'whsec_second_server')
+      @workspace.hourglass_integrations.create!(
+        hourglass_server_id: "srv_#{SecureRandom.hex(4)}",
+        hourglass_server_name: 'Other',
+        base_url: 'https://hg2.test',
+        webhook_secret: secret,
+        active: true
+      )
     end
 
     test 'verified happy path persists delivery and enqueues processor job' do
@@ -74,7 +88,7 @@ module Webhooks
       }
 
       assert_no_difference -> { WebhookDelivery.count } do
-        post webhooks_hourglass_path(workspace_id: @workspace.id),
+        post webhooks_hourglass_path(public_id: @integration.public_id),
              params: body, headers: headers
       end
 
@@ -127,7 +141,7 @@ module Webhooks
         'X-Hourglass-Signature-256' => sign(body)
       }
 
-      post webhooks_hourglass_path(workspace_id: 999_999), params: body, headers: headers
+      post webhooks_hourglass_path(public_id: SecureRandom.uuid), params: body, headers: headers
       assert_response :not_found
     end
 
@@ -147,9 +161,71 @@ module Webhooks
         'X-Hourglass-Signature-256' => sign(body)
       }
 
-      post webhooks_hourglass_path(workspace_id: @workspace.id),
+      post webhooks_hourglass_path(public_id: @integration.public_id),
            params: body, headers: headers
       assert_response :bad_request
+    end
+
+    test 'two integrations in one workspace each verify and process against their own secret' do
+      second_secret = 'whsec_second_server'
+      second = add_second_integration(secret: second_secret)
+      body = '{"x":1}'
+
+      assert_enqueued_with(job: HourglassWebhookProcessorJob, args: for_integration(@integration)) do
+        post_webhook(body: body, signature: sign(body), delivery_id: 'del_first')
+      end
+      assert_response :ok
+
+      assert_enqueued_with(job: HourglassWebhookProcessorJob, args: for_integration(second)) do
+        post_webhook(body: body, signature: sign(body, second_secret), delivery_id: 'del_second',
+                     path: webhooks_hourglass_path(public_id: second.public_id))
+      end
+      assert_response :ok
+
+      assert_not_nil @integration.reload.last_webhook_at
+      assert_not_nil second.reload.last_webhook_at
+    end
+
+    test "one integration's secret does not verify against another integration's URL" do
+      second = add_second_integration
+      body = '{"x":1}'
+
+      assert_no_difference -> { WebhookDelivery.count } do
+        post_webhook(body: body, signature: sign(body), delivery_id: 'del_cross',
+                     path: webhooks_hourglass_path(public_id: second.public_id))
+      end
+
+      assert_response :unauthorized
+    end
+
+    test 'legacy workspace URL resolves when the workspace has exactly one active integration' do
+      body = '{"x":1}'
+
+      assert_enqueued_with(job: HourglassWebhookProcessorJob, args: for_integration(@integration)) do
+        post_webhook(body: body, signature: sign(body), delivery_id: 'del_legacy',
+                     path: webhooks_hourglass_legacy_path(workspace_id: @workspace.id))
+      end
+      assert_response :ok
+    end
+
+    test 'legacy workspace URL ignores inactive integrations when counting' do
+      add_second_integration.update!(active: false)
+      body = '{"x":1}'
+
+      post_webhook(body: body, signature: sign(body), delivery_id: 'del_legacy_inactive',
+                   path: webhooks_hourglass_legacy_path(workspace_id: @workspace.id))
+      assert_response :ok
+    end
+
+    test 'legacy workspace URL 404s when the workspace has several active integrations' do
+      add_second_integration
+      body = '{"x":1}'
+
+      assert_no_difference -> { WebhookDelivery.count } do
+        post_webhook(body: body, signature: sign(body), delivery_id: 'del_legacy_ambiguous',
+                     path: webhooks_hourglass_legacy_path(workspace_id: @workspace.id))
+      end
+      assert_response :not_found
     end
   end
 end

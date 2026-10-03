@@ -1,4 +1,4 @@
-<%# locals: (issue:, team:, integration:) %>
+<%# locals: (issue:, team:, project_integration:, integrations:) %>
 <div data-controller="modal"
      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
   <div class="bg-foreground border border-stroke rounded-lg shadow-2xl w-full max-w-md flex flex-col">
@@ -14,15 +14,27 @@
       <% end %>
     </div>
 
-    <% if integration.nil? %>
+    <% if project_integration.nil? && integrations.empty? %>
       <div class="px-4 py-8 text-center text-xs text-gray-500">
-        No active Hourglass integration on this workspace.
-        Connect one in workspace settings to link threads to issues.
+        This team isn't subscribed to a Hourglass server.
+        Subscribe it in workspace settings to link threads to issues.
       </div>
     <% else %>
       <%= form_with url: team_issue_hourglass_thread_link_path(team, issue),
             method: :post,
             class: "px-4 py-4 space-y-3" do |f| %>
+        <% if project_integration.nil? %>
+          <div>
+            <label class="block text-xs text-gray-400 mb-1.5" for="hourglass_integration_id">
+              Hourglass server
+            </label>
+            <%= select_tag :hourglass_integration_id,
+                options_for_select(integrations.map { |i| [i.hourglass_server_name.presence || i.hourglass_server_id, i.id] }),
+                id: 'hourglass_integration_id',
+                include_blank: integrations.size > 1,
+                class: "w-full bg-background border border-stroke rounded px-2 py-1.5 text-xs text-gray-200 focus:outline-none focus:border-accent cursor-pointer" %>
+          </div>
+        <% end %>
         <div>
           <label class="block text-xs text-gray-400 mb-1.5" for="hourglass_thread_id">
             Thread ID
@@ -42,7 +54,7 @@
               data: { action: "click->modal#close" },
               class: "px-3 py-1.5 rounded border border-stroke text-xs text-gray-400 hover:text-gray-200 hover:bg-hover-highlight cursor-pointer" %>
           <button type="submit"
-                  class="px-3 py-1.5 rounded bg-accent/10 border border-accent/30 text-accent text-xs font-medium hover:bg-accent/20">
+                  class="px-3 py-1.5 rounded bg-accent/10 border border-accent/30 text-accent text-xs font-medium hover:bg-accent/20 cursor-pointer">
             Link thread
           </button>
         </div>

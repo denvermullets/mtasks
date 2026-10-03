@@ -17,6 +17,7 @@ module HourglassWebhookProcessor
           base_url: 'https://hg.test', api_token: 'tok', webhook_secret: 'wh',
           connected_by_user: @user
         )
+        HourglassIntegrations::SubscribeTeamsService.call(integration: @integration, teams: [@team])
       end
 
       def build_delivery(data, event: 'link.created')
@@ -91,6 +92,24 @@ module HourglassWebhookProcessor
       test 'logs and skips on unknown link_type' do
         assert_no_difference -> { HourglassLink.count } do
           CreatedHandler.call(build_delivery({ 'link_type' => 'mystery' }), @integration)
+        end
+      end
+
+      test 'ignores a link for a team not subscribed to the delivering integration' do
+        other_team = @workspace.teams.create!(name: 'Other', identifier: 'LCO')
+        other_project = other_team.projects.create!(name: 'Not subscribed')
+        other_team.team_memberships.create!(user: @user)
+
+        assert_no_difference -> { HourglassLink.count } do
+          CreatedHandler.call(
+            build_delivery({
+                             'link_type' => 'project_channel',
+                             'mtasks_project_id' => other_project.id,
+                             'hourglass_channel_id' => 'C_X',
+                             'created_by_user_id' => @user.id
+                           }),
+            @integration
+          )
         end
       end
     end

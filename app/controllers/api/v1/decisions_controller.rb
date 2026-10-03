@@ -82,7 +82,7 @@ module Api
         email = params[:pinned_by_email].to_s.downcase
         return nil if email.blank?
 
-        User.find_by('LOWER(email) = ?', email)
+        current_team.users.find_by('LOWER(email) = ?', email)
       end
 
       def broadcast(_action, _decision)

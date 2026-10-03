@@ -4,18 +4,24 @@ module Api
       def handshake
         return forbid_unless_bootstrap unless bootstrap_token?
 
+        teams = bootstrap_teams
+        return reject_without_teams if teams.empty?
+
         integration = nil
         callback = nil
         ActiveRecord::Base.transaction do
           integration = upsert_integration!
           callback = mint_callback_token(integration)
+          HourglassIntegrations::SubscribeTeamsService.call(integration: integration, teams: teams)
           @current_api_token.revoke!
         end
 
         render json: {
           integration_id: integration.id,
           workspace_id: integration.workspace_id,
-          callback_token: callback.raw_token
+          callback_token: callback.raw_token,
+          webhook_url: webhooks_hourglass_url(public_id: integration.public_id),
+          webhook_secret: integration.webhook_secret
         }, status: :created
       end
 
@@ -29,6 +35,19 @@ module Api
 
       def forbid_unless_bootstrap
         render json: { error: 'Forbidden', message: 'Bootstrap token required' }, status: :forbidden
+      end
+
+      # The bootstrap token's own team set names which teams the connection is for; an unscoped one
+      # would mean every team in the workspace, which is exactly the fan-out connections no longer do.
+      def bootstrap_teams
+        return [] unless @current_api_token.team_scoped?
+
+        @current_api_token.workspace.teams.where(id: @current_api_token.scoped_team_ids).to_a
+      end
+
+      def reject_without_teams
+        render json: { error: 'Unprocessable', message: 'Bootstrap token must be scoped to teams in its workspace' },
+               status: :unprocessable_entity
       end
 
       def upsert_integration!
@@ -50,13 +69,17 @@ module Api
         integration
       end
 
+      # Starts with no teams: SubscribeTeamsService then scopes it to the integration's active
+      # subscriptions. A re-handshake rotates the token, so the old one is revoked.
       def mint_callback_token(integration)
+        previous = integration.live_callback_token
         callback = ApiTokens::Issuer.call(
           user: current_user,
-          workspace: integration.workspace,
-          name: "Hourglass callback (workspace #{integration.workspace_id})"
+          teams: [],
+          name: "Hourglass callback (#{integration.hourglass_server_name || integration.hourglass_server_id})"
         )
         integration.update!(callback_api_token: callback)
+        previous&.revoke!
         callback
       end
     end

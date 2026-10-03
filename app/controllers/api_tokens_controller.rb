@@ -1,6 +1,6 @@
 class ApiTokensController < ApplicationController
   def index
-    @api_tokens = Current.user.api_tokens.active.order(created_at: :desc)
+    @api_tokens = Current.user.api_tokens.active.includes(:scoped_teams).order(created_at: :desc)
     @new_token_value = flash[:new_token_value]
   end
 
@@ -19,7 +19,7 @@ class ApiTokensController < ApplicationController
     team = resolve_team(params.dig(:api_token, :team_id))
     scopes = scopes_for(params.dig(:api_token, :permission))
 
-    token = ApiToken.generate_for(Current.user, name: name, team: team, scopes: scopes)
+    token = ApiToken.generate_for(Current.user, name: name, teams: team && [team], scopes: scopes)
     redirect_to api_tokens_path, flash: { new_token_value: token.raw_token },
                                  notice: "API token '#{token.name}' generated. Copy it now — it won't be shown again."
   end

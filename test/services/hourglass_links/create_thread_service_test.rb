@@ -15,6 +15,7 @@ module HourglassLinks
         hourglass_server_id: 'srv', base_url: 'https://hg.test', api_token: 'tok',
         webhook_secret: 'wh', connected_by_user: @user
       )
+      HourglassIntegrations::SubscribeTeamsService.call(integration: @integration, teams: [@team])
     end
 
     test 'persists an issue_thread link with the pasted thread id' do
@@ -61,6 +62,29 @@ module HourglassLinks
           notify_outbound: false
         )
       end
+    end
+
+    test 'rejects an integration the issue team is not subscribed to' do
+      @team.hourglass_channel_subscriptions.update_all(active: false)
+
+      result = HourglassLinks::CreateThreadService.call(
+        issue: @issue, hourglass_thread_id: 'T_NO',
+        integration: @integration, current_user: @user
+      )
+
+      assert_match(/not subscribed/, result.error)
+      assert_equal 0, HourglassLink.count
+    end
+
+    test 'rejects an inactive integration even with an active subscription' do
+      @integration.update!(active: false)
+
+      result = HourglassLinks::CreateThreadService.call(
+        issue: @issue, hourglass_thread_id: 'T_OFF',
+        integration: @integration, current_user: @user
+      )
+
+      assert_match(/not subscribed/, result.error)
     end
   end
 end

@@ -1,6 +1,7 @@
 module HourglassLinks
   class CreateService < Service
     Result = Struct.new(:link, :error, keyword_init: true)
+    NOT_SUBSCRIBED_ERROR = 'This team is not subscribed to that Hourglass server.'.freeze
 
     def initialize(project:, channel_id:, channel_name:, integration:, current_user:, notify_outbound: true)
       @project = project
@@ -12,6 +13,8 @@ module HourglassLinks
     end
 
     def call
+      return Result.new(error: NOT_SUBSCRIBED_ERROR) unless @project.team.subscribed_to_hourglass?(@integration)
+
       link = HourglassLink.new(
         link_type: 'project_channel',
         team: @project.team,

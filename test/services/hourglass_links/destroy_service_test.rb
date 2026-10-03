@@ -14,6 +14,7 @@ module HourglassLinks
         hourglass_server_id: 'srv', base_url: 'https://hg.test', api_token: 'tok',
         webhook_secret: 'wh', connected_by_user: @user
       )
+      HourglassIntegrations::SubscribeTeamsService.call(integration: @integration, teams: [@team])
       @link = HourglassLinks::CreateService.call(
         project: @project, channel_id: 'C42', channel_name: 'general',
         integration: @integration, current_user: @user

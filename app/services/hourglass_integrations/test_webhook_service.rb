@@ -33,7 +33,7 @@ module HourglassIntegrations
     private
 
     def webhook_url
-      "#{@protocol}#{@host}/webhooks/hourglass/#{@integration.workspace_id}"
+      "#{@protocol}#{@host}/webhooks/hourglass/#{@integration.public_id}"
     end
 
     def build_request(uri, delivery_id)

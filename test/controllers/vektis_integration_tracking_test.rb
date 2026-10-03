@@ -1,4 +1,5 @@
 require 'test_helper'
+require 'webmock/minitest'
 
 # The web half of VEK-585: integration setup a user performs in a page.
 #
@@ -24,10 +25,12 @@ class VektisIntegrationTrackingTest < ActionDispatch::IntegrationTest
   end
 
   def hourglass_integration
-    @workspace.hourglass_integrations.create!(
+    integration = @workspace.hourglass_integrations.create!(
       hourglass_server_id: "srv_#{SecureRandom.hex(4)}", base_url: 'https://hg.test',
       api_token: 'tok', webhook_secret: 'wh', connected_by_user: @user
     )
+    HourglassIntegrations::SubscribeTeamsService.call(integration: integration, teams: [@team])
+    integration
   end
 
   def assert_web_origin(feature_id, action, provider)
@@ -42,7 +45,9 @@ class VektisIntegrationTrackingTest < ActionDispatch::IntegrationTest
   # --- Hourglass --------------------------------------------------------------------------------
 
   test 'linking a project to a channel emits hourglass-integration/link for a project' do
-    hourglass_integration
+    integration = hourglass_integration
+    stub_request(:get, 'https://hg.test/api/v1/channels/C1')
+      .to_return(status: 200, body: { id: 'C1', server_id: integration.hourglass_server_id }.to_json)
 
     post team_project_hourglass_channel_link_path(@team, @project),
          params: { hourglass_channel_id: 'C1', hourglass_channel_name: 'launch-room' },
@@ -68,10 +73,10 @@ class VektisIntegrationTrackingTest < ActionDispatch::IntegrationTest
   end
 
   test 'linking an issue to a thread emits hourglass-integration/link for an issue' do
-    hourglass_integration
+    integration = hourglass_integration
 
     post team_issue_hourglass_thread_link_path(@team, @issue),
-         params: { hourglass_thread_id: 'T1' },
+         params: { hourglass_thread_id: 'T1', hourglass_integration_id: integration.id },
          headers: { 'Accept' => 'text/vnd.turbo-stream.html' }
 
     assert_web_origin('hourglass-integration', 'link', 'hourglass')
@@ -80,10 +85,10 @@ class VektisIntegrationTrackingTest < ActionDispatch::IntegrationTest
   end
 
   test 'a rejected thread link emits nothing' do
-    hourglass_integration
+    integration = hourglass_integration
 
     post team_issue_hourglass_thread_link_path(@team, @issue),
-         params: { hourglass_thread_id: '' },
+         params: { hourglass_thread_id: '', hourglass_integration_id: integration.id },
          headers: { 'Accept' => 'text/vnd.turbo-stream.html' }
 
     assert_empty emitted, 'a validation failure is not integration usage'

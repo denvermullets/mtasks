@@ -32,7 +32,7 @@ class ApiTokensControllerTest < ActionDispatch::IntegrationTest
     token = @user.api_tokens.active.order(:created_at).last
     assert_equal 'Slack', token.name
     assert_equal %w[read write], token.scopes
-    assert_nil token.team_id
+    assert_not token.team_scoped?
 
     assert_redirected_to api_tokens_path
     follow_redirect!
@@ -50,14 +50,15 @@ class ApiTokensControllerTest < ActionDispatch::IntegrationTest
     post api_tokens_path, params: { api_token: { name: 'Team token', permission: 'read', team_id: @team.id } }
 
     token = @user.api_tokens.active.order(:created_at).last
-    assert_equal @team.id, token.team_id
+    assert token.team_scoped?
+    assert_equal [@team.id], token.scoped_team_ids
   end
 
   test 'create ignores team_id for teams the user does not belong to' do
     post api_tokens_path, params: { api_token: { name: 'Foreign', permission: 'read', team_id: @other_team.id } }
 
     token = @user.api_tokens.active.order(:created_at).last
-    assert_nil token.team_id
+    assert_not token.team_scoped?
   end
 
   test 'create requires name' do

@@ -7,15 +7,17 @@ module Api
         @user = User.create!(name: 'WS Owner', email: "intowner_#{SecureRandom.hex(4)}@example.com",
                              password: 'password')
         @workspace = Workspace.create!(name: 'Int WS', owner: @user)
+        @team = @workspace.teams.create!(name: 'Mine', identifier: 'MINE')
+        @team.team_memberships.create!(user: @user)
       end
 
       def bootstrap_headers(token)
         { 'Authorization' => "Bearer #{token.raw_token}", 'Content-Type' => 'application/json' }
       end
 
-      def issue_bootstrap(name: 'bootstrap', scopes: ApiToken::AVAILABLE_SCOPES)
+      def issue_bootstrap(name: 'bootstrap', scopes: ApiToken::AVAILABLE_SCOPES, teams: [@team])
         ApiTokens::Issuer.call(
-          user: @user, workspace: @workspace, name: name, one_time_use: true, scopes: scopes
+          user: @user, workspace: @workspace, name: name, one_time_use: true, scopes: scopes, teams: teams
         )
       end
 
@@ -41,6 +43,8 @@ module Api
         assert_predicate json['callback_token'], :present?
 
         integration = HourglassIntegration.find(json['integration_id'])
+        assert_equal "http://www.example.com/webhooks/hourglass/#{integration.public_id}", json['webhook_url']
+        assert_equal integration.webhook_secret, json['webhook_secret']
         assert_equal 'srv_42', integration.hourglass_server_id
         assert_equal 'Acme', integration.hourglass_server_name
         assert_equal 'https://hg.example', integration.base_url
@@ -50,6 +54,43 @@ module Api
         assert integration.active?
 
         assert boot.reload.revoked?
+      end
+
+      test 'subscribes only the bootstrap token teams and scopes the callback to them' do
+        sibling = @workspace.teams.create!(name: 'Sibling', identifier: 'SIB')
+        elsewhere = Workspace.create!(name: 'Elsewhere', owner: @user).teams.create!(name: 'Far', identifier: 'FAR')
+        [sibling, elsewhere].each { |t| t.team_memberships.create!(user: @user) }
+
+        post api_v1_integrations_handshake_path,
+             params: valid_payload, headers: bootstrap_headers(issue_bootstrap)
+
+        integration = HourglassIntegration.find(JSON.parse(response.body)['integration_id'])
+        assert_equal [@team.id], integration.active_subscriptions.pluck(:team_id)
+        callback = integration.callback_api_token
+        assert callback.team_scoped?
+        assert callback.allows_team?(@team)
+        assert_not callback.allows_team?(sibling)
+        assert_not callback.allows_team?(elsewhere)
+        assert_nil callback.workspace_id
+      end
+
+      test 'unscoped bootstrap token is rejected without connecting anything' do
+        boot = issue_bootstrap(teams: nil)
+
+        assert_no_difference -> { HourglassIntegration.count } do
+          post api_v1_integrations_handshake_path, params: valid_payload, headers: bootstrap_headers(boot)
+        end
+        assert_response :unprocessable_entity
+        assert_not boot.reload.revoked?
+      end
+
+      test 'bootstrap token scoped only to teams outside its workspace is rejected' do
+        far = Workspace.create!(name: 'Elsewhere', owner: @user).teams.create!(name: 'Far', identifier: 'FAR')
+        far.team_memberships.create!(user: @user)
+
+        post api_v1_integrations_handshake_path,
+             params: valid_payload, headers: bootstrap_headers(issue_bootstrap(teams: [far]))
+        assert_response :unprocessable_entity
       end
 
       test 'replay with revoked bootstrap returns 401' do
@@ -94,6 +135,24 @@ module Api
         integration = HourglassIntegration.find(first_id)
         assert_equal 'updated', integration.api_token
         assert_equal 'Renamed', integration.hourglass_server_name
+      end
+
+      test 'second handshake rotates the callback token and keeps every subscribed team in scope' do
+        other = @workspace.teams.create!(name: 'Other', identifier: 'OTH')
+        other.team_memberships.create!(user: @user)
+
+        post api_v1_integrations_handshake_path, params: valid_payload, headers: bootstrap_headers(issue_bootstrap)
+        integration = HourglassIntegration.find(JSON.parse(response.body)['integration_id'])
+        first_callback = integration.callback_api_token
+
+        post api_v1_integrations_handshake_path, params: valid_payload,
+                                                 headers: bootstrap_headers(issue_bootstrap(teams: [other]))
+        assert_response :created
+
+        integration.reload
+        assert first_callback.reload.revoked?
+        assert_equal [@team.id, other.id].sort, integration.callback_api_token.scoped_team_ids.sort
+        assert_equal [@team.id, other.id].sort, integration.active_subscriptions.pluck(:team_id).sort
       end
 
       test 'missing required field returns parameter error' do
