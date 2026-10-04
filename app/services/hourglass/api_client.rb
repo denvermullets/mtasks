@@ -42,6 +42,14 @@ class Hourglass::ApiClient
     get("/api/v1/channels/#{channel_id}")
   end
 
+  # True only when the channel exists, this token can see it, and it lives on this client's server.
+  def channel_on_server?(channel_id)
+    channel = fetch_channel(channel_id)
+    channel.is_a?(Hash) && channel['server_id'].to_s == server_id.to_s
+  rescue NotFound
+    false
+  end
+
   def list_channel_messages(channel_id, since: nil, limit: 50)
     query = { limit: limit }
     query[:since] = since if since

@@ -12,8 +12,8 @@ module Api
 
       def by_identifier
         team_identifier, number_str = params[:identifier].split('-', 2)
-        team = current_user.teams.not_archived.find_by(identifier: team_identifier)
-        return render_not_found unless team && token_allows_team?(team)
+        team = accessible_teams.find_by(identifier: team_identifier)
+        return render_not_found unless team
 
         # This route resolves its own tenant rather than going through set_current_team; assigning
         # it here is what lets the read event be attributed instead of silently dropped.
@@ -39,6 +39,9 @@ module Api
       end
 
       def create
+        foreign = foreign_team_references(issue_params)
+        return render_foreign_team_references(foreign) if foreign.any?
+
         issue = current_team.issues.new(issue_params)
         issue.creator = current_user
 
@@ -52,6 +55,9 @@ module Api
       end
 
       def update
+        foreign = foreign_team_references(issue_params)
+        return render_foreign_team_references(foreign) if foreign.any?
+
         @issue.assign_attributes(issue_params)
         @issue.apply_lane_timestamps!
 

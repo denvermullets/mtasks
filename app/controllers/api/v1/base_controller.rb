@@ -41,21 +41,41 @@ module Api
 
       attr_reader :current_team
 
-      def set_current_team
-        team = current_user.teams.not_archived.find_by(id: params[:team_id])
+      # Every team-resolving lookup goes through this, so a team-scoped token never sees a team
+      # outside its set — not even to learn that it exists.
+      def accessible_teams
+        @current_api_token.filter_teams(current_user.teams.not_archived)
+      end
 
-        if team && token_allows_team?(team)
-          @current_team = team
-          return
-        end
+      def set_current_team
+        @current_team = accessible_teams.find_by(id: params[:team_id])
+        return if @current_team
 
         render json: { error: 'Not Found', message: 'Team not found or access denied' }, status: :not_found
       end
 
-      def token_allows_team?(team)
-        return true unless @current_api_token&.scoped_to_team?
+      # Ids a client sends for related records are only checked by the database for existence, not
+      # tenancy, so without this a token scoped to one team could hang its writes off another
+      # team's projects, labels or issues. Run it before assign_attributes: label_ids writes its
+      # join rows the moment it is assigned on a persisted record.
+      def foreign_team_references(attrs)
+        team_reference_scopes.filter_map do |key, scope|
+          ids = Array(attrs[key]).compact_blank.map(&:to_s).uniq
+          key if ids.any? && scope.where(id: ids).count != ids.size
+        end
+      end
 
-        @current_api_token.team_id == team.id
+      def team_reference_scopes
+        {
+          'lane_id' => current_team.lanes, 'project_id' => current_team.projects,
+          'parent_issue_id' => current_team.issues, 'label_ids' => current_team.labels,
+          'assignee_id' => current_team.users, 'lead_id' => current_team.users
+        }
+      end
+
+      def render_foreign_team_references(keys)
+        render json: { error: 'Unprocessable Entity', errors: keys.map { |k| "#{k} does not belong to this team" } },
+               status: :unprocessable_entity
       end
 
       def configure_paper_trail_whodunnit

@@ -1,6 +1,7 @@
 module HourglassLinks
   class CreateThreadService < Service
     Result = Struct.new(:link, :error, keyword_init: true)
+    NOT_SUBSCRIBED_ERROR = 'This team is not subscribed to that Hourglass server.'.freeze
 
     def initialize(issue:, hourglass_thread_id:, integration:, current_user:, notify_outbound: true)
       @issue = issue
@@ -12,6 +13,7 @@ module HourglassLinks
 
     def call
       return Result.new(error: 'Thread ID is required.') if @hourglass_thread_id.blank?
+      return Result.new(error: NOT_SUBSCRIBED_ERROR) unless @issue.team.subscribed_to_hourglass?(@integration)
 
       link = HourglassLink.new(
         link_type: 'issue_thread',

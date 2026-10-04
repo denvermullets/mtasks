@@ -14,6 +14,7 @@ module HourglassLinks
         hourglass_server_id: 'srv', base_url: 'https://hg.test', api_token: 'tok',
         webhook_secret: 'wh', connected_by_user: @user
       )
+      HourglassIntegrations::SubscribeTeamsService.call(integration: @integration, teams: [@team])
     end
 
     test 'persists link and enqueues notify job' do
@@ -46,6 +47,29 @@ module HourglassLinks
 
       assert_not_nil result.error
       assert_not result.link.persisted?
+    end
+
+    test 'rejects an integration the project team is not subscribed to' do
+      @team.hourglass_channel_subscriptions.update_all(active: false)
+
+      assert_no_enqueued_jobs(only: HourglassNotifyLinkCreatedJob) do
+        result = HourglassLinks::CreateService.call(
+          project: @project, channel_id: 'C1', channel_name: 'one',
+          integration: @integration, current_user: @user
+        )
+
+        assert_match(/not subscribed/, result.error)
+      end
+      assert_equal 0, HourglassLink.count
+    end
+
+    test 'rejects a nil integration' do
+      result = HourglassLinks::CreateService.call(
+        project: @project, channel_id: 'C1', channel_name: 'one',
+        integration: nil, current_user: @user
+      )
+
+      assert_match(/not subscribed/, result.error)
     end
   end
 end

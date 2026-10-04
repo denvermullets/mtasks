@@ -19,6 +19,19 @@ module HourglassIntegrations
       assert @token.reload.revoked?
     end
 
+    test 'deactivates every subscription and breaks the integration links' do
+      team = @workspace.teams.create!(name: 'Disc Team', identifier: 'DSC')
+      SubscribeTeamsService.call(integration: @integration, teams: [team])
+      project = team.projects.create!(name: 'Disc project')
+      link = HourglassLink.create!(team: team, link_type: 'project_channel', mtasks_project: project,
+                                   hourglass_channel_id: 'ch_disc', hourglass_integration: @integration)
+
+      DisconnectService.new(@integration).call
+
+      assert_empty @integration.active_subscriptions
+      assert_predicate link.reload, :broken?
+    end
+
     test 'is safe with no callback token' do
       @integration.update!(callback_api_token: nil)
       DisconnectService.new(@integration).call

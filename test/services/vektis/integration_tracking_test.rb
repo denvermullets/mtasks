@@ -35,10 +35,12 @@ module Vektis
     # --- Hourglass --------------------------------------------------------------------------------
 
     def hourglass_integration
-      @workspace.hourglass_integrations.create!(
+      integration = @workspace.hourglass_integrations.create!(
         hourglass_server_id: "srv_#{SecureRandom.hex(4)}", base_url: 'https://hg.test',
         api_token: 'tok', webhook_secret: 'wh', connected_by_user: @user
       )
+      HourglassIntegrations::SubscribeTeamsService.call(integration: integration, teams: [@team])
+      integration
     end
 
     def message_cache(body: 'we ship on Friday')

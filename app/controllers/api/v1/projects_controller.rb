@@ -16,6 +16,9 @@ module Api
       end
 
       def create
+        foreign = foreign_team_references(project_params)
+        return render_foreign_team_references(foreign) if foreign.any?
+
         project = current_team.projects.new(project_params)
 
         if project.save
@@ -27,6 +30,9 @@ module Api
       end
 
       def update
+        foreign = foreign_team_references(project_params)
+        return render_foreign_team_references(foreign) if foreign.any?
+
         if @project.update(project_params)
           track_api_feature('project-management', 'update')
           render json: serialize(@project)

@@ -14,8 +14,14 @@ class Team < ApplicationRecord
   has_many :github_repository_subscriptions, dependent: :destroy
   has_many :github_installations, through: :workspace
   has_many :hourglass_channel_subscriptions, dependent: :destroy
+  has_many :active_hourglass_channel_subscriptions, -> { active },
+           class_name: 'HourglassChannelSubscription', inverse_of: false
+  # The Hourglass servers this team has opted into. Link pickers and link creation resolve
+  # integrations through this, never through the workspace.
+  has_many :hourglass_integrations, -> { active }, through: :active_hourglass_channel_subscriptions
   has_many :hourglass_links, dependent: :destroy
   has_many :decisions, dependent: :destroy
+  has_many :api_token_teams, dependent: :delete_all
   # Vektis.for reads this table directly rather than through the association: a settings save must
   # be visible to the very next emit, and a memoized has_one on a long-lived team object would not
   # be. Declared here so destroying a team takes its analytics credentials with it.
@@ -46,6 +52,10 @@ class Team < ApplicationRecord
       update!(archived_at: Time.current)
       issues.not_archived.update_all(archived_at: Time.current)
     end
+  end
+
+  def subscribed_to_hourglass?(integration)
+    integration.present? && hourglass_integrations.exists?(integration.id)
   end
 
   def owner?(user)

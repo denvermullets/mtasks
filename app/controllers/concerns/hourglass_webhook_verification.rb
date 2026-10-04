@@ -6,8 +6,8 @@ module HourglassWebhookVerification
   private
 
   def verify_hourglass_signature
-    @integration = HourglassIntegration.active.find_by(workspace_id: params[:workspace_id])
-    return reject_hourglass(:not_found, "Unknown hourglass workspace #{params[:workspace_id]}") unless @integration
+    @integration = find_hourglass_integration
+    return reject_hourglass(:not_found, 'Unknown Hourglass webhook target') unless @integration
     return reject_hourglass(:unauthorized, 'Hourglass webhook outside replay window') unless valid_timestamp?
 
     signature = request.headers['X-Hourglass-Signature-256']
@@ -17,6 +17,15 @@ module HourglassWebhookVerification
     return if Rack::Utils.secure_compare(signature, expected)
 
     reject_hourglass(:unauthorized, 'Invalid Hourglass webhook signature')
+  end
+
+  def find_hourglass_integration
+    return HourglassIntegration.active.find_by(public_id: params[:public_id]) if params[:public_id].present?
+
+    # Legacy /webhooks/hourglass/:workspace_id: with several integrations in the workspace there's no
+    # telling which server sent it, so refuse rather than verify against the wrong secret.
+    candidates = HourglassIntegration.active.where(workspace_id: params[:workspace_id]).limit(2).to_a
+    candidates.first if candidates.one?
   end
 
   def reject_hourglass(status, message)
