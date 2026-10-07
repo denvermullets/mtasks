@@ -102,4 +102,30 @@ class ProjectTest < ActiveSupport::TestCase
     ids = @team.projects.in_commitment('now').pluck(:id)
     assert_equal [early.id, late.id, no_date.id], ids
   end
+
+  test 'cancelled issues count toward completion' do
+    project = @team.projects.create!(name: 'Progress')
+    lane = @team.lanes.create!(name: 'Backlog', position: 0)
+    @team.issues.create!(title: 'Done', lane: lane, creator: @user, project: project, completed_at: 1.day.ago)
+    @team.issues.create!(title: 'Cancelled', lane: lane, creator: @user, project: project, canceled_at: 1.day.ago)
+
+    project.recalculate_velocity!
+    assert_equal 2, project.completed_issues_count
+    assert_equal 100, project.progress_percentage
+  end
+
+  test 'chart counts cancelled issues as completed but not started' do
+    project = @team.projects.create!(name: 'Chart')
+    lane = @team.lanes.create!(name: 'Backlog', position: 0)
+    now = Time.current
+    @team.issues.create!(title: 'Done', lane: lane, creator: @user, project: project,
+                         started_at: now, completed_at: now)
+    @team.issues.create!(title: 'Cancelled', lane: lane, creator: @user, project: project, canceled_at: now)
+    @team.issues.create!(title: 'Open', lane: lane, creator: @user, project: project)
+
+    today = project.progress_chart_data.last
+    assert_equal 3, today[:scope]
+    assert_equal 1, today[:started]
+    assert_equal 2, today[:completed]
+  end
 end

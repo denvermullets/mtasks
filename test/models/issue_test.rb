@@ -131,6 +131,27 @@ class IssueTest < ActiveSupport::TestCase
     assert_equal started_at, issue.started_at
   end
 
+  test 'apply_lane_timestamps! sets started_at when finishing straight from backlog' do
+    issue = @team.issues.create!(title: 'A', lane: @backlog, creator: @user)
+
+    issue.lane_id = @done.id
+    issue.apply_lane_timestamps!
+
+    assert_not_nil issue.started_at
+    assert_equal issue.completed_at, issue.started_at
+  end
+
+  test 'apply_lane_timestamps! leaves started_at empty when cancelling from backlog' do
+    cancelled = @team.lanes.create!(name: 'Cancelled', position: 2, category: 'canceled')
+    issue = @team.issues.create!(title: 'A', lane: @backlog, creator: @user)
+
+    issue.lane_id = cancelled.id
+    issue.apply_lane_timestamps!
+
+    assert_not_nil issue.canceled_at
+    assert_nil issue.started_at
+  end
+
   test 'apply_lane_timestamps! clears canceled_at when moving away from a Cancelled lane' do
     cancelled = @team.lanes.create!(name: 'Cancelled', position: 2, category: 'canceled')
     issue = @team.issues.create!(

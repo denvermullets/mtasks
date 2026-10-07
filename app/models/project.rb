@@ -34,7 +34,7 @@ class Project < ApplicationRecord
   def recalculate_velocity!
     update_columns(
       velocity_score: issues.not_archived.where('completed_at >= ?', 14.days.ago).count,
-      completed_issues_count: issues.not_archived.where.not(completed_at: nil).count,
+      completed_issues_count: closed_issues(issues.not_archived).count,
       total_issues_count: issues.not_archived.count
     )
   end
@@ -85,9 +85,16 @@ class Project < ApplicationRecord
 
   private
 
+  # Cancelled issues are resolved work, so they count toward completion alongside finished ones.
+  def closed_issues(scope)
+    scope.where.not(completed_at: nil).or(scope.where.not(canceled_at: nil))
+  end
+
+  # Cancelled issues land in "completed" (they're resolved) but not "started" unless real work began.
   def pluck_issue_dates(project_issues)
-    project_issues.pluck(:created_at, :started_at, :completed_at).map do |created, started, completed|
-      { created: created&.to_date, started: started&.to_date, completed: completed&.to_date }
+    project_issues.pluck(:created_at, :started_at, :completed_at, :canceled_at).map do |created, *timestamps|
+      started, completed, canceled = timestamps.map { |t| t&.to_date }
+      { created: created&.to_date, started: started, completed: [completed, canceled].compact.min }
     end
   end
 

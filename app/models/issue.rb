@@ -78,7 +78,8 @@ class Issue < ApplicationRecord
   end
 
   def complete!
-    update(completed_at: Time.current)
+    now = Time.current
+    update(completed_at: now, started_at: started_at || now)
   end
 
   def cancel!
@@ -109,14 +110,15 @@ class Issue < ApplicationRecord
 
   # Timestamps follow the lane's category, so they only move when an issue crosses categories:
   # QA Verified -> Production deployed (both completed) keeps the original completed_at, and
-  # bouncing back to a started lane clears it. started_at is set once and never reset.
+  # bouncing back to a started lane clears it. started_at is set once and never reset; finishing
+  # straight from backlog still means work was done, so completing sets it too (cancelling doesn't).
   def apply_lane_timestamps!
     return unless lane_id_changed?
 
     category = Lane.find_by(id: lane_id)&.category
-    self.started_at ||= Time.current if category == 'started'
     self.completed_at = category_timestamp(completed_at, category == 'completed')
     self.canceled_at = category_timestamp(canceled_at, category == 'canceled')
+    self.started_at ||= completed_at || Time.current if %w[started completed].include?(category)
   end
 
   def remove_blocking_dependencies!
