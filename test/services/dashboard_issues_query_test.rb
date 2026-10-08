@@ -380,6 +380,19 @@ class DashboardIssuesQueryTest < ActiveSupport::TestCase
     assert_equal 1, result.due_today_count
   end
 
+  test 'issues in a closed lane stay hidden on the open tab even without timestamps' do
+    group = group_with(@team_a)
+    open_issue = create_issue(@team_a, due_date: TODAY)
+    done = create_issue(@team_a, due_date: TODAY, lane: @team_a.lanes.find_by!(name: 'Done'))
+    canceled = create_issue(@team_a, due_date: TODAY, lane: @team_a.lanes.find_by!(name: 'Cancelled'))
+    # Timestamps predating the lane's category (e.g. lanes recategorized after the fact).
+    [done, canceled].each { |issue| issue.update_columns(completed_at: nil, canceled_at: nil) }
+
+    result = query(filter: 'open')
+    assert_equal [open_issue], issues_for(result, group)
+    assert_equal 1, result.due_today_count
+  end
+
   test 'picking a closed lane shows its issues, timestamps and all' do
     group = group_with(@team_a)
     done = create_issue(@team_a, due_date: TODAY, lane: @team_a.lanes.find_by!(name: 'Done'),

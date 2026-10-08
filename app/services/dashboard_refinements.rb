@@ -19,10 +19,11 @@ class DashboardRefinements
     @status = status.to_s.strip.presence
   end
 
-  # Issues the dashboard starts from. With no status picked, completed/canceled issues stay hidden;
+  # Issues the dashboard starts from. With no status picked, completed/canceled issues stay hidden
+  # (by timestamp or by sitting in a closed lane);
   # picking a lane (even a closed one like Done) shows whatever sits in it.
   def base_scope
-    @status ? Issue.not_archived : Issue.unresolved
+    @status ? Issue.not_archived : Issue.active
   end
 
   # Labels and lanes match by name, so "bug" / "In Progress" cover every team's label / lane of that
