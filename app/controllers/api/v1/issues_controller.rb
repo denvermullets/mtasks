@@ -63,7 +63,7 @@ module Api
         foreign = foreign_team_references(issue_params)
         return render_foreign_team_references(foreign) if foreign.any?
 
-        @issue.assign_attributes(issue_params)
+        @issue.assign_attributes_touching_labels(issue_params)
         @issue.apply_lane_timestamps!
 
         if @issue.save

@@ -69,7 +69,7 @@ class IssuesController < ApplicationController
 
   def update
     load_form_collections
-    @issue.assign_attributes(issue_params.except(:files))
+    @issue.assign_attributes_touching_labels(issue_params.except(:files))
     @issue.apply_lane_timestamps!
 
     if @issue.save
