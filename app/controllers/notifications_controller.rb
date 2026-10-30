@@ -41,7 +41,7 @@ class NotificationsController < ApplicationController
   end
 
   def mark_all_as_read
-    marked = Current.user.notifications.unread.update_all(read_at: Time.current)
+    marked = Current.user.notifications.mark_all_read!
     # Deliberately one event with a count, and deliberately attributed to current_team: this
     # clears notifications across every team the user belongs to, so no single team owns it. The
     # honest reading is "the team the user was looking at when they cleared the lot".
