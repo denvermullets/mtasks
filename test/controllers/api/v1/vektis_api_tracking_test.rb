@@ -198,6 +198,12 @@ module Api
         assert_no_user_content('a secret note')
       end
 
+      test 'deleting an issue emits issue-delete delete' do
+        delete api_v1_team_issue_path(@team, @issue), headers: @headers
+        assert_response :no_content
+        assert_equal [%w[issue-delete delete]], write_pairs
+      end
+
       test 'commenting on a project reports entity project' do
         post api_v1_team_project_comments_path(@team, @project),
              params: { comment: { body: 'project note' } }.to_json, headers: @headers
