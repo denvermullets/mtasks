@@ -2,7 +2,7 @@ module Api
   module V1
     class IssuesController < BaseController
       before_action :set_current_team, except: [:by_identifier]
-      before_action :set_issue, only: %i[show update]
+      before_action :set_issue, only: %i[show update move]
 
       # Below the before_action block on purpose: capture_tracked_label_ids has to run after
       # set_issue, because it reads label_ids before update rewrites them.
@@ -78,7 +78,27 @@ module Api
         end
       end
 
+      def move
+        target_team = accessible_teams.find_by(id: params[:target_team_id])
+        return render_team_not_found unless target_team
+
+        mover = IssueTeamMover.call(issue: @issue, target_team: target_team, user: current_user)
+        return render_move_failure(mover) unless mover.success?
+
+        track_api_feature('issue-transfer', 'move', entity: 'issue')
+        render json: serialize(@issue, detailed: true)
+      end
+
       private
+
+      def render_team_not_found
+        render json: { error: 'Not Found', message: 'Team not found or access denied' }, status: :not_found
+      end
+
+      def render_move_failure(mover)
+        message = mover.error || 'Could not move issue.'
+        render json: { error: 'Unprocessable Entity', errors: [message] }, status: :unprocessable_entity
+      end
 
       def set_issue
         @issue = current_team.issues.find(params[:id])
