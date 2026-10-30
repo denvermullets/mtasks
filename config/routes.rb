@@ -151,7 +151,7 @@ Rails.application.routes.draw do
         resources :recurring_issues, only: %i[index create]
         resources :saved_views, only: [:create]
       end
-      resources :saved_views, only: [:index]
+      resources :saved_views, only: %i[index update destroy]
     end
   end
 
