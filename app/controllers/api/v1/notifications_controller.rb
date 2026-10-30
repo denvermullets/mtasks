@@ -21,6 +21,17 @@ module Api
         }
       end
 
+      def read
+        notification = inbox.find(params[:id])
+        # mark_as_read! is a no-op when already read, so retries keep read_at and updated_at.
+        notification.mark_as_read!
+        if notification.saved_change_to_read_at?
+          track_api_feature('notification', 'read',
+                            team: notification.issue.team)
+        end
+        render json: serialize(notification)
+      end
+
       private
 
       # Notifications belong to a user, but the scoping unit is the issue's team, so a team-scoped
