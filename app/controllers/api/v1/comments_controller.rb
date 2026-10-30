@@ -36,12 +36,22 @@ module Api
         end
       end
 
+      def destroy
+        comment = @issue.comments.find(params[:id])
+        return render_forbidden('Only the author or a team admin can delete this') unless can_modify?(comment)
+
+        depth = comment.depth
+        comment.destroy! # replies cascade via dependent: :destroy
+        @issue.touch # a deletion is a change to the issue; surfaces it in updated_since pulls
+        track_api_feature('comment', 'delete', entity: 'issue', depth: depth)
+        head :no_content
+      rescue ActiveRecord::RecordNotFound
+        render json: { error: 'Not Found', message: 'Comment not found' }, status: :not_found
+      end
+
       def destroy_attachment
         comment = @issue.comments.find(params[:comment_id])
-        unless comment.user_id == Current.user.id || current_team.admin?(Current.user)
-          return render json: { error: 'Forbidden', message: 'Only the author or a team admin can remove this' },
-                        status: :forbidden
-        end
+        return render_forbidden('Only the author or a team admin can remove this') unless can_modify?(comment)
 
         comment.files_attachments.find(params[:id]).purge
         @issue.touch
@@ -51,6 +61,14 @@ module Api
       end
 
       private
+
+      def can_modify?(comment)
+        comment.user_id == Current.user.id || current_team.admin?(Current.user)
+      end
+
+      def render_forbidden(message)
+        render json: { error: 'Forbidden', message: message }, status: :forbidden
+      end
 
       def build_comment(blobs)
         comment = @issue.comments.new(comment_params)
