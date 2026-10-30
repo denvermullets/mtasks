@@ -148,6 +148,7 @@ Rails.application.routes.draw do
           resources :decisions, only: %i[create destroy]
           resources :comments, only: %i[index create], controller: 'project_comments'
         end
+        get :deleted, to: 'deleted#index'
         resources :members, only: [:index]
         resources :comments, only: [:index], controller: 'team_comments'
         resources :recurring_issues, only: %i[index create]
