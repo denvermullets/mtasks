@@ -2,7 +2,7 @@ module Api
   module V1
     class LabelsController < BaseController
       before_action :set_current_team
-      before_action :set_label, only: :update
+      before_action :set_label, only: %i[update destroy]
 
       def index
         labels = current_team.labels.order(:name).to_a
@@ -30,6 +30,14 @@ module Api
         else
           render_validation_errors(@label)
         end
+      end
+
+      def destroy
+        # Explicit touch (no callbacks): carrying issues must reach the next updated_since pull.
+        @label.issues.touch_all
+        @label.destroy!
+        track_api_feature('label-management', 'delete')
+        head :no_content
       end
 
       private

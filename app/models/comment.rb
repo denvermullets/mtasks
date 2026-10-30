@@ -1,4 +1,7 @@
 class Comment < ApplicationRecord
+  # Destroy-only: the team deleted feed reads these versions; nothing else needs history.
+  has_paper_trail on: [:destroy]
+
   MAX_NESTING_DEPTH = 4
 
   belongs_to :issue, optional: true

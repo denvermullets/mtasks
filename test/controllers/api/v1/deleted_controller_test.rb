@@ -77,6 +77,49 @@ module Api
         assert_empty JSON.parse(response.body)
       end
 
+      test 'deleting an issue also tombstones its comments and dependencies' do
+        issue = @team.issues.create!(title: 'I', lane: @lane, creator: @user)
+        other = @team.issues.create!(title: 'J', lane: @lane, creator: @user)
+        comment = issue.comments.create!(body: 'hi', user: @user)
+        reply = issue.comments.create!(body: 're', user: @user, parent: comment)
+        dep = IssueDependency.create!(blocking_issue: issue, blocked_issue: other)
+        ids = { 'Issue' => issue.id, 'Comment' => [comment.id, reply.id], 'IssueDependency' => dep.id }
+        issue.destroy!
+
+        get api_v1_team_deleted_path(@team), headers: @headers
+
+        pairs = JSON.parse(response.body).map { |e| e.values_at('record_type', 'record_id') }
+        assert_includes pairs, ['Issue', ids['Issue']]
+        assert_includes pairs, ['IssueDependency', dep.id]
+        assert_includes pairs, ['Comment', comment.id]
+        assert_includes pairs, ['Comment', reply.id]
+      end
+
+      test 'a deleted project comment is scoped to the project team' do
+        project = @team.projects.create!(name: 'P')
+        comment = project.comments.create!(body: 'hi', user: @user)
+        comment.destroy!
+        other_project = @other_team.projects.create!(name: 'OP')
+        other_project.comments.create!(body: 'x', user: @user).destroy!
+
+        get api_v1_team_deleted_path(@team), headers: @headers
+
+        pairs = JSON.parse(response.body).map { |e| e.values_at('record_type', 'record_id') }
+        assert_equal [['Comment', comment.id]], pairs
+      end
+
+      test 'cascaded deletions from another team never appear' do
+        issue = @other_team.issues.create!(title: 'I', lane: @other_lane, creator: @user)
+        other = @other_team.issues.create!(title: 'J', lane: @other_lane, creator: @user)
+        issue.comments.create!(body: 'hi', user: @user)
+        IssueDependency.create!(blocking_issue: issue, blocked_issue: other)
+        issue.destroy!
+
+        get api_v1_team_deleted_path(@team), headers: @headers
+
+        assert_empty JSON.parse(response.body)
+      end
+
       test 'team outside the user is 404' do
         stranger = Team.create!(workspace: @workspace, name: 'S', identifier: 'ADS')
 
