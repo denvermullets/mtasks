@@ -7,7 +7,7 @@ module Api
         labels = current_team.labels.order(:name).to_a
 
         @tracked_result_count = labels.size
-        render json: labels.map { |l| serialize(l) }
+        render_conditional_json(labels.map { |l| serialize(l) })
       end
 
       def create
