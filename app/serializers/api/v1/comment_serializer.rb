@@ -12,6 +12,7 @@ module Api
           body: @comment.body,
           parent_id: @comment.parent_id,
           user: serialize_user(@comment.user),
+          files: @comment.files_attachments.includes(:blob).order(:id).map { |a| AttachmentSerializer.new(a).as_json },
           created_at: @comment.created_at,
           updated_at: @comment.updated_at
         }

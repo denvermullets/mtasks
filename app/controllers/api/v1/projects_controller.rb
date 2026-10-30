@@ -5,7 +5,13 @@ module Api
       before_action :set_project, only: %i[show update destroy]
 
       def index
-        projects = current_team.projects.includes(:lead).order(:name).to_a
+        set_server_time_header
+
+        scope = current_team.projects.includes(:lead)
+        scope = params[:updated_since].present? ? updated_since_scope(scope) : scope.order(:name)
+        return if performed?
+
+        projects = scope.to_a
 
         @tracked_result_count = projects.size
         render json: projects.map { |p| serialize(p) }
@@ -48,6 +54,13 @@ module Api
       end
 
       private
+
+      def updated_since_scope(scope)
+        since = parse_time_param(:updated_since)
+        return scope if performed?
+
+        scope.where(projects: { updated_at: since.. }).order(updated_at: :asc, id: :asc)
+      end
 
       def set_project
         @project = current_team.projects.find(params[:id])

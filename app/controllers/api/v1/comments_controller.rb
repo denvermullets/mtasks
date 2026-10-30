@@ -2,6 +2,7 @@ module Api
   module V1
     class CommentsController < BaseController
       include MentionNotifying
+      include ApiCommentFiles
 
       before_action :set_current_team
       before_action :set_issue
@@ -19,22 +20,57 @@ module Api
           return
         end
 
-        @comment = @issue.comments.new(comment_params)
-        @comment.user = Current.user
-        @comment.hourglass_message_id = hourglass_message_id
+        blobs = find_blobs
+        return render_invalid_files if blobs.nil?
+
+        @comment = build_comment(blobs)
 
         if @comment.save
+          @issue.touch # a comment is a change to the issue; surfaces it in updated_since pulls
           after_create_side_effects(@comment)
           # Only this branch. The Idempotency-Key short-circuit above returns an existing comment,
           # which is a redelivery rather than new activity and must not be counted twice.
           track_api_feature('comment', 'create', entity: 'issue', depth: @comment.depth)
+          track_comment_files(blobs)
           render json: CommentSerializer.new(@comment).as_json, status: :created
         else
           render_validation_errors(@comment)
         end
       end
 
+      def destroy
+        comment = @issue.comments.find(params[:id])
+        return render_forbidden('Only the author or a team admin can delete this') unless can_modify?(comment)
+
+        depth = comment.depth
+        comment.destroy! # replies cascade via dependent: :destroy
+        @issue.touch # a deletion is a change to the issue; surfaces it in updated_since pulls
+        track_api_feature('comment', 'delete', entity: 'issue', depth: depth)
+        head :no_content
+      rescue ActiveRecord::RecordNotFound
+        render json: { error: 'Not Found', message: 'Comment not found' }, status: :not_found
+      end
+
+      def destroy_attachment
+        comment = @issue.comments.find(params[:comment_id])
+        return render_forbidden('Only the author or a team admin can remove this') unless can_modify?(comment)
+
+        comment.files_attachments.find(params[:id]).purge
+        @issue.touch
+        head :no_content
+      rescue ActiveRecord::RecordNotFound
+        render json: { error: 'Not Found', message: 'Comment attachment not found' }, status: :not_found
+      end
+
       private
+
+      def build_comment(blobs)
+        comment = @issue.comments.new(comment_params)
+        comment.user = Current.user
+        comment.hourglass_message_id = hourglass_message_id
+        comment.files.attach(blobs) if blobs.any?
+        comment
+      end
 
       def after_create_side_effects(comment)
         IssueReferenceService.call(source_issue: @issue, text: comment.body,
@@ -60,7 +96,7 @@ module Api
       end
 
       def comment_params
-        params.require(:comment).permit(:body, :parent_id)
+        params.require(:comment).permit(:body, :parent_id) # files handled by find_blobs
       end
 
       def hourglass_message_id

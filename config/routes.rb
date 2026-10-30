@@ -127,25 +127,56 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       get '/me', to: 'users#me'
+      put '/me/home_page', to: 'users#update_home_page'
+      resources :dashboards, only: %i[index show create update destroy] do
+        resources :groups, only: %i[create update destroy], controller: 'dashboard_groups' do
+          patch :move, on: :member
+          patch :reorder, on: :collection
+        end
+      end
       get '/users/by_email', to: 'users#by_email'
       get '/issues/by_identifier/:identifier',
           to: 'issues#by_identifier',
           constraints: { identifier: /[A-Z]+-\d+/ }
       post '/integrations/handshake', to: 'integrations#handshake'
+      resources :direct_uploads, only: :create
+      get '/attachments/:id/download', to: 'attachment_downloads#show', as: :attachment_download
+      resources :notifications, only: [:index] do
+        member { patch :read }
+        collection do
+          patch :read_all
+          get :unread_count
+        end
+      end
       resources :teams, only: [:index] do
-        resources :issues, only: %i[index show create update] do
+        resources :issues, only: %i[index show create update destroy] do
           resources :issue_dependencies, only: %i[index create destroy], controller: 'issue_dependencies'
-          resources :comments, only: %i[index create]
+          resources :comments, only: %i[index create destroy] do
+            delete 'attachments/:id', to: 'comments#destroy_attachment', as: :attachment
+          end
           resources :decisions, only: %i[create destroy]
+          get :activity, to: 'activity#index'
+          resources :attachments, only: %i[create destroy]
+          patch :move, on: :member
         end
         resources :lanes, only: [:index]
-        resources :labels, only: %i[index create]
+        resources :labels, only: %i[index create update destroy]
         resources :projects, only: %i[index show create update destroy] do
           resources :decisions, only: %i[create destroy]
-          resources :comments, only: %i[index create], controller: 'project_comments'
+          resources :comments, only: %i[index create], controller: 'project_comments' do
+            delete 'attachments/:id', to: 'project_comments#destroy_attachment', as: :attachment
+          end
+          resources :attachments, only: %i[create destroy], controller: 'project_attachments'
+          get :activity, to: 'project_activity#index'
         end
+        get :deleted, to: 'deleted#index'
         resources :members, only: [:index]
+        resources :comments, only: [:index], controller: 'team_comments'
+        resources :recurring_issues, only: %i[index create update destroy]
+        resources :saved_views, only: [:create]
       end
+      resources :saved_views, only: %i[index update destroy]
+      get :deleted, to: 'deleted#user_index'
     end
   end
 

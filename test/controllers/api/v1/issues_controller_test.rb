@@ -32,6 +32,209 @@ module Api
         assert_response :not_found
       end
 
+      # Sync fields
+      test 'issue JSON includes team_id, team_number, archived_at and recurring_issue_id' do
+        recurring = @team.recurring_issues.create!(title: 'Weekly', frequency: 'weekly', weekday: 1, interval: 1,
+                                                   next_run_on: Date.current, time_zone: 'UTC', creator: @user)
+        spawned = @team.issues.create!(title: 'Spawned', lane: @backlog, creator: @user, recurring_issue: recurring)
+        archived = @team.issues.create!(title: 'Old', lane: @backlog, creator: @user)
+        archived.update_columns(archived_at: Time.current)
+
+        get api_v1_team_issues_path(@team), headers: @headers
+        rows = JSON.parse(response.body).index_by { |i| i['id'] }
+        assert_equal @team.id, rows[@issue.id]['team_id']
+        assert_equal @issue.team_number, rows[@issue.id]['team_number']
+        assert_nil rows[@issue.id]['archived_at']
+        assert_nil rows[@issue.id]['recurring_issue_id']
+        assert_equal recurring.id, rows[spawned.id]['recurring_issue_id']
+
+        get api_v1_team_issue_path(@team, archived), headers: @headers
+        assert_response :success
+        assert_not_nil JSON.parse(response.body)['archived_at']
+      end
+
+      # Index: incremental pull
+      test 'index sends X-Server-Time' do
+        get api_v1_team_issues_path(@team), headers: @headers
+
+        assert_response :success
+        assert Time.iso8601(response.headers['X-Server-Time'])
+      end
+
+      test 'updated_since returns issues at or after the time, oldest first, ties by id' do
+        t = Time.utc(2026, 1, 1, 12)
+        old = @team.issues.create!(title: 'Old', lane: @backlog, creator: @user)
+        a = @team.issues.create!(title: 'A', lane: @backlog, creator: @user)
+        b = @team.issues.create!(title: 'B', lane: @backlog, creator: @user)
+        c = @team.issues.create!(title: 'C', lane: @backlog, creator: @user)
+        @issue.update_columns(updated_at: t - 1.day)
+        old.update_columns(updated_at: t - 1.second)
+        c.update_columns(updated_at: t + 1.minute)
+        a.update_columns(updated_at: t)
+        b.update_columns(updated_at: t)
+
+        get api_v1_team_issues_path(@team), params: { updated_since: t.iso8601 }, headers: @headers
+
+        assert_response :success
+        assert_equal [a.id, b.id, c.id], JSON.parse(response.body).pluck('id')
+        assert response.headers['X-Server-Time'].present?
+      end
+
+      test 'archived issues are excluded by default and included with include_archived=1' do
+        t = Time.utc(2026, 1, 1, 12)
+        @issue.update_columns(updated_at: t - 1.day)
+        archived = @team.issues.create!(title: 'Archived', lane: @backlog, creator: @user)
+        archived.archive!
+
+        get api_v1_team_issues_path(@team), params: { updated_since: t.iso8601 }, headers: @headers
+        assert_response :success
+        assert_empty JSON.parse(response.body)
+
+        get api_v1_team_issues_path(@team), params: { updated_since: t.iso8601, include_archived: '1' },
+                                            headers: @headers
+        assert_response :success
+        body = JSON.parse(response.body)
+        assert_equal [archived.id], body.pluck('id')
+        assert body.first['archived_at'].present?
+      end
+
+      test 'invalid updated_since returns 422 with X-Server-Time' do
+        get api_v1_team_issues_path(@team), params: { updated_since: 'yesterday' }, headers: @headers
+
+        assert_response :unprocessable_entity
+        body = JSON.parse(response.body)
+        assert_equal 'Unprocessable Entity', body['error']
+        assert body['errors'].any?
+      end
+
+      test 'limit and after_id walk every issue once, including shared updated_at' do
+        t = Time.utc(2026, 1, 1, 12)
+        ids = Array.new(5) { |i| @team.issues.create!(title: "P#{i}", lane: @backlog, creator: @user) }.map(&:id)
+        @issue.update_columns(updated_at: t - 1.day)
+        Issue.where(id: ids).update_all(updated_at: t)
+        seen = []
+        after = nil
+        pages = 0
+        loop do
+          query = { updated_since: t.iso8601, limit: 2 }
+          query[:after_id] = after if after
+          get api_v1_team_issues_path(@team), params: query, headers: @headers
+          assert_response :success
+          seen.concat(JSON.parse(response.body).pluck('id'))
+          pages += 1
+          after = response.headers['X-Next-After-Id']
+          break unless after
+        end
+        assert_equal ids.sort, seen
+        assert_equal 3, pages
+      end
+
+      test 'limit above 500 is clamped and last page has no X-Next-After-Id' do
+        get api_v1_team_issues_path(@team), params: { limit: 100_000 }, headers: @headers
+
+        assert_response :success
+        assert_nil response.headers['X-Next-After-Id']
+        assert_equal 1, JSON.parse(response.body).length
+      end
+
+      test 'unknown after_id returns 422' do
+        get api_v1_team_issues_path(@team), params: { after_id: 0 }, headers: @headers
+
+        assert_response :unprocessable_entity
+      end
+
+      # updated_at hygiene
+      test 'adding a label via update makes the issue appear in the next updated_since pull' do
+        label = @team.labels.create!(name: 'Bug', color: '#ff0000')
+        @issue.update_columns(updated_at: 1.day.ago)
+        cursor = 1.hour.ago
+
+        patch api_v1_team_issue_path(@team, @issue), params: { issue: { label_ids: [label.id] } },
+                                                     headers: @headers, as: :json
+        assert_response :success
+
+        get api_v1_team_issues_path(@team), params: { updated_since: cursor.utc.iso8601 }, headers: @headers
+        assert_includes JSON.parse(response.body).pluck('id'), @issue.id
+      end
+
+      test 'removing a label via update makes the issue appear in the next updated_since pull' do
+        label = @team.labels.create!(name: 'Bug', color: '#ff0000')
+        @issue.labels << label
+        @issue.update_columns(updated_at: 1.day.ago)
+        cursor = 1.hour.ago
+
+        patch api_v1_team_issue_path(@team, @issue), params: { issue: { label_ids: [] } },
+                                                     headers: @headers, as: :json
+        assert_response :success
+
+        get api_v1_team_issues_path(@team), params: { updated_since: cursor.utc.iso8601 }, headers: @headers
+        assert_includes JSON.parse(response.body).pluck('id'), @issue.id
+      end
+
+      # Index: include=detail
+      test 'index without include=detail keeps the base shape' do
+        get api_v1_team_issues_path(@team), headers: @headers
+
+        assert_not JSON.parse(response.body).first.key?('description')
+      end
+
+      test 'index include=detail matches the show detailed shape' do
+        parent = @team.issues.create!(title: 'Parent', lane: @backlog, creator: @user)
+        other = @team.issues.create!(title: 'Other', lane: @backlog, creator: @user)
+        @issue.update!(parent_issue: parent, description: 'Details')
+        IssueDependency.create!(blocking_issue: other, blocked_issue: @issue)
+        IssueDependency.create!(blocking_issue: @issue, blocked_issue: parent, kind: 'relates')
+
+        get api_v1_team_issues_path(@team), params: { include: 'detail' }, headers: @headers
+        listed = JSON.parse(response.body).find { |i| i['id'] == @issue.id }
+
+        get api_v1_team_issue_path(@team, @issue), headers: @headers
+        assert_equal JSON.parse(response.body), listed
+        assert_equal 'Details', listed['description']
+      end
+
+      test 'index include=detail works with updated_since' do
+        t = Time.utc(2026, 1, 1, 12)
+        @issue.update_columns(updated_at: t - 1.day)
+        newer = @team.issues.create!(title: 'Newer', lane: @backlog, creator: @user)
+        newer.update_columns(updated_at: t + 1.minute)
+
+        get api_v1_team_issues_path(@team), params: { include: 'detail', updated_since: t.iso8601 }, headers: @headers
+
+        body = JSON.parse(response.body)
+        assert_equal [newer.id], body.pluck('id')
+        assert body.first.key?('description')
+      end
+
+      test 'index include=detail query count does not grow per issue' do
+        count_queries = lambda do
+          count = 0
+          counter = ->(*, payload) { count += 1 unless %w[SCHEMA TRANSACTION].include?(payload[:name]) }
+          ActiveRecord::Base.uncached do
+            ActiveSupport::Notifications.subscribed(counter, 'sql.active_record') do
+              get api_v1_team_issues_path(@team), params: { include: 'detail' }, headers: @headers
+            end
+          end
+          count
+        end
+
+        # Preloads of empty associations are skipped, so seed one of each relation before measuring.
+        parent = @team.issues.create!(title: 'Parent', lane: @backlog, creator: @user)
+        add_linked = lambda do |title|
+          issue = @team.issues.create!(title: title, lane: @backlog, creator: @user, parent_issue: parent)
+          IssueDependency.create!(blocking_issue: parent, blocked_issue: issue)
+          IssueDependency.create!(blocking_issue: issue, blocked_issue: @issue, kind: 'relates')
+        end
+        add_linked.call('Seed')
+
+        count_queries.call # warm
+        baseline = count_queries.call
+
+        4.times { |i| add_linked.call("Extra #{i}") }
+
+        assert_equal baseline, count_queries.call
+      end
+
       # Index
       test 'lists issues' do
         get api_v1_team_issues_path(@team), headers: @headers
@@ -157,6 +360,45 @@ module Api
 
         @issue.reload
         assert_nil @issue.completed_at
+      end
+
+      # Destroy
+      test 'team member deletes an issue' do
+        delete api_v1_team_issue_path(@team, @issue), headers: @headers
+        assert_response :no_content
+
+        get api_v1_team_issue_path(@team, @issue), headers: @headers
+        assert_response :not_found
+        get api_v1_team_issues_path(@team), headers: @headers
+        assert_not_includes JSON.parse(response.body).pluck('id'), @issue.id
+      end
+
+      test 'delete with read-only token is forbidden' do
+        read_only = ApiToken.generate_for(@user, scopes: %w[read])
+        headers = { 'Authorization' => "Bearer #{read_only.raw_token}", 'Content-Type' => 'application/json' }
+        delete api_v1_team_issue_path(@team, @issue), headers: headers
+        assert_response :forbidden
+        assert Issue.exists?(@issue.id)
+      end
+
+      test 'delete in a team outside the token is not found' do
+        other_user = User.create!(name: 'Other', email: 'other_del@example.com', password: 'password')
+        other_team = Workspace.create!(name: 'Other WS', owner: other_user).teams.create!(name: 'O', identifier: 'OTD')
+        delete api_v1_team_issue_path(other_team, @issue), headers: @headers
+        assert_response :not_found
+      end
+
+      test 'delete unknown issue is not found' do
+        delete api_v1_team_issue_path(@team, 0), headers: @headers
+        assert_response :not_found
+      end
+
+      test 'deleting an issue with a project enqueues velocity recalculation' do
+        project = @team.projects.create!(name: 'Proj')
+        @issue.update!(project: project)
+        assert_enqueued_with(job: ProjectVelocityJob, args: [project.id]) do
+          delete api_v1_team_issue_path(@team, @issue), headers: @headers
+        end
       end
     end
   end

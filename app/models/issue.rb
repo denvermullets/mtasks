@@ -139,6 +139,15 @@ class Issue < ApplicationRecord
     Issue.where(id: incoming_links.duplicates.select(:blocking_issue_id))
   end
 
+  # Assigning label_ids on a persisted issue rewrites the join rows without touching the issue,
+  # so incremental sync (updated_since) would miss it. Writers use this instead of a bare
+  # assign_attributes so a label-only change still moves updated_at (explicit, no callback).
+  def assign_attributes_touching_labels(attrs)
+    previous_label_ids = label_ids
+    assign_attributes(attrs)
+    touch if persisted? && label_ids.sort != previous_label_ids.sort
+  end
+
   def enqueue_velocity_recalculation!
     return unless saved_change_to_project_id? || saved_change_to_completed_at? || saved_change_to_archived_at?
 

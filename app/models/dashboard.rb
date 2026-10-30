@@ -1,4 +1,6 @@
 class Dashboard < ApplicationRecord
+  has_paper_trail on: [:destroy]
+
   # Associations
   belongs_to :user
   has_many :groups, -> { order(:position, :id) }, class_name: 'DashboardGroup', dependent: :destroy
@@ -17,15 +19,18 @@ class Dashboard < ApplicationRecord
     with_lock do
       siblings = groups.reload.to_a
       renumber_groups(siblings.sort_by.with_index { |group, i| [ids.index(group.id) || ids.size, i] })
+      touch
     end
 
     self
   end
 
-  # Writes positions 1..n in the given order, skipping rows that already match.
+  # Writes positions 1..n in the given order, skipping rows that already match. Bumps updated_at on
+  # the rows it renumbers (update_columns skips timestamps) so sync sees the new order.
   def renumber_groups(ordered)
+    now = Time.current
     ordered.each.with_index(1) do |group, pos|
-      group.update_column(:position, pos) unless group.position == pos
+      group.update_columns(position: pos, updated_at: now) unless group.position == pos
     end
   end
 end

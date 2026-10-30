@@ -68,7 +68,7 @@ class IssueTeamMover < Service
 
   def sever_cross_team_hierarchy
     @issue.parent_issue = nil if @issue.parent_issue && @issue.parent_issue.team_id != @target_team.id
-    @issue.sub_issues.update_all(parent_issue_id: nil)
+    @issue.sub_issues.update_all(parent_issue_id: nil, updated_at: Time.current)
   end
 
   def member?(team, user = @user)

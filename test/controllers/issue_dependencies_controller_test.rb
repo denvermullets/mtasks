@@ -15,6 +15,38 @@ class IssueDependenciesControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(@user)
   end
 
+  test 'create moves both issues updated_at' do
+    old = 1.day.ago
+    [@issue_a, @issue_b].each { |i| i.update_columns(updated_at: old) }
+
+    post team_issue_issue_dependencies_path(@team, @issue_a),
+         params: { target_issue_id: @issue_b.id, direction: 'blocking' }
+
+    assert_operator @issue_a.reload.updated_at, :>, old
+    assert_operator @issue_b.reload.updated_at, :>, old
+  end
+
+  test 'destroy moves both issues updated_at' do
+    dep = IssueDependency.create!(blocking_issue: @issue_a, blocked_issue: @issue_b, kind: 'blocks')
+    old = 1.day.ago
+    [@issue_a, @issue_b].each { |i| i.update_columns(updated_at: old) }
+
+    delete team_issue_issue_dependency_path(@team, @issue_a, dep)
+
+    assert_operator @issue_a.reload.updated_at, :>, old
+    assert_operator @issue_b.reload.updated_at, :>, old
+  end
+
+  test 'bulk_create moves every linked issue updated_at' do
+    old = 1.day.ago
+    [@issue_a, @issue_b, @issue_c].each { |i| i.update_columns(updated_at: old) }
+
+    post bulk_create_team_issue_issue_dependencies_path(@team, @issue_a),
+         params: { target_issue_ids: [@issue_b.id, @issue_c.id], direction: 'blocking' }
+
+    [@issue_a, @issue_b, @issue_c].each { |i| assert_operator i.reload.updated_at, :>, old }
+  end
+
   test 'creates a blocking dependency' do
     assert_difference 'IssueDependency.count', 1 do
       post team_issue_issue_dependencies_path(@team, @issue_a),

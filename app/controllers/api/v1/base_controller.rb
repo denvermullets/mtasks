@@ -41,6 +41,13 @@ module Api
 
       attr_reader :current_team
 
+      # Idle-poll primitive: the ETag is derived from the serialized payload itself, so it changes
+      # when anything the client would see changes and differs wherever the response differs
+      # (per team, per token scope). A matching If-None-Match gets a 304 with no body.
+      def render_conditional_json(payload)
+        render json: payload if stale?(etag: payload)
+      end
+
       # Every team-resolving lookup goes through this, so a team-scoped token never sees a team
       # outside its set — not even to learn that it exists.
       def accessible_teams
@@ -80,6 +87,26 @@ module Api
 
       def configure_paper_trail_whodunnit
         ::PaperTrail.request.whodunnit = Current.user&.id&.to_s
+      end
+
+      # Sync clients store this as their next cursor, so it goes out on every response that takes a
+      # time param, 422s included.
+      def set_server_time_header
+        response.set_header('X-Server-Time', Time.current.utc.iso8601(6))
+      end
+
+      # Parses an optional ISO8601 time param. Returns nil when the param is absent or blank; on
+      # garbage it renders the 422 and returns nil too, so callers check `performed?` before going on.
+      def parse_time_param(name)
+        set_server_time_header
+        value = params[name]
+        return nil if value.blank?
+
+        Time.iso8601(value.to_s)
+      rescue ArgumentError
+        render json: { error: 'Unprocessable Entity', errors: ["#{name} must be an ISO8601 timestamp"] },
+               status: :unprocessable_entity
+        nil
       end
 
       def render_validation_errors(record)

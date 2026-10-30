@@ -4,6 +4,10 @@ class Project < ApplicationRecord
 
   enum :priority, { urgent: 0, high: 1, medium: 2, low: 3, no_priority: 4 }
 
+  # Destroy versions are the team deleted feed's tombstones (see TeamDeletedFeed); update versions
+  # feed the project activity API.
+  has_paper_trail only: %i[name description status priority lead_id start_date due_date roadmap_commitment]
+
   belongs_to :team
   belongs_to :lead, class_name: 'User', optional: true
   has_many :issues, dependent: :nullify
@@ -31,12 +35,16 @@ class Project < ApplicationRecord
 
   normalizes :roadmap_commitment, with: lambda(&:presence)
 
+  # update_columns skips timestamps, but these counts are in the API payload, so a change has to
+  # move updated_at or an updated_since pull would never see it.
   def recalculate_velocity!
-    update_columns(
+    counts = {
       velocity_score: issues.not_archived.where('completed_at >= ?', 14.days.ago).count,
       completed_issues_count: closed_issues(issues.not_archived).count,
       total_issues_count: issues.not_archived.count
-    )
+    }
+    counts[:updated_at] = Time.current if counts.any? { |attribute, value| self[attribute] != value }
+    update_columns(counts)
   end
 
   def progress_percentage

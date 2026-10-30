@@ -30,6 +30,47 @@ module Api
         assert_nil json.dig('token', 'team_ids')
       end
 
+      test 'home_page is null when unset' do
+        get api_v1_me_path, headers: api_headers_for(@user)
+
+        assert_response :success
+        assert JSON.parse(response.body).key?('home_page')
+        assert_nil JSON.parse(response.body)['home_page']
+      end
+
+      test 'home_page reports a team' do
+        @user.update!(settings: { 'home_team_id' => @team.id })
+        get api_v1_me_path, headers: api_headers_for(@user)
+
+        assert_equal({ 'kind' => 'team', 'id' => @team.id }, JSON.parse(response.body)['home_page'])
+      end
+
+      test 'home_page reports a saved view' do
+        view = @user.saved_views.create!(team: @team, name: 'Mine', query: {})
+        @user.update!(settings: { 'home_view_id' => view.id })
+        get api_v1_me_path, headers: api_headers_for(@user)
+
+        assert_equal({ 'kind' => 'saved_view', 'id' => view.id }, JSON.parse(response.body)['home_page'])
+      end
+
+      test 'home_page reports a dashboard' do
+        dashboard = @user.dashboards.create!(name: 'Dash')
+        @user.update!(settings: { 'home_dashboard_id' => dashboard.id })
+        get api_v1_me_path, headers: api_headers_for(@user)
+
+        assert_equal({ 'kind' => 'dashboard', 'id' => dashboard.id }, JSON.parse(response.body)['home_page'])
+      end
+
+      test 'home_page for a team outside a scoped token is null' do
+        other = @workspace.teams.create!(name: 'Other', identifier: 'OTHR')
+        other.team_memberships.create!(user: @user)
+        @user.update!(settings: { 'home_team_id' => other.id })
+        token = ApiToken.generate_for(@user, name: 'Scoped', teams: [@team])
+        get api_v1_me_path, headers: headers_for(token)
+
+        assert_nil JSON.parse(response.body)['home_page']
+      end
+
       test 'reports team_id for team-scoped tokens' do
         token = ApiToken.generate_for(@user, name: 'Scoped', teams: [@team])
 
@@ -39,6 +80,110 @@ module Api
         json = JSON.parse(response.body)
         assert_equal @team.id, json.dig('token', 'team_id')
         assert_equal [@team.id], json.dig('token', 'team_ids')
+      end
+
+      def put_home(body, headers: api_headers_for(@user))
+        put api_v1_me_home_page_path, params: body.to_json, headers: headers
+      end
+
+      test 'PUT home_page sets a team via kind and id' do
+        put_home({ kind: 'team', id: @team.id })
+
+        assert_response :success
+        assert_equal({ 'kind' => 'team', 'id' => @team.id }, JSON.parse(response.body)['home_page'])
+        assert_equal @team, @user.reload.home_team
+      end
+
+      test 'PUT home_page sets a saved view via kind and id' do
+        view = @user.saved_views.create!(team: @team, name: 'Mine', query: {})
+        put_home({ kind: 'saved_view', id: view.id })
+
+        assert_response :success
+        assert_equal view, @user.reload.home_view
+      end
+
+      test 'PUT home_page sets a dashboard via kind and id' do
+        dashboard = @user.dashboards.create!(name: 'Dash')
+        put_home({ kind: 'dashboard', id: dashboard.id })
+
+        assert_response :success
+        assert_equal dashboard, @user.reload.home_dashboard
+      end
+
+      test 'PUT home_page accepts the web string form' do
+        view = @user.saved_views.create!(team: @team, name: 'Mine', query: {})
+        dashboard = @user.dashboards.create!(name: 'Dash')
+
+        put_home({ home: "team:#{@team.id}" })
+        assert_equal @team, @user.reload.home_team
+        put_home({ home: "view:#{view.id}" })
+        assert_equal view, @user.reload.home_view
+        assert_nil @user.home_team
+        put_home({ home: "dashboard:#{dashboard.id}" })
+        assert_equal dashboard, @user.reload.home_dashboard
+        assert_nil @user.home_view
+      end
+
+      test 'PUT home_page with a blank value clears it and keeps other settings' do
+        @user.update!(settings: { 'home_team_id' => @team.id, 'time_zone' => 'UTC' })
+
+        put_home({ home: '' })
+
+        assert_response :success
+        assert_nil JSON.parse(response.body)['home_page']
+        assert_equal({ 'time_zone' => 'UTC' }, @user.reload.settings)
+      end
+
+      test 'PUT home_page with no kind clears it' do
+        @user.update!(settings: { 'home_team_id' => @team.id })
+
+        put_home({})
+
+        assert_response :success
+        assert_nil @user.reload.home_team
+      end
+
+      test 'PUT home_page rejects inaccessible targets and saves nothing' do
+        other_user = User.create!(name: 'Other', email: 'other-home@example.com', password: 'password')
+        other_ws = Workspace.create!(name: 'Other WS', owner: other_user)
+        foreign_team = other_ws.teams.create!(name: 'Foreign', identifier: 'FRGN')
+        foreign_team.team_memberships.create!(user: other_user)
+        foreign_view = other_user.saved_views.create!(team: foreign_team, name: 'Theirs', query: {})
+        foreign_dash = other_user.dashboards.create!(name: 'Theirs')
+        @user.update!(settings: { 'home_team_id' => @team.id })
+
+        [{ kind: 'team', id: foreign_team.id }, { kind: 'saved_view', id: foreign_view.id },
+         { kind: 'dashboard', id: foreign_dash.id }, { kind: 'bogus', id: 1 }, { home: 'team:0' }].each do |body|
+          put_home(body)
+
+          assert_response :unprocessable_entity
+          assert_equal({ 'home_team_id' => @team.id }, @user.reload.settings)
+        end
+      end
+
+      test 'PUT home_page rejects a team outside a team-scoped token' do
+        other = @workspace.teams.create!(name: 'Other', identifier: 'OTHR')
+        other.team_memberships.create!(user: @user)
+        view = @user.saved_views.create!(team: other, name: 'Other view', query: {})
+        token = ApiToken.generate_for(@user, name: 'Scoped', teams: [@team])
+
+        put_home({ kind: 'team', id: other.id }, headers: headers_for(token))
+        assert_response :unprocessable_entity
+        put_home({ kind: 'saved_view', id: view.id }, headers: headers_for(token))
+        assert_response :unprocessable_entity
+        assert_nil @user.reload.settings&.dig('home_team_id')
+
+        put_home({ kind: 'team', id: @team.id }, headers: headers_for(token))
+        assert_response :success
+      end
+
+      test 'PUT home_page needs the write scope' do
+        token = ApiToken.generate_for(@user, name: 'RO', scopes: %w[read])
+
+        put_home({ kind: 'team', id: @team.id }, headers: headers_for(token))
+
+        assert_response :forbidden
+        assert_nil @user.reload.home_team
       end
 
       test 'rejects requests without a valid token' do

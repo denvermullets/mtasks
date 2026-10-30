@@ -4,6 +4,9 @@
 # next_run_on is a calendar date in the template's own time_zone (defaulted from the creator's
 # preference), so "every Friday" means Friday where the team is. RecurringIssuesJob sweeps hourly.
 class RecurringIssue < ApplicationRecord
+  # Destroy-only: the versions are the team deleted feed's tombstones (see TeamDeletedFeed).
+  has_paper_trail on: :destroy
+
   enum :frequency, { daily: 0, weekly: 1, monthly: 2 }
   enum :priority, Issue.priorities
 

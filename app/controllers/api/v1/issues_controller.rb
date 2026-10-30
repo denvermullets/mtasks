@@ -2,11 +2,12 @@ module Api
   module V1
     class IssuesController < BaseController
       before_action :set_current_team, except: [:by_identifier]
-      before_action :set_issue, only: %i[show update]
+      before_action :set_issue, only: %i[show update destroy move]
 
       # Below the before_action block on purpose: capture_tracked_label_ids has to run after
       # set_issue, because it reads label_ids before update rewrites them.
       include VektisApiIssueTracking
+      include IssueKeysetPagination
 
       FILTER_PARAMS = %i[lane_id assignee_id project_id priority].freeze
 
@@ -26,12 +27,12 @@ module Api
       end
 
       def index
-        issues = filter_issues(
-          current_team.issues.not_archived.includes(:lane, :project, :labels, :assignee, :creator)
-        ).order(created_at: :desc).to_a
+        set_server_time_header
+        scope = filter_issues(index_base_scope)
+        scope = ordered_scope(scope)
+        return if performed?
 
-        @tracked_result_count = issues.size
-        render json: issues.map { |i| serialize(i) }
+        render_issue_list(scope)
       end
 
       def show
@@ -58,7 +59,7 @@ module Api
         foreign = foreign_team_references(issue_params)
         return render_foreign_team_references(foreign) if foreign.any?
 
-        @issue.assign_attributes(issue_params)
+        @issue.assign_attributes_touching_labels(issue_params)
         @issue.apply_lane_timestamps!
 
         if @issue.save
@@ -73,7 +74,40 @@ module Api
         end
       end
 
+      # Mirrors the web destroy: any team member may delete, and the project's velocity is
+      # recalculated afterwards. The write is tracked as issue-delete, the web's slug.
+      def destroy
+        project_id = @issue.project_id
+        @issue.destroy
+        return render_validation_errors(@issue) unless @issue.destroyed?
+
+        track_api_feature('issue-delete', 'delete', **issue_shape(@issue))
+        ProjectVelocityJob.perform_later(project_id) if project_id.present?
+        head :no_content
+      end
+
+      def move
+        target_team = accessible_teams.find_by(id: params[:target_team_id])
+        return render_not_found('Team not found or access denied') unless target_team
+
+        mover = IssueTeamMover.call(issue: @issue, target_team: target_team, user: current_user)
+        return render_validation_message(mover.error || 'Could not move issue.') unless mover.success?
+
+        track_api_feature('issue-transfer', 'move', entity: 'issue')
+        render json: serialize(@issue, detailed: true)
+      end
+
       private
+
+      def index_base_scope
+        base = current_team.issues
+        base = base.not_archived unless ActiveModel::Type::Boolean.new.cast(params[:include_archived]) == true
+        base.includes(:lane, :project, :labels, :assignee, :creator)
+      end
+
+      def render_validation_message(message)
+        render json: { error: 'Unprocessable Entity', errors: [message] }, status: :unprocessable_entity
+      end
 
       def set_issue
         @issue = current_team.issues.find(params[:id])
@@ -81,8 +115,42 @@ module Api
         render_not_found
       end
 
-      def render_not_found
-        render json: { error: 'Not Found', message: 'Issue not found' }, status: :not_found
+      def updated_since_scope(scope)
+        since = parse_time_param(:updated_since)
+        return scope if performed?
+
+        scope.where(issues: { updated_at: since.. }).order(updated_at: :asc, id: :asc)
+      end
+
+      def ordered_scope(scope)
+        scope = params[:updated_since].present? ? updated_since_scope(scope) : scope.order(created_at: :desc)
+        return scope if performed?
+
+        paginate_scope(scope)
+      end
+
+      def render_issue_list(scope)
+        scope = detail_preloads(scope) if detail_requested?
+        issues = trim_page(scope.to_a)
+        @tracked_result_count = issues.size
+        render json: issues.map { |i| serialize(i, detailed: detail_requested?) }
+      end
+
+      def detail_requested?
+        params[:include] == 'detail'
+      end
+
+      # Everything IssueSerializer(detailed: true) touches, loaded up front so the pull stays flat.
+      def detail_preloads(scope)
+        scope.includes(
+          :team, { files_attachments: :blob }, { parent_issue: :team },
+          outgoing_links: { blocked_issue: :team }, incoming_links: { blocking_issue: :team },
+          blocked_dependencies: { blocking_issue: :team }, blocking_dependencies: { blocked_issue: :team }
+        )
+      end
+
+      def render_not_found(message = 'Issue not found')
+        render json: { error: 'Not Found', message: message }, status: :not_found
       end
 
       def issue_params
