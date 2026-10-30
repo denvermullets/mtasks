@@ -127,6 +127,7 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       get '/me', to: 'users#me'
+      put '/me/home_page', to: 'users#update_home_page'
       resources :dashboards, only: %i[index show create update destroy] do
         resources :groups, only: %i[create update destroy], controller: 'dashboard_groups'
       end
