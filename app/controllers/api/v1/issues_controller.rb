@@ -2,7 +2,7 @@ module Api
   module V1
     class IssuesController < BaseController
       before_action :set_current_team, except: [:by_identifier]
-      before_action :set_issue, only: %i[show update destroy]
+      before_action :set_issue, only: %i[show update destroy move]
 
       # Below the before_action block on purpose: capture_tracked_label_ids has to run after
       # set_issue, because it reads label_ids before update rewrites them.
@@ -90,12 +90,27 @@ module Api
         head :no_content
       end
 
+      def move
+        target_team = accessible_teams.find_by(id: params[:target_team_id])
+        return render_not_found('Team not found or access denied') unless target_team
+
+        mover = IssueTeamMover.call(issue: @issue, target_team: target_team, user: current_user)
+        return render_validation_message(mover.error || 'Could not move issue.') unless mover.success?
+
+        track_api_feature('issue-transfer', 'move', entity: 'issue')
+        render json: serialize(@issue, detailed: true)
+      end
+
       private
 
       def index_base_scope
         base = current_team.issues
         base = base.not_archived unless ActiveModel::Type::Boolean.new.cast(params[:include_archived]) == true
         base.includes(:lane, :project, :labels, :assignee, :creator)
+      end
+
+      def render_validation_message(message)
+        render json: { error: 'Unprocessable Entity', errors: [message] }, status: :unprocessable_entity
       end
 
       def set_issue
@@ -133,7 +148,7 @@ module Api
         scope = scope.reorder(updated_at: :asc, id: :asc)
         if params.key?(:after_id)
           cursor = current_team.issues.find_by(id: params[:after_id])
-          return render_invalid_after_id unless cursor
+          return render_validation_message('after_id must be an issue id in this team') unless cursor
 
           scope = scope.where('(issues.updated_at, issues.id) > (?, ?)', cursor.updated_at, cursor.id)
         end
@@ -148,11 +163,6 @@ module Api
         page
       end
 
-      def render_invalid_after_id
-        render json: { error: 'Unprocessable Entity', errors: ['after_id must be an issue id in this team'] },
-               status: :unprocessable_entity
-      end
-
       def parse_updated_since
         Time.iso8601(params[:updated_since].to_s)
       rescue ArgumentError
@@ -164,8 +174,8 @@ module Api
                status: :unprocessable_entity
       end
 
-      def render_not_found
-        render json: { error: 'Not Found', message: 'Issue not found' }, status: :not_found
+      def render_not_found(message = 'Issue not found')
+        render json: { error: 'Not Found', message: message }, status: :not_found
       end
 
       def issue_params
