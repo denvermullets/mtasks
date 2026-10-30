@@ -149,7 +149,9 @@ Rails.application.routes.draw do
         end
         resources :members, only: [:index]
         resources :recurring_issues, only: %i[index create]
+        resources :saved_views, only: [:create]
       end
+      resources :saved_views, only: [:index]
     end
   end
 
