@@ -15,6 +15,31 @@ module Api
         @headers = api_headers_for(@user)
       end
 
+      # updated_since hygiene: a link change counts as a change to both issues
+      test 'creating a dependency makes both issues appear in the next updated_since pull' do
+        cursor = Time.utc(2026, 1, 1, 12)
+        [@issue_a, @issue_b].each { |i| i.update_columns(updated_at: cursor - 1.day) }
+
+        post api_v1_team_issue_issue_dependencies_path(@team, @issue_a),
+             params: { target_issue_id: @issue_b.id, direction: 'blocking' }.to_json, headers: @headers
+        assert_response :created
+
+        get api_v1_team_issues_path(@team), params: { updated_since: cursor.iso8601 }, headers: @headers
+        assert_equal [@issue_a.id, @issue_b.id].sort, JSON.parse(response.body).pluck('id').sort
+      end
+
+      test 'deleting a dependency makes both issues appear in the next updated_since pull' do
+        dep = IssueDependency.create!(blocking_issue: @issue_a, blocked_issue: @issue_b, kind: 'blocks')
+        cursor = Time.utc(2026, 1, 1, 12)
+        [@issue_a, @issue_b].each { |i| i.update_columns(updated_at: cursor - 1.day) }
+
+        delete api_v1_team_issue_issue_dependency_path(@team, @issue_a, dep), headers: @headers
+        assert_response :success
+
+        get api_v1_team_issues_path(@team), params: { updated_since: cursor.iso8601 }, headers: @headers
+        assert_equal [@issue_a.id, @issue_b.id].sort, JSON.parse(response.body).pluck('id').sort
+      end
+
       # Create - blocking direction
       test 'creates blocking dependency' do
         assert_difference 'IssueDependency.count', 1 do

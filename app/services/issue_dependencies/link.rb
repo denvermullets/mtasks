@@ -40,7 +40,8 @@ module IssueDependencies
       source, target = issue_is_source ? [@issue, @target] : [@target, @issue]
 
       dependency = IssueDependency.new(kind: kind, blocking_issue: source, blocked_issue: target)
-      dependency.save
+      # Touch both issues explicitly so the link shows up in the next `updated_since` pull.
+      source.touch && target.touch if dependency.save
       dependency
     end
   end

@@ -41,7 +41,7 @@ class IssueDependenciesController < ApplicationController
     dependency = find_dependency
 
     if dependency && (dependency.blocking_issue_id == @issue.id || dependency.blocked_issue_id == @issue.id)
-      dependency.destroy
+      IssueDependencies::Unlink.call(dependency: dependency)
       track_feature('issue-dependency', 'unlink', direction: link_direction(dependency))
       render_relations
     else
