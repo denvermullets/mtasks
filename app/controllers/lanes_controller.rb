@@ -89,7 +89,7 @@ class LanesController < ApplicationController
     return unless @lane.issues.any?
 
     target_lane = current_team.lanes.find(params[:target_lane_id])
-    @lane.issues.update_all(lane_id: target_lane.id)
+    @lane.issues.update_all(lane_id: target_lane.id, updated_at: Time.current)
   end
 
   def position_changed?
