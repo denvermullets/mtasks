@@ -142,7 +142,7 @@ Rails.application.routes.draw do
           get :activity, to: 'activity#index'
         end
         resources :lanes, only: [:index]
-        resources :labels, only: %i[index create]
+        resources :labels, only: %i[index create update]
         resources :projects, only: %i[index show create update destroy] do
           resources :decisions, only: %i[create destroy]
           resources :comments, only: %i[index create], controller: 'project_comments'
