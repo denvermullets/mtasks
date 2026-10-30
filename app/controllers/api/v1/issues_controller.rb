@@ -34,9 +34,7 @@ module Api
         scope = params.key?(:updated_since) ? updated_since_scope(scope) : scope.order(created_at: :desc)
         return if performed?
 
-        issues = scope.to_a
-        @tracked_result_count = issues.size
-        render json: issues.map { |i| serialize(i) }
+        render_issue_list(scope)
       end
 
       def show
@@ -91,6 +89,26 @@ module Api
         return render_invalid_updated_since unless since
 
         scope.where(issues: { updated_at: since.. }).order(updated_at: :asc, id: :asc)
+      end
+
+      def render_issue_list(scope)
+        scope = detail_preloads(scope) if detail_requested?
+        issues = scope.to_a
+        @tracked_result_count = issues.size
+        render json: issues.map { |i| serialize(i, detailed: detail_requested?) }
+      end
+
+      def detail_requested?
+        params[:include] == 'detail'
+      end
+
+      # Everything IssueSerializer(detailed: true) touches, loaded up front so the pull stays flat.
+      def detail_preloads(scope)
+        scope.includes(
+          :team, { parent_issue: :team },
+          outgoing_links: { blocked_issue: :team }, incoming_links: { blocking_issue: :team },
+          blocked_dependencies: { blocking_issue: :team }, blocking_dependencies: { blocked_issue: :team }
+        )
       end
 
       def parse_updated_since

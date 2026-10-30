@@ -59,9 +59,14 @@ module Api
         { id: issue.id, identifier: issue.identifier, title: issue.title, dependency_id: dependency.id }
       end
 
+      def links_of(links, kind)
+        links.select { |d| d.kind == kind.to_s }
+      end
+
       def serialize_links(kind)
-        outgoing = @issue.outgoing_links.public_send(kind).includes(:blocked_issue).map { |d| [d, d.blocked_issue] }
-        incoming = @issue.incoming_links.public_send(kind).includes(:blocking_issue).map { |d| [d, d.blocking_issue] }
+        # Filter in Ruby over the (preloadable) associations so list endpoints don't N+1.
+        outgoing = links_of(@issue.outgoing_links, kind).map { |d| [d, d.blocked_issue] }
+        incoming = links_of(@issue.incoming_links, kind).map { |d| [d, d.blocking_issue] }
 
         (outgoing + incoming).sort_by { |d, _| d.id }.map do |dependency, other|
           serialize_dependency_issue(dependency, other)

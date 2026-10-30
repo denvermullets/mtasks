@@ -68,6 +68,70 @@ module Api
         assert body['errors'].any?
       end
 
+      # Index: include=detail
+      test 'index without include=detail keeps the base shape' do
+        get api_v1_team_issues_path(@team), headers: @headers
+
+        assert_not JSON.parse(response.body).first.key?('description')
+      end
+
+      test 'index include=detail matches the show detailed shape' do
+        parent = @team.issues.create!(title: 'Parent', lane: @backlog, creator: @user)
+        other = @team.issues.create!(title: 'Other', lane: @backlog, creator: @user)
+        @issue.update!(parent_issue: parent, description: 'Details')
+        IssueDependency.create!(blocking_issue: other, blocked_issue: @issue)
+        IssueDependency.create!(blocking_issue: @issue, blocked_issue: parent, kind: 'relates')
+
+        get api_v1_team_issues_path(@team), params: { include: 'detail' }, headers: @headers
+        listed = JSON.parse(response.body).find { |i| i['id'] == @issue.id }
+
+        get api_v1_team_issue_path(@team, @issue), headers: @headers
+        assert_equal JSON.parse(response.body), listed
+        assert_equal 'Details', listed['description']
+      end
+
+      test 'index include=detail works with updated_since' do
+        t = Time.utc(2026, 1, 1, 12)
+        @issue.update_columns(updated_at: t - 1.day)
+        newer = @team.issues.create!(title: 'Newer', lane: @backlog, creator: @user)
+        newer.update_columns(updated_at: t + 1.minute)
+
+        get api_v1_team_issues_path(@team), params: { include: 'detail', updated_since: t.iso8601 }, headers: @headers
+
+        body = JSON.parse(response.body)
+        assert_equal [newer.id], body.pluck('id')
+        assert body.first.key?('description')
+      end
+
+      test 'index include=detail query count does not grow per issue' do
+        count_queries = lambda do
+          count = 0
+          counter = ->(*, payload) { count += 1 unless %w[SCHEMA TRANSACTION].include?(payload[:name]) }
+          ActiveRecord::Base.uncached do
+            ActiveSupport::Notifications.subscribed(counter, 'sql.active_record') do
+              get api_v1_team_issues_path(@team), params: { include: 'detail' }, headers: @headers
+            end
+          end
+          count
+        end
+
+        # Preloads of empty associations are skipped, so seed one of each relation before measuring.
+        parent = @team.issues.create!(title: 'Parent', lane: @backlog, creator: @user)
+        add_linked = lambda do |title|
+          issue = @team.issues.create!(title: title, lane: @backlog, creator: @user, parent_issue: parent)
+          IssueDependency.create!(blocking_issue: parent, blocked_issue: issue)
+          IssueDependency.create!(blocking_issue: issue, blocked_issue: @issue, kind: 'relates')
+        end
+        add_linked.call('Seed')
+
+        count_queries.call # warm
+        baseline = count_queries.call
+
+        4.times { |i| add_linked.call("Extra #{i}") }
+
+        assert_equal baseline, count_queries.call
+      end
+
       # Index
       test 'lists issues' do
         get api_v1_team_issues_path(@team), headers: @headers
