@@ -137,6 +137,7 @@ Rails.application.routes.draw do
           resources :issue_dependencies, only: %i[index create destroy], controller: 'issue_dependencies'
           resources :comments, only: %i[index create]
           resources :decisions, only: %i[create destroy]
+          get :activity, to: 'activity#index'
         end
         resources :lanes, only: [:index]
         resources :labels, only: %i[index create]
