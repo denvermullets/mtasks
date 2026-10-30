@@ -146,6 +146,7 @@ Rails.application.routes.draw do
           resources :comments, only: %i[index create], controller: 'project_comments'
         end
         resources :members, only: [:index]
+        resources :comments, only: [:index], controller: 'team_comments'
         resources :recurring_issues, only: %i[index create]
       end
     end
