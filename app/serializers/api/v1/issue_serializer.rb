@@ -13,9 +13,7 @@ module Api
       private
 
       def base_json
-        {
-          id: @issue.id,
-          identifier: @issue.identifier,
+        identity_json.merge(
           title: @issue.title,
           priority: @issue.priority,
           estimate: @issue.estimate,
@@ -28,7 +26,11 @@ module Api
           created_at: @issue.created_at,
           updated_at: @issue.updated_at,
           archived_at: @issue.archived_at
-        }
+        )
+      end
+
+      def identity_json
+        { id: @issue.id, identifier: @issue.identifier, team_id: @issue.team_id, team_number: @issue.team_number }
       end
 
       def detail_json

@@ -141,6 +141,7 @@ Rails.application.routes.draw do
           resources :comments, only: %i[index create]
           resources :decisions, only: %i[create destroy]
           get :activity, to: 'activity#index'
+          patch :move, on: :member
         end
         resources :lanes, only: [:index]
         resources :labels, only: %i[index create update]
