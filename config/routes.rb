@@ -128,7 +128,10 @@ Rails.application.routes.draw do
     namespace :v1 do
       get '/me', to: 'users#me'
       resources :dashboards, only: %i[index show create update destroy] do
-        resources :groups, only: %i[create update destroy], controller: 'dashboard_groups'
+        resources :groups, only: %i[create update destroy], controller: 'dashboard_groups' do
+          patch :move, on: :member
+          patch :reorder, on: :collection
+        end
       end
       get '/users/by_email', to: 'users#by_email'
       get '/issues/by_identifier/:identifier',

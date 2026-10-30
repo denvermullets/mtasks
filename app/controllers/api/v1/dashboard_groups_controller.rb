@@ -9,7 +9,7 @@ module Api
       SOURCE_ID_KEYS = DashboardGroups::SourceSanitizer::KEYS
 
       before_action :set_dashboard
-      before_action :set_group, only: %i[update destroy]
+      before_action :set_group, only: %i[update destroy move]
 
       def create
         group = DashboardGroup.new(group_attributes.merge(dashboard_id: @dashboard.id))
@@ -25,6 +25,29 @@ module Api
       def destroy
         @group.destroy
         head :no_content
+      end
+
+      def move
+        direction = params[:direction]
+        unless DashboardGroup::DIRECTIONS.include?(direction)
+          return render json: { error: 'Bad Request', message: 'direction must be up or down' }, status: :bad_request
+        end
+
+        @group.move!(direction)
+        render json: serialize_all
+      end
+
+      # Every group id on the dashboard is accepted in display order; ids that don't belong to it are
+      # rejected rather than ignored, and groups left out keep their relative order at the end.
+      def reorder
+        ids = Array(params[:ids]).map(&:to_i)
+        unless (ids - @dashboard.groups.pluck(:id)).empty?
+          return render json: { error: 'Unprocessable Entity', message: 'ids must belong to the dashboard' },
+                        status: :unprocessable_entity
+        end
+
+        @dashboard.reorder_groups!(ids)
+        render json: serialize_all
       end
 
       private
@@ -61,9 +84,12 @@ module Api
 
       # The dashboard serializer's group shape, so a write returns exactly what the list would.
       def serialize(group)
+        serialize_all.find { |g| g[:id] == group.id }
+      end
+
+      def serialize_all
         dashboard = Dashboard.includes(groups: :sources).find(@dashboard.id)
-        json = DashboardSerializer.new(dashboard, allowed: allowed_source_ids).as_json
-        json[:groups].find { |g| g[:id] == group.id }
+        DashboardSerializer.new(dashboard, allowed: allowed_source_ids).as_json[:groups]
       end
 
       def allowed_source_ids

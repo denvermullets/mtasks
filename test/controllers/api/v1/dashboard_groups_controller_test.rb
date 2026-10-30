@@ -144,6 +144,81 @@ module Api
         delete api_v1_dashboard_group_path(@dashboard, group), headers: read_only
         assert_response :forbidden
       end
+
+      test 'moves a group down and returns the new order, touching dashboard and renumbered groups' do
+        a = @dashboard.groups.create!(name: 'A', position: 1)
+        b = @dashboard.groups.create!(name: 'B', position: 2)
+        old = 1.day.ago
+        @dashboard.update_columns(updated_at: old)
+        [a, b].each { |g| g.update_columns(updated_at: old) }
+
+        patch move_api_v1_dashboard_group_path(@dashboard, a), headers: @headers, params: { direction: 'down' }.to_json
+
+        assert_response :ok
+        json = JSON.parse(response.body)
+        assert_equal(%w[B A], json.map { |g| g['name'] })
+        assert_equal([1, 2], json.map { |g| g['position'] })
+        assert_operator @dashboard.reload.updated_at, :>, old
+        assert_operator a.reload.updated_at, :>, old
+        assert_operator b.reload.updated_at, :>, old
+      end
+
+      test 'move rejects an unknown direction' do
+        a = @dashboard.groups.create!(name: 'A', position: 1)
+
+        patch move_api_v1_dashboard_group_path(@dashboard, a), headers: @headers,
+                                                               params: { direction: 'sideways' }.to_json
+
+        assert_response :bad_request
+      end
+
+      test 'reorders all groups, touching dashboard and groups' do
+        a = @dashboard.groups.create!(name: 'A', position: 1)
+        b = @dashboard.groups.create!(name: 'B', position: 2)
+        c = @dashboard.groups.create!(name: 'C', position: 3)
+        old = 1.day.ago
+        @dashboard.update_columns(updated_at: old)
+        [a, b, c].each { |g| g.update_columns(updated_at: old) }
+
+        patch reorder_api_v1_dashboard_groups_path(@dashboard), headers: @headers,
+                                                                params: { ids: [c.id, a.id, b.id] }.to_json
+
+        assert_response :ok
+        assert_equal(%w[C A B], JSON.parse(response.body).map { |g| g['name'] })
+        assert_operator @dashboard.reload.updated_at, :>, old
+        assert_operator c.reload.updated_at, :>, old
+      end
+
+      test 'reorder with ids not on the dashboard is 422' do
+        a = @dashboard.groups.create!(name: 'A', position: 1)
+        elsewhere = @user.dashboards.create!(name: 'Else', position: 2).groups.create!(name: 'E', position: 1)
+
+        patch reorder_api_v1_dashboard_groups_path(@dashboard), headers: @headers,
+                                                                params: { ids: [elsewhere.id, a.id] }.to_json
+
+        assert_response :unprocessable_entity
+      end
+
+      test 'move and reorder on another user dashboard are 404' do
+        theirs = @stranger.dashboards.create!(name: 'Theirs', position: 1)
+        group = theirs.groups.create!(name: 'G', position: 1)
+
+        patch move_api_v1_dashboard_group_path(theirs, group), headers: @headers, params: { direction: 'up' }.to_json
+        assert_response :not_found
+        patch reorder_api_v1_dashboard_groups_path(theirs), headers: @headers, params: { ids: [group.id] }.to_json
+        assert_response :not_found
+      end
+
+      test 'read-only token cannot move or reorder' do
+        group = @dashboard.groups.create!(name: 'G', position: 1)
+        token = ApiToken.generate_for(@user, name: 'RO2', scopes: %w[read])
+        ro = { 'Authorization' => "Bearer #{token.raw_token}", 'Content-Type' => 'application/json' }
+
+        patch move_api_v1_dashboard_group_path(@dashboard, group), headers: ro, params: { direction: 'up' }.to_json
+        assert_response :forbidden
+        patch reorder_api_v1_dashboard_groups_path(@dashboard), headers: ro, params: { ids: [group.id] }.to_json
+        assert_response :forbidden
+      end
     end
   end
 end
