@@ -25,9 +25,12 @@ module Api
           labels: @issue.labels.map { |l| { id: l.id, name: l.name } },
           created_at: @issue.created_at,
           updated_at: @issue.updated_at,
-          archived_at: @issue.archived_at,
-          recurring_issue_id: @issue.recurring_issue_id
+          **sync_json
         )
+      end
+
+      def sync_json
+        { archived_at: @issue.archived_at, recurring_issue_id: @issue.recurring_issue_id }
       end
 
       def identity_json
