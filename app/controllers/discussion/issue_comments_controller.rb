@@ -9,6 +9,7 @@ module Discussion
       @comment = @issue.comments.new(comment_params.merge(user: Current.user))
 
       if @comment.save
+        @issue.touch # a comment is a change to the issue; surfaces it in updated_since pulls
         track_comment_created
         push_result = maybe_push(@comment)
         broadcast_new_comment(@comment)
