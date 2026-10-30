@@ -52,7 +52,8 @@ module Api
           duplicates: serialize_links(:duplicates),
           started_at: @issue.started_at,
           completed_at: @issue.completed_at,
-          canceled_at: @issue.canceled_at
+          canceled_at: @issue.canceled_at,
+          files: @issue.files_attachments.map { |a| AttachmentSerializer.new(a).as_json }
         }
       end
 

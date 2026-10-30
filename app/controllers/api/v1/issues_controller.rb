@@ -142,7 +142,7 @@ module Api
       # Everything IssueSerializer(detailed: true) touches, loaded up front so the pull stays flat.
       def detail_preloads(scope)
         scope.includes(
-          :team, { parent_issue: :team },
+          :team, { files_attachments: :blob }, { parent_issue: :team },
           outgoing_links: { blocked_issue: :team }, incoming_links: { blocking_issue: :team },
           blocked_dependencies: { blocking_issue: :team }, blocking_dependencies: { blocked_issue: :team }
         )

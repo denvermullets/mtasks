@@ -143,6 +143,7 @@ Rails.application.routes.draw do
           resources :comments, only: %i[index create]
           resources :decisions, only: %i[create destroy]
           get :activity, to: 'activity#index'
+          resources :attachments, only: %i[create destroy]
           patch :move, on: :member
         end
         resources :lanes, only: [:index]
