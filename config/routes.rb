@@ -127,11 +127,13 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       get '/me', to: 'users#me'
+      resources :dashboards, only: %i[index show create update destroy]
       get '/users/by_email', to: 'users#by_email'
       get '/issues/by_identifier/:identifier',
           to: 'issues#by_identifier',
           constraints: { identifier: /[A-Z]+-\d+/ }
       post '/integrations/handshake', to: 'integrations#handshake'
+      resources :direct_uploads, only: :create
       resources :teams, only: [:index] do
         resources :issues, only: %i[index show create update] do
           resources :issue_dependencies, only: %i[index create destroy], controller: 'issue_dependencies'
