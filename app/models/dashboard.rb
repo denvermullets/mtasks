@@ -1,4 +1,6 @@
 class Dashboard < ApplicationRecord
+  has_paper_trail on: [:destroy]
+
   # Associations
   belongs_to :user
   has_many :groups, -> { order(:position, :id) }, class_name: 'DashboardGroup', dependent: :destroy
