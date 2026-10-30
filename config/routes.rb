@@ -138,6 +138,7 @@ Rails.application.routes.draw do
       resources :direct_uploads, only: :create
       resources :notifications, only: [:index] do
         member { patch :read }
+        collection { patch :read_all }
       end
       resources :teams, only: [:index] do
         resources :issues, only: %i[index show create update destroy] do

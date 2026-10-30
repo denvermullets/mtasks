@@ -32,7 +32,37 @@ module Api
         render json: serialize(notification)
       end
 
+      def read_all
+        team = read_all_team
+        before = parse_before
+        return if performed?
+
+        marked = (team ? inbox.where(issues: { team_id: team.id }) : inbox).mark_all_read!(before: before)
+        track_api_feature('notification', 'read_all', team: team, count: marked) if marked.positive?
+        response.set_header('X-Server-Time', Time.current.utc.iso8601(6))
+        render json: { marked: marked, unread_count: inbox.unread.count }
+      end
+
       private
+
+      def read_all_team
+        return nil if params[:team_id].blank?
+
+        accessible_teams.find_by(id: params[:team_id]) || render_team_not_found
+      end
+
+      def render_team_not_found
+        render json: { error: 'Not Found', message: 'Team not found or access denied' }, status: :not_found
+      end
+
+      def parse_before
+        return nil if params[:before].blank?
+
+        Time.zone.parse(params[:before].to_s) ||
+          render(json: { error: 'Bad Request', message: 'before must be a timestamp' }, status: :bad_request)
+      rescue ArgumentError
+        render json: { error: 'Bad Request', message: 'before must be a timestamp' }, status: :bad_request
+      end
 
       # Notifications belong to a user, but the scoping unit is the issue's team, so a team-scoped
       # token only ever sees (and counts) the teams it was issued for.
