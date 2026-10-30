@@ -144,6 +144,74 @@ module Api
 
         assert_response :forbidden
       end
+
+      # Attachments
+      def comment_signed_id(name = 'c.txt')
+        ActiveStorage::Blob.create_and_upload!(io: StringIO.new('hi'), filename: name, content_type: 'text/plain')
+                           .signed_id
+      end
+
+      def create_file_comment(headers: @headers, body: nil)
+        post api_v1_team_issue_comments_path(@team, @issue),
+             params: { comment: { body: body }, files: [comment_signed_id] }.to_json, headers: headers
+      end
+
+      test 'files-only comment is created and lists files' do
+        create_file_comment
+
+        assert_response :created
+        assert_equal %w[c.txt], response.parsed_body['files'].pluck('filename')
+        get api_v1_team_issue_comments_path(@team, @issue), headers: @headers
+        assert_equal %w[c.txt], response.parsed_body.first['files'].pluck('filename')
+      end
+
+      test 'invalid file signed id is 422 and creates nothing' do
+        assert_no_difference 'Comment.count' do
+          post api_v1_team_issue_comments_path(@team, @issue),
+               params: { comment: { body: 'x' }, files: ['bogus'] }.to_json, headers: @headers
+        end
+        assert_response :unprocessable_entity
+      end
+
+      test 'author removes comment attachment and issue is touched' do
+        create_file_comment
+        comment = Comment.find(response.parsed_body['id'])
+        att_id = response.parsed_body['files'].first['id']
+        @issue.update_columns(updated_at: 1.day.ago)
+
+        delete api_v1_team_issue_comment_attachment_path(@team, @issue, comment, att_id), headers: @headers
+
+        assert_response :no_content
+        assert_not comment.reload.files.attached?
+        assert_operator @issue.reload.updated_at, :>, 1.minute.ago
+      end
+
+      test 'non-author non-admin cannot remove comment attachment' do
+        create_file_comment
+        comment = Comment.find(response.parsed_body['id'])
+        att_id = response.parsed_body['files'].first['id']
+        member = User.create!(name: 'Mem', email: 'mem_att@example.com', password: 'password')
+        @team.team_memberships.create!(user: member)
+
+        delete api_v1_team_issue_comment_attachment_path(@team, @issue, comment, att_id),
+               headers: api_headers_for(member)
+
+        assert_response :forbidden
+        assert comment.reload.files.attached?
+      end
+
+      test 'team admin can remove another user comment attachment' do
+        member = User.create!(name: 'Mem2', email: 'mem2_att@example.com', password: 'password')
+        @team.team_memberships.create!(user: member)
+        create_file_comment(headers: api_headers_for(member))
+        comment = Comment.find(response.parsed_body['id'])
+        att_id = response.parsed_body['files'].first['id']
+        assert @team.admin?(@user)
+
+        delete api_v1_team_issue_comment_attachment_path(@team, @issue, comment, att_id), headers: @headers
+
+        assert_response :no_content
+      end
     end
   end
 end

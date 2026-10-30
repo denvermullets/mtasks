@@ -19,9 +19,10 @@ module Api
           return
         end
 
-        @comment = @issue.comments.new(comment_params)
-        @comment.user = Current.user
-        @comment.hourglass_message_id = hourglass_message_id
+        blobs = find_blobs
+        return render_invalid_files if blobs.nil?
+
+        @comment = build_comment(blobs)
 
         if @comment.save
           @issue.touch # a comment is a change to the issue; surfaces it in updated_since pulls
@@ -35,7 +36,41 @@ module Api
         end
       end
 
+      def destroy_attachment
+        comment = @issue.comments.find(params[:comment_id])
+        unless comment.user_id == Current.user.id || current_team.admin?(Current.user)
+          return render json: { error: 'Forbidden', message: 'Only the author or a team admin can remove this' },
+                        status: :forbidden
+        end
+
+        comment.files_attachments.find(params[:id]).purge
+        @issue.touch
+        head :no_content
+      rescue ActiveRecord::RecordNotFound
+        render json: { error: 'Not Found', message: 'Comment attachment not found' }, status: :not_found
+      end
+
       private
+
+      def build_comment(blobs)
+        comment = @issue.comments.new(comment_params)
+        comment.user = Current.user
+        comment.hourglass_message_id = hourglass_message_id
+        comment.files.attach(blobs) if blobs.any?
+        comment
+      end
+
+      # [] when no files were sent; nil when any id doesn't resolve, so a bad batch creates nothing.
+      def find_blobs
+        ids = Array(params[:files]).compact_blank
+        blobs = ids.map { |id| ActiveStorage::Blob.find_signed(id) }
+        blobs.all? ? blobs.uniq : nil
+      end
+
+      def render_invalid_files
+        render json: { error: 'Unprocessable Entity', errors: ['files must be valid signed ids'] },
+               status: :unprocessable_entity
+      end
 
       def after_create_side_effects(comment)
         IssueReferenceService.call(source_issue: @issue, text: comment.body,
@@ -61,7 +96,7 @@ module Api
       end
 
       def comment_params
-        params.require(:comment).permit(:body, :parent_id)
+        params.require(:comment).permit(:body, :parent_id) # files handled by find_blobs
       end
 
       def hourglass_message_id
