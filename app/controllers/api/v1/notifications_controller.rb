@@ -21,6 +21,10 @@ module Api
         }
       end
 
+      def unread_count
+        render json: { unread_count: inbox.unread.count, server_time: Time.current.iso8601(3) }
+      end
+
       private
 
       # Notifications belong to a user, but the scoping unit is the issue's team, so a team-scoped
