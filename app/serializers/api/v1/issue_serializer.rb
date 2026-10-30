@@ -13,9 +13,7 @@ module Api
       private
 
       def base_json
-        {
-          id: @issue.id,
-          identifier: @issue.identifier,
+        identity_json.merge(
           title: @issue.title,
           priority: @issue.priority,
           estimate: @issue.estimate,
@@ -27,8 +25,13 @@ module Api
           labels: @issue.labels.map { |l| { id: l.id, name: l.name } },
           created_at: @issue.created_at,
           updated_at: @issue.updated_at,
-          archived_at: @issue.archived_at
-        }
+          archived_at: @issue.archived_at,
+          recurring_issue_id: @issue.recurring_issue_id
+        )
+      end
+
+      def identity_json
+        { id: @issue.id, identifier: @issue.identifier, team_id: @issue.team_id, team_number: @issue.team_number }
       end
 
       def detail_json
