@@ -140,6 +140,7 @@ Rails.application.routes.draw do
           constraints: { identifier: /[A-Z]+-\d+/ }
       post '/integrations/handshake', to: 'integrations#handshake'
       resources :direct_uploads, only: :create
+      get '/attachments/:id/download', to: 'attachment_downloads#show', as: :attachment_download
       resources :notifications, only: [:index] do
         member { patch :read }
         collection do
