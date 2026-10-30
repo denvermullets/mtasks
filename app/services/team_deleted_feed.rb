@@ -11,24 +11,25 @@ class TeamDeletedFeed < DeletedFeed
   # Resolves a version to a team through a parent id stored in `object`. The parent may be gone
   # too when it was deleted in the same cascade, so its own destroy version is checked as well.
   # Stays a relation so it can be OR'd with the other sources.
-  PARENT_TEAM_SCOPE = lambda { |parent_type, table, key|
+  PARENT_TEAM_SCOPE = lambda { |parent_class, key|
     lambda { |versions, team|
-      live = "SELECT id FROM #{table} WHERE team_id = :team"
-      gone = "SELECT item_id FROM versions WHERE item_type = :type AND event = 'destroy' " \
-             "AND object ->> 'team_id' = :team_s"
-      versions.where("(versions.object ->> '#{key}')::bigint IN (#{live} UNION #{gone})",
-                     team: team.id, team_s: team.id.to_s, type: parent_type)
+      live = parent_class.where(team_id: team.id).select(:id)
+      gone = PaperTrail::Version.where(item_type: parent_class.name, event: 'destroy')
+                                .where("versions.object ->> 'team_id' = ?", team.id.to_s)
+                                .select(:item_id)
+      versions.where('(versions.object ->> ?)::bigint IN (?) OR (versions.object ->> ?)::bigint IN (?)',
+                     key, live, key, gone)
     }
   }
 
   # A comment belongs to exactly one of issue or project.
   COMMENT_SCOPE = lambda { |versions, team|
-    PARENT_TEAM_SCOPE.call('Issue', 'issues', 'issue_id').call(versions, team)
-                     .or(PARENT_TEAM_SCOPE.call('Project', 'projects', 'project_id').call(versions, team))
+    PARENT_TEAM_SCOPE.call(Issue, 'issue_id').call(versions, team)
+                     .or(PARENT_TEAM_SCOPE.call(Project, 'project_id').call(versions, team))
   }
 
   # Blocking and blocked issues share a team, so the blocking side is enough.
-  DEPENDENCY_SCOPE = PARENT_TEAM_SCOPE.call('Issue', 'issues', 'blocking_issue_id')
+  DEPENDENCY_SCOPE = PARENT_TEAM_SCOPE.call(Issue, 'blocking_issue_id')
 
   SOURCES = [
     Source.new(item_type: 'Issue', scope: TEAM_ID_SCOPE),
