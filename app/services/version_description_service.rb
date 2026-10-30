@@ -42,6 +42,7 @@ class VersionDescriptionService < Service
   end
   private_class_method :as_entries
 
+  # Dependency-link versions touching the issue. Shared by the web timeline and the API.
   def self.dependency_versions(issue)
     id = issue.id
     PaperTrail::Version.where(item_type: 'IssueDependency').where(
@@ -50,7 +51,6 @@ class VersionDescriptionService < Service
       arr: "[#{id}]", id_str: id.to_s
     )
   end
-  private_class_method :dependency_versions
 
   private
 
