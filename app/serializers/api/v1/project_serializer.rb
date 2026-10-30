@@ -36,7 +36,8 @@ module Api
       def detail_json
         {
           labels: @project.labels.map { |l| { id: l.id, name: l.name } },
-          issues_count: @project.issues.not_archived.count
+          issues_count: @project.issues.not_archived.count,
+          files: @project.files_attachments.includes(:blob).map { |a| AttachmentSerializer.new(a).as_json }
         }
       end
 
