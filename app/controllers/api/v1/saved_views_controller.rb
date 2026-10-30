@@ -4,6 +4,7 @@ module Api
     # current_user.saved_views, narrowed to the teams the token can see.
     class SavedViewsController < BaseController
       before_action :set_current_team, only: :create
+      before_action :set_saved_view, only: %i[update destroy]
 
       def index
         views = visible_views
@@ -32,7 +33,30 @@ module Api
         end
       end
 
+      def update
+        attrs = {}
+        attrs[:name] = saved_view_params[:name] if saved_view_params.key?(:name)
+        attrs[:query] = SavedView.query_from(query_string(saved_view_params[:query])) if saved_view_params.key?(:query)
+
+        if @saved_view.update(attrs)
+          render json: SavedViewSerializer.new(@saved_view).as_json
+        else
+          render_validation_errors(@saved_view)
+        end
+      end
+
+      def destroy
+        @saved_view.destroy
+        head :no_content
+      end
+
       private
+
+      def set_saved_view
+        @saved_view = visible_views.find(params[:id])
+      rescue ActiveRecord::RecordNotFound
+        render json: { error: 'Not Found', message: 'Saved view not found' }, status: :not_found
+      end
 
       def visible_views
         views = current_user.saved_views.where(team_id: accessible_teams.select(:id))

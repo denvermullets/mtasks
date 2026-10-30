@@ -117,6 +117,86 @@ module Api
 
         assert_response :forbidden
       end
+
+      def token_headers(**)
+        token = ApiToken.generate_for(@user, **)
+        { 'Authorization' => "Bearer #{token.raw_token}", 'Content-Type' => 'application/json' }
+      end
+
+      test 'updates name and query, dropping unknown keys' do
+        view = @user.saved_views.create!(team: @team, name: 'Old', query: { 'group_by' => 'lane' })
+
+        patch api_v1_saved_view_path(view),
+              params: { saved_view: { name: 'New', query: { priority: '1', evil: 'x' } } }.to_json,
+              headers: @headers
+
+        assert_response :ok
+        json = JSON.parse(response.body)
+        assert_equal 'New', json['name']
+        assert_equal({ 'priority' => '1' }, json['query'])
+        assert_equal({ 'priority' => '1' }, view.reload.query)
+      end
+
+      test 'rename alone keeps the query' do
+        view = @user.saved_views.create!(team: @team, name: 'Old', query: { 'group_by' => 'lane' })
+
+        patch api_v1_saved_view_path(view), params: { saved_view: { name: 'Renamed' } }.to_json, headers: @headers
+
+        assert_response :ok
+        assert_equal({ 'group_by' => 'lane' }, view.reload.query)
+      end
+
+      test 'update with blank name is 422' do
+        view = @user.saved_views.create!(team: @team, name: 'Keep')
+
+        patch api_v1_saved_view_path(view), params: { saved_view: { name: '' } }.to_json, headers: @headers
+
+        assert_response :unprocessable_entity
+        assert_equal 'Keep', view.reload.name
+      end
+
+      test 'deletes a view with 204' do
+        view = @user.saved_views.create!(team: @team, name: 'Bye')
+
+        assert_difference 'SavedView.count', -1 do
+          delete api_v1_saved_view_path(view), headers: @headers
+        end
+        assert_response :no_content
+      end
+
+      test 'another users view is 404 for update and delete' do
+        view = @other.saved_views.create!(team: @team, name: 'Theirs')
+
+        patch api_v1_saved_view_path(view), params: { saved_view: { name: 'X' } }.to_json, headers: @headers
+        assert_response :not_found
+        assert_no_difference 'SavedView.count' do
+          delete api_v1_saved_view_path(view), headers: @headers
+        end
+        assert_response :not_found
+        assert_equal 'Theirs', view.reload.name
+      end
+
+      test 'view in a team outside the token is 404' do
+        view = @user.saved_views.create!(team: @team2, name: 'Hidden')
+        headers = token_headers(teams: [@team])
+
+        patch api_v1_saved_view_path(view), params: { saved_view: { name: 'X' } }.to_json, headers: headers
+        assert_response :not_found
+        delete api_v1_saved_view_path(view), headers: headers
+        assert_response :not_found
+        assert SavedView.exists?(view.id)
+      end
+
+      test 'read-only token cannot update or delete' do
+        view = @user.saved_views.create!(team: @team, name: 'Mine')
+        headers = token_headers(scopes: %w[read])
+
+        patch api_v1_saved_view_path(view), params: { saved_view: { name: 'X' } }.to_json, headers: headers
+        assert_response :forbidden
+        delete api_v1_saved_view_path(view), headers: headers
+        assert_response :forbidden
+        assert_equal 'Mine', view.reload.name
+      end
     end
   end
 end
