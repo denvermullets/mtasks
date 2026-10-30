@@ -68,6 +68,34 @@ module Api
         assert body['errors'].any?
       end
 
+      # updated_at hygiene
+      test 'adding a label via update makes the issue appear in the next updated_since pull' do
+        label = @team.labels.create!(name: 'Bug', color: '#ff0000')
+        @issue.update_columns(updated_at: 1.day.ago)
+        cursor = 1.hour.ago
+
+        patch api_v1_team_issue_path(@team, @issue), params: { issue: { label_ids: [label.id] } },
+                                                     headers: @headers, as: :json
+        assert_response :success
+
+        get api_v1_team_issues_path(@team), params: { updated_since: cursor.utc.iso8601 }, headers: @headers
+        assert_includes JSON.parse(response.body).pluck('id'), @issue.id
+      end
+
+      test 'removing a label via update makes the issue appear in the next updated_since pull' do
+        label = @team.labels.create!(name: 'Bug', color: '#ff0000')
+        @issue.labels << label
+        @issue.update_columns(updated_at: 1.day.ago)
+        cursor = 1.hour.ago
+
+        patch api_v1_team_issue_path(@team, @issue), params: { issue: { label_ids: [] } },
+                                                     headers: @headers, as: :json
+        assert_response :success
+
+        get api_v1_team_issues_path(@team), params: { updated_since: cursor.utc.iso8601 }, headers: @headers
+        assert_includes JSON.parse(response.body).pluck('id'), @issue.id
+      end
+
       # Index
       test 'lists issues' do
         get api_v1_team_issues_path(@team), headers: @headers
