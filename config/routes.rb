@@ -157,7 +157,7 @@ Rails.application.routes.draw do
         get :deleted, to: 'deleted#index'
         resources :members, only: [:index]
         resources :comments, only: [:index], controller: 'team_comments'
-        resources :recurring_issues, only: %i[index create]
+        resources :recurring_issues, only: %i[index create update destroy]
         resources :saved_views, only: [:create]
       end
       resources :saved_views, only: %i[index update destroy]
