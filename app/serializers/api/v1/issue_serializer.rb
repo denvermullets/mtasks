@@ -26,7 +26,8 @@ module Api
           project: serialize_record(@issue.project, :name),
           labels: @issue.labels.map { |l| { id: l.id, name: l.name } },
           created_at: @issue.created_at,
-          updated_at: @issue.updated_at
+          updated_at: @issue.updated_at,
+          archived_at: @issue.archived_at
         }
       end
 

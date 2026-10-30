@@ -59,6 +59,24 @@ module Api
         assert response.headers['X-Server-Time'].present?
       end
 
+      test 'archived issues are excluded by default and included with include_archived=1' do
+        t = Time.utc(2026, 1, 1, 12)
+        @issue.update_columns(updated_at: t - 1.day)
+        archived = @team.issues.create!(title: 'Archived', lane: @backlog, creator: @user)
+        archived.archive!
+
+        get api_v1_team_issues_path(@team), params: { updated_since: t.iso8601 }, headers: @headers
+        assert_response :success
+        assert_empty JSON.parse(response.body)
+
+        get api_v1_team_issues_path(@team), params: { updated_since: t.iso8601, include_archived: '1' },
+                                            headers: @headers
+        assert_response :success
+        body = JSON.parse(response.body)
+        assert_equal [archived.id], body.pluck('id')
+        assert body.first['archived_at'].present?
+      end
+
       test 'invalid updated_since returns 422 with X-Server-Time' do
         get api_v1_team_issues_path(@team), params: { updated_since: 'yesterday' }, headers: @headers
 
