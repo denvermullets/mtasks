@@ -1,4 +1,6 @@
 class DashboardGroup < ApplicationRecord
+  has_paper_trail on: [:destroy]
+
   # Swatches offered in the group form. The column default comes first so a new group and
   # rows created before the palette existed always have a checked swatch.
   COLORS = %w[#6366f1 #ec4899 #3b82f6 #10b981 #f59e0b #ef4444 #8b5cf6 #14b8a6 #737373].freeze

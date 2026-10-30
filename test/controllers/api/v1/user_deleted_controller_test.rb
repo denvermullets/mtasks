@@ -86,6 +86,43 @@ module Api
         assert_empty JSON.parse(response.body)
       end
 
+      test 'a deleted dashboard group appears as a tombstone' do
+        dashboard = @user.dashboards.create!(name: 'D')
+        group = dashboard.groups.create!(name: 'G')
+        group_id = group.id
+        group.destroy!
+
+        get api_v1_deleted_path, headers: @headers
+
+        assert_equal([['DashboardGroup', group_id]],
+                     JSON.parse(response.body).map { |e| e.values_at('record_type', 'record_id') })
+      end
+
+      test 'a deleted dashboard appears with all its groups' do
+        dashboard = @user.dashboards.create!(name: 'D')
+        g1 = dashboard.groups.create!(name: 'G1')
+        g2 = dashboard.groups.create!(name: 'G2')
+        ids = [dashboard.id, g1.id, g2.id]
+        dashboard.destroy!
+
+        get api_v1_deleted_path, headers: @headers
+
+        pairs = JSON.parse(response.body).map { |e| e.values_at('record_type', 'record_id') }
+        assert_equal [['Dashboard', ids[0]], ['DashboardGroup', ids[1]], ['DashboardGroup', ids[2]]].sort, pairs.sort
+      end
+
+      test 'other users dashboard and group deletions never appear' do
+        dashboard = @other_user.dashboards.create!(name: 'D')
+        dashboard.groups.create!(name: 'G')
+        other_group_dash = @other_user.dashboards.create!(name: 'D2')
+        other_group_dash.groups.create!(name: 'G2').destroy!
+        dashboard.destroy!
+
+        get api_v1_deleted_path, headers: @headers
+
+        assert_empty JSON.parse(response.body)
+      end
+
       test 'missing token is 401' do
         get api_v1_deleted_path
 
