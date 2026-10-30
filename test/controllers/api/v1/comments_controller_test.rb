@@ -212,6 +212,72 @@ module Api
 
         assert_response :no_content
       end
+
+      # Destroy
+      def member_with_comment(email)
+        member = User.create!(name: 'Mem', email: email, password: 'password')
+        @team.team_memberships.create!(user: member)
+        comment = @issue.comments.create!(body: 'mine', user: member)
+        [member, comment]
+      end
+
+      test 'author deletes own comment and replies go with it' do
+        member, comment = member_with_comment('del_author@example.com')
+        reply = @issue.comments.create!(body: 'r', user: @user, parent: comment)
+        @issue.update_columns(updated_at: 1.day.ago)
+
+        delete api_v1_team_issue_comment_path(@team, @issue, comment), headers: api_headers_for(member)
+
+        assert_response :no_content
+        assert_not Comment.exists?(comment.id)
+        assert_not Comment.exists?(reply.id)
+        assert_operator @issue.reload.updated_at, :>, 1.minute.ago
+
+        get api_v1_team_deleted_path(@team), headers: @headers
+        ids = response.parsed_body.select { |e| e['record_type'] == 'Comment' }.pluck('record_id')
+        assert_equal [comment.id, reply.id].sort, ids.sort
+      end
+
+      test 'team admin deletes another user comment' do
+        _member, comment = member_with_comment('del_admin@example.com')
+        assert @team.admin?(@user)
+
+        delete api_v1_team_issue_comment_path(@team, @issue, comment), headers: @headers
+
+        assert_response :no_content
+      end
+
+      test 'non-author non-admin cannot delete comment' do
+        _member, comment = member_with_comment('del_owner@example.com')
+        other = User.create!(name: 'Oth', email: 'del_other@example.com', password: 'password')
+        @team.team_memberships.create!(user: other)
+
+        delete api_v1_team_issue_comment_path(@team, @issue, comment), headers: api_headers_for(other)
+
+        assert_response :forbidden
+        assert Comment.exists?(comment.id)
+      end
+
+      test 'read-only token cannot delete comment' do
+        comment = @issue.comments.create!(body: 'x', user: @user)
+        read_only = ApiToken.generate_for(@user, scopes: %w[read])
+        headers = { 'Authorization' => "Bearer #{read_only.raw_token}", 'Content-Type' => 'application/json' }
+
+        delete api_v1_team_issue_comment_path(@team, @issue, comment), headers: headers
+
+        assert_response :forbidden
+        assert Comment.exists?(comment.id)
+      end
+
+      test 'delete comment in team outside token returns not found' do
+        outsider = User.create!(name: 'Out', email: 'del_out@example.com', password: 'password')
+        comment = @issue.comments.create!(body: 'x', user: @user)
+
+        delete api_v1_team_issue_comment_path(@team, @issue, comment), headers: api_headers_for(outsider)
+
+        assert_response :not_found
+        assert Comment.exists?(comment.id)
+      end
     end
   end
 end
