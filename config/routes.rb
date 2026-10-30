@@ -133,6 +133,7 @@ Rails.application.routes.draw do
           to: 'issues#by_identifier',
           constraints: { identifier: /[A-Z]+-\d+/ }
       post '/integrations/handshake', to: 'integrations#handshake'
+      resources :direct_uploads, only: :create
       resources :teams, only: [:index] do
         resources :issues, only: %i[index show create update] do
           resources :issue_dependencies, only: %i[index create destroy], controller: 'issue_dependencies'
