@@ -7,9 +7,8 @@ module Api
         members = current_team.users.order(:name).to_a
 
         @tracked_result_count = members.size
-        render json: members.map { |u|
-          { id: u.id, name: u.name, email: u.email }
-        }
+        payload = members.map { |u| { id: u.id, name: u.name, email: u.email } }
+        render_conditional_json(payload)
       end
     end
   end

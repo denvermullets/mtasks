@@ -6,6 +6,7 @@ module Api
           id: current_user.id,
           name: current_user.name,
           email: current_user.email,
+          home_page: home_page_json,
           token: {
             name: @current_api_token.name,
             scopes: @current_api_token.scopes,
@@ -31,6 +32,20 @@ module Api
       end
 
       private
+
+      # A token scoped to some teams must not reveal a home page in another team.
+      def home_page_json
+        page = current_user.home_page
+        return page unless page && token_team_ids
+
+        page if page[:kind] == 'dashboard' || token_team_ids.include?(home_page_team_id(page))
+      end
+
+      def home_page_team_id(page)
+        return page[:id] if page[:kind] == 'team'
+
+        current_user.saved_views.find_by(id: page[:id])&.team_id
+      end
 
       def token_team_ids
         return @token_team_ids if defined?(@token_team_ids)

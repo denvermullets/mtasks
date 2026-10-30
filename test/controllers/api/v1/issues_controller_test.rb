@@ -53,6 +53,60 @@ module Api
         assert_not_nil JSON.parse(response.body)['archived_at']
       end
 
+      # Index: incremental pull
+      test 'index sends X-Server-Time' do
+        get api_v1_team_issues_path(@team), headers: @headers
+
+        assert_response :success
+        assert Time.iso8601(response.headers['X-Server-Time'])
+      end
+
+      test 'updated_since returns issues at or after the time, oldest first, ties by id' do
+        t = Time.utc(2026, 1, 1, 12)
+        old = @team.issues.create!(title: 'Old', lane: @backlog, creator: @user)
+        a = @team.issues.create!(title: 'A', lane: @backlog, creator: @user)
+        b = @team.issues.create!(title: 'B', lane: @backlog, creator: @user)
+        c = @team.issues.create!(title: 'C', lane: @backlog, creator: @user)
+        @issue.update_columns(updated_at: t - 1.day)
+        old.update_columns(updated_at: t - 1.second)
+        c.update_columns(updated_at: t + 1.minute)
+        a.update_columns(updated_at: t)
+        b.update_columns(updated_at: t)
+
+        get api_v1_team_issues_path(@team), params: { updated_since: t.iso8601 }, headers: @headers
+
+        assert_response :success
+        assert_equal [a.id, b.id, c.id], JSON.parse(response.body).pluck('id')
+        assert response.headers['X-Server-Time'].present?
+      end
+
+      test 'archived issues are excluded by default and included with include_archived=1' do
+        t = Time.utc(2026, 1, 1, 12)
+        @issue.update_columns(updated_at: t - 1.day)
+        archived = @team.issues.create!(title: 'Archived', lane: @backlog, creator: @user)
+        archived.archive!
+
+        get api_v1_team_issues_path(@team), params: { updated_since: t.iso8601 }, headers: @headers
+        assert_response :success
+        assert_empty JSON.parse(response.body)
+
+        get api_v1_team_issues_path(@team), params: { updated_since: t.iso8601, include_archived: '1' },
+                                            headers: @headers
+        assert_response :success
+        body = JSON.parse(response.body)
+        assert_equal [archived.id], body.pluck('id')
+        assert body.first['archived_at'].present?
+      end
+
+      test 'invalid updated_since returns 422 with X-Server-Time' do
+        get api_v1_team_issues_path(@team), params: { updated_since: 'yesterday' }, headers: @headers
+
+        assert_response :unprocessable_entity
+        body = JSON.parse(response.body)
+        assert_equal 'Unprocessable Entity', body['error']
+        assert body['errors'].any?
+      end
+
       # Index
       test 'lists issues' do
         get api_v1_team_issues_path(@team), headers: @headers
@@ -178,6 +232,45 @@ module Api
 
         @issue.reload
         assert_nil @issue.completed_at
+      end
+
+      # Destroy
+      test 'team member deletes an issue' do
+        delete api_v1_team_issue_path(@team, @issue), headers: @headers
+        assert_response :no_content
+
+        get api_v1_team_issue_path(@team, @issue), headers: @headers
+        assert_response :not_found
+        get api_v1_team_issues_path(@team), headers: @headers
+        assert_not_includes JSON.parse(response.body).pluck('id'), @issue.id
+      end
+
+      test 'delete with read-only token is forbidden' do
+        read_only = ApiToken.generate_for(@user, scopes: %w[read])
+        headers = { 'Authorization' => "Bearer #{read_only.raw_token}", 'Content-Type' => 'application/json' }
+        delete api_v1_team_issue_path(@team, @issue), headers: headers
+        assert_response :forbidden
+        assert Issue.exists?(@issue.id)
+      end
+
+      test 'delete in a team outside the token is not found' do
+        other_user = User.create!(name: 'Other', email: 'other_del@example.com', password: 'password')
+        other_team = Workspace.create!(name: 'Other WS', owner: other_user).teams.create!(name: 'O', identifier: 'OTD')
+        delete api_v1_team_issue_path(other_team, @issue), headers: @headers
+        assert_response :not_found
+      end
+
+      test 'delete unknown issue is not found' do
+        delete api_v1_team_issue_path(@team, 0), headers: @headers
+        assert_response :not_found
+      end
+
+      test 'deleting an issue with a project enqueues velocity recalculation' do
+        project = @team.projects.create!(name: 'Proj')
+        @issue.update!(project: project)
+        assert_enqueued_with(job: ProjectVelocityJob, args: [project.id]) do
+          delete api_v1_team_issue_path(@team, @issue), headers: @headers
+        end
       end
     end
   end

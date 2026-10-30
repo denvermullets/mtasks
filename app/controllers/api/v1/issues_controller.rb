@@ -2,7 +2,7 @@ module Api
   module V1
     class IssuesController < BaseController
       before_action :set_current_team, except: [:by_identifier]
-      before_action :set_issue, only: %i[show update]
+      before_action :set_issue, only: %i[show update destroy]
 
       # Below the before_action block on purpose: capture_tracked_label_ids has to run after
       # set_issue, because it reads label_ids before update rewrites them.
@@ -26,10 +26,13 @@ module Api
       end
 
       def index
-        issues = filter_issues(
-          current_team.issues.not_archived.includes(:lane, :project, :labels, :assignee, :creator)
-        ).order(created_at: :desc).to_a
+        response.set_header('X-Server-Time', Time.current.utc.iso8601(6))
 
+        scope = filter_issues(index_base_scope)
+        scope = params.key?(:updated_since) ? updated_since_scope(scope) : scope.order(created_at: :desc)
+        return if performed?
+
+        issues = scope.to_a
         @tracked_result_count = issues.size
         render json: issues.map { |i| serialize(i) }
       end
@@ -73,12 +76,48 @@ module Api
         end
       end
 
+      # Mirrors the web destroy: any team member may delete, and the project's velocity is
+      # recalculated afterwards. The write is tracked as issue-delete, the web's slug.
+      def destroy
+        project_id = @issue.project_id
+        @issue.destroy
+        return render_validation_errors(@issue) unless @issue.destroyed?
+
+        track_api_feature('issue-delete', 'delete', **issue_shape(@issue))
+        ProjectVelocityJob.perform_later(project_id) if project_id.present?
+        head :no_content
+      end
+
       private
+
+      def index_base_scope
+        base = current_team.issues
+        base = base.not_archived unless ActiveModel::Type::Boolean.new.cast(params[:include_archived]) == true
+        base.includes(:lane, :project, :labels, :assignee, :creator)
+      end
 
       def set_issue
         @issue = current_team.issues.find(params[:id])
       rescue ActiveRecord::RecordNotFound
         render_not_found
+      end
+
+      def updated_since_scope(scope)
+        since = parse_updated_since
+        return render_invalid_updated_since unless since
+
+        scope.where(issues: { updated_at: since.. }).order(updated_at: :asc, id: :asc)
+      end
+
+      def parse_updated_since
+        Time.iso8601(params[:updated_since].to_s)
+      rescue ArgumentError
+        nil
+      end
+
+      def render_invalid_updated_since
+        render json: { error: 'Unprocessable Entity', errors: ['updated_since must be an ISO8601 timestamp'] },
+               status: :unprocessable_entity
       end
 
       def render_not_found
