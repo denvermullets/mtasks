@@ -164,6 +164,7 @@ Rails.application.routes.draw do
         resources :projects, only: %i[index show create update destroy] do
           resources :decisions, only: %i[create destroy]
           resources :comments, only: %i[index create], controller: 'project_comments'
+          resources :attachments, only: %i[create destroy], controller: 'project_attachments'
           get :activity, to: 'project_activity#index'
         end
         get :deleted, to: 'deleted#index'
