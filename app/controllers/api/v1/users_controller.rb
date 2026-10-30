@@ -17,6 +17,17 @@ module Api
         }
       end
 
+      # PUT /me/home_page with {kind, id} or the web's {home: "team:3"}; blank clears it.
+      def update_home_page
+        kind, id = home_page_params
+        unless current_user.set_home_page(kind, id, within_teams: accessible_teams)
+          return render json: { error: 'Unprocessable Entity', errors: ['Unknown home page'] },
+                        status: :unprocessable_entity
+        end
+
+        render json: { home_page: current_user.home_page }
+      end
+
       def by_email
         email = params[:email].to_s.strip.downcase
         return render json: { error: 'Bad Request', message: 'email is required' }, status: :bad_request if email.blank?
@@ -32,6 +43,12 @@ module Api
       end
 
       private
+
+      def home_page_params
+        return params[:home].to_s.split(':', 2) if params[:home].present?
+
+        [params[:kind].to_s, params[:id].to_s]
+      end
 
       # A token scoped to some teams must not reveal a home page in another team.
       def home_page_json
