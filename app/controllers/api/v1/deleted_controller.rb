@@ -23,22 +23,7 @@ module Api
       end
 
       def set_since
-        response.set_header('X-Server-Time', Time.current.utc.iso8601(6))
-        return unless params.key?(:since)
-
-        @since = parse_since
-        render_invalid_since unless @since
-      end
-
-      def parse_since
-        Time.iso8601(params[:since].to_s)
-      rescue ArgumentError
-        nil
-      end
-
-      def render_invalid_since
-        render json: { error: 'Unprocessable Entity', errors: ['since must be an ISO8601 timestamp'] },
-               status: :unprocessable_entity
+        @since = parse_time_param(:since)
       end
     end
   end

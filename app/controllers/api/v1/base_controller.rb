@@ -89,6 +89,26 @@ module Api
         ::PaperTrail.request.whodunnit = Current.user&.id&.to_s
       end
 
+      # Sync clients store this as their next cursor, so it goes out on every response that takes a
+      # time param, 422s included.
+      def set_server_time_header
+        response.set_header('X-Server-Time', Time.current.utc.iso8601(6))
+      end
+
+      # Parses an optional ISO8601 time param. Returns nil when the param is absent or blank; on
+      # garbage it renders the 422 and returns nil too, so callers check `performed?` before going on.
+      def parse_time_param(name)
+        set_server_time_header
+        value = params[name]
+        return nil if value.blank?
+
+        Time.iso8601(value.to_s)
+      rescue ArgumentError
+        render json: { error: 'Unprocessable Entity', errors: ["#{name} must be an ISO8601 timestamp"] },
+               status: :unprocessable_entity
+        nil
+      end
+
       def render_validation_errors(record)
         render json: { error: 'Unprocessable Entity', errors: record.errors.full_messages },
                status: :unprocessable_entity

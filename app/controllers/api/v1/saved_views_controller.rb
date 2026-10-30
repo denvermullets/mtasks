@@ -7,13 +7,11 @@ module Api
       before_action :set_saved_view, only: %i[update destroy]
 
       def index
-        views = visible_views
-        if params[:updated_since].present?
-          since = parse_time(params[:updated_since])
-          return render_invalid_since unless since
+        since = parse_time_param(:updated_since)
+        return if performed?
 
-          views = views.where('saved_views.updated_at > ?', since)
-        end
+        views = visible_views
+        views = views.where('saved_views.updated_at > ?', since) if since
 
         @tracked_result_count = views.size
         render json: views.map { |v| SavedViewSerializer.new(v).as_json }
@@ -71,17 +69,6 @@ module Api
       # for SavedView.query_from, which keeps only QUERY_KEYS.
       def query_string(query)
         query.respond_to?(:to_h) ? query.to_h.to_query : query.to_s
-      end
-
-      def parse_time(value)
-        Time.iso8601(value.to_s)
-      rescue ArgumentError
-        nil
-      end
-
-      def render_invalid_since
-        render json: { error: 'Unprocessable Entity', errors: ['updated_since must be ISO8601'] },
-               status: :unprocessable_entity
       end
     end
   end
