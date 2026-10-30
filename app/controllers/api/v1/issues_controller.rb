@@ -28,9 +28,7 @@ module Api
       def index
         response.set_header('X-Server-Time', Time.current.utc.iso8601(6))
 
-        scope = filter_issues(
-          current_team.issues.not_archived.includes(:lane, :project, :labels, :assignee, :creator)
-        )
+        scope = filter_issues(index_base_scope)
         scope = params.key?(:updated_since) ? updated_since_scope(scope) : scope.order(created_at: :desc)
         return if performed?
 
@@ -79,6 +77,12 @@ module Api
       end
 
       private
+
+      def index_base_scope
+        base = current_team.issues
+        base = base.not_archived unless ActiveModel::Type::Boolean.new.cast(params[:include_archived]) == true
+        base.includes(:lane, :project, :labels, :assignee, :creator)
+      end
 
       def set_issue
         @issue = current_team.issues.find(params[:id])
