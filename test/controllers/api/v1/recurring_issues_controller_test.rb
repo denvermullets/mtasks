@@ -122,6 +122,102 @@ module Api
         assert_response :forbidden
       end
 
+      test 'toggling active leaves next_run_on unchanged' do
+        @recurring.update_columns(next_run_on: Date.new(2031, 5, 5))
+
+        patch api_v1_team_recurring_issue_path(@team, @recurring),
+              params: { recurring_issue: { active: false } }.to_json, headers: @headers
+
+        assert_response :success
+        json = JSON.parse(response.body)
+        assert_equal false, json['active']
+        assert_equal '2031-05-05', json['next_run_on']
+        assert_equal Date.new(2031, 5, 5), @recurring.reload.next_run_on
+      end
+
+      test 'update with starts_on recalculates next_run_on' do
+        patch api_v1_team_recurring_issue_path(@team, @recurring),
+              params: { recurring_issue: { weekday: 1, starts_on: '2030-01-01' } }.to_json, headers: @headers
+
+        assert_response :success
+        assert_equal '2030-01-07', JSON.parse(response.body)['next_run_on']
+      end
+
+      test 'update with invalid values is 422' do
+        patch api_v1_team_recurring_issue_path(@team, @recurring),
+              params: { recurring_issue: { interval: 0 } }.to_json, headers: @headers
+
+        assert_response :unprocessable_entity
+      end
+
+      test 'update rejects references from another team' do
+        other = @workspace.teams.create!(name: 'Other', identifier: 'OTH')
+        other.team_memberships.create!(user: @user)
+
+        patch api_v1_team_recurring_issue_path(@team, @recurring),
+              params: { recurring_issue: { project_id: other.projects.create!(name: 'P').id } }.to_json,
+              headers: @headers
+
+        assert_response :unprocessable_entity
+        assert_nil @recurring.reload.project_id
+      end
+
+      test 'update of a recurring issue from another team is 404' do
+        other = @workspace.teams.create!(name: 'Other', identifier: 'OTH')
+        other.team_memberships.create!(user: @user)
+        theirs = create_recurring(other, title: 'Theirs')
+
+        patch api_v1_team_recurring_issue_path(@team, theirs),
+              params: { recurring_issue: { title: 'Hijacked' } }.to_json, headers: @headers
+
+        assert_response :not_found
+        assert_equal 'Theirs', theirs.reload.title
+      end
+
+      test 'destroy returns 204, keeps spawned issues and appears in the deleted feed' do
+        lane = @team.lanes.create!(name: 'Backlog', position: 0)
+        issue = @team.issues.create!(title: 'Spawned', lane: lane, creator: @user, recurring_issue: @recurring)
+        id = @recurring.id
+
+        delete api_v1_team_recurring_issue_path(@team, @recurring), headers: @headers
+
+        assert_response :no_content
+        assert_nil RecurringIssue.find_by(id: id)
+        assert_nil issue.reload.recurring_issue_id
+
+        get api_v1_team_deleted_path(@team), headers: @headers
+        entries = JSON.parse(response.body).map { |e| e.slice('record_type', 'record_id') }
+        assert_includes entries, { 'record_type' => 'RecurringIssue', 'record_id' => id }
+      end
+
+      test 'update and destroy with a read-only token are 403' do
+        token = ApiToken.generate_for(@user, name: 'RO', scopes: %w[read])
+        headers = { 'Authorization' => "Bearer #{token.raw_token}", 'Content-Type' => 'application/json' }
+
+        patch api_v1_team_recurring_issue_path(@team, @recurring),
+              params: { recurring_issue: { active: false } }.to_json, headers: headers
+        assert_response :forbidden
+
+        delete api_v1_team_recurring_issue_path(@team, @recurring), headers: headers
+        assert_response :forbidden
+        assert RecurringIssue.exists?(@recurring.id)
+      end
+
+      test 'update and destroy for a team outside the token are 404' do
+        stranger = User.create!(name: 'S', email: 'stranger_rec2@example.com', password: 'password')
+        ws = Workspace.create!(name: 'Other WS', owner: stranger)
+        foreign = ws.teams.create!(name: 'Foreign', identifier: 'FRN')
+        foreign.team_memberships.create!(user: stranger)
+        theirs = create_recurring(foreign, title: 'Theirs')
+
+        patch api_v1_team_recurring_issue_path(foreign, theirs),
+              params: { recurring_issue: { active: false } }.to_json, headers: @headers
+        assert_response :not_found
+
+        delete api_v1_team_recurring_issue_path(foreign, theirs), headers: @headers
+        assert_response :not_found
+      end
+
       private
 
       def create_body(starts_on: '2030-01-01', **attrs)

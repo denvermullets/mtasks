@@ -158,18 +158,20 @@ Rails.application.routes.draw do
           patch :move, on: :member
         end
         resources :lanes, only: [:index]
-        resources :labels, only: %i[index create update]
+        resources :labels, only: %i[index create update destroy]
         resources :projects, only: %i[index show create update destroy] do
           resources :decisions, only: %i[create destroy]
           resources :comments, only: %i[index create], controller: 'project_comments'
+          get :activity, to: 'project_activity#index'
         end
         get :deleted, to: 'deleted#index'
         resources :members, only: [:index]
         resources :comments, only: [:index], controller: 'team_comments'
-        resources :recurring_issues, only: %i[index create]
+        resources :recurring_issues, only: %i[index create update destroy]
         resources :saved_views, only: [:create]
       end
       resources :saved_views, only: %i[index update destroy]
+      get :deleted, to: 'deleted#user_index'
     end
   end
 
