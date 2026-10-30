@@ -7,10 +7,9 @@ module Api
       # Below the before_action block on purpose: capture_tracked_label_ids has to run after
       # set_issue, because it reads label_ids before update rewrites them.
       include VektisApiIssueTracking
+      include IssueKeysetPagination
 
       FILTER_PARAMS = %i[lane_id assignee_id project_id priority].freeze
-      DEFAULT_PAGE_LIMIT = 200
-      MAX_PAGE_LIMIT = 500
 
       def by_identifier
         team_identifier, number_str = params[:identifier].split('-', 2)
@@ -34,9 +33,7 @@ module Api
         scope = ordered_scope(scope)
         return if performed?
 
-        issues = trim_page(scope.to_a)
-        @tracked_result_count = issues.size
-        render json: issues.map { |i| serialize(i) }
+        render_issue_list(scope)
       end
 
       def show
@@ -131,36 +128,24 @@ module Api
         performed? ? scope : paginate_scope(scope)
       end
 
-      def paginated?
-        params.key?(:limit) || params.key?(:after_id)
+      def render_issue_list(scope)
+        scope = detail_preloads(scope) if detail_requested?
+        issues = trim_page(scope.to_a)
+        @tracked_result_count = issues.size
+        render json: issues.map { |i| serialize(i, detailed: detail_requested?) }
       end
 
-      def page_limit
-        requested = params[:limit].to_i
-        requested = DEFAULT_PAGE_LIMIT unless requested.positive?
-        [requested, MAX_PAGE_LIMIT].min
+      def detail_requested?
+        params[:include] == 'detail'
       end
 
-      # Keyset on (updated_at, id). Fetches one extra row so trim_page can tell whether more remain.
-      def paginate_scope(scope)
-        return scope unless paginated?
-
-        scope = scope.reorder(updated_at: :asc, id: :asc)
-        if params.key?(:after_id)
-          cursor = current_team.issues.find_by(id: params[:after_id])
-          return render_validation_message('after_id must be an issue id in this team') unless cursor
-
-          scope = scope.where('(issues.updated_at, issues.id) > (?, ?)', cursor.updated_at, cursor.id)
-        end
-        scope.limit(page_limit + 1)
-      end
-
-      def trim_page(issues)
-        return issues unless paginated? && issues.size > page_limit
-
-        page = issues.first(page_limit)
-        response.set_header('X-Next-After-Id', page.last.id.to_s)
-        page
+      # Everything IssueSerializer(detailed: true) touches, loaded up front so the pull stays flat.
+      def detail_preloads(scope)
+        scope.includes(
+          :team, { parent_issue: :team },
+          outgoing_links: { blocked_issue: :team }, incoming_links: { blocking_issue: :team },
+          blocked_dependencies: { blocking_issue: :team }, blocking_dependencies: { blocked_issue: :team }
+        )
       end
 
       def parse_updated_since
