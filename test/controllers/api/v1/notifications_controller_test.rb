@@ -123,6 +123,69 @@ module Api
 
         assert_response :success
       end
+
+      test 'read marks the notification read and returns it' do
+        n = notify(@issue_a)
+        patch read_api_v1_notification_path(n), headers: @headers
+
+        assert_response :success
+        assert_equal n.id, body['id']
+        assert_not_nil body['read_at']
+        assert n.reload.read?
+      end
+
+      test 'read is idempotent and leaves read_at and updated_at unchanged' do
+        n = notify(@issue_a)
+        patch read_api_v1_notification_path(n), headers: @headers
+        first = body['read_at']
+        updated = n.reload.updated_at
+
+        patch read_api_v1_notification_path(n), headers: @headers
+
+        assert_response :success
+        assert_equal first, body['read_at']
+        assert_equal updated, n.reload.updated_at
+      end
+
+      test 'read bumps updated_at so it shows up in updated_since' do
+        n = notify(@issue_a)
+        n.update_columns(updated_at: 1.hour.ago)
+        since = 1.minute.ago.iso8601(6)
+
+        patch read_api_v1_notification_path(n), headers: @headers
+        get api_v1_notifications_path(updated_since: since), headers: @headers
+
+        assert_equal([n.id], body['notifications'].map { |x| x['id'] })
+      end
+
+      test 'read 404s for another users notification' do
+        other = User.create!(name: 'Other', email: "o_#{SecureRandom.hex(4)}@example.com", password: 'password')
+        n = notify(@issue_a, user: other)
+        patch read_api_v1_notification_path(n), headers: @headers
+
+        assert_response :not_found
+        assert_not n.reload.read?
+      end
+
+      test 'read 404s outside a team-scoped token' do
+        n = notify(@issue_b)
+        token = ApiToken.generate_for(@user, name: 'A only', teams: [@team_a])
+        patch read_api_v1_notification_path(n),
+              headers: { 'Authorization' => "Bearer #{token.raw_token}", 'Content-Type' => 'application/json' }
+
+        assert_response :not_found
+        assert_not n.reload.read?
+      end
+
+      test 'read requires write scope' do
+        n = notify(@issue_a)
+        token = ApiToken.generate_for(@user, name: 'ro', scopes: ['read'])
+        patch read_api_v1_notification_path(n),
+              headers: { 'Authorization' => "Bearer #{token.raw_token}", 'Content-Type' => 'application/json' }
+
+        assert_response :forbidden
+        assert_not n.reload.read?
+      end
     end
   end
 end
