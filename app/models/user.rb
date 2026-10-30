@@ -92,6 +92,15 @@ class User < ApplicationRecord
     id.present? ? teams.not_archived.find_by(id: id) : nil
   end
 
+  # The configured home page as {kind:, id:} (kind: team, saved_view or dashboard), nil when unset or
+  # the target no longer resolves. Same precedence as home_path.
+  def home_page
+    if (dashboard = home_dashboard) then { kind: 'dashboard', id: dashboard.id }
+    elsif (view = home_view) then { kind: 'saved_view', id: view.id }
+    elsif (team = home_team) then { kind: 'team', id: team.id }
+    end
+  end
+
   # Where "/" and sign-in land: the home dashboard if one is set, then the home saved view, then the
   # pinned home team's issues board, then the preferred (last-used) team, then the first non-archived team.
   def home_path(preferred_team_id = nil)
