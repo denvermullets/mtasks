@@ -11,6 +11,7 @@ class CommentsController < ApplicationController
     @comment.user = Current.user
 
     if @comment.save
+      @issue.touch # a comment is a change to the issue; surfaces it in updated_since pulls
       track_comment_created
       detect_issue_references
       notify_comment_created

@@ -17,6 +17,27 @@ class IssuesControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(@user)
   end
 
+  test 'changing labels via issue update moves updated_at' do
+    label = @team.labels.create!(name: 'Bug', color: '#ff0000')
+    @issue.update_columns(updated_at: 1.day.ago)
+
+    patch team_issue_path(@team, @issue), params: { issue: { label_ids: [label.id] } }
+
+    assert_operator @issue.reload.updated_at, :>, 1.hour.ago
+  end
+
+  test 'adding and removing a label via issue_labels moves updated_at' do
+    label = @team.labels.create!(name: 'Bug', color: '#ff0000')
+    @issue.update_columns(updated_at: 1.day.ago)
+
+    post team_issue_issue_labels_path(@team, @issue, format: :turbo_stream), params: { label_id: label.id }
+    assert_operator @issue.reload.updated_at, :>, 1.hour.ago
+
+    @issue.update_columns(updated_at: 1.day.ago)
+    delete team_issue_issue_label_path(@team, @issue, label, format: :turbo_stream)
+    assert_operator @issue.reload.updated_at, :>, 1.hour.ago
+  end
+
   test 'sets completed_at when moving issue to Done lane' do
     assert_nil @issue.completed_at
 

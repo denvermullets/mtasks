@@ -23,6 +23,41 @@ module Api
         assert_equal 'Test Project', projects.first['name']
       end
 
+      test 'index sends X-Server-Time' do
+        get api_v1_team_projects_path(@team), headers: @headers
+
+        assert Time.iso8601(response.headers['X-Server-Time'])
+      end
+
+      test 'updated_since returns projects at or after the time, oldest first, ties by id' do
+        t = Time.utc(2026, 1, 1, 12)
+        old = @team.projects.create!(name: 'Old')
+        a = @team.projects.create!(name: 'A')
+        b = @team.projects.create!(name: 'B')
+        c = @team.projects.create!(name: 'C')
+        @project.update_columns(updated_at: t - 1.day)
+        old.update_columns(updated_at: t - 1.second)
+        c.update_columns(updated_at: t + 1.minute)
+        a.update_columns(updated_at: t)
+        b.update_columns(updated_at: t)
+
+        get api_v1_team_projects_path(@team), params: { updated_since: t.iso8601 }, headers: @headers
+
+        assert_response :success
+        assert_equal [a.id, b.id, c.id], JSON.parse(response.body).pluck('id')
+        assert response.headers['X-Server-Time'].present?
+      end
+
+      test 'invalid updated_since returns 422 with X-Server-Time' do
+        get api_v1_team_projects_path(@team), params: { updated_since: 'yesterday' }, headers: @headers
+
+        assert_response :unprocessable_entity
+        body = JSON.parse(response.body)
+        assert_equal 'Unprocessable Entity', body['error']
+        assert body['errors'].any?
+        assert response.headers['X-Server-Time'].present?
+      end
+
       # Show
       test 'shows project with details' do
         get api_v1_team_project_path(@team, @project), headers: @headers

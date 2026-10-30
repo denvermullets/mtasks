@@ -38,7 +38,7 @@ module Api
 
         if dependency
           direction = IssueDependencies::Link.direction_for(dependency, @issue)
-          dependency.destroy
+          IssueDependencies::Unlink.call(dependency: dependency)
           track_api_feature('issue-dependency', 'unlink', direction: direction)
           render json: { ok: true, id: dependency.id }
         else

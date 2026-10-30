@@ -1,10 +1,10 @@
 # Groups belong to a user-owned dashboard, so every lookup goes through current_user.dashboards
 # and a foreign dashboard or group id is simply not found. Source ids from the client are
-# intersected with the teams/projects/labels the user can actually see; the rest are dropped silently.
+# narrowed by DashboardGroups::SourceSanitizer to the teams, projects and labels the user can see.
 class DashboardGroupsController < ApplicationController
   include DashboardPage
 
-  SOURCE_ID_KEYS = %i[team_ids project_ids label_ids all_team_ids all_project_ids].freeze
+  SOURCE_ID_KEYS = DashboardGroups::SourceSanitizer::KEYS
 
   before_action :set_dashboard
   before_action :set_group, only: %i[update destroy move]
@@ -76,43 +76,8 @@ class DashboardGroupsController < ApplicationController
     group_params.except(*SOURCE_ID_KEYS)
   end
 
-  # Keyword args for DashboardGroup#replace_sources!. `all_*` ids only count when they're also sources.
+  # Keyword args for DashboardGroup#replace_sources!.
   def permitted_sources
-    team_ids = permitted_team_ids
-    project_ids = permitted_project_ids
-    label_ids = permitted_label_ids
-
-    {
-      team_ids: team_ids, project_ids: project_ids, label_ids: label_ids,
-      all_team_ids: submitted_ids(:all_team_ids) & team_ids,
-      all_project_ids: submitted_ids(:all_project_ids) & project_ids
-    }
-  end
-
-  # collection_check_boxes posts a blank entry so the key is always present; drop it.
-  def submitted_ids(key)
-    Array(group_params[key]).map(&:to_i).reject(&:zero?)
-  end
-
-  def allowed_team_ids
-    @allowed_team_ids ||= current_user.teams.not_archived.pluck(:id)
-  end
-
-  def permitted_team_ids
-    submitted_ids(:team_ids) & allowed_team_ids
-  end
-
-  def permitted_project_ids
-    ids = submitted_ids(:project_ids)
-    return [] if ids.empty?
-
-    Project.where(id: ids, team_id: allowed_team_ids).pluck(:id)
-  end
-
-  def permitted_label_ids
-    ids = submitted_ids(:label_ids)
-    return [] if ids.empty?
-
-    Label.where(id: ids, team_id: allowed_team_ids).pluck(:id)
+    DashboardGroups::SourceSanitizer.call(teams: current_user.teams.not_archived, params: group_params)
   end
 end

@@ -24,6 +24,7 @@ module Api
         @comment.hourglass_message_id = hourglass_message_id
 
         if @comment.save
+          @issue.touch # a comment is a change to the issue; surfaces it in updated_since pulls
           after_create_side_effects(@comment)
           # Only this branch. The Idempotency-Key short-circuit above returns an existing comment,
           # which is a redelivery rather than new activity and must not be counted twice.

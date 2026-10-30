@@ -39,6 +39,26 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
     assert_equal @user, @issue.comments.last.user
   end
 
+  test 'create moves the issue updated_at' do
+    sign_in_as(@user)
+    @issue.update_columns(updated_at: 1.hour.ago)
+    before = @issue.reload.updated_at
+
+    post team_issue_comments_path(@team, @issue), params: { comment: { body: 'Hello' } }
+
+    assert_operator @issue.reload.updated_at, :>, before
+  end
+
+  test 'discussion comment create moves the issue updated_at' do
+    sign_in_as(@user)
+    @issue.update_columns(updated_at: 1.hour.ago)
+    before = @issue.reload.updated_at
+
+    post team_issue_discussion_comments_path(@team, @issue), params: { comment: { body: 'Hello' } }
+
+    assert_operator @issue.reload.updated_at, :>, before
+  end
+
   test 'destroy removes the authors own comment' do
     sign_in_as(@user)
     comment = @issue.comments.create!(user: @user, body: 'Existing comment')

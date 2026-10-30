@@ -13,9 +13,7 @@ module Api
       private
 
       def base_json
-        {
-          id: @issue.id,
-          identifier: @issue.identifier,
+        identity_json.merge(
           title: @issue.title,
           priority: @issue.priority,
           estimate: @issue.estimate,
@@ -26,8 +24,17 @@ module Api
           project: serialize_record(@issue.project, :name),
           labels: @issue.labels.map { |l| { id: l.id, name: l.name } },
           created_at: @issue.created_at,
-          updated_at: @issue.updated_at
-        }
+          updated_at: @issue.updated_at,
+          **sync_json
+        )
+      end
+
+      def sync_json
+        { archived_at: @issue.archived_at, recurring_issue_id: @issue.recurring_issue_id }
+      end
+
+      def identity_json
+        { id: @issue.id, identifier: @issue.identifier, team_id: @issue.team_id, team_number: @issue.team_number }
       end
 
       def detail_json
@@ -59,9 +66,14 @@ module Api
         { id: issue.id, identifier: issue.identifier, title: issue.title, dependency_id: dependency.id }
       end
 
+      def links_of(links, kind)
+        links.select { |d| d.kind == kind.to_s }
+      end
+
       def serialize_links(kind)
-        outgoing = @issue.outgoing_links.public_send(kind).includes(:blocked_issue).map { |d| [d, d.blocked_issue] }
-        incoming = @issue.incoming_links.public_send(kind).includes(:blocking_issue).map { |d| [d, d.blocking_issue] }
+        # Filter in Ruby over the (preloadable) associations so list endpoints don't N+1.
+        outgoing = links_of(@issue.outgoing_links, kind).map { |d| [d, d.blocked_issue] }
+        incoming = links_of(@issue.incoming_links, kind).map { |d| [d, d.blocking_issue] }
 
         (outgoing + incoming).sort_by { |d, _| d.id }.map do |dependency, other|
           serialize_dependency_issue(dependency, other)
