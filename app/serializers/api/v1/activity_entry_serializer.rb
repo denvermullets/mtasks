@@ -11,6 +11,53 @@ module Api
         'team_id' => [Team, :name]
       }.freeze
 
+      # Serializes any timeline entry ({type:, record:}) from IssueActivityFeed, relative to `issue`.
+      def self.for(entry, issue:)
+        record = entry[:record]
+        base = { type: entry[:type].to_s, id: record.id, cursor: IssueActivityFeed.cursor_for(entry),
+                 created_at: record.created_at.iso8601 }
+        case entry[:type]
+        when :version then new(record).as_json.merge(cursor: base[:cursor])
+        when :dependency then base.merge(dependency_json(record, issue))
+        when :comment then base.merge(comment: CommentSerializer.new(record, include_replies: false).as_json)
+        when :reference then base.merge(reference_json(record))
+        end
+      end
+
+      def self.user_json(user)
+        user && { id: user.id, name: user.name }
+      end
+
+      def self.dependency_json(version, issue)
+        data = version.event == 'destroy' ? (version.object || {}) : stored_values(version)
+        blocking_id = data['blocking_issue_id']
+        kind = data['kind'] || 'blocks'
+        other_id = blocking_id == issue.id ? data['blocked_issue_id'] : blocking_id
+        other = Issue.find_by(id: other_id)
+        { event: version.event, kind: kind, direction: direction(kind, blocking_id == issue.id),
+          other_issue: other && { id: other.id, identifier: other.identifier, title: other.title },
+          actor: user_json(User.find_by(id: version.whodunnit)),
+          description: VersionDescriptionService.call(version) }
+      end
+
+      def self.stored_values(version)
+        (version.object_changes || {}).transform_values { |v| v.is_a?(Array) ? v.last : v }
+      end
+
+      def self.direction(kind, issue_is_source)
+        case kind
+        when 'relates' then 'relates'
+        when 'duplicates' then issue_is_source ? 'duplicates' : 'duplicated_by'
+        else issue_is_source ? 'blocking' : 'blocked_by'
+        end
+      end
+
+      def self.reference_json(reference)
+        source = reference.source_issue
+        { source_issue: { id: source.id, identifier: source.identifier, title: source.title },
+          source_type: reference.source_type, user: user_json(reference.user) }
+      end
+
       def initialize(version)
         @version = version
         @changes = version.object_changes || {}
