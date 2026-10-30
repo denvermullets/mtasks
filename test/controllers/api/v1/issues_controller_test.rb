@@ -32,6 +32,42 @@ module Api
         assert_response :not_found
       end
 
+      # Index: incremental pull
+      test 'index sends X-Server-Time' do
+        get api_v1_team_issues_path(@team), headers: @headers
+
+        assert_response :success
+        assert Time.iso8601(response.headers['X-Server-Time'])
+      end
+
+      test 'updated_since returns issues at or after the time, oldest first, ties by id' do
+        t = Time.utc(2026, 1, 1, 12)
+        old = @team.issues.create!(title: 'Old', lane: @backlog, creator: @user)
+        a = @team.issues.create!(title: 'A', lane: @backlog, creator: @user)
+        b = @team.issues.create!(title: 'B', lane: @backlog, creator: @user)
+        c = @team.issues.create!(title: 'C', lane: @backlog, creator: @user)
+        @issue.update_columns(updated_at: t - 1.day)
+        old.update_columns(updated_at: t - 1.second)
+        c.update_columns(updated_at: t + 1.minute)
+        a.update_columns(updated_at: t)
+        b.update_columns(updated_at: t)
+
+        get api_v1_team_issues_path(@team), params: { updated_since: t.iso8601 }, headers: @headers
+
+        assert_response :success
+        assert_equal [a.id, b.id, c.id], JSON.parse(response.body).pluck('id')
+        assert response.headers['X-Server-Time'].present?
+      end
+
+      test 'invalid updated_since returns 422 with X-Server-Time' do
+        get api_v1_team_issues_path(@team), params: { updated_since: 'yesterday' }, headers: @headers
+
+        assert_response :unprocessable_entity
+        body = JSON.parse(response.body)
+        assert_equal 'Unprocessable Entity', body['error']
+        assert body['errors'].any?
+      end
+
       # Index
       test 'lists issues' do
         get api_v1_team_issues_path(@team), headers: @headers

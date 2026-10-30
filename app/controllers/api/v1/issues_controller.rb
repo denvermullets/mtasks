@@ -26,10 +26,15 @@ module Api
       end
 
       def index
-        issues = filter_issues(
-          current_team.issues.not_archived.includes(:lane, :project, :labels, :assignee, :creator)
-        ).order(created_at: :desc).to_a
+        response.set_header('X-Server-Time', Time.current.utc.iso8601(6))
 
+        scope = filter_issues(
+          current_team.issues.not_archived.includes(:lane, :project, :labels, :assignee, :creator)
+        )
+        scope = params.key?(:updated_since) ? updated_since_scope(scope) : scope.order(created_at: :desc)
+        return if performed?
+
+        issues = scope.to_a
         @tracked_result_count = issues.size
         render json: issues.map { |i| serialize(i) }
       end
@@ -79,6 +84,24 @@ module Api
         @issue = current_team.issues.find(params[:id])
       rescue ActiveRecord::RecordNotFound
         render_not_found
+      end
+
+      def updated_since_scope(scope)
+        since = parse_updated_since
+        return render_invalid_updated_since unless since
+
+        scope.where(issues: { updated_at: since.. }).order(updated_at: :asc, id: :asc)
+      end
+
+      def parse_updated_since
+        Time.iso8601(params[:updated_since].to_s)
+      rescue ArgumentError
+        nil
+      end
+
+      def render_invalid_updated_since
+        render json: { error: 'Unprocessable Entity', errors: ['updated_since must be an ISO8601 timestamp'] },
+               status: :unprocessable_entity
       end
 
       def render_not_found
