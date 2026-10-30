@@ -43,6 +43,10 @@ module Api
         render json: { marked: marked, unread_count: inbox.unread.count }
       end
 
+      def unread_count
+        render json: { unread_count: inbox.unread.count, server_time: Time.current.iso8601(3) }
+      end
+
       private
 
       def read_all_team
