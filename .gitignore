@@ -40,3 +40,5 @@ node_modules/
 .notes
 
 .DS_STORE
+# Claude Code agent worktrees
+/.claude/worktrees/
