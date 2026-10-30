@@ -169,6 +169,7 @@ Rails.application.routes.draw do
         resources :saved_views, only: [:create]
       end
       resources :saved_views, only: %i[index update destroy]
+      get :deleted, to: 'deleted#user_index'
     end
   end
 

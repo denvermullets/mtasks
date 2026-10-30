@@ -8,6 +8,9 @@ class SavedView < ApplicationRecord
     lane_ids assignee_ids creator_ids label_ids project_ids priority q
   ].freeze
 
+  # Destroy versions feed the user-level deleted tombstones (UserDeletedFeed).
+  has_paper_trail on: :destroy
+
   # Associations
   belongs_to :user
   belongs_to :team
