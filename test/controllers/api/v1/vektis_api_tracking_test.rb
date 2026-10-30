@@ -140,6 +140,13 @@ module Api
         assert_equal 1, event_for('issue-label', 'remove')['properties']['count']
       end
 
+      test 'updating a label emits label-management update' do
+        patch api_v1_team_label_path(@team, @label),
+              params: { label: { name: 'renamed' } }.to_json, headers: @headers
+
+        assert_equal [%w[label-management update]], write_pairs
+      end
+
       test 'reparenting through the API emits sub-issue link then unlink' do
         parent = @team.issues.create!(title: 'Parent', lane: @backlog, creator: @user)
 
