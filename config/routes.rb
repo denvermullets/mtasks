@@ -127,6 +127,7 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       get '/me', to: 'users#me'
+      resources :dashboards, only: %i[index show create update destroy]
       get '/users/by_email', to: 'users#by_email'
       get '/issues/by_identifier/:identifier',
           to: 'issues#by_identifier',
