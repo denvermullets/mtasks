@@ -69,16 +69,19 @@ class DashboardGroup < ApplicationRecord
       index = siblings.index { |group| group.id == id }
       target = index + offset
 
-      if target.between?(0, siblings.size - 1)
-        siblings[index], siblings[target] = siblings[target], siblings[index]
-        dashboard.renumber_groups(siblings)
-      end
+      swap_and_renumber(siblings, index, target) if target.between?(0, siblings.size - 1)
     end
 
     self
   end
 
   private
+
+  def swap_and_renumber(siblings, index, target)
+    siblings[index], siblings[target] = siblings[target], siblings[index]
+    dashboard.renumber_groups(siblings)
+    dashboard.touch
+  end
 
   def sync_sources(type, ids, all_ids)
     # `where.not(source_id: [])` compiles to NOT (1=0), i.e. every row, which is what
