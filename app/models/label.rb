@@ -1,4 +1,6 @@
 class Label < ApplicationRecord
+  has_paper_trail on: [:destroy]
+
   belongs_to :team
   has_many :issue_labels, dependent: :destroy
   has_many :issues, through: :issue_labels
