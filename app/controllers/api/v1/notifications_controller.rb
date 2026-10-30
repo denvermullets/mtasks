@@ -5,6 +5,9 @@ module Api
       MAX_LIMIT = 200
 
       def index
+        since = updated_since
+        return if performed?
+
         scope = inbox
         unread_count = scope.unread.count
         server_time = Time.current
@@ -13,7 +16,7 @@ module Api
         # tuple changes whenever the inbox does. The row count covers hard deletes.
         return unless stale?(etag: [unread_count, scope.count, scope.maximum(:updated_at)&.iso8601(6)])
 
-        notifications = filtered(scope).includes(:actor, :issue).to_a
+        notifications = filtered(scope, since).includes(:actor, :issue).to_a
         @tracked_result_count = notifications.size
         render json: {
           notifications: notifications.map { |n| serialize(n) },
@@ -39,7 +42,7 @@ module Api
 
         marked = (team ? inbox.where(issues: { team_id: team.id }) : inbox).mark_all_read!(before: before)
         track_api_feature('notification', 'read_all', team: team, count: marked) if marked.positive?
-        response.set_header('X-Server-Time', Time.current.utc.iso8601(6))
+        set_server_time_header
         render json: { marked: marked, unread_count: inbox.unread.count }
       end
 
@@ -74,9 +77,9 @@ module Api
         current_user.notifications.joins(:issue).where(issues: { team_id: accessible_teams.select(:id) })
       end
 
-      def filtered(scope)
+      def filtered(scope, since)
         scope = scope.unread if params[:unread].to_s == '1'
-        scope = scope.where(notifications: { updated_at: updated_since.. }) if updated_since
+        scope = scope.where(notifications: { updated_at: since.. }) if since
         scope = scope.where(notifications: { id: ...params[:before_id].to_i }) if params[:before_id].present?
         scope.reorder(created_at: :desc, id: :desc).limit(limit)
       end
@@ -84,9 +87,7 @@ module Api
       def updated_since
         return @updated_since if defined?(@updated_since)
 
-        @updated_since = params[:updated_since].present? ? Time.zone.parse(params[:updated_since].to_s) : nil
-      rescue ArgumentError
-        @updated_since = nil
+        @updated_since = parse_time_param(:updated_since)
       end
 
       def limit

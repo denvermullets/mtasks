@@ -11,8 +11,10 @@ module Api
       before_action :set_project
 
       def index
-        response.set_header('X-Server-Time', Time.current.utc.iso8601(6))
-        scope = filtered_versions
+        since = parse_time_param(:since)
+        return if performed?
+
+        scope = filtered_versions(since)
         return if performed?
 
         versions = scope.reorder(id: :desc).limit(limit + 1).to_a # one extra row says an older page exists
@@ -28,7 +30,7 @@ module Api
         response.headers['X-Next-Before-Id'] = "version:#{versions[limit - 1].id}"
       end
 
-      def filtered_versions
+      def filtered_versions(since)
         scope = @project.versions.where(event: 'update')
         scope = scope.where('versions.created_at > ?', since) if since
         return scope if params[:before_id].blank?
@@ -43,14 +45,6 @@ module Api
         @project = current_team.projects.find(params[:project_id])
       rescue ActiveRecord::RecordNotFound
         render json: { error: 'Not Found', message: 'Project not found' }, status: :not_found
-      end
-
-      def since
-        return @since if defined?(@since)
-
-        @since = (Time.iso8601(params[:since]) if params[:since].present?)
-      rescue ArgumentError
-        @since = nil
       end
 
       def limit

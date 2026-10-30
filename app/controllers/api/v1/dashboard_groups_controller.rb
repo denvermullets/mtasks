@@ -24,6 +24,7 @@ module Api
 
       def destroy
         @group.destroy
+        @dashboard.touch # the group list changed; dashboards expose updated_at
         head :no_content
       end
 
@@ -71,6 +72,7 @@ module Api
         saved = DashboardGroup.transaction { group.save && group.replace_sources!(**sources) }
         return render_validation_errors(group) unless saved
 
+        @dashboard.touch # the group list or a group changed; dashboards expose updated_at
         render json: serialize(group), status: status
       end
 

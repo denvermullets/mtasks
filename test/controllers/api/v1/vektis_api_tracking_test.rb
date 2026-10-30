@@ -219,6 +219,79 @@ module Api
         assert_equal 'project', event_for('comment')['properties']['entity']
       end
 
+      # --- attachments: the same pairs the web emits, and nothing where the web emits nothing ----
+
+      def signed_id(name = 't.txt')
+        ActiveStorage::Blob.create_and_upload!(io: StringIO.new('hi'), filename: name, content_type: 'text/plain')
+                           .signed_id
+      end
+
+      test 'attaching files to an issue emits issue-attachment create for the issue' do
+        post api_v1_team_issue_attachments_path(@team, @issue),
+             params: { signed_ids: [signed_id] }.to_json, headers: @headers
+
+        assert_equal [%w[issue-attachment create]], write_pairs
+        assert_equal 'issue', event_for('issue-attachment')['properties']['entity']
+      end
+
+      test 'removing an issue file emits nothing, like the web' do
+        @issue.files.attach(io: StringIO.new('x'), filename: 'x.txt')
+        clear_enqueued_jobs
+
+        delete api_v1_team_issue_attachment_path(@team, @issue, @issue.files_attachments.first), headers: @headers
+
+        assert_response :no_content
+        assert_empty write_pairs
+      end
+
+      test 'attaching files to a project emits project-management update, like the web edit form' do
+        post api_v1_team_project_attachments_path(@team, @project),
+             params: { signed_ids: [signed_id] }.to_json, headers: @headers
+
+        assert_response :created
+        assert_equal [%w[project-management update]], write_pairs
+      end
+
+      test 'removing a project file emits issue-attachment remove for the project' do
+        @project.files.attach(io: StringIO.new('x'), filename: 'x.txt')
+        clear_enqueued_jobs
+
+        delete api_v1_team_project_attachment_path(@team, @project, @project.files_attachments.first),
+               headers: @headers
+
+        assert_response :no_content
+        assert_equal [%w[issue-attachment remove]], write_pairs
+        event = event_for('issue-attachment')
+        assert_equal 'project', event['properties']['entity']
+        assert_equal 1, event['properties']['count']
+      end
+
+      test 'a comment with files emits comment create plus issue-attachment create for the comment' do
+        post api_v1_team_issue_comments_path(@team, @issue),
+             params: { comment: { body: 'with file' }, files: [signed_id] }.to_json, headers: @headers
+        assert_response :created
+        assert_equal [%w[comment create], %w[issue-attachment create]], write_pairs.sort
+        assert_equal 'comment', event_for('issue-attachment')['properties']['entity']
+
+        clear_enqueued_jobs
+        post api_v1_team_project_comments_path(@team, @project),
+             params: { comment: { body: 'with file' }, files: [signed_id] }.to_json, headers: @headers
+        assert_response :created
+        assert_equal [%w[comment create], %w[issue-attachment create]], write_pairs.sort
+      end
+
+      test 'removing a comment file emits nothing, like the web' do
+        comment = @issue.comments.create!(body: 'c', user: @user)
+        comment.files.attach(io: StringIO.new('x'), filename: 'x.txt')
+        clear_enqueued_jobs
+
+        delete api_v1_team_issue_comment_attachment_path(@team, @issue, comment, comment.files_attachments.first),
+               headers: @headers
+
+        assert_response :no_content
+        assert_empty write_pairs
+      end
+
       test 'an idempotent comment replay emits nothing the second time' do
         headers = @headers.merge('Idempotency-Key' => 'hourglass-message-1')
 

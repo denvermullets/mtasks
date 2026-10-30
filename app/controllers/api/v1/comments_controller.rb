@@ -2,6 +2,7 @@ module Api
   module V1
     class CommentsController < BaseController
       include MentionNotifying
+      include ApiCommentFiles
 
       before_action :set_current_team
       before_action :set_issue
@@ -30,6 +31,7 @@ module Api
           # Only this branch. The Idempotency-Key short-circuit above returns an existing comment,
           # which is a redelivery rather than new activity and must not be counted twice.
           track_api_feature('comment', 'create', entity: 'issue', depth: @comment.depth)
+          track_comment_files(blobs)
           render json: CommentSerializer.new(@comment).as_json, status: :created
         else
           render_validation_errors(@comment)
@@ -62,32 +64,12 @@ module Api
 
       private
 
-      def can_modify?(comment)
-        comment.user_id == Current.user.id || current_team.admin?(Current.user)
-      end
-
-      def render_forbidden(message)
-        render json: { error: 'Forbidden', message: message }, status: :forbidden
-      end
-
       def build_comment(blobs)
         comment = @issue.comments.new(comment_params)
         comment.user = Current.user
         comment.hourglass_message_id = hourglass_message_id
         comment.files.attach(blobs) if blobs.any?
         comment
-      end
-
-      # [] when no files were sent; nil when any id doesn't resolve, so a bad batch creates nothing.
-      def find_blobs
-        ids = Array(params[:files]).compact_blank
-        blobs = ids.map { |id| ActiveStorage::Blob.find_signed(id) }
-        blobs.all? ? blobs.uniq : nil
-      end
-
-      def render_invalid_files
-        render json: { error: 'Unprocessable Entity', errors: ['files must be valid signed ids'] },
-               status: :unprocessable_entity
       end
 
       def after_create_side_effects(comment)

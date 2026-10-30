@@ -52,10 +52,12 @@ class DashboardGroup < ApplicationRecord
   # issue (the rest are "assigned to me"); ids there that aren't also sources are ignored.
   # Callers own the access checks; this trusts what it's given.
   def replace_sources!(team_ids:, project_ids:, label_ids: [], all_team_ids: [], all_project_ids: [])
+    changed = false
     transaction do
-      sync_sources('Team', team_ids, all_team_ids)
-      sync_sources('Project', project_ids, all_project_ids)
-      sync_sources('Label', label_ids, [])
+      changed |= sync_sources('Team', team_ids, all_team_ids)
+      changed |= sync_sources('Project', project_ids, all_project_ids)
+      changed |= sync_sources('Label', label_ids, [])
+      touch_with_dashboard if changed
     end
     sources.reset
     self
@@ -85,14 +87,25 @@ class DashboardGroup < ApplicationRecord
     dashboard.touch
   end
 
+  # Returns whether any source row was removed, added or flipped, so the caller can bump
+  # updated_at: delete_all skips timestamps and a sources-only edit leaves the group row untouched.
   def sync_sources(type, ids, all_ids)
     # `where.not(source_id: [])` compiles to NOT (1=0), i.e. every row, which is what
     # "keep none" means here. Don't "fix" it.
-    sources.where(source_type: type).where.not(source_id: ids).delete_all
+    changed = sources.where(source_type: type).where.not(source_id: ids).delete_all.positive?
     ids.each do |id|
       source = sources.find_or_initialize_by(source_type: type, source_id: id)
       source.include_all = all_ids.include?(id)
-      source.save! if source.changed?
+      next unless source.changed?
+
+      source.save!
+      changed = true
     end
+    changed
+  end
+
+  def touch_with_dashboard
+    touch
+    dashboard.touch
   end
 end

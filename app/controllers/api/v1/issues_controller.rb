@@ -27,8 +27,7 @@ module Api
       end
 
       def index
-        response.set_header('X-Server-Time', Time.current.utc.iso8601(6))
-
+        set_server_time_header
         scope = filter_issues(index_base_scope)
         scope = ordered_scope(scope)
         return if performed?
@@ -117,15 +116,17 @@ module Api
       end
 
       def updated_since_scope(scope)
-        since = parse_updated_since
-        return render_invalid_updated_since unless since
+        since = parse_time_param(:updated_since)
+        return scope if performed?
 
         scope.where(issues: { updated_at: since.. }).order(updated_at: :asc, id: :asc)
       end
 
       def ordered_scope(scope)
-        scope = params.key?(:updated_since) ? updated_since_scope(scope) : scope.order(created_at: :desc)
-        performed? ? scope : paginate_scope(scope)
+        scope = params[:updated_since].present? ? updated_since_scope(scope) : scope.order(created_at: :desc)
+        return scope if performed?
+
+        paginate_scope(scope)
       end
 
       def render_issue_list(scope)
@@ -146,17 +147,6 @@ module Api
           outgoing_links: { blocked_issue: :team }, incoming_links: { blocking_issue: :team },
           blocked_dependencies: { blocking_issue: :team }, blocking_dependencies: { blocked_issue: :team }
         )
-      end
-
-      def parse_updated_since
-        Time.iso8601(params[:updated_since].to_s)
-      rescue ArgumentError
-        nil
-      end
-
-      def render_invalid_updated_since
-        render json: { error: 'Unprocessable Entity', errors: ['updated_since must be an ISO8601 timestamp'] },
-               status: :unprocessable_entity
       end
 
       def render_not_found(message = 'Issue not found')

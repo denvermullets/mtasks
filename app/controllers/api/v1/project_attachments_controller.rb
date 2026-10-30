@@ -12,7 +12,9 @@ module Api
 
         @project.files.attach(blobs)
         @project.touch
-        track_api_feature('project-management', 'update', entity: 'project', count: blobs.size)
+        # The web attaches through the project edit form, so the event is project-management/update.
+        track_api_feature('project-management', 'update', priority: @project.priority,
+                                                          has_due_date: @project.due_date.present?)
         render json: attached_since(blobs).map { |a| AttachmentSerializer.new(a).as_json }, status: :created
       end
 
@@ -20,6 +22,7 @@ module Api
         attachment = @project.files_attachments.find(params[:id])
         attachment.purge
         @project.touch
+        track_api_feature('issue-attachment', 'remove', entity: 'project', count: 1)
         head :no_content
       rescue ActiveRecord::RecordNotFound
         render json: { error: 'Not Found', message: 'Attachment not found' }, status: :not_found
