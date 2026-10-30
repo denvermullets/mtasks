@@ -127,6 +127,7 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       get '/me', to: 'users#me'
+      put '/me/home_page', to: 'users#update_home_page'
       resources :dashboards, only: %i[index show create update destroy] do
         resources :groups, only: %i[create update destroy], controller: 'dashboard_groups'
       end
@@ -138,7 +139,10 @@ Rails.application.routes.draw do
       resources :direct_uploads, only: :create
       resources :notifications, only: [:index] do
         member { patch :read }
-        collection { patch :read_all }
+        collection do
+          patch :read_all
+          get :unread_count
+        end
       end
       resources :teams, only: [:index] do
         resources :issues, only: %i[index show create update destroy] do
