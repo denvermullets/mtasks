@@ -127,6 +127,7 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       get '/me', to: 'users#me'
+      put '/me/home_page', to: 'users#update_home_page'
       get '/users/by_email', to: 'users#by_email'
       get '/issues/by_identifier/:identifier',
           to: 'issues#by_identifier',
