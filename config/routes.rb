@@ -127,6 +127,7 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       get '/me', to: 'users#me'
+      resources :dashboards, only: %i[index show create update destroy]
       get '/users/by_email', to: 'users#by_email'
       get '/issues/by_identifier/:identifier',
           to: 'issues#by_identifier',
@@ -137,6 +138,7 @@ Rails.application.routes.draw do
           resources :issue_dependencies, only: %i[index create destroy], controller: 'issue_dependencies'
           resources :comments, only: %i[index create]
           resources :decisions, only: %i[create destroy]
+          get :activity, to: 'activity#index'
         end
         resources :lanes, only: [:index]
         resources :labels, only: %i[index create]
@@ -145,6 +147,7 @@ Rails.application.routes.draw do
           resources :comments, only: %i[index create], controller: 'project_comments'
         end
         resources :members, only: [:index]
+        resources :recurring_issues, only: %i[index create]
       end
     end
   end
