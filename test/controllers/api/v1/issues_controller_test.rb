@@ -86,6 +86,42 @@ module Api
         assert body['errors'].any?
       end
 
+      test 'limit and after_id walk every issue once, including shared updated_at' do
+        t = Time.utc(2026, 1, 1, 12)
+        ids = Array.new(5) { |i| @team.issues.create!(title: "P#{i}", lane: @backlog, creator: @user) }.map(&:id)
+        @issue.update_columns(updated_at: t - 1.day)
+        Issue.where(id: ids).update_all(updated_at: t)
+        seen = []
+        after = nil
+        pages = 0
+        loop do
+          query = { updated_since: t.iso8601, limit: 2 }
+          query[:after_id] = after if after
+          get api_v1_team_issues_path(@team), params: query, headers: @headers
+          assert_response :success
+          seen.concat(JSON.parse(response.body).pluck('id'))
+          pages += 1
+          after = response.headers['X-Next-After-Id']
+          break unless after
+        end
+        assert_equal ids.sort, seen
+        assert_equal 3, pages
+      end
+
+      test 'limit above 500 is clamped and last page has no X-Next-After-Id' do
+        get api_v1_team_issues_path(@team), params: { limit: 100_000 }, headers: @headers
+
+        assert_response :success
+        assert_nil response.headers['X-Next-After-Id']
+        assert_equal 1, JSON.parse(response.body).length
+      end
+
+      test 'unknown after_id returns 422' do
+        get api_v1_team_issues_path(@team), params: { after_id: 0 }, headers: @headers
+
+        assert_response :unprocessable_entity
+      end
+
       # Index
       test 'lists issues' do
         get api_v1_team_issues_path(@team), headers: @headers

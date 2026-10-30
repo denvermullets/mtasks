@@ -9,6 +9,8 @@ module Api
       include VektisApiIssueTracking
 
       FILTER_PARAMS = %i[lane_id assignee_id project_id priority].freeze
+      DEFAULT_PAGE_LIMIT = 200
+      MAX_PAGE_LIMIT = 500
 
       def by_identifier
         team_identifier, number_str = params[:identifier].split('-', 2)
@@ -29,10 +31,10 @@ module Api
         response.set_header('X-Server-Time', Time.current.utc.iso8601(6))
 
         scope = filter_issues(index_base_scope)
-        scope = params.key?(:updated_since) ? updated_since_scope(scope) : scope.order(created_at: :desc)
+        scope = ordered_scope(scope)
         return if performed?
 
-        issues = scope.to_a
+        issues = trim_page(scope.to_a)
         @tracked_result_count = issues.size
         render json: issues.map { |i| serialize(i) }
       end
@@ -107,6 +109,48 @@ module Api
         return render_invalid_updated_since unless since
 
         scope.where(issues: { updated_at: since.. }).order(updated_at: :asc, id: :asc)
+      end
+
+      def ordered_scope(scope)
+        scope = params.key?(:updated_since) ? updated_since_scope(scope) : scope.order(created_at: :desc)
+        performed? ? scope : paginate_scope(scope)
+      end
+
+      def paginated?
+        params.key?(:limit) || params.key?(:after_id)
+      end
+
+      def page_limit
+        requested = params[:limit].to_i
+        requested = DEFAULT_PAGE_LIMIT unless requested.positive?
+        [requested, MAX_PAGE_LIMIT].min
+      end
+
+      # Keyset on (updated_at, id). Fetches one extra row so trim_page can tell whether more remain.
+      def paginate_scope(scope)
+        return scope unless paginated?
+
+        scope = scope.reorder(updated_at: :asc, id: :asc)
+        if params.key?(:after_id)
+          cursor = current_team.issues.find_by(id: params[:after_id])
+          return render_invalid_after_id unless cursor
+
+          scope = scope.where('(issues.updated_at, issues.id) > (?, ?)', cursor.updated_at, cursor.id)
+        end
+        scope.limit(page_limit + 1)
+      end
+
+      def trim_page(issues)
+        return issues unless paginated? && issues.size > page_limit
+
+        page = issues.first(page_limit)
+        response.set_header('X-Next-After-Id', page.last.id.to_s)
+        page
+      end
+
+      def render_invalid_after_id
+        render json: { error: 'Unprocessable Entity', errors: ['after_id must be an issue id in this team'] },
+               status: :unprocessable_entity
       end
 
       def parse_updated_since
