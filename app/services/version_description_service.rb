@@ -24,8 +24,13 @@ class VersionDescriptionService < Service
     entries.sort_by { |e| e[:created_at] }
   end
 
+  # Field-change versions of the issue itself, oldest first. Shared by the web timeline and the API.
+  def self.version_entries(issue)
+    issue.versions.where.not(event: 'create').order(:created_at, :id)
+  end
+
   def self.timeline_entries(issue)
-    as_entries(:version, issue.versions.where.not(event: 'create')) +
+    as_entries(:version, version_entries(issue)) +
       as_entries(:version, dependency_versions(issue)) +
       as_entries(:comment, issue.comments.top_level.includes(:user)) +
       as_entries(:reference, issue.incoming_references.includes(:user, source_issue: %i[team lane]))

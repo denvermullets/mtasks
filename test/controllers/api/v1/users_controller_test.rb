@@ -30,6 +30,47 @@ module Api
         assert_nil json.dig('token', 'team_ids')
       end
 
+      test 'home_page is null when unset' do
+        get api_v1_me_path, headers: api_headers_for(@user)
+
+        assert_response :success
+        assert JSON.parse(response.body).key?('home_page')
+        assert_nil JSON.parse(response.body)['home_page']
+      end
+
+      test 'home_page reports a team' do
+        @user.update!(settings: { 'home_team_id' => @team.id })
+        get api_v1_me_path, headers: api_headers_for(@user)
+
+        assert_equal({ 'kind' => 'team', 'id' => @team.id }, JSON.parse(response.body)['home_page'])
+      end
+
+      test 'home_page reports a saved view' do
+        view = @user.saved_views.create!(team: @team, name: 'Mine', query: {})
+        @user.update!(settings: { 'home_view_id' => view.id })
+        get api_v1_me_path, headers: api_headers_for(@user)
+
+        assert_equal({ 'kind' => 'saved_view', 'id' => view.id }, JSON.parse(response.body)['home_page'])
+      end
+
+      test 'home_page reports a dashboard' do
+        dashboard = @user.dashboards.create!(name: 'Dash')
+        @user.update!(settings: { 'home_dashboard_id' => dashboard.id })
+        get api_v1_me_path, headers: api_headers_for(@user)
+
+        assert_equal({ 'kind' => 'dashboard', 'id' => dashboard.id }, JSON.parse(response.body)['home_page'])
+      end
+
+      test 'home_page for a team outside a scoped token is null' do
+        other = @workspace.teams.create!(name: 'Other', identifier: 'OTHR')
+        other.team_memberships.create!(user: @user)
+        @user.update!(settings: { 'home_team_id' => other.id })
+        token = ApiToken.generate_for(@user, name: 'Scoped', teams: [@team])
+        get api_v1_me_path, headers: headers_for(token)
+
+        assert_nil JSON.parse(response.body)['home_page']
+      end
+
       test 'reports team_id for team-scoped tokens' do
         token = ApiToken.generate_for(@user, name: 'Scoped', teams: [@team])
 
