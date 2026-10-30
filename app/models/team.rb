@@ -48,9 +48,10 @@ class Team < ApplicationRecord
   end
 
   def archive!
+    now = Time.current
     transaction do
-      update!(archived_at: Time.current)
-      issues.not_archived.update_all(archived_at: Time.current)
+      update!(archived_at: now)
+      issues.not_archived.update_all(archived_at: now, updated_at: now)
     end
   end
 
