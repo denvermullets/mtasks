@@ -101,6 +101,26 @@ class User < ApplicationRecord
     end
   end
 
+  HOME_KEYS = { 'team' => 'home_team_id', 'view' => 'home_view_id', 'dashboard' => 'home_dashboard_id' }.freeze
+  # The API reports saved views as `saved_view`; the web form says `view`. Both mean the same thing.
+  HOME_KIND_ALIASES = { 'saved_view' => 'view' }.freeze
+
+  # Stores the landing page (kind: team, view/saved_view or dashboard) and clears the other two, or
+  # clears it all when kind is blank. Returns false, saving nothing, when the kind is unknown or the
+  # target is not one the user can reach: a team in `within_teams` (default: their non-archived
+  # teams; the API passes the token's accessible teams), a saved view on one of those teams, or one
+  # of their own dashboards.
+  def set_home_page(kind, id, within_teams: teams.not_archived) # rubocop:disable Naming/PredicateMethod
+    kind = HOME_KIND_ALIASES.fetch(kind.to_s, kind.to_s)
+    key = HOME_KEYS[kind]
+    return false if kind.present? && !(key && home_target?(kind, id, within_teams))
+
+    new_settings = (settings || {}).except(*HOME_KEYS.values)
+    new_settings[key] = id.to_i if key
+    update!(settings: new_settings)
+    true
+  end
+
   # Where "/" and sign-in land: the home dashboard if one is set, then the home saved view, then the
   # pinned home team's issues board, then the preferred (last-used) team, then the first non-archived team.
   def home_path(preferred_team_id = nil)
@@ -160,5 +180,16 @@ class User < ApplicationRecord
 
   def personal_workspace
     owned_workspaces.first || owned_workspaces.create!(name: "#{name}'s workspace")
+  end
+
+  private
+
+  def home_target?(kind, id, within_teams)
+    scope = case kind
+            when 'team' then within_teams
+            when 'view' then saved_views.where(team_id: within_teams.select(:id))
+            else dashboards
+            end
+    scope.exists?(id: id)
   end
 end
