@@ -2,7 +2,7 @@ module Api
   module V1
     class IssuesController < BaseController
       before_action :set_current_team, except: [:by_identifier]
-      before_action :set_issue, only: %i[show update]
+      before_action :set_issue, only: %i[show update destroy]
 
       # Below the before_action block on purpose: capture_tracked_label_ids has to run after
       # set_issue, because it reads label_ids before update rewrites them.
@@ -76,6 +76,18 @@ module Api
         else
           render_validation_errors(@issue)
         end
+      end
+
+      # Mirrors the web destroy: any team member may delete, and the project's velocity is
+      # recalculated afterwards. The write is tracked as issue-delete, the web's slug.
+      def destroy
+        project_id = @issue.project_id
+        @issue.destroy
+        return render_validation_errors(@issue) unless @issue.destroyed?
+
+        track_api_feature('issue-delete', 'delete', **issue_shape(@issue))
+        ProjectVelocityJob.perform_later(project_id) if project_id.present?
+        head :no_content
       end
 
       private

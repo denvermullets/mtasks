@@ -194,6 +194,45 @@ module Api
         @issue.reload
         assert_nil @issue.completed_at
       end
+
+      # Destroy
+      test 'team member deletes an issue' do
+        delete api_v1_team_issue_path(@team, @issue), headers: @headers
+        assert_response :no_content
+
+        get api_v1_team_issue_path(@team, @issue), headers: @headers
+        assert_response :not_found
+        get api_v1_team_issues_path(@team), headers: @headers
+        assert_not_includes JSON.parse(response.body).pluck('id'), @issue.id
+      end
+
+      test 'delete with read-only token is forbidden' do
+        read_only = ApiToken.generate_for(@user, scopes: %w[read])
+        headers = { 'Authorization' => "Bearer #{read_only.raw_token}", 'Content-Type' => 'application/json' }
+        delete api_v1_team_issue_path(@team, @issue), headers: headers
+        assert_response :forbidden
+        assert Issue.exists?(@issue.id)
+      end
+
+      test 'delete in a team outside the token is not found' do
+        other_user = User.create!(name: 'Other', email: 'other_del@example.com', password: 'password')
+        other_team = Workspace.create!(name: 'Other WS', owner: other_user).teams.create!(name: 'O', identifier: 'OTD')
+        delete api_v1_team_issue_path(other_team, @issue), headers: @headers
+        assert_response :not_found
+      end
+
+      test 'delete unknown issue is not found' do
+        delete api_v1_team_issue_path(@team, 0), headers: @headers
+        assert_response :not_found
+      end
+
+      test 'deleting an issue with a project enqueues velocity recalculation' do
+        project = @team.projects.create!(name: 'Proj')
+        @issue.update!(project: project)
+        assert_enqueued_with(job: ProjectVelocityJob, args: [project.id]) do
+          delete api_v1_team_issue_path(@team, @issue), headers: @headers
+        end
+      end
     end
   end
 end
