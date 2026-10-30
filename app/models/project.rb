@@ -5,7 +5,8 @@ class Project < ApplicationRecord
   enum :priority, { urgent: 0, high: 1, medium: 2, low: 3, no_priority: 4 }
 
   # Destroy-only: the versions are the team deleted feed's tombstones (see TeamDeletedFeed).
-  has_paper_trail on: :destroy
+  # Destroy versions feed the team deleted feed; update versions feed the project activity API.
+  has_paper_trail only: %i[name description status priority lead_id start_date due_date roadmap_commitment]
 
   belongs_to :team
   belongs_to :lead, class_name: 'User', optional: true
