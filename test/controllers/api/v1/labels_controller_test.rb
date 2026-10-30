@@ -64,6 +64,77 @@ module Api
 
         assert_response :unprocessable_entity
       end
+
+      test 'renames and recolors a label' do
+        patch api_v1_team_label_path(@team, @label),
+              params: { label: { name: 'Defect', color: '#000000' } }.to_json, headers: @headers
+
+        assert_response :success
+        json = JSON.parse(response.body)
+        assert_equal 'Defect', json['name']
+        assert_equal '#000000', json['color']
+        assert_equal @label.reload.updated_at.iso8601(3), Time.zone.parse(json['updated_at']).iso8601(3)
+        assert_equal 'Defect', @label.name
+      end
+
+      test 'list and create JSON include updated_at' do
+        get api_v1_team_labels_path(@team), headers: @headers
+        assert JSON.parse(response.body).first['updated_at'].present?
+      end
+
+      test 'update rejects blank name' do
+        patch api_v1_team_label_path(@team, @label),
+              params: { label: { name: '' } }.to_json, headers: @headers
+
+        assert_response :unprocessable_entity
+        json = JSON.parse(response.body)
+        assert_equal 'Unprocessable Entity', json['error']
+        assert(json['errors'].any? { |e| e.include?('Name') })
+      end
+
+      test 'update rejects duplicate name' do
+        @team.labels.create!(name: 'Other', color: '#111111')
+        patch api_v1_team_label_path(@team, @label),
+              params: { label: { name: 'other' } }.to_json, headers: @headers
+
+        assert_response :unprocessable_entity
+        assert_equal 'Bug', @label.reload.name
+      end
+
+      test 'update with a read-only token is forbidden' do
+        token = ApiToken.generate_for(@user, name: 'RO', scopes: %w[read])
+        patch api_v1_team_label_path(@team, @label),
+              params: { label: { name: 'X' } }.to_json,
+              headers: { 'Authorization' => "Bearer #{token.raw_token}", 'Content-Type' => 'application/json' }
+
+        assert_response :forbidden
+      end
+
+      test 'update on a team outside the token is not found' do
+        other_team = @workspace.teams.create!(name: 'Other Team', identifier: 'OTH')
+        other_team.team_memberships.create!(user: @user)
+        other_label = other_team.labels.create!(name: 'Elsewhere', color: '#222222')
+        token = ApiToken.generate_for(@user, name: 'Scoped', teams: [@team])
+        headers = { 'Authorization' => "Bearer #{token.raw_token}", 'Content-Type' => 'application/json' }
+
+        patch api_v1_team_label_path(other_team, other_label),
+              params: { label: { name: 'X' } }.to_json, headers: headers
+
+        assert_response :not_found
+        assert_equal 'Elsewhere', other_label.reload.name
+      end
+
+      test 'update on a label from another team is not found' do
+        other_team = @workspace.teams.create!(name: 'Other Team', identifier: 'OTH')
+        other_team.team_memberships.create!(user: @user)
+        other_label = other_team.labels.create!(name: 'Elsewhere', color: '#222222')
+
+        patch api_v1_team_label_path(@team, other_label),
+              params: { label: { name: 'X' } }.to_json, headers: @headers
+
+        assert_response :not_found
+        assert_equal 'Elsewhere', other_label.reload.name
+      end
     end
   end
 end
