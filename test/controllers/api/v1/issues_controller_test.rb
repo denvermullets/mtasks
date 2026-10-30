@@ -32,6 +32,27 @@ module Api
         assert_response :not_found
       end
 
+      # Sync fields
+      test 'issue JSON includes team_id, team_number, archived_at and recurring_issue_id' do
+        recurring = @team.recurring_issues.create!(title: 'Weekly', frequency: 'weekly', weekday: 1, interval: 1,
+                                                   next_run_on: Date.current, time_zone: 'UTC', creator: @user)
+        spawned = @team.issues.create!(title: 'Spawned', lane: @backlog, creator: @user, recurring_issue: recurring)
+        archived = @team.issues.create!(title: 'Old', lane: @backlog, creator: @user)
+        archived.update_columns(archived_at: Time.current)
+
+        get api_v1_team_issues_path(@team), headers: @headers
+        rows = JSON.parse(response.body).index_by { |i| i['id'] }
+        assert_equal @team.id, rows[@issue.id]['team_id']
+        assert_equal @issue.team_number, rows[@issue.id]['team_number']
+        assert_nil rows[@issue.id]['archived_at']
+        assert_nil rows[@issue.id]['recurring_issue_id']
+        assert_equal recurring.id, rows[spawned.id]['recurring_issue_id']
+
+        get api_v1_team_issue_path(@team, archived), headers: @headers
+        assert_response :success
+        assert_not_nil JSON.parse(response.body)['archived_at']
+      end
+
       # Index: incremental pull
       test 'index sends X-Server-Time' do
         get api_v1_team_issues_path(@team), headers: @headers
