@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_07_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_30_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -358,6 +358,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_07_120000) do
     t.index ["recurring_issue_id"], name: "index_issues_on_recurring_issue_id"
     t.index ["team_id", "due_date"], name: "index_issues_on_team_id_due_date_open", where: "((archived_at IS NULL) AND (completed_at IS NULL) AND (canceled_at IS NULL))"
     t.index ["team_id", "team_number"], name: "index_issues_on_team_id_and_team_number", unique: true
+    t.index ["team_id", "updated_at"], name: "index_issues_on_team_id_and_updated_at"
     t.index ["team_id"], name: "index_issues_on_team_id"
     t.index ["team_id"], name: "index_issues_on_team_id_not_archived", where: "(archived_at IS NULL)"
     t.index ["team_id"], name: "index_issues_on_team_id_open", where: "((completed_at IS NULL) AND (canceled_at IS NULL))"
