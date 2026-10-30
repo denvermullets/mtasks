@@ -60,6 +60,19 @@ module Api
       end
 
       # Create
+      test 'creating a comment makes the issue appear in the next updated_since pull' do
+        since = 1.minute.ago
+        @issue.update_columns(updated_at: 1.hour.ago)
+
+        post api_v1_team_issue_comments_path(@team, @issue),
+             params: { comment: { body: 'Touch' } }.to_json, headers: @headers
+        assert_response :created
+
+        get api_v1_team_issues_path(@team, updated_since: since.utc.iso8601(6)), headers: @headers
+        assert_response :success
+        assert_includes JSON.parse(response.body).map { |i| i['id'] }, @issue.id
+      end
+
       test 'creates comment and sets author from token' do
         assert_difference 'Comment.count', 1 do
           post api_v1_team_issue_comments_path(@team, @issue),
