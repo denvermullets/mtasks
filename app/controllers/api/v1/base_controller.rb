@@ -41,6 +41,13 @@ module Api
 
       attr_reader :current_team
 
+      # Idle-poll primitive: the ETag is derived from the serialized payload itself, so it changes
+      # when anything the client would see changes and differs wherever the response differs
+      # (per team, per token scope). A matching If-None-Match gets a 304 with no body.
+      def render_conditional_json(payload)
+        render json: payload if stale?(etag: payload)
+      end
+
       # Every team-resolving lookup goes through this, so a team-scoped token never sees a team
       # outside its set — not even to learn that it exists.
       def accessible_teams

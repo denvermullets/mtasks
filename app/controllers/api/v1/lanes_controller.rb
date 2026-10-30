@@ -7,9 +7,10 @@ module Api
         lanes = current_team.lanes.order(:position).to_a
 
         @tracked_result_count = lanes.size
-        render json: lanes.map { |l|
+        payload = lanes.map do |l|
           { id: l.id, name: l.name, position: l.position, color: l.color, category: l.category }
-        }
+        end
+        render_conditional_json(payload)
       end
     end
   end
