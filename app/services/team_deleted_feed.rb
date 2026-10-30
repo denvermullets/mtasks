@@ -16,7 +16,8 @@ class TeamDeletedFeed
 
   SOURCES = [
     Source.new(item_type: 'Issue', scope: TEAM_ID_SCOPE),
-    Source.new(item_type: 'Project', scope: TEAM_ID_SCOPE)
+    Source.new(item_type: 'Project', scope: TEAM_ID_SCOPE),
+    Source.new(item_type: 'Label', scope: TEAM_ID_SCOPE)
   ].freeze
 
   def initialize(team, since: nil)

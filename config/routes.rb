@@ -149,7 +149,7 @@ Rails.application.routes.draw do
           patch :move, on: :member
         end
         resources :lanes, only: [:index]
-        resources :labels, only: %i[index create update]
+        resources :labels, only: %i[index create update destroy]
         resources :projects, only: %i[index show create update destroy] do
           resources :decisions, only: %i[create destroy]
           resources :comments, only: %i[index create], controller: 'project_comments'
