@@ -33,6 +33,33 @@ module Api
         assert_equal 'API', teams.first['identifier']
       end
 
+      test 'reports owner role for a team the user owns' do
+        get api_v1_teams_path, headers: @headers
+
+        assert_equal 'owner', JSON.parse(response.body).first['role']
+      end
+
+      test 'owner role wins over an admin membership' do
+        @team.team_memberships.find_by(user: @user).update!(role: :admin)
+        get api_v1_teams_path, headers: @headers
+
+        assert_equal 'owner', JSON.parse(response.body).first['role']
+      end
+
+      test 'reports admin and member roles on teams the user does not own' do
+        other_owner = User.create!(name: 'Owner', email: 'owner_teams@example.com', password: 'password')
+        other_workspace = Workspace.create!(name: 'Shared Workspace', owner: other_owner)
+        admin_team = other_workspace.teams.create!(name: 'Admin Team', identifier: 'ADM')
+        member_team = other_workspace.teams.create!(name: 'Member Team', identifier: 'MEM')
+        admin_team.team_memberships.create!(user: @user, role: :admin)
+        member_team.team_memberships.create!(user: @user)
+
+        get api_v1_teams_path, headers: @headers
+
+        roles = JSON.parse(response.body).to_h { |t| [t['identifier'], t['role']] }
+        assert_equal({ 'ADM' => 'admin', 'API' => 'owner', 'MEM' => 'member' }, roles)
+      end
+
       test 'does not include archived teams' do
         @team.archive!
         get api_v1_teams_path, headers: @headers
