@@ -7,6 +7,7 @@ module Api
           name: current_user.name,
           email: current_user.email,
           home_page: home_page_json,
+          sidebar: sidebar_json,
           token: {
             name: @current_api_token.name,
             scopes: @current_api_token.scopes,
@@ -56,6 +57,23 @@ module Api
         return page unless page && token_team_ids
 
         page if page[:kind] == 'dashboard' || token_team_ids.include?(home_page_team_id(page))
+      end
+
+      # Raw sidebar settings; the client resolves the layout the way User#sidebar_layout does. Ids of
+      # teams the token can't see (out of scope, archived, or left) are dropped, but groups are kept
+      # even when that empties them.
+      def sidebar_json
+        visible = accessible_teams.pluck(:id).to_set
+        order = current_user.team_order
+        {
+          groups: current_user.sidebar_groups.map do |group|
+            group.merge('team_ids' => group['team_ids'].select { |id| visible.include?(id) })
+          end,
+          team_order: {
+            owned: order['owned'].select { |id| visible.include?(id) },
+            joined: order['joined'].select { |id| visible.include?(id) }
+          }
+        }
       end
 
       def home_page_team_id(page)

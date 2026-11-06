@@ -82,6 +82,70 @@ module Api
         assert_equal [@team.id], json.dig('token', 'team_ids')
       end
 
+      test 'sidebar defaults to empty groups and order' do
+        get api_v1_me_path, headers: api_headers_for(@user)
+
+        assert_equal({ 'groups' => [], 'team_order' => { 'owned' => [], 'joined' => [] } },
+                     JSON.parse(response.body)['sidebar'])
+      end
+
+      test 'sidebar reports groups in order and team order' do
+        other = @workspace.teams.create!(name: 'Other', identifier: 'OTHR')
+        other.team_memberships.create!(user: @user)
+        @user.update!(settings: {
+                        'sidebar_groups' => [
+                          { 'id' => 'g1', 'name' => 'Bozo', 'team_ids' => [other.id, @team.id], 'collapsed' => true },
+                          { 'id' => 'g2', 'name' => 'Empty', 'team_ids' => [] }
+                        ],
+                        'team_order' => { 'owned' => [other.id, @team.id], 'joined' => [] }
+                      })
+
+        get api_v1_me_path, headers: api_headers_for(@user)
+
+        sidebar = JSON.parse(response.body)['sidebar']
+        assert_equal [
+          { 'id' => 'g1', 'name' => 'Bozo', 'team_ids' => [other.id, @team.id], 'collapsed' => true },
+          { 'id' => 'g2', 'name' => 'Empty', 'team_ids' => [], 'collapsed' => false }
+        ], sidebar['groups']
+        assert_equal({ 'owned' => [other.id, @team.id], 'joined' => [] }, sidebar['team_order'])
+      end
+
+      test 'sidebar hides teams outside a scoped token but keeps their groups' do
+        other = @workspace.teams.create!(name: 'Other', identifier: 'OTHR')
+        other.team_memberships.create!(user: @user)
+        @user.update!(settings: {
+                        'sidebar_groups' => [
+                          { 'id' => 'g1', 'name' => 'Mixed', 'team_ids' => [other.id, @team.id] },
+                          { 'id' => 'g2', 'name' => 'Hidden', 'team_ids' => [other.id] }
+                        ],
+                        'team_order' => { 'owned' => [other.id, @team.id], 'joined' => [other.id] }
+                      })
+        token = ApiToken.generate_for(@user, name: 'Scoped', teams: [@team])
+
+        get api_v1_me_path, headers: headers_for(token)
+
+        sidebar = JSON.parse(response.body)['sidebar']
+        assert_equal [[@team.id], []], sidebar['groups'].pluck('team_ids')
+        assert_equal %w[Mixed Hidden], sidebar['groups'].pluck('name')
+        assert_equal({ 'owned' => [@team.id], 'joined' => [] }, sidebar['team_order'])
+      end
+
+      test 'sidebar drops archived teams' do
+        archived = @workspace.teams.create!(name: 'Old', identifier: 'OLDT')
+        archived.team_memberships.create!(user: @user)
+        archived.update!(archived_at: Time.current)
+        @user.update!(settings: {
+                        'sidebar_groups' => [{ 'id' => 'g1', 'name' => 'G', 'team_ids' => [archived.id, @team.id] }],
+                        'team_order' => { 'owned' => [archived.id, @team.id], 'joined' => [] }
+                      })
+
+        get api_v1_me_path, headers: api_headers_for(@user)
+
+        sidebar = JSON.parse(response.body)['sidebar']
+        assert_equal [@team.id], sidebar['groups'].first['team_ids']
+        assert_equal [@team.id], sidebar.dig('team_order', 'owned')
+      end
+
       def put_home(body, headers: api_headers_for(@user))
         put api_v1_me_home_page_path, params: body.to_json, headers: headers
       end
