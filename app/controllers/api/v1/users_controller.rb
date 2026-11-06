@@ -29,6 +29,20 @@ module Api
         render json: { home_page: current_user.home_page }
       end
 
+      # PATCH /me/sidebar_groups/:id with {collapsed: bool}. Only the collapsed state is settable here;
+      # creating, renaming, deleting and regrouping teams stay web-only.
+      def update_sidebar_group
+        unless params.key?(:collapsed)
+          return render json: { error: 'Unprocessable Entity', errors: ['collapsed is required'] },
+                        status: :unprocessable_entity
+        end
+
+        group = current_user.update_sidebar_group(params[:id], collapsed: params[:collapsed])
+        return render json: { error: 'Not Found', message: 'Sidebar group not found' }, status: :not_found unless group
+
+        render json: visible_sidebar_group(group, accessible_teams.pluck(:id).to_set)
+      end
+
       def by_email
         email = params[:email].to_s.strip.downcase
         return render json: { error: 'Bad Request', message: 'email is required' }, status: :bad_request if email.blank?
@@ -66,14 +80,16 @@ module Api
         visible = accessible_teams.pluck(:id).to_set
         order = current_user.team_order
         {
-          groups: current_user.sidebar_groups.map do |group|
-            group.merge('team_ids' => group['team_ids'].select { |id| visible.include?(id) })
-          end,
+          groups: current_user.sidebar_groups.map { |group| visible_sidebar_group(group, visible) },
           team_order: {
             owned: order['owned'].select { |id| visible.include?(id) },
             joined: order['joined'].select { |id| visible.include?(id) }
           }
         }
+      end
+
+      def visible_sidebar_group(group, visible_team_ids)
+        group.merge('team_ids' => group['team_ids'].select { |id| visible_team_ids.include?(id) })
       end
 
       def home_page_team_id(page)

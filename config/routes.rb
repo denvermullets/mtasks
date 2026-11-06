@@ -128,6 +128,7 @@ Rails.application.routes.draw do
     namespace :v1 do
       get '/me', to: 'users#me'
       put '/me/home_page', to: 'users#update_home_page'
+      patch '/me/sidebar_groups/:id', to: 'users#update_sidebar_group', as: :me_sidebar_group
       resources :dashboards, only: %i[index show create update destroy] do
         resources :groups, only: %i[create update destroy], controller: 'dashboard_groups' do
           patch :move, on: :member

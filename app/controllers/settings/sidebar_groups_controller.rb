@@ -12,13 +12,8 @@ class Settings::SidebarGroupsController < ApplicationController
 
   # Renames from the settings form, or records the collapsed state from the sidebar chevron (JSON).
   def update
-    groups = current_user.sidebar_groups
-    group = groups.find { |g| g['id'] == params[:id] }
-    return head :not_found unless group
     return redirect_back_to_settings(alert: 'Group name is required.') if params.key?(:name) && group_name.blank?
-
-    apply_changes(group)
-    save_groups(groups)
+    return head :not_found unless current_user.update_sidebar_group(params[:id], **group_changes)
 
     respond_to do |format|
       format.html { redirect_back_to_settings(notice: 'Group renamed') }
@@ -34,9 +29,8 @@ class Settings::SidebarGroupsController < ApplicationController
 
   private
 
-  def apply_changes(group)
-    group['name'] = group_name if params.key?(:name)
-    group['collapsed'] = ActiveModel::Type::Boolean.new.cast(params[:collapsed]) if params.key?(:collapsed)
+  def group_changes
+    params.permit(:name, :collapsed).to_h.symbolize_keys
   end
 
   def group_name

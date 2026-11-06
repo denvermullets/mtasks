@@ -168,6 +168,19 @@ class User < ApplicationRecord
     end
   end
 
+  # Renames and/or collapses one sidebar group, leaving every other group and setting untouched. Only
+  # the keys passed are changed. Returns the updated group, or nil (saving nothing) when the id is unknown.
+  def update_sidebar_group(id, **changes)
+    groups = sidebar_groups
+    group = groups.find { |g| g['id'] == id.to_s }
+    return unless group
+
+    group['name'] = changes[:name].to_s.strip.first(SIDEBAR_GROUP_NAME_LIMIT) if changes.key?(:name)
+    group['collapsed'] = ActiveModel::Type::Boolean.new.cast(changes[:collapsed]) == true if changes.key?(:collapsed)
+    update!(settings: (settings || {}).merge('sidebar_groups' => groups))
+    group
+  end
+
   def sidebar_layout(teams)
     by_id = teams.index_by(&:id)
     claimed = Set.new

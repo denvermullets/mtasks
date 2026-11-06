@@ -146,6 +146,91 @@ module Api
         assert_equal [@team.id], sidebar.dig('team_order', 'owned')
       end
 
+      test 'PATCH sidebar group collapses only that group and shows on /me and the web sidebar' do
+        @user.update!(settings: {
+                        'appearance' => { 'theme' => 'dusk' },
+                        'sidebar_groups' => [
+                          { 'id' => 'g1', 'name' => 'Work', 'team_ids' => [@team.id] },
+                          { 'id' => 'g2', 'name' => 'Play', 'team_ids' => [], 'collapsed' => true }
+                        ]
+                      })
+
+        patch_group('g1', { collapsed: true })
+
+        assert_response :success
+        assert_equal({ 'id' => 'g1', 'name' => 'Work', 'team_ids' => [@team.id], 'collapsed' => true },
+                     JSON.parse(response.body))
+        @user.reload
+        assert_equal [true, true], @user.sidebar_groups.pluck('collapsed')
+        assert_equal %w[Work Play], @user.sidebar_groups.pluck('name')
+        assert_equal 'dusk', @user.theme
+
+        get api_v1_me_path, headers: api_headers_for(@user)
+        assert JSON.parse(response.body).dig('sidebar', 'groups', 0, 'collapsed')
+
+        patch_group('g1', { collapsed: false })
+        assert_not JSON.parse(response.body)['collapsed']
+        assert_equal [false, true], @user.reload.sidebar_groups.pluck('collapsed')
+      end
+
+      test 'PATCH sidebar group filters team ids for a scoped token' do
+        other = @workspace.teams.create!(name: 'Other', identifier: 'OTHR')
+        other.team_memberships.create!(user: @user)
+        @user.update!(settings: {
+                        'sidebar_groups' => [{ 'id' => 'g1', 'name' => 'G', 'team_ids' => [other.id, @team.id] }]
+                      })
+        token = ApiToken.generate_for(@user, name: 'Scoped', teams: [@team])
+
+        patch_group('g1', { collapsed: true }, headers: headers_for(token))
+
+        assert_response :success
+        assert_equal [@team.id], JSON.parse(response.body)['team_ids']
+        assert_equal [other.id, @team.id], @user.reload.sidebar_groups.first['team_ids']
+      end
+
+      test 'PATCH sidebar group ignores anything but collapsed' do
+        @user.update!(settings: { 'sidebar_groups' => [{ 'id' => 'g1', 'name' => 'Keep', 'team_ids' => [@team.id] }] })
+
+        patch_group('g1', { collapsed: true, name: 'Renamed', team_ids: [] })
+
+        assert_response :success
+        group = @user.reload.sidebar_groups.first
+        assert_equal 'Keep', group['name']
+        assert_equal [@team.id], group['team_ids']
+      end
+
+      test 'PATCH sidebar group 404s for an unknown id' do
+        @user.update!(settings: { 'sidebar_groups' => [{ 'id' => 'g1', 'name' => 'G', 'team_ids' => [] }] })
+
+        patch_group('nope', { collapsed: true })
+
+        assert_response :not_found
+        assert_not @user.reload.sidebar_groups.first['collapsed']
+      end
+
+      test 'PATCH sidebar group 422s without collapsed' do
+        @user.update!(settings: { 'sidebar_groups' => [{ 'id' => 'g1', 'name' => 'G', 'team_ids' => [] }] })
+
+        patch_group('g1', { name: 'X' })
+
+        assert_response :unprocessable_entity
+        assert_equal 'G', @user.reload.sidebar_groups.first['name']
+      end
+
+      test 'PATCH sidebar group needs the write scope' do
+        @user.update!(settings: { 'sidebar_groups' => [{ 'id' => 'g1', 'name' => 'G', 'team_ids' => [] }] })
+        token = ApiToken.generate_for(@user, name: 'RO', scopes: %w[read])
+
+        patch_group('g1', { collapsed: true }, headers: headers_for(token))
+
+        assert_response :forbidden
+        assert_not @user.reload.sidebar_groups.first['collapsed']
+      end
+
+      def patch_group(id, body, headers: api_headers_for(@user))
+        patch api_v1_me_sidebar_group_path(id), params: body.to_json, headers: headers
+      end
+
       def put_home(body, headers: api_headers_for(@user))
         put api_v1_me_home_page_path, params: body.to_json, headers: headers
       end
