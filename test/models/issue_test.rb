@@ -243,4 +243,48 @@ class IssueTest < ActiveSupport::TestCase
 
     assert_equal [urgent, high], @team.issues.hot.order(:id).to_a
   end
+
+  test 'sub-issues can nest to any depth' do
+    root = @team.issues.create!(title: 'Root', lane: @backlog, creator: @user)
+    child = @team.issues.create!(title: 'Child', lane: @backlog, creator: @user, parent_issue: root)
+    grandchild = @team.issues.create!(title: 'Grandchild', lane: @backlog, creator: @user, parent_issue: child)
+    great = @team.issues.new(title: 'Great', lane: @backlog, creator: @user, parent_issue: grandchild)
+
+    assert great.valid?
+  end
+
+  test 'an issue cannot be its own parent' do
+    issue = @team.issues.create!(title: 'Solo', lane: @backlog, creator: @user)
+    issue.parent_issue_id = issue.id
+
+    assert_not issue.valid?
+    assert_includes issue.errors[:parent_issue], 'cannot be the issue itself'
+  end
+
+  test 'parent issue must be in the same team' do
+    other_team = @workspace.teams.create!(name: 'Other', identifier: 'OTH')
+    other_lane = other_team.lanes.create!(name: 'Backlog', position: 0)
+    other_parent = other_team.issues.create!(title: 'Other', lane: other_lane, creator: @user)
+    issue = @team.issues.new(title: 'Child', lane: @backlog, creator: @user, parent_issue: other_parent)
+
+    assert_not issue.valid?
+    assert_includes issue.errors[:parent_issue], 'must be in the same team'
+  end
+
+  test 'parenting an issue under its own descendant is rejected' do
+    root = @team.issues.create!(title: 'Root', lane: @backlog, creator: @user)
+    child = @team.issues.create!(title: 'Child', lane: @backlog, creator: @user, parent_issue: root)
+    grandchild = @team.issues.create!(title: 'Grandchild', lane: @backlog, creator: @user, parent_issue: child)
+    root.parent_issue = grandchild
+
+    assert_not root.valid?
+    assert_includes root.errors[:parent_issue], 'would create a circular sub-issue chain'
+  end
+
+  test 'parent validation is skipped when the parent does not change' do
+    root = @team.issues.create!(title: 'Root', lane: @backlog, creator: @user)
+    child = @team.issues.create!(title: 'Child', lane: @backlog, creator: @user, parent_issue: root)
+
+    assert child.update(title: 'Renamed')
+  end
 end

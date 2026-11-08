@@ -1,0 +1,28 @@
+<%#
+  Outline of the sub-issue tree. Levels past COLLAPSE_DEPTH start collapsed (native <details>),
+  except along the path to the focus issue, so deep trees stay readable on narrow screens.
+%>
+<% if hierarchy.single_issue? %>
+  <div class="rounded-xl border border-stroke px-4 py-16 text-center text-sm text-gray-500">
+    No parent or sub-issues yet.
+    <%= link_to "Add sub-issues from the issue page.", team_issue_path(current_team, hierarchy.issue), class: "text-gray-400 hover:text-gray-300 underline cursor-pointer" %>
+  </div>
+<% else %>
+  <%
+    # Open blockers inside the tree, keyed by the blocked issue, for the "Blocked by" chips.
+    blockers = hierarchy.edges.each_with_object(Hash.new { |h, k| h[k] = [] }) do |edge, acc|
+      blocker = hierarchy.issues_by_id[edge[:from_id]]
+      acc[edge[:to_id]] << blocker if blocker && !blocker.closed?
+    end
+    focus_path = Set[*hierarchy.ancestors.map(&:id), hierarchy.issue.id]
+  %>
+  <div class="rounded-xl border border-stroke bg-foreground/40 p-2 sm:p-3 overflow-x-auto">
+    <%= render "dependency_maps/hierarchy_node", hierarchy: hierarchy, node: hierarchy.root, depth: 0,
+               blockers: blockers, focus_path: focus_path %>
+  </div>
+  <% if hierarchy.truncated? %>
+    <p class="text-xs text-gray-500">
+      Showing the first <%= IssueHierarchyQuery::MAX_DEPTH %> levels. Open a deeper issue to see the rest of its tree.
+    </p>
+  <% end %>
+<% end %>

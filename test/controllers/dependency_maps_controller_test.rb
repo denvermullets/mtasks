@@ -107,7 +107,42 @@ class DependencyMapsControllerTest < ActionDispatch::IntegrationTest
     assert_equal small, large
   end
 
+  test 'hierarchy view renders the whole tree from the top-level issue' do
+    root = create_issue('Root issue')
+    mid = create_issue('Middle issue', parent_issue: root)
+    leaf = create_issue('Leaf issue', parent_issue: mid)
+    sibling = create_issue('Sibling issue', parent_issue: root)
+    link(sibling, leaf)
+
+    get team_issue_dependency_map_path(@team, mid, view: 'hierarchy')
+
+    assert_response :success
+    %w[Root Middle Leaf Sibling].each { |title| assert_includes response.body, "#{title} issue" }
+    assert_includes response.body, "Blocked by #{sibling.identifier}"
+  end
+
+  test 'hierarchy view shows an empty state for a standalone issue' do
+    issue = create_issue('Alone')
+
+    get team_issue_dependency_map_path(@team, issue, view: 'hierarchy')
+
+    assert_includes response.body, 'No parent or sub-issues yet.'
+  end
+
+  test 'hierarchy query count does not grow with the number of sub-issues' do
+    assert_equal hierarchy_query_count(2), hierarchy_query_count(6)
+  end
+
   private
+
+  def hierarchy_query_count(fan_out)
+    root = create_issue("Tree root #{fan_out}", assignee: @user)
+    fan_out.times do |i|
+      child = create_issue("Child #{i}", parent_issue: root, assignee: @user)
+      create_issue("Grandchild #{i}", parent_issue: child, assignee: @user)
+    end
+    count_queries { get team_issue_dependency_map_path(@team, root, view: 'hierarchy') }
+  end
 
   # Renders a map whose focus has `fan_out` blockers, blocked issues and related issues, each
   # with a label, and counts the SQL it takes.

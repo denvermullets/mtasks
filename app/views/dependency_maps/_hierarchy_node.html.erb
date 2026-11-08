@@ -1,0 +1,53 @@
+<%
+  collapse_depth = 3
+  children = hierarchy.children_of(node)
+  focus = node.id == hierarchy.issue.id
+  node_blockers = blockers.fetch(node.id, [])
+  done = children.count(&:closed?)
+%>
+<% row = capture do %>
+  <div class="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm min-w-0 <%= focus ? 'bg-hover-highlight ring-1 ring-accent' : 'hover:bg-hover-highlight' %> <%= 'opacity-60' if node.closed? %>">
+    <span class="shrink-0"><%= render_lane_icon(node.lane) %></span>
+    <%= link_to team_issue_path(node.team_id, node),
+        data: { controller: "hover-card", "hover-card-url-value": card_team_issue_path(node.team_id, node) },
+        class: "flex items-center gap-2 flex-1 min-w-0 cursor-pointer" do %>
+      <span class="font-mono text-xs shrink-0 <%= focus ? 'text-accent' : 'text-gray-500' %>"><%= node.identifier %></span>
+      <span class="truncate <%= focus ? 'text-gray-100 font-medium' : 'text-gray-300' %>"><%= node.title %></span>
+    <% end %>
+    <% node_blockers.first(2).each do |blocker| %>
+      <span class="hidden sm:inline-flex shrink-0 items-center gap-1 px-1.5 py-0.5 rounded border border-stroke text-xs text-gray-400"
+            title="Blocked by <%= blocker.identifier %>: <%= blocker.title %>">
+        <span class="w-1.5 h-1.5 rounded-full" style="background-color: var(--dep-blocked-by)"></span>
+        <%= blocker.identifier %>
+      </span>
+    <% end %>
+    <% if children.any? %>
+      <span class="shrink-0 text-xs text-gray-500"><%= done %>/<%= children.size %></span>
+    <% end %>
+    <% if node.assignee %>
+      <span class="shrink-0"><%= user_avatar(node.assignee, size: "sm") %></span>
+    <% end %>
+  </div>
+<% end %>
+
+<% if children.any? %>
+  <details <%= "open" if depth < collapse_depth || focus_path.include?(node.id) %> class="group/node">
+    <summary class="list-none cursor-pointer flex items-center gap-1 [&::-webkit-details-marker]:hidden">
+      <svg class="w-3 h-3 shrink-0 text-gray-500 transition-transform group-open/node:rotate-90" fill="currentColor" viewBox="0 0 20 20">
+        <path d="M7 5l6 5-6 5V5z"/>
+      </svg>
+      <div class="flex-1 min-w-0"><%= row %></div>
+    </summary>
+    <div class="ml-1.5 pl-2 sm:pl-3 border-l border-stroke">
+      <% children.each do |child| %>
+        <%= render "dependency_maps/hierarchy_node", hierarchy: hierarchy, node: child, depth: depth + 1,
+                   blockers: blockers, focus_path: focus_path %>
+      <% end %>
+    </div>
+  </details>
+<% else %>
+  <div class="flex items-center gap-1">
+    <span class="w-3 shrink-0"></span>
+    <div class="flex-1 min-w-0"><%= row %></div>
+  </div>
+<% end %>

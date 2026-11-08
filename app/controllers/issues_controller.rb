@@ -39,9 +39,9 @@ class IssuesController < ApplicationController
 
   def new
     @team = current_team
-    @issue = current_team.issues.new(assignee: Current.user)
-    @issue.lane_id = params[:lane_id] if params[:lane_id].present?
-    @issue.project_id = params[:project_id] if params[:project_id].present?
+    prefill = params.slice(:lane_id, :project_id).permit(:lane_id, :project_id).compact_blank
+    @issue = current_team.issues.new(prefill.merge(assignee: Current.user))
+    @issue.nest_under(params[:parent_issue_id])
     @return_to = navigation_return_path
     load_form_collections
   end
@@ -138,7 +138,7 @@ class IssuesController < ApplicationController
   def redirect_after_create
     return_to = navigation_return_path
     if params[:create_more] == '1'
-      redirect_to new_team_issue_path(@issue.team, return_to: return_to),
+      redirect_to new_team_issue_path(@issue.team, return_to: return_to, parent_issue_id: @issue.parent_issue_id),
                   notice: 'Issue was successfully created. Create another?'
     else
       redirect_to return_to || team_issues_path(@issue.team), notice: 'Issue was successfully created.'

@@ -400,6 +400,43 @@ module Api
           delete api_v1_team_issue_path(@team, @issue), headers: @headers
         end
       end
+
+      # Sub-issues
+      test 'list rows carry parent_issue_id and detail lists direct sub-issues' do
+        child = @team.issues.create!(title: 'Child', lane: @backlog, creator: @user, parent_issue: @issue)
+        @team.issues.create!(title: 'Archived child', lane: @backlog, creator: @user, parent_issue: @issue,
+                             archived_at: Time.current)
+
+        get api_v1_team_issues_path(@team), headers: @headers
+        row = JSON.parse(response.body).find { |i| i['id'] == child.id }
+        assert_equal @issue.id, row['parent_issue_id']
+
+        get api_v1_team_issue_path(@team, @issue), headers: @headers
+        sub_issues = JSON.parse(response.body)['sub_issues']
+        assert_equal [child.identifier], sub_issues.pluck('identifier')
+        assert_equal 'Backlog', sub_issues.first.dig('lane', 'name')
+      end
+
+      test 'index filters by parent_issue_id, with none meaning top-level' do
+        child = @team.issues.create!(title: 'Child', lane: @backlog, creator: @user, parent_issue: @issue)
+
+        get api_v1_team_issues_path(@team), params: { parent_issue_id: @issue.id }, headers: @headers
+        assert_equal [child.id], JSON.parse(response.body).pluck('id')
+
+        get api_v1_team_issues_path(@team), params: { parent_issue_id: 'none' }, headers: @headers
+        assert_equal [@issue.id], JSON.parse(response.body).pluck('id')
+      end
+
+      test 'update rejects a circular parent' do
+        child = @team.issues.create!(title: 'Child', lane: @backlog, creator: @user, parent_issue: @issue)
+
+        patch api_v1_team_issue_path(@team, @issue),
+              params: { issue: { parent_issue_id: child.id } }.to_json, headers: @headers
+
+        assert_response :unprocessable_entity
+        assert_match(/circular/, response.body)
+        assert_nil @issue.reload.parent_issue_id
+      end
     end
   end
 end

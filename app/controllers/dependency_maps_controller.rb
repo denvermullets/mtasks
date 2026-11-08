@@ -9,8 +9,14 @@ class DependencyMapsController < ApplicationController
     raise ActiveRecord::RecordNotFound unless current_team
 
     @issue = current_team.issues.find(params[:issue_id])
-    @depth = params.fetch(:depth, DEFAULT_DEPTH).to_i.clamp(1, MAX_DEPTH)
-    @graph = DependencyGraphQuery.call(issue: @issue, max_depth: @depth)
     @lanes = current_team.lanes.order(:position)
+    @view = params[:view] == 'hierarchy' ? 'hierarchy' : 'dependencies'
+
+    if @view == 'hierarchy'
+      @hierarchy = IssueHierarchyQuery.call(issue: @issue)
+    else
+      @depth = params.fetch(:depth, DEFAULT_DEPTH).to_i.clamp(1, MAX_DEPTH)
+      @graph = DependencyGraphQuery.call(issue: @issue, max_depth: @depth)
+    end
   end
 end

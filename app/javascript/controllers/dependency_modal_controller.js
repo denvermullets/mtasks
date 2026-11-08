@@ -6,6 +6,8 @@ const TITLES = {
   relates: "Add related issues",
   duplicates: "Mark as duplicate of…",
   duplicated_by: "Add duplicates of this issue",
+  sub_issues: "Add existing sub-issues",
+  parent: "Set parent issue",
 };
 
 export default class extends Controller {
@@ -21,7 +23,7 @@ export default class extends Controller {
     this.searchTarget.value = "";
     this.searchTarget.focus();
 
-    this.frameTarget.src = `${this.searchUrlValue}?q=`;
+    this.frameTarget.src = this.searchUrl("");
 
     this.boundEscape = this.handleKeydown.bind(this);
     document.addEventListener("keydown", this.boundEscape);
@@ -37,8 +39,15 @@ export default class extends Controller {
     clearTimeout(this.debounceTimer);
     this.debounceTimer = setTimeout(() => {
       const query = this.searchTarget.value.trim();
-      this.frameTarget.src = `${this.searchUrlValue}?q=${encodeURIComponent(query)}`;
+      this.frameTarget.src = this.searchUrl(query);
     }, 300);
+  }
+
+  // The search URL may already carry params (e.g. ?mode=parent), so merge q rather than append.
+  searchUrl(query) {
+    const url = new URL(this.searchUrlValue, window.location.origin);
+    url.searchParams.set("q", query);
+    return url.toString();
   }
 
   handleKeydown(event) {

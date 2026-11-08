@@ -143,7 +143,7 @@ module Api
       # Everything IssueSerializer(detailed: true) touches, loaded up front so the pull stays flat.
       def detail_preloads(scope)
         scope.includes(
-          :team, { files_attachments: :blob }, { parent_issue: :team },
+          :team, { files_attachments: :blob }, { parent_issue: :team }, { sub_issues: %i[team lane] },
           outgoing_links: { blocked_issue: :team }, incoming_links: { blocking_issue: :team },
           blocked_dependencies: { blocking_issue: :team }, blocking_dependencies: { blocked_issue: :team }
         )
@@ -165,7 +165,15 @@ module Api
         FILTER_PARAMS.each do |key|
           issues = issues.where(key => params[key]) if params[key]
         end
-        issues
+        filter_by_parent(issues)
+      end
+
+      # parent_issue_id=<id> lists that issue's direct sub-issues; parent_issue_id=none lists
+      # top-level issues only.
+      def filter_by_parent(issues)
+        return issues unless params.key?(:parent_issue_id)
+
+        issues.where(parent_issue_id: params[:parent_issue_id] == 'none' ? nil : params[:parent_issue_id])
       end
 
       def serialize(issue, detailed: false)

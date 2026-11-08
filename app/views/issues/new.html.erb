@@ -31,7 +31,16 @@
             </svg>
           </div>
           <span class="text-gray-600">&#8250;</span>
-          <span class="text-gray-400 text-sm">New issue</span>
+          <% if @issue.parent_issue %>
+            <%= form.hidden_field :parent_issue_id %>
+            <span class="text-gray-400 text-sm">New sub-issue of</span>
+            <span class="inline-flex items-center gap-1.5 min-w-0 px-2 py-1 rounded-md bg-foreground border border-stroke text-sm">
+              <span class="font-mono text-xs text-gray-500"><%= @issue.parent_issue.identifier %></span>
+              <span class="text-gray-300 truncate max-w-64"><%= @issue.parent_issue.title %></span>
+            </span>
+          <% else %>
+            <span class="text-gray-400 text-sm">New issue</span>
+          <% end %>
         </div>
         <!-- Issue Title -->
         <div class="mb-6">

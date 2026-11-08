@@ -71,14 +71,7 @@
         <% end %>
 
         <!-- Sub-issues Section -->
-        <% if @issue.sub_issues.any? %>
-          <div class="mb-6 sm:mb-8">
-            <button class="flex items-center gap-2 mb-4 text-sm text-gray-400 hover:text-gray-300">
-              <span>&#9654;</span>
-              <span>+ Add sub-issues</span>
-            </button>
-          </div>
-        <% end %>
+        <%= render "sub_issues/hierarchy", issue: @issue %>
 
         <!-- Mobile Properties (inline, replaces the hidden drawer) -->
         <div class="sm:hidden border-t border-stroke -mx-4 px-0 mb-6">

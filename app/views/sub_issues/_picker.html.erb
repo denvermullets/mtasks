@@ -1,0 +1,59 @@
+<%#
+  Trigger button + search modal for the hierarchy section. mode :children posts picked issues
+  (checkboxes) to sub_issues#create; mode :parent PATCHes the one picked issue (radio) as parent.
+%>
+<% parent_mode = mode == :parent %>
+<% results_frame = parent_mode ? "parent_issue_search_results" : "sub_issue_search_results" %>
+<span data-controller="dependency-modal"
+      data-dependency-modal-search-url-value="<%= search_team_issue_sub_issues_path(issue.team, issue, mode: (parent_mode ? 'parent' : nil)) %>">
+  <button type="button"
+          data-action="click->dependency-modal#open"
+          data-dependency-modal-direction-param="<%= parent_mode ? 'parent' : 'sub_issues' %>"
+          class="<%= trigger_class %> cursor-pointer">
+    <%= trigger_label %>
+  </button>
+
+  <div data-dependency-modal-target="modal" class="hidden fixed inset-0 z-50">
+    <div class="absolute inset-0 bg-black bg-opacity-50"
+         data-action="click->dependency-modal#closeOnBackdrop"></div>
+    <div class="relative z-10 flex items-center justify-center min-h-screen p-4">
+      <div class="bg-foreground border border-stroke rounded-lg w-full max-w-lg shadow-xl">
+        <div class="px-4 pt-4 pb-2">
+          <h3 class="text-sm font-medium text-gray-300" data-dependency-modal-target="title"><%= parent_mode ? "Set parent issue" : "Add existing sub-issues" %></h3>
+        </div>
+
+        <%= form_with url: (parent_mode ? parent_team_issue_sub_issues_path(issue.team, issue) : team_issue_sub_issues_path(issue.team, issue)),
+                      method: (parent_mode ? :patch : :post) do %>
+          <input type="hidden" name="direction" data-dependency-modal-target="directionInput">
+
+          <div class="px-4 pb-2">
+            <input type="text"
+                   data-dependency-modal-target="search"
+                   data-action="input->dependency-modal#search"
+                   placeholder="Search issues by title or identifier..."
+                   class="w-full px-3 py-2 bg-background border border-stroke rounded text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-accent"
+                   autocomplete="off">
+          </div>
+
+          <div class="max-h-64 overflow-y-auto px-2 py-1">
+            <turbo-frame id="<%= results_frame %>" data-dependency-modal-target="frame">
+              <div class="px-3 py-8 text-center text-sm text-gray-500">Search for issues above</div>
+            </turbo-frame>
+          </div>
+
+          <div class="px-4 py-3 border-t border-stroke flex items-center justify-end gap-2">
+            <button type="button"
+                    data-action="click->dependency-modal#close"
+                    class="px-4 py-2 text-gray-400 hover:text-gray-300 cursor-pointer">
+              Cancel
+            </button>
+            <button type="submit"
+                    class="px-4 py-2 rounded-md border-accent border hover:bg-accent hover:text-gray-800 text-accent font-medium cursor-pointer transition-colors">
+              <%= parent_mode ? "Set parent" : "Add sub-issues" %>
+            </button>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</span>

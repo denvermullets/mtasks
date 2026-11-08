@@ -1,4 +1,6 @@
 class Issue < ApplicationRecord
+  include IssueHierarchy
+
   has_paper_trail only: %i[title description lane_id priority estimate due_date assignee_id project_id
                            parent_issue_id team_id]
 

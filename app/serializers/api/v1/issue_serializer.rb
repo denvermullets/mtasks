@@ -30,7 +30,10 @@ module Api
       end
 
       def sync_json
-        { archived_at: @issue.archived_at, recurring_issue_id: @issue.recurring_issue_id }
+        # parent_issue_id on every row (it's a column, no extra query) so clients syncing the
+        # list can rebuild the sub-issue tree without fetching each issue's detail.
+        { archived_at: @issue.archived_at, recurring_issue_id: @issue.recurring_issue_id,
+          parent_issue_id: @issue.parent_issue_id }
       end
 
       def identity_json
@@ -41,6 +44,8 @@ module Api
         {
           description: @issue.description,
           parent_issue: serialize_record(@issue.parent_issue, :identifier),
+          # Direct sub-issues only; GET .../issues/:id/hierarchy returns the whole tree.
+          sub_issues: serialize_sub_issues,
           # Each entry carries the IssueDependency record id (dependency_id) so it can be removed.
           # blocking_issues = issues that block this one (via blocked_dependencies -> blocking_issue)
           # blocked_issues  = issues this one blocks (via blocking_dependencies -> blocked_issue)
@@ -61,6 +66,16 @@ module Api
         return nil unless record
 
         { id: record.id, attribute => record.public_send(attribute) }
+      end
+
+      def serialize_sub_issues
+        # show/by_identifier don't go through detail_preloads; the preloader is a no-op when the
+        # list endpoint already loaded these. Filter and sort in Ruby to keep it one query.
+        ActiveRecord::Associations::Preloader.new(records: [@issue], associations: { sub_issues: %i[team lane] }).call
+        @issue.sub_issues.reject(&:archived_at).sort_by(&:team_number).map do |sub_issue|
+          { id: sub_issue.id, identifier: sub_issue.identifier, title: sub_issue.title,
+            lane: serialize_record(sub_issue.lane, :name) }
+        end
       end
 
       def serialize_dependency_issue(dependency, issue)

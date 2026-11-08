@@ -1,0 +1,93 @@
+<%# The issue page's parent + sub-issues section. Replaced as a whole by SubIssuesController. %>
+<% parent = issue.parent_issue unless issue.parent_issue&.archived_at %>
+<% children = issue.sub_issues.not_archived.includes(:team, :lane, :assignee).sort_by { |child| [child.lane.position, child.team_number] } %>
+<% grandchild_counts = children.any? ? Issue.not_archived.where(parent_issue_id: children.map(&:id)).group(:parent_issue_id).count : {} %>
+<% done_count = children.count(&:closed?) %>
+<% new_sub_issue_path = new_team_issue_path(issue.team, parent_issue_id: issue.id, return_to: team_issue_path(issue.team, issue)) %>
+
+<%= turbo_frame_tag "issue_hierarchy", class: "block mb-6 sm:mb-8" do %>
+  <% if local_assigns[:alert].present? %>
+    <div class="mb-3 px-3 py-2 rounded-md border border-red-500/40 bg-red-500/10 text-xs text-red-400">
+      <%= alert %>
+    </div>
+  <% end %>
+
+  <!-- Parent -->
+  <div class="flex items-center gap-2 mb-4 text-sm min-w-0">
+    <% if parent %>
+      <span class="text-gray-500 shrink-0">Sub-issue of</span>
+      <%= link_to team_issue_path(parent.team, parent),
+          data: { turbo_frame: "_top", controller: "hover-card", "hover-card-url-value": card_team_issue_path(parent.team, parent) },
+          class: "flex items-center gap-1.5 min-w-0 px-2 py-1 rounded-md bg-foreground border border-stroke hover:bg-hover-highlight transition-colors cursor-pointer" do %>
+        <span class="font-mono text-xs text-gray-500 shrink-0"><%= parent.identifier %></span>
+        <span class="text-gray-300 truncate"><%= parent.title %></span>
+      <% end %>
+      <%= render "sub_issues/picker", issue: issue, mode: :parent,
+                 trigger_label: "Change", trigger_class: "shrink-0 text-xs text-gray-500 hover:text-gray-300" %>
+      <%= button_to "Remove", parent_team_issue_sub_issues_path(issue.team, issue),
+          method: :patch, params: { parent_issue_id: "" },
+          form: { class: "shrink-0" },
+          class: "text-xs text-gray-500 hover:text-red-400 cursor-pointer" %>
+    <% else %>
+      <%= render "sub_issues/picker", issue: issue, mode: :parent,
+                 trigger_label: "Set parent issue…", trigger_class: "text-xs text-gray-500 hover:text-gray-300" %>
+    <% end %>
+  </div>
+
+  <!-- Sub-issues -->
+  <div class="flex items-center justify-between gap-2 mb-2">
+    <div class="flex items-center gap-2 text-sm font-semibold text-gray-400">
+      Sub-issues
+      <% if children.any? %>
+        <span class="text-xs font-normal text-gray-500"><%= done_count %>/<%= children.size %> done</span>
+      <% end %>
+    </div>
+    <div class="flex items-center gap-3 text-xs">
+      <% if parent || children.any? %>
+        <%= link_to "View tree →", team_issue_dependency_map_path(issue.team, issue, view: "hierarchy"),
+            data: { turbo_frame: "_top" }, class: "text-gray-500 hover:text-gray-300 cursor-pointer" %>
+      <% end %>
+      <%= render "sub_issues/picker", issue: issue, mode: :children,
+                 trigger_label: "Add existing", trigger_class: "text-gray-500 hover:text-gray-300" %>
+      <%= link_to "+ New sub-issue", new_sub_issue_path,
+          data: { turbo_frame: "_top" }, class: "text-gray-400 hover:text-gray-200 cursor-pointer" %>
+    </div>
+  </div>
+
+  <% if children.any? %>
+    <div class="h-1 mb-2 rounded-full bg-foreground overflow-hidden">
+      <div class="h-full bg-accent" style="width: <%= (done_count * 100.0 / children.size).round %>%"></div>
+    </div>
+    <div class="flex flex-col gap-1">
+      <% children.each do |child| %>
+        <div class="flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground border border-stroke text-sm group <%= 'opacity-60' if child.closed? %>">
+          <span class="shrink-0"><%= render_lane_icon(child.lane) %></span>
+          <%= link_to team_issue_path(child.team, child),
+              data: { turbo_frame: "_top", controller: "hover-card", "hover-card-url-value": card_team_issue_path(child.team, child) },
+              class: "flex items-center gap-2 flex-1 min-w-0 text-gray-300 hover:text-accent transition-colors cursor-pointer" do %>
+            <span class="font-mono text-xs text-gray-500 shrink-0"><%= child.identifier %></span>
+            <span class="truncate"><%= child.title %></span>
+          <% end %>
+          <% if (nested = grandchild_counts[child.id]) %>
+            <span class="shrink-0 text-xs text-gray-500" title="<%= pluralize(nested, 'sub-issue') %>">
+              <%= nested %> sub
+            </span>
+          <% end %>
+          <% if child.assignee %>
+            <span class="shrink-0"><%= user_avatar(child.assignee, size: "sm") %></span>
+          <% end %>
+          <%= link_to team_issue_sub_issue_path(issue.team, issue, child),
+              data: { turbo_method: :delete },
+              title: "Remove from sub-issues",
+              class: "shrink-0 text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all cursor-pointer" do %>
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="text-xs text-gray-600">No sub-issues yet.</div>
+  <% end %>
+<% end %>

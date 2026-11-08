@@ -90,6 +90,12 @@ Rails.application.routes.draw do
           post :bulk_create
         end
       end
+      resources :sub_issues, only: %i[create destroy] do
+        collection do
+          get :search
+          patch :parent
+        end
+      end
       resource :hourglass_thread_link,
                only: %i[new create destroy],
                controller: 'hourglass_thread_links'
@@ -152,6 +158,7 @@ Rails.application.routes.draw do
       resources :teams, only: [:index] do
         resources :issues, only: %i[index show create update destroy] do
           resources :issue_dependencies, only: %i[index create destroy], controller: 'issue_dependencies'
+          resource :hierarchy, only: :show, controller: 'issue_hierarchies'
           resources :comments, only: %i[index create destroy] do
             delete 'attachments/:id', to: 'comments#destroy_attachment', as: :attachment
           end
